@@ -1,0 +1,27 @@
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kemo_card", "kemo_card.csproj", "{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "kemo_card.Frame.Tests", "Tests\kemo_card.Frame.Tests\kemo_card.Frame.Tests.csproj", "{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+	Debug|Any CPU = Debug|Any CPU
+	ExportDebug|Any CPU = ExportDebug|Any CPU
+	ExportRelease|Any CPU = ExportRelease|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}.ExportDebug|Any CPU.ActiveCfg = ExportDebug|Any CPU
+		{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}.ExportDebug|Any CPU.Build.0 = ExportDebug|Any CPU
+		{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}.ExportRelease|Any CPU.ActiveCfg = ExportRelease|Any CPU
+		{134E6FCA-C79B-43CF-8F76-DB274C7D95D4}.ExportRelease|Any CPU.Build.0 = ExportRelease|Any CPU
+		{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}.ExportDebug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}.ExportDebug|Any CPU.Build.0 = Debug|Any CPU
+		{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}.ExportRelease|Any CPU.ActiveCfg = Release|Any CPU
+		{E8F4A12C-3B5D-4E6F-9A0B-1C2D3E4F5A6B}.ExportRelease|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
