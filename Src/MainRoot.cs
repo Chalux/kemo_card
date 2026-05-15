@@ -1,7 +1,5 @@
 using Godot;
-using KemoCard.Frame.FeatureKit;
-using System;
-using System.Collections.Generic;
+using KemoCard.Frame.Ui;
 
 namespace MainRoot;
 
@@ -9,16 +7,15 @@ public partial class MainRoot : Control
 {
 	public override void _Ready()
 	{
-		BootstrapFeatures();
-	}
+		var uiManager = GetNodeOrNull<UiManager>("UiManager");
+		var dlgHost = GetNodeOrNull<Control>("DlgCanvas/DlgHost");
+		var popupStack = GetNodeOrNull<Control>("PopupCanvas/PopupStack");
+		if (uiManager is null || dlgHost is null || popupStack is null)
+		{
+			GD.PushError("MainRoot: missing UiManager, DlgCanvas/DlgHost, or PopupCanvas/PopupStack.");
+			return;
+		}
 
-	private static void BootstrapFeatures()
-	{
-		var globalBus = new GlobalEventBus();
-		IReadOnlyList<IFeaturePackage> packages = Array.Empty<IFeaturePackage>();
-		var manager = new FeatureManager(packages);
-		var context = new FeatureCompositionContext(globalBus, manager, packages);
-		FeatureBootstrap.Run(packages, context, manager);
-		GD.Print("功能框架已启动（当前无功能包）。");
+		uiManager.Configure(dlgHost, popupStack);
 	}
 }
