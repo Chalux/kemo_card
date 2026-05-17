@@ -1,0 +1,11 @@
+{
+  "modId": "base.game",
+  "displayName": "基础内容",
+  "version": "1.0.0",
+  "loadOrder": 0,
+  "dependencies": {
+    "required": [],
+    "optional": []
+  },
+  "contentRoot": "content"
+}

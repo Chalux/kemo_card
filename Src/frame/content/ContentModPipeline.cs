@@ -1,0 +1,84 @@
+namespace KemoCard.Frame.Content;
+
+public sealed class ContentModPipeline
+{
+	private readonly string _modRootDirectory;
+	private readonly ContentModDiscovery _discovery = new();
+	private readonly ContentModActivationPlanner _planner = new();
+	private readonly ContentModLoader _loader = new();
+	private readonly IContentModLogger _logger;
+	private readonly IContentModUserNotifier _notifier;
+
+	public ContentModPipeline(
+		string modRootDirectory,
+		GameDefinitionRegistry registry,
+		IContentModLogger logger,
+		IContentModUserNotifier notifier)
+	{
+		ArgumentException.ThrowIfNullOrWhiteSpace(modRootDirectory);
+		ArgumentNullException.ThrowIfNull(registry);
+		ArgumentNullException.ThrowIfNull(logger);
+		ArgumentNullException.ThrowIfNull(notifier);
+
+		_modRootDirectory = modRootDirectory;
+		Registry = registry;
+		_logger = logger;
+		_notifier = notifier;
+	}
+
+	public GameDefinitionRegistry Registry { get; }
+
+	public ContentLoadReport Rebuild(IReadOnlyList<string> enabledModIds)
+	{
+		ArgumentNullException.ThrowIfNull(enabledModIds);
+
+		var discovery = _discovery.Scan(_modRootDirectory);
+		foreach (var skip in discovery.SkippedMods)
+		{
+			_logger.LogSkipped(skip);
+		}
+
+		var activation = _planner.Plan(discovery.ValidMods, enabledModIds, discovery.SkippedMods);
+		var discoverySkippedIds = discovery.SkippedMods
+			.Select(static s => s.ModId)
+			.ToHashSet(StringComparer.Ordinal);
+		foreach (var skip in activation.SkippedMods)
+		{
+			if (discoverySkippedIds.Contains(skip.ModId))
+			{
+				continue;
+			}
+
+			_logger.LogSkipped(skip);
+		}
+
+		var bundles = new List<ModContentBundle>();
+		var loadSkipped = new List<ModSkipEntry>();
+		foreach (var entry in activation.OrderedActiveMods)
+		{
+			try
+			{
+				bundles.Add(_loader.Load(entry));
+			}
+			catch (ContentModLoadException ex)
+			{
+				var skip = new ModSkipEntry(ex.ModId, ModSkipReason.LoadFailed, ex.Message);
+				loadSkipped.Add(skip);
+				_logger.LogSkipped(skip);
+			}
+		}
+
+		Registry.Rebuild(bundles, out var mergeReport);
+		foreach (var conflict in mergeReport.IdConflicts)
+		{
+			_logger.LogConflict(conflict);
+		}
+
+		var allSkipped = activation.SkippedMods
+			.Concat(loadSkipped)
+			.ToList();
+		var finalReport = new ContentLoadReport(allSkipped, mergeReport.IdConflicts);
+		_notifier.OnModLoadCompleted(finalReport);
+		return finalReport;
+	}
+}
