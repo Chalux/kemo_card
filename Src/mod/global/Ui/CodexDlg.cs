@@ -12,7 +12,7 @@ public partial class CodexDlg : BaseDlg
 
 	public override void _Ready()
 	{
-		BuildChrome("图鉴");
+		BuildChrome(Tr("UI_CODEX_TITLE"));
 	}
 
 	public override void ApplyPayload(object payload)
@@ -52,9 +52,9 @@ public partial class CodexDlg : BaseDlg
 		titleLabel.AddThemeFontSizeOverride("font_size", 32);
 		column.AddChild(titleLabel);
 
-		column.AddChild(new Label { Text = "图鉴条目将在此展示。" });
+		column.AddChild(new Label { Text = Tr("UI_CODEX_PLACEHOLDER") });
 
-		_closeButton = new Button { Text = "返回" };
+		_closeButton = new Button { Text = Tr("UI_COMMON_BACK") };
 		column.AddChild(_closeButton);
 	}
 

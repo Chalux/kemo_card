@@ -5,15 +5,16 @@ public sealed class ContentModPipeline
 	private readonly string _modRootDirectory;
 	private readonly ContentModDiscovery _discovery = new();
 	private readonly ContentModActivationPlanner _planner = new();
-	private readonly ContentModLoader _loader = new();
 	private readonly IContentModLogger _logger;
 	private readonly IContentModUserNotifier _notifier;
+	private readonly IContentModTranslationLoader _translationLoader;
 
 	public ContentModPipeline(
 		string modRootDirectory,
 		GameDefinitionRegistry registry,
 		IContentModLogger logger,
-		IContentModUserNotifier notifier)
+		IContentModUserNotifier notifier,
+		IContentModTranslationLoader? translationLoader = null)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(modRootDirectory);
 		ArgumentNullException.ThrowIfNull(registry);
@@ -24,6 +25,7 @@ public sealed class ContentModPipeline
 		Registry = registry;
 		_logger = logger;
 		_notifier = notifier;
+		_translationLoader = translationLoader ?? new NullContentModTranslationLoader();
 	}
 
 	public GameDefinitionRegistry Registry { get; }
@@ -52,13 +54,16 @@ public sealed class ContentModPipeline
 			_logger.LogSkipped(skip);
 		}
 
+		_translationLoader.ClearRegistered();
+
 		var bundles = new List<ModContentBundle>();
 		var loadSkipped = new List<ModSkipEntry>();
 		foreach (var entry in activation.OrderedActiveMods)
 		{
 			try
 			{
-				bundles.Add(_loader.Load(entry));
+				bundles.Add(ContentModLoader.Load(entry));
+				_translationLoader.TryLoadModTranslations(entry);
 			}
 			catch (ContentModLoadException ex)
 			{

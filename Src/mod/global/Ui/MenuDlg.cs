@@ -12,7 +12,7 @@ public partial class MenuDlg : BaseDlg
 
 	public override void _Ready()
 	{
-		BuildChrome("主菜单");
+		BuildChrome(Tr("UI_MENU_TITLE"));
 	}
 
 	public override void ApplyPayload(object payload)
@@ -52,10 +52,10 @@ public partial class MenuDlg : BaseDlg
 		titleLabel.AddThemeFontSizeOverride("font_size", 32);
 		column.AddChild(titleLabel);
 
-		column.AddChild(new Label { Text = "继续游戏" });
-		column.AddChild(new Label { Text = "设置" });
+		column.AddChild(new Label { Text = Tr("UI_MENU_CONTINUE") });
+		column.AddChild(new Label { Text = Tr("UI_MENU_SETTINGS") });
 
-		_closeButton = new Button { Text = "返回" };
+		_closeButton = new Button { Text = Tr("UI_COMMON_BACK") };
 		column.AddChild(_closeButton);
 	}
 

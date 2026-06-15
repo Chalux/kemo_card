@@ -1,3 +1,4 @@
+using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Ui;
 using KemoCard.Mod.Global;
@@ -72,7 +73,8 @@ public sealed class ModFactory
             context.ContentModRootDirectory,
             registry,
             new GodotContentModLogger(),
-            new NullContentModUserNotifier());
+            new NullContentModUserNotifier(),
+            new GodotContentModTranslationLoader());
 
         var enabledModIds = globalMod.Current.EnabledModIds ?? GlobalSaveDto.CreateDefault().EnabledModIds!;
         pipeline.Rebuild(enabledModIds);

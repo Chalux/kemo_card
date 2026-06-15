@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://jh0b3o3wh8v4"
+
+[deps]
+
+files=["res://Resource/Locale/strings.zh_CN.translation", "res://Resource/Locale/strings.en.translation"]
+
+source_file="res://Resource/Locale/strings.csv"
+dest_files=["res://Resource/Locale/strings.zh_CN.translation", "res://Resource/Locale/strings.en.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

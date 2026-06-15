@@ -1,6 +1,6 @@
 {
   "modId": "base.game",
-  "displayName": "基础内容",
+  "displayName": "MOD_BASE_GAME_DISPLAY_NAME",
   "version": "1.0.0",
   "loadOrder": 0,
   "dependencies": {
