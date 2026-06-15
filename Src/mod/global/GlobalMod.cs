@@ -1,53 +1,48 @@
+using KemoCard.Frame.Mvc;
 using KemoCard.Frame.Ui;
 using KemoCard.Mod.Global.Save;
 using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global;
 
+public enum EGlobalModEvt
+{
+    [EventPayload(typeof(GlobalSaveChangedPayload))]
+    GlobalSaveChanged,
+}
+
+public readonly struct GlobalSaveChangedPayload
+{
+    public GlobalSaveDto Snapshot { get; init; }
+}
+
+[EventTable(typeof(EGlobalModEvt), typeof(GlobalMod))]
+public static partial class GlobalModEventTable
+{
+}
+
 /// <summary>
 /// 全局模块组合根：全局存档 + 通用界面（菜单、图鉴等）。
+/// On*/Notify* 包装方法由 Source Generator 依据 <see cref="GlobalModEventTable"/> 生成。
 /// </summary>
-public sealed class GlobalMod
+public sealed partial class GlobalMod : BaseMod
 {
-	private GlobalMod(GlobalModModel model, GlobalModController controller, GlobalSaveService saveService)
-	{
-		Model = model;
-		Controller = controller;
-		SaveService = saveService;
-	}
+    public GlobalMod() : base("global")
+    {
+    }
 
-	public GlobalModModel Model { get; }
+    public GlobalSaveDto Current { get; internal set; } = GlobalSaveDto.CreateDefault();
 
-	public GlobalModController Controller { get; }
+    public static void RegisterUi(UiManager uiManager)
+    {
+        ArgumentNullException.ThrowIfNull(uiManager);
 
-	public GlobalSaveService SaveService { get; }
+        uiManager.RegisterDlg<MenuDlg, MenuDlgPayload>(
+            GlobalUiIds.Menu,
+            static _ => new MenuDlg());
 
-	public static GlobalMod Create(IUiManager uiManager, string saveDirectory)
-	{
-		ArgumentNullException.ThrowIfNull(uiManager);
-		ArgumentException.ThrowIfNullOrWhiteSpace(saveDirectory);
-
-		var model = new GlobalModModel();
-		var saveService = new GlobalSaveService(saveDirectory);
-		var controller = new GlobalModController(model, saveService, uiManager);
-		return new GlobalMod(model, controller, saveService);
-	}
-
-	public void RegisterUi(UiManager uiManager)
-	{
-		ArgumentNullException.ThrowIfNull(uiManager);
-
-		uiManager.RegisterDlg<MenuDlg, MenuDlgPayload>(
-			GlobalUiIds.Menu,
-			static _ => new MenuDlg());
-
-		uiManager.RegisterDlg<CodexDlg, CodexDlgPayload>(
-			GlobalUiIds.Codex,
-			static _ => new CodexDlg());
-	}
-
-	public void Bootstrap()
-	{
-		Controller.LoadFromDisk();
-	}
+        uiManager.RegisterDlg<CodexDlg, CodexDlgPayload>(
+            GlobalUiIds.Codex,
+            static _ => new CodexDlg());
+    }
 }

@@ -5,6 +5,11 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <DefaultItemExcludes>$(DefaultItemExcludes);Tests\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Tests\**;Src\frame\mvc\Generators\**</DefaultItemExcludes>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="Src\frame\mvc\Generators\KemoCard.Mvc.Generators\KemoCard.Mvc.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
 </Project>
