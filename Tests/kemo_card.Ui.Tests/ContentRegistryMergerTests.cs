@@ -13,10 +13,8 @@ public sealed class ContentRegistryMergerTests
 		var merger = new ContentRegistryMerger();
 		var bundles = new[]
 		{
-			new ModContentBundle("a", Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(),
-				new[] { "strike" }, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>()),
-			new ModContentBundle("b", Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(),
-				new[] { "strike" }, Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>()),
+			ContentModTestHelper.EmptyBundle("a") with { Cards = new[] { "strike" } },
+			ContentModTestHelper.EmptyBundle("b") with { Cards = new[] { "strike" } },
 		};
 
 		merger.Merge(bundles, tables, out var report);
@@ -34,8 +32,11 @@ public sealed class ContentRegistryMergerTests
 		var merger = new ContentRegistryMerger();
 		var bundles = new[]
 		{
-			new ModContentBundle("a", Array.Empty<string>(), Array.Empty<string>(), Array.Empty<string>(),
-				new[] { "foo" }, Array.Empty<string>(), new[] { "foo" }, Array.Empty<string>()),
+			ContentModTestHelper.EmptyBundle("a") with
+			{
+				Cards = new[] { "foo" },
+				Skills = new[] { "foo" },
+			},
 		};
 
 		merger.Merge(bundles, tables, out var report);
@@ -55,5 +56,6 @@ public sealed class ContentRegistryMergerTests
 			[ContentCategory.Item] = new(StringComparer.Ordinal),
 			[ContentCategory.Skill] = new(StringComparer.Ordinal),
 			[ContentCategory.Buff] = new(StringComparer.Ordinal),
+			[ContentCategory.Effect] = new(StringComparer.Ordinal),
 		};
 }

@@ -1,0 +1,6 @@
+{
+  "displayNameId": "skill.strike_hit.name",
+  "descId": "skill.strike_hit.desc",
+  "effectRefs": [{ "effectId": "strike_damage" }],
+  "tags": ["attack"]
+}

@@ -19,19 +19,24 @@ public sealed class GameDefinitionRegistryTests
 	public void Contains_returns_true_after_registering_card()
 	{
 		var reg = new GameDefinitionRegistry();
-		var bundle = new ModContentBundle(
-			ModId: "base.game",
-			Characters: Array.Empty<string>(),
-			Battles: Array.Empty<string>(),
-			Events: Array.Empty<string>(),
-			Cards: new[] { "strike" },
-			Items: Array.Empty<string>(),
-			Skills: Array.Empty<string>(),
-			Buffs: Array.Empty<string>());
+		var bundle = ContentModTestHelper.EmptyBundle("base.game");
+		bundle = bundle with
+		{
+			Cards = new[] { "strike" },
+			Definitions = bundle.Definitions with
+			{
+				Cards = new Dictionary<string, KemoCard.Frame.Content.Definitions.CardDto>
+				{
+					["strike"] = new() { Id = "strike", DisplayNameId = "card.strike.name" },
+				},
+			},
+		};
 
 		reg.Rebuild(new[] { bundle }, out var report);
 
 		Assert.That(reg.Contains(ContentCategory.Card, "strike"), Is.True);
+		Assert.That(reg.Store.TryGetCard("strike", out var card), Is.True);
+		Assert.That(card.DisplayNameId, Is.EqualTo("card.strike.name"));
 		Assert.That(report.IdConflicts, Is.Empty);
 		Assert.That(reg.DefinitionVersion, Is.EqualTo(1));
 	}

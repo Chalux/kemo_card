@@ -2,6 +2,9 @@
 .godot/
 /android/
 
+# Node / TypeScript
+**/node_modules/
+
 # .NET / xUnit
 **/bin/
 **/obj/

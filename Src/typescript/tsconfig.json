@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": false,
+    "sourceMap": false,
+    "noEmit": true,
+    "typeRoots": ["./typings"]
+  },
+  "include": ["src/**/*.mts", "src/**/*.d.ts", "typings/**/*.d.ts"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -73,16 +73,24 @@ public sealed class ContentModPipeline
 			}
 		}
 
-		Registry.Rebuild(bundles, out var mergeReport);
-		foreach (var conflict in mergeReport.IdConflicts)
+		Registry.Rebuild(bundles, out var registryReport);
+		foreach (var conflict in registryReport.IdConflicts)
 		{
 			_logger.LogConflict(conflict);
+		}
+
+		foreach (var validationError in registryReport.ValidationErrors)
+		{
+			_logger.LogValidationError(validationError);
 		}
 
 		var allSkipped = activation.SkippedMods
 			.Concat(loadSkipped)
 			.ToList();
-		var finalReport = new ContentLoadReport(allSkipped, mergeReport.IdConflicts);
+		var finalReport = new ContentLoadReport(
+			allSkipped,
+			registryReport.IdConflicts,
+			registryReport.ValidationErrors);
 		_notifier.OnModLoadCompleted(finalReport);
 		return finalReport;
 	}

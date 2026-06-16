@@ -14,4 +14,10 @@ public sealed class GodotContentModLogger : IContentModLogger
 		GD.PushWarning(
 			$"[ContentMod] Id conflict {entry.Category}/{entry.ContentId}: kept {entry.WinnerModId}, skipped {entry.LoserModId}");
 	}
+
+	public void LogValidationError(ContentDefinitionValidationError entry)
+	{
+		GD.PushWarning(
+			$"[ContentMod] Validation {entry.Category}/{entry.DefinitionId}: {entry.Message}");
+	}
 }

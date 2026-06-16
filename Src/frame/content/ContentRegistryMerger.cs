@@ -19,9 +19,10 @@ public sealed class ContentRegistryMerger
 			TryAddAll(bundle.ModId, ContentCategory.Item, bundle.Items, tables, ownerById, conflicts);
 			TryAddAll(bundle.ModId, ContentCategory.Skill, bundle.Skills, tables, ownerById, conflicts);
 			TryAddAll(bundle.ModId, ContentCategory.Buff, bundle.Buffs, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, ContentCategory.Effect, bundle.Effects, tables, ownerById, conflicts);
 		}
 
-		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts);
+		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>());
 	}
 
 	private static void TryAddAll(

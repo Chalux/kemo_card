@@ -8,4 +8,6 @@ public sealed record ModContentBundle(
 	IReadOnlyList<string> Cards,
 	IReadOnlyList<string> Items,
 	IReadOnlyList<string> Skills,
-	IReadOnlyList<string> Buffs);
+	IReadOnlyList<string> Buffs,
+	IReadOnlyList<string> Effects,
+	ModDefinitionsBundle Definitions);

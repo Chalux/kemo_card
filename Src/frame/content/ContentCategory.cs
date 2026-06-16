@@ -9,4 +9,5 @@ public enum ContentCategory
 	Item,
 	Skill,
 	Buff,
+	Effect,
 }

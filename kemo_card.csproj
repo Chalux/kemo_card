@@ -8,8 +8,9 @@
     <DefaultItemExcludes>$(DefaultItemExcludes);Tests\**;Src\frame\mvc\Generators\**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="Src\frame\mvc\Generators\KemoCard.Mvc.Generators\KemoCard.Mvc.Generators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Src\frame\mvc\Generators\KemoCard.Mvc.Generators\KemoCard.Mvc.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Puerts.V8.Complete" Version="3.0.2" />
   </ItemGroup>
 </Project>

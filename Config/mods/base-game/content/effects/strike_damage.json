@@ -1,0 +1,5 @@
+{
+  "kind": "Damage",
+  "params": { "amount": 6 },
+  "tags": ["damage", "physical"]
+}

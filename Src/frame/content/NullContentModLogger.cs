@@ -9,4 +9,8 @@ public sealed class NullContentModLogger : IContentModLogger
 	public void LogConflict(ContentIdConflictEntry entry)
 	{
 	}
+
+	public void LogValidationError(ContentDefinitionValidationError entry)
+	{
+	}
 }

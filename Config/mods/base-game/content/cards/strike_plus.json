@@ -1,9 +1,9 @@
 {
-  "displayNameId": "card.strike.name",
+  "displayNameId": "card.strike_plus.name",
   "element": 1,
   "costType": "Energy",
   "cost": 1,
-  "skillRefs": [{ "skillId": "strike_hit" }],
+  "skillRefs": [{ "skillId": "strike_hit", "params": { "bonusDamage": 3 } }],
   "role": 1,
   "priority": 100,
   "cardType": "Physics",
@@ -11,8 +11,8 @@
   "targetScope": "Single",
   "retargetPolicy": "RandomLegal",
   "tags": ["attack", "basic"],
-  "artPath": "cards/strike.png",
+  "artPath": "cards/strike_plus.png",
   "rarity": "Common",
   "cardGroupId": "strike_chain",
-  "upgradeTier": 0
+  "upgradeTier": 1
 }
