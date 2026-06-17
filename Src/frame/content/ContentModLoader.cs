@@ -43,7 +43,7 @@ public sealed class ContentModLoader
 					buffs,
 					effects));
 		}
-		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+		catch (Exception ex)
 		{
 			throw new ContentModLoadException(manifest.ModId, ex.Message, ex);
 		}

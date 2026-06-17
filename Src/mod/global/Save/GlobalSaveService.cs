@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace KemoCard.Mod.Global.Save;
@@ -16,41 +17,67 @@ public sealed class GlobalSaveService
 	private readonly string _filePath;
 	private readonly string _backupPath;
 	private readonly string _tempPath;
+	private readonly string _directoryPath;
+	private readonly object _ioGate = new();
+	private readonly Action<string>? _logWarning;
 
-	public GlobalSaveService(string directoryPath)
+	public GlobalSaveService(string directoryPath, Action<string>? logWarning = null)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(directoryPath);
+		_directoryPath = directoryPath;
 		Directory.CreateDirectory(directoryPath);
 		_filePath = Path.Combine(directoryPath, "global_save.json");
 		_backupPath = Path.Combine(directoryPath, "global_save.bak.json");
 		_tempPath = Path.Combine(directoryPath, "global_save.tmp.json");
+		_logWarning = logWarning;
 	}
 
-	public bool Exists => File.Exists(_filePath);
+	public bool Exists
+	{
+		get
+		{
+			lock (_ioGate)
+			{
+				return File.Exists(_filePath);
+			}
+		}
+	}
 
 	public GlobalSaveDto LoadOrDefault()
 	{
-		if (TryRead(_filePath, out var primary))
+		lock (_ioGate)
 		{
-			return primary;
-		}
+			if (TryRead(_filePath, out var primary, isPrimary: true))
+			{
+				return primary;
+			}
 
-		if (TryRead(_backupPath, out var backup))
-		{
-			return backup;
-		}
+			if (TryRead(_backupPath, out var backup, isPrimary: false))
+			{
+				if (File.Exists(_filePath))
+				{
+					LogWarning($"Global save primary file unreadable; loaded backup from '{_backupPath}'.");
+				}
 
-		return GlobalSaveDto.CreateDefault();
+				return backup;
+			}
+
+			return GlobalSaveDto.CreateDefault();
+		}
 	}
 
 	public void Save(GlobalSaveDto dto)
 	{
 		ArgumentNullException.ThrowIfNull(dto);
 		var json = JsonSerializer.Serialize(dto, JsonOptions);
-		WriteAtomic(json);
+
+		lock (_ioGate)
+		{
+			WriteAtomic(json);
+		}
 	}
 
-	private bool TryRead(string path, out GlobalSaveDto dto)
+	private bool TryRead(string path, out GlobalSaveDto dto, bool isPrimary)
 	{
 		dto = GlobalSaveDto.CreateDefault();
 		if (!File.Exists(path))
@@ -64,19 +91,41 @@ public sealed class GlobalSaveService
 			var loaded = JsonSerializer.Deserialize<GlobalSaveDto>(json, JsonOptions);
 			if (loaded is null)
 			{
+				LogWarning($"Global save at '{path}' deserialized to null.");
 				return false;
 			}
 
 			dto = loaded;
 			return true;
 		}
-		catch (JsonException)
+		catch (JsonException ex)
 		{
+			LogWarning($"Global save JSON error at '{path}': {ex.Message}");
+			if (isPrimary)
+			{
+				ArchiveCorruptFile(path);
+			}
+
 			return false;
 		}
-		catch (IOException)
+		catch (IOException ex)
 		{
+			LogWarning($"Global save IO error at '{path}': {ex.Message}");
 			return false;
+		}
+	}
+
+	private void ArchiveCorruptFile(string path)
+	{
+		try
+		{
+			var stamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+			var archivePath = Path.Combine(_directoryPath, $"global_save.corrupt.{stamp}.json");
+			File.Copy(path, archivePath, overwrite: false);
+		}
+		catch (Exception ex)
+		{
+			LogWarning($"Failed to archive corrupt save '{path}': {ex.Message}");
 		}
 	}
 
@@ -85,14 +134,21 @@ public sealed class GlobalSaveService
 		File.WriteAllText(_tempPath, json);
 		if (File.Exists(_filePath))
 		{
-			File.Copy(_filePath, _backupPath, overwrite: true);
-		}
-
-		if (File.Exists(_filePath))
-		{
-			File.Delete(_filePath);
+			File.Replace(_tempPath, _filePath, _backupPath, ignoreMetadataErrors: true);
+			return;
 		}
 
 		File.Move(_tempPath, _filePath);
+	}
+
+	private void LogWarning(string message)
+	{
+		if (_logWarning is not null)
+		{
+			_logWarning(message);
+			return;
+		}
+
+		Trace.TraceWarning(message);
 	}
 }

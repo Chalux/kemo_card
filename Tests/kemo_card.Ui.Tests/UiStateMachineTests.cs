@@ -33,6 +33,20 @@ public sealed class UiStateMachineTests
 	}
 
 	[Test]
+	public void Closed_to_Created_allows_reopen()
+	{
+		var sm = new UiStateMachine();
+		sm.TryTransitionTo(UiLifecycleState.Opening);
+		sm.TryTransitionTo(UiLifecycleState.Opened);
+		sm.TryTransitionTo(UiLifecycleState.Closing);
+		sm.TryTransitionTo(UiLifecycleState.Closed);
+
+		Assert.That(sm.TryTransitionTo(UiLifecycleState.Created), Is.True);
+		Assert.That(sm.TryTransitionTo(UiLifecycleState.Opening), Is.True);
+		Assert.That(sm.Current, Is.EqualTo(UiLifecycleState.Opening));
+	}
+
+	[Test]
 	public void Created_to_Opened_is_invalid()
 	{
 		var sm = new UiStateMachine();

@@ -50,10 +50,17 @@ public sealed class ModScriptLoader : ILoader
 			return false;
 		}
 
-		fullPath = Path.Combine(
-			modFolder,
-			"scripts",
-			scriptPath.Replace('/', Path.DirectorySeparatorChar));
+		var scriptsRoot = Path.GetFullPath(Path.Combine(modFolder, "scripts"));
+		var relativePath = scriptPath.Replace('/', Path.DirectorySeparatorChar);
+		var candidate = Path.GetFullPath(Path.Combine(scriptsRoot, relativePath));
+		if (!candidate.StartsWith(scriptsRoot, OperatingSystem.IsWindows()
+				? StringComparison.OrdinalIgnoreCase
+				: StringComparison.Ordinal))
+		{
+			return false;
+		}
+
+		fullPath = candidate;
 		return File.Exists(fullPath);
 	}
 }

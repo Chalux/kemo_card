@@ -67,6 +67,10 @@ public sealed class EventListener<TPayload> : IEventListener
         catch (Exception e)
         {
             EventDispatcher.LogError($"Event listener {Key} failed to invoke: {e}");
+            if (EventDispatcher.FailureMode == EventDispatchFailureMode.Throw)
+            {
+                throw;
+            }
         }
 
         if (Once)
@@ -110,6 +114,8 @@ public sealed class EventDispatcher
 {
     private static IEventDispatcherLogger _logger = NullEventDispatcherLogger.Instance;
 
+    public static EventDispatchFailureMode FailureMode { get; set; } = EventDispatchFailureMode.LogAndContinue;
+
     private readonly object _gate = new();
     private readonly Dictionary<int, List<IEventListener>> _handlers = [];
     private readonly Dictionary<object, Dictionary<int, List<IEventListener>>> _callerMap = [];
@@ -139,6 +145,8 @@ public sealed class EventDispatcher
 
         lock (_gate)
         {
+            EnsurePayloadTypeContractLocked(key.Id, typeof(TPayload));
+
             if (TryFindActiveListener(key.Id, handler, caller, out EventListener<TPayload>? existing))
             {
                 if (existing.Once != once)
@@ -404,6 +412,38 @@ public sealed class EventDispatcher
     }
 
     #region private methods
+    private void EnsurePayloadTypeContractLocked(int eventId, Type payloadType)
+    {
+        if (!_handlers.TryGetValue(eventId, out var handlers) || handlers.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var obj in handlers)
+        {
+            var listenerType = obj.GetType();
+            if (!listenerType.IsGenericType || listenerType.GetGenericTypeDefinition() != typeof(EventListener<>))
+            {
+                continue;
+            }
+
+            var registeredPayload = listenerType.GetGenericArguments()[0];
+            if (registeredPayload == payloadType)
+            {
+                continue;
+            }
+
+            var isActiveProperty = listenerType.GetProperty(nameof(EventListener<object>.IsActive));
+            if (isActiveProperty?.GetValue(obj) is not true)
+            {
+                continue;
+            }
+
+            throw new InvalidOperationException(
+                $"Event id {eventId} is already bound to payload type {registeredPayload.Name}, cannot register {payloadType.Name}.");
+        }
+    }
+
     internal bool TryClaimOnce<TPayload>(EventListener<TPayload> listener)
     {
         lock (_gate)

@@ -31,4 +31,24 @@ public sealed class ModScriptLoaderTests
 		Assert.That(source, Does.Contain("proposedEffects"));
 		Assert.That(debugPath, Does.Contain("effects"));
 	}
+
+	[Test]
+	public void FileExists_rejects_path_traversal_outside_scripts_root()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "kemo_script_tests", Guid.NewGuid().ToString("N"));
+		var modDir = ContentModTestHelper.CreateModFolder(root, "base-game", "base.game");
+		var secretPath = Path.Combine(root, "secret.txt");
+		File.WriteAllText(secretPath, "secret");
+
+		var catalog = new ModScriptCatalog();
+		catalog.Rebuild(
+		[
+			new DiscoveredModEntry(
+				modDir,
+				new ContentModManifestDto { ModId = "base.game", ContentRoot = "content" }),
+		]);
+
+		var loader = new ModScriptLoader(catalog);
+		Assert.That(loader.FileExists("base.game/../../secret.txt"), Is.False);
+	}
 }

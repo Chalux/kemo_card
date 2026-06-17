@@ -15,6 +15,7 @@ public partial class UiManager : Node, IUiManager
 	private CancellationTokenSource? _dlgLoadCts;
 	private readonly Dictionary<string, BasePopup> _popupById = new(StringComparer.Ordinal);
 	private BasePopup? _maskSubscribedPopup;
+	private readonly SemaphoreSlim _closeGate = new(1, 1);
 
 	#region Configure and registration
 
@@ -71,67 +72,101 @@ public partial class UiManager : Node, IUiManager
 		_dlgLoadCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 		var token = _dlgLoadCts.Token;
 
-		BaseDlg newDlg;
 		try
 		{
-			newDlg = (BaseDlg)factory(payload!);
+			BaseDlg newDlg;
+			try
+			{
+				newDlg = (BaseDlg)factory(payload!);
+			}
+			catch (Exception ex)
+			{
+				GD.PushError($"UiManager: factory failed for dlg '{id}': {ex.Message}");
+				return;
+			}
+
+			newDlg.Visible = false;
+			AddChild(newDlg);
+
+			if (token.IsCancellationRequested)
+			{
+				newDlg.QueueFree();
+				return;
+			}
+
+			newDlg.ApplyPayload(payload!);
+			if (!newDlg.Lifecycle.TryTransitionTo(UiLifecycleState.Opening))
+			{
+				GD.PushError("UiManager: dlg lifecycle cannot enter Opening.");
+				newDlg.QueueFree();
+				return;
+			}
+
+			try
+			{
+				await newDlg.PlayOpenAsync();
+			}
+			catch (Exception ex)
+			{
+				GD.PushError($"UiManager: PlayOpenAsync failed for dlg '{id}': {ex.Message}");
+				newDlg.QueueFree();
+				return;
+			}
+
+			if (token.IsCancellationRequested)
+			{
+				newDlg.QueueFree();
+				return;
+			}
+
+			if (!newDlg.Lifecycle.TryTransitionTo(UiLifecycleState.Opened))
+			{
+				GD.PushError("UiManager: dlg lifecycle cannot enter Opened.");
+				newDlg.QueueFree();
+				return;
+			}
+
+			if (token.IsCancellationRequested)
+			{
+				newDlg.QueueFree();
+				return;
+			}
+
+			RemoveChild(newDlg);
+
+			var previous = _currentDlg;
+			if (previous is not null && IsInstanceValid(previous) && previous.GetParent() == _dlgHost)
+			{
+				_dlgHost.RemoveChild(previous);
+				await CloseDlgInstanceAsync(previous, CancellationToken.None);
+			}
+
+			try
+			{
+				_dlgHost.AddChild(newDlg);
+				ApplyFullRectAnchors(newDlg);
+				newDlg.Visible = true;
+				_currentDlg = newDlg;
+			}
+			catch
+			{
+				newDlg.QueueFree();
+				if (previous is not null && IsInstanceValid(previous) && previous.GetParent() is null)
+				{
+					_dlgHost.AddChild(previous);
+					ApplyFullRectAnchors(previous);
+					previous.Visible = true;
+					_currentDlg = previous;
+				}
+
+				throw;
+			}
 		}
-		catch (Exception ex)
+		finally
 		{
-			GD.PushError($"UiManager: factory failed for dlg '{id}': {ex.Message}");
-			return;
+			_dlgLoadCts?.Dispose();
+			_dlgLoadCts = null;
 		}
-
-		newDlg.Visible = false;
-		AddChild(newDlg);
-
-		if (token.IsCancellationRequested)
-		{
-			newDlg.QueueFree();
-			return;
-		}
-
-		newDlg.ApplyPayload(payload!);
-		if (!newDlg.Lifecycle.TryTransitionTo(UiLifecycleState.Opening))
-		{
-			GD.PushError("UiManager: dlg lifecycle cannot enter Opening.");
-			newDlg.QueueFree();
-			return;
-		}
-
-		await newDlg.PlayOpenAsync();
-		if (token.IsCancellationRequested)
-		{
-			newDlg.QueueFree();
-			return;
-		}
-
-		if (!newDlg.Lifecycle.TryTransitionTo(UiLifecycleState.Opened))
-		{
-			GD.PushError("UiManager: dlg lifecycle cannot enter Opened.");
-			newDlg.QueueFree();
-			return;
-		}
-
-		if (token.IsCancellationRequested)
-		{
-			newDlg.QueueFree();
-			return;
-		}
-
-		RemoveChild(newDlg);
-
-		var previous = _currentDlg;
-		if (previous is not null && IsInstanceValid(previous) && previous.GetParent() == _dlgHost)
-		{
-			_dlgHost.RemoveChild(previous);
-			await CloseDlgInstanceAsync(previous, token);
-		}
-
-		_dlgHost.AddChild(newDlg);
-		ApplyFullRectAnchors(newDlg);
-		newDlg.Visible = true;
-		_currentDlg = newDlg;
 	}
 
 	public async Task OpenPopupAsync<TPayload>(
@@ -141,6 +176,8 @@ public partial class UiManager : Node, IUiManager
 		bool maskClickClosesPopup = true,
 		CancellationToken cancellationToken = default)
 	{
+		PruneInvalidPopups();
+
 		if (_popupStack is null)
 		{
 			GD.PushError("UiManager: PopupStack not configured.");
@@ -167,7 +204,7 @@ public partial class UiManager : Node, IUiManager
 
 		cancellationToken.ThrowIfCancellationRequested();
 
-		if (_popupById.TryGetValue(id, out var existing))
+		if (_popupById.TryGetValue(id, out var existing) && IsInstanceValid(existing))
 		{
 			switch (behavior)
 			{
@@ -208,6 +245,10 @@ public partial class UiManager : Node, IUiManager
 				default:
 					throw new ArgumentOutOfRangeException(nameof(behavior), behavior, "Unknown PopupReopenBehavior.");
 			}
+		}
+		else if (_popupById.ContainsKey(id))
+		{
+			_popupById.Remove(id);
 		}
 
 		cancellationToken.ThrowIfCancellationRequested();
@@ -256,13 +297,14 @@ public partial class UiManager : Node, IUiManager
 
 	public void CloseTopPopup()
 	{
+		PruneInvalidPopups();
 		var top = GetTopBasePopup();
 		if (top is null)
 		{
 			return;
 		}
 
-		_ = RunCloseTopPopupAsync(top);
+		_ = EnqueueCloseAsync(() => RunCloseTopPopupAsync(top));
 	}
 
 	public void CloseDlg()
@@ -273,7 +315,8 @@ public partial class UiManager : Node, IUiManager
 			return;
 		}
 
-		_ = RunCloseDlgAsync(_currentDlg);
+		var dlg = _currentDlg;
+		_ = EnqueueCloseAsync(() => RunCloseDlgAsync(dlg));
 	}
 
 	#endregion
@@ -285,7 +328,21 @@ public partial class UiManager : Node, IUiManager
 		_dlgLoadCts?.Cancel();
 		_dlgLoadCts?.Dispose();
 		_dlgLoadCts = null;
+		_closeGate.Dispose();
 		base._ExitTree();
+	}
+
+	private async Task EnqueueCloseAsync(Func<Task> closeAction)
+	{
+		await _closeGate.WaitAsync();
+		try
+		{
+			await closeAction();
+		}
+		finally
+		{
+			_closeGate.Release();
+		}
 	}
 
 	private static void ApplyFullRectAnchors(Control control)
@@ -380,13 +437,38 @@ public partial class UiManager : Node, IUiManager
 
 		for (var i = _popupStack.GetChildCount() - 1; i >= 0; i--)
 		{
-			if (_popupStack.GetChild(i) is BasePopup p)
+			if (_popupStack.GetChild(i) is BasePopup p && IsInstanceValid(p))
 			{
 				return p;
 			}
 		}
 
 		return null;
+	}
+
+	private void PruneInvalidPopups()
+	{
+		List<string>? staleKeys = null;
+		foreach (var kv in _popupById)
+		{
+			if (IsInstanceValid(kv.Value))
+			{
+				continue;
+			}
+
+			staleKeys ??= new List<string>();
+			staleKeys.Add(kv.Key);
+		}
+
+		if (staleKeys is null)
+		{
+			return;
+		}
+
+		foreach (var key in staleKeys)
+		{
+			_popupById.Remove(key);
+		}
 	}
 
 	private static void RemovePopupFromMapCore(Dictionary<string, BasePopup> map, BasePopup instance)
@@ -432,7 +514,7 @@ public partial class UiManager : Node, IUiManager
 		BasePopup? top = null;
 		for (var i = _popupStack.GetChildCount() - 1; i >= 0; i--)
 		{
-			if (_popupStack.GetChild(i) is BasePopup p)
+			if (_popupStack.GetChild(i) is BasePopup p && IsInstanceValid(p))
 			{
 				top = p;
 				break;

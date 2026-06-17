@@ -8,12 +8,14 @@ public sealed class ContentLoadReport
 		IReadOnlyList<ModSkipEntry> skippedMods,
 		IReadOnlyList<ContentIdConflictEntry> idConflicts,
 		IReadOnlyList<ContentDefinitionValidationError> validationErrors,
-		IReadOnlyList<ScriptLoadError> scriptLoadErrors)
+		IReadOnlyList<ScriptLoadError> scriptLoadErrors,
+		IReadOnlyList<ContentDefinitionValidationError>? removedValidationErrors = null)
 	{
 		SkippedMods = skippedMods;
 		IdConflicts = idConflicts;
 		ValidationErrors = validationErrors;
 		ScriptLoadErrors = scriptLoadErrors;
+		RemovedValidationErrors = removedValidationErrors ?? Array.Empty<ContentDefinitionValidationError>();
 	}
 
 	public IReadOnlyList<ModSkipEntry> SkippedMods { get; }
@@ -21,6 +23,8 @@ public sealed class ContentLoadReport
 	public IReadOnlyList<ContentIdConflictEntry> IdConflicts { get; }
 
 	public IReadOnlyList<ContentDefinitionValidationError> ValidationErrors { get; }
+
+	public IReadOnlyList<ContentDefinitionValidationError> RemovedValidationErrors { get; }
 
 	public IReadOnlyList<ScriptLoadError> ScriptLoadErrors { get; }
 
@@ -37,8 +41,8 @@ public sealed class ContentLoadReport
 		Array.Empty<ScriptLoadError>());
 
 	public ContentLoadReport WithSkippedMods(IReadOnlyList<ModSkipEntry> skippedMods) =>
-		new(skippedMods, IdConflicts, ValidationErrors, ScriptLoadErrors);
+		new(skippedMods, IdConflicts, ValidationErrors, ScriptLoadErrors, RemovedValidationErrors);
 
 	public ContentLoadReport WithScriptLoadErrors(IReadOnlyList<ScriptLoadError> scriptLoadErrors) =>
-		new(SkippedMods, IdConflicts, ValidationErrors, scriptLoadErrors);
+		new(SkippedMods, IdConflicts, ValidationErrors, scriptLoadErrors, RemovedValidationErrors);
 }

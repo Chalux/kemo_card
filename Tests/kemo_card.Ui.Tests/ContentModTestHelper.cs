@@ -9,7 +9,8 @@ internal static class ContentModTestHelper
 		string folderName,
 		string modId,
 		int loadOrder = 0,
-		string[]? required = null)
+		string[]? required = null,
+		string version = "1.0.0")
 	{
 		var dir = Path.Combine(root, folderName);
 		Directory.CreateDirectory(Path.Combine(dir, "content", "characters"));
@@ -28,7 +29,7 @@ internal static class ContentModTestHelper
 		{
 		  "modId": "{{modId}}",
 		  "displayName": "{{modId}}",
-		  "version": "1.0.0",
+		  "version": "{{version}}",
 		  "loadOrder": {{loadOrder}},
 		  "dependencies": { "required": [{{requiredJson}}], "optional": [] },
 		  "contentRoot": "content"

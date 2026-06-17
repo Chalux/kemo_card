@@ -51,11 +51,31 @@ public sealed class PuertsContentEffectScriptHost : IContentEffectScriptHost
 		return value switch
 		{
 			int intValue => intValue,
-			long longValue => (int)longValue,
-			double doubleValue => (int)doubleValue,
+			long longValue => TryConvertLongToInt(longValue, fallback),
+			double doubleValue => TryConvertDoubleToInt(doubleValue, fallback),
 			string text when int.TryParse(text, out var parsed) => parsed,
 			_ => fallback,
 		};
+	}
+
+	private static int TryConvertLongToInt(long value, int fallback)
+	{
+		if (value is < int.MinValue or > int.MaxValue)
+		{
+			return fallback;
+		}
+
+		return checked((int)value);
+	}
+
+	private static int TryConvertDoubleToInt(double value, int fallback)
+	{
+		if (value is < int.MinValue or > int.MaxValue or double.NaN or double.PositiveInfinity or double.NegativeInfinity)
+		{
+			return fallback;
+		}
+
+		return checked((int)value);
 	}
 
 	private static string? ExtractString(IReadOnlyDictionary<string, object>? context, string key)

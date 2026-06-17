@@ -5,16 +5,35 @@ using KemoCard.Frame.Mvc;
 using KemoCard.Frame.Scripting;
 using KemoCard.Frame.Ui;
 using KemoCard.Mod.Global;
+using KemoCard.Mod.Global.Save;
 
 namespace MainRoot;
 
 public partial class MainRoot : Control
 {
-    public GlobalMod? GlobalMod { get; private set; }
+    private ModStartupResult? _startup;
 
-    public ContentModPipeline? ContentModPipeline { get; private set; }
+    public GlobalMod? GlobalMod => _startup?.GlobalMod;
+
+    public GlobalModController? GlobalController => _startup?.GlobalController;
+
+    public GlobalSaveService? GlobalSaveService => _startup?.GlobalSaveService;
+
+    public ContentModPipeline? ContentModPipeline => _startup?.ContentModPipeline;
 
     public GameDefinitionRegistry? GameDefinitions => ContentModPipeline?.Registry;
+
+    public ModScriptRuntime? ScriptRuntime => _startup?.ScriptRuntime;
+
+    public PuertsContentEffectScriptHost? ContentEffectScriptHost => _startup?.ContentEffectScriptHost;
+
+    public StoryScriptInvoker? StoryScriptInvoker => _startup?.StoryScriptInvoker;
+
+    public EventScriptInvoker? EventScriptInvoker => _startup?.EventScriptInvoker;
+
+    public BattleScriptInvoker? BattleScriptInvoker => _startup?.BattleScriptInvoker;
+
+    public EnemyAiScriptInvoker? EnemyAiScriptInvoker => _startup?.EnemyAiScriptInvoker;
 
     public override void _Ready()
     {
@@ -24,6 +43,7 @@ public partial class MainRoot : Control
         if (uiManager is null || dlgHost is null || popupStack is null)
         {
             GD.PushError("MainRoot: missing UiManager, DlgCanvas/DlgHost, or PopupCanvas/PopupStack.");
+            CallDeferred(MethodName.QuitGame);
             return;
         }
 
@@ -31,18 +51,26 @@ public partial class MainRoot : Control
 
         EventDispatcher.Configure(new GodotEventDispatcherLogger());
 
-        var modResult = ModFactory.Bootstrap(new()
+        _startup = ModFactory.Bootstrap(new()
         {
             UiManager = uiManager,
             SaveDirectory = ProjectSettings.GlobalizePath("user://saves"),
             ContentModRootDirectory = ProjectSettings.GlobalizePath("user://mods"),
             BundledContentModsDirectory = ProjectSettings.GlobalizePath("res://Config/mods"),
         });
-
-        GlobalMod = modResult.GlobalMod;
-        ContentModPipeline = modResult.ContentModPipeline;
-        ScriptRuntime = modResult.ScriptRuntime;
     }
 
-    public ModScriptRuntime? ScriptRuntime { get; private set; }
+    public override void _ExitTree()
+    {
+        GlobalEvents.Bus.OffAll();
+        GlobalMod?.Dispose();
+        ScriptRuntime?.Dispose();
+        _startup = null;
+        base._ExitTree();
+    }
+
+    private void QuitGame()
+    {
+        GetTree().Quit();
+    }
 }

@@ -5,8 +5,20 @@ namespace KemoCard.Frame.Ui;
 
 public abstract partial class BasePopup : BaseUI
 {
+	private ColorRect? _modalMask;
+	private bool _modalMaskBound;
+
 	[Export]
-	public ColorRect? ModalMask { get; set; }
+	public ColorRect? ModalMask
+	{
+		get => _modalMask;
+		set
+		{
+			UnbindModalMask();
+			_modalMask = value;
+			BindModalMask();
+		}
+	}
 
 	public bool MaskClickClosesPopup { get; set; } = true;
 
@@ -15,19 +27,12 @@ public abstract partial class BasePopup : BaseUI
 	public override void _Ready()
 	{
 		base._Ready();
-		if (ModalMask is not null)
-		{
-			ModalMask.GuiInput += OnModalMaskGuiInput;
-		}
+		BindModalMask();
 	}
 
 	public override void _ExitTree()
 	{
-		if (ModalMask is not null)
-		{
-			ModalMask.GuiInput -= OnModalMaskGuiInput;
-		}
-
+		UnbindModalMask();
 		base._ExitTree();
 	}
 
@@ -40,6 +45,28 @@ public abstract partial class BasePopup : BaseUI
 
 		ModalMask.Visible = visible;
 		ModalMask.MouseFilter = visible ? Control.MouseFilterEnum.Stop : Control.MouseFilterEnum.Ignore;
+	}
+
+	private void BindModalMask()
+	{
+		if (_modalMaskBound || _modalMask is null || !IsInsideTree())
+		{
+			return;
+		}
+
+		_modalMask.GuiInput += OnModalMaskGuiInput;
+		_modalMaskBound = true;
+	}
+
+	private void UnbindModalMask()
+	{
+		if (!_modalMaskBound || _modalMask is null)
+		{
+			return;
+		}
+
+		_modalMask.GuiInput -= OnModalMaskGuiInput;
+		_modalMaskBound = false;
 	}
 
 	private void OnModalMaskGuiInput(InputEvent @event)

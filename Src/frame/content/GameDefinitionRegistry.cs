@@ -2,6 +2,7 @@ namespace KemoCard.Frame.Content;
 
 public sealed class GameDefinitionRegistry
 {
+	private readonly object _gate = new();
 	private readonly Dictionary<EContentCategory, HashSet<string>> _tables = new()
 	{
 		[EContentCategory.Character] = new HashSet<string>(StringComparer.Ordinal),
@@ -23,42 +24,58 @@ public sealed class GameDefinitionRegistry
 
 	public void Rebuild(IReadOnlyList<ModContentBundle> bundles, out ContentLoadReport report)
 	{
-		foreach (var set in _tables.Values)
+		lock (_gate)
 		{
-			set.Clear();
+			foreach (var set in _tables.Values)
+			{
+				set.Clear();
+			}
+
+			_ownerModIds.Clear();
+
+			var merger = new ContentRegistryMerger();
+			merger.Merge(bundles, _tables, out var mergeReport, out var ownerModIds);
+			foreach (var (key, modId) in ownerModIds)
+			{
+				_ownerModIds[key] = modId;
+			}
+
+			Store.Rebuild(bundles, mergeReport.IdConflicts);
+
+			var validator = new ContentDefinitionValidator();
+			var validationErrors = validator.Validate(Store);
+			var removedValidationErrors = Array.Empty<ContentDefinitionValidationError>();
+			if (validationErrors.Count > 0)
+			{
+				RemoveInvalidDefinitions(validationErrors);
+				removedValidationErrors = validationErrors.ToArray();
+			}
+
+			DefinitionVersion++;
+			report = new ContentLoadReport(
+				mergeReport.SkippedMods,
+				mergeReport.IdConflicts,
+				validationErrors,
+				Array.Empty<ScriptLoadError>(),
+				removedValidationErrors);
 		}
-
-		_ownerModIds.Clear();
-
-		var merger = new ContentRegistryMerger();
-		merger.Merge(bundles, _tables, out var mergeReport, out var ownerModIds);
-		foreach (var (key, modId) in ownerModIds)
-		{
-			_ownerModIds[key] = modId;
-		}
-
-		Store.Rebuild(bundles, mergeReport.IdConflicts);
-
-		var validator = new ContentDefinitionValidator();
-		var validationErrors = validator.Validate(Store);
-		if (validationErrors.Count > 0)
-		{
-			RemoveInvalidDefinitions(validationErrors);
-		}
-
-		DefinitionVersion++;
-		report = new ContentLoadReport(
-			mergeReport.SkippedMods,
-			mergeReport.IdConflicts,
-			validationErrors,
-			Array.Empty<ScriptLoadError>());
 	}
 
-	public bool Contains(EContentCategory category, string id) =>
-		_tables[category].Contains(id);
+	public bool Contains(EContentCategory category, string id)
+	{
+		lock (_gate)
+		{
+			return _tables[category].Contains(id);
+		}
+	}
 
-	public bool TryGetOwnerModId(EContentCategory category, string id, out string modId) =>
-		_ownerModIds.TryGetValue((category, id), out modId!);
+	public bool TryGetOwnerModId(EContentCategory category, string id, out string modId)
+	{
+		lock (_gate)
+		{
+			return _ownerModIds.TryGetValue((category, id), out modId!);
+		}
+	}
 
 	private void RemoveInvalidDefinitions(IReadOnlyList<ContentDefinitionValidationError> errors)
 	{

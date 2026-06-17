@@ -32,6 +32,7 @@ public sealed class EventDispatcherTests
     public void SetUp()
     {
         EventDispatcher.Configure(NullEventDispatcherLogger.Instance);
+        EventDispatcher.FailureMode = EventDispatchFailureMode.LogAndContinue;
     }
 
     [Test]
@@ -296,5 +297,36 @@ public sealed class EventDispatcherTests
         bus.Send(key, new IntPayload(1));
 
         Assert.That(hasDuringInvoke, Is.False);
+    }
+
+    [Test]
+    public void On_conflicting_payload_type_throws()
+    {
+        var bus = new EventDispatcher();
+        var intKey = new EventKey<IntPayload>(20);
+        var stringKey = new EventKey<string>(20);
+
+        bus.On(intKey, static (_, _) => { }, this);
+
+        Assert.Throws<InvalidOperationException>(() => bus.On(stringKey, static (_, _) => { }, this));
+    }
+
+    [Test]
+    public void Send_throw_mode_propagates_listener_exception()
+    {
+        var previousMode = EventDispatcher.FailureMode;
+        EventDispatcher.FailureMode = EventDispatchFailureMode.Throw;
+        try
+        {
+            var bus = new EventDispatcher();
+            var key = new EventKey<IntPayload>(21);
+            bus.On(key, static (_, _) => throw new InvalidOperationException("boom"), this);
+
+            Assert.Throws<InvalidOperationException>(() => bus.Send(key, new IntPayload(1)));
+        }
+        finally
+        {
+            EventDispatcher.FailureMode = previousMode;
+        }
     }
 }

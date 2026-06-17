@@ -13,6 +13,8 @@ public sealed class ModScriptRuntime : IScriptRuntimeResetter, IDisposable
 	private readonly ConcurrentDictionary<(string ModId, string ScriptPath, string Entry), Func<ScriptContextFacade, object>> _entryCache = new();
 	private ScriptEnv? _env;
 	private readonly object _gate = new();
+	private volatile bool _rebuildGate;
+	private int _generation;
 
 	public ModScriptRuntime(
 		ModScriptCatalog catalog,
@@ -29,20 +31,37 @@ public sealed class ModScriptRuntime : IScriptRuntimeResetter, IDisposable
 		Recreate();
 	}
 
+	public void BeginRebuild()
+	{
+		_rebuildGate = true;
+	}
+
 	public void Recreate()
 	{
 		lock (_gate)
 		{
+			_generation++;
 			_entryCache.Clear();
 			_env?.Dispose();
 			_env = new ScriptEnv(new BackendV8(_loader));
 		}
 	}
 
+	public void EndRebuild()
+	{
+		_rebuildGate = false;
+	}
+
 	public bool TryLoadModule(string modId, string scriptPath)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(modId);
 		ArgumentException.ThrowIfNullOrWhiteSpace(scriptPath);
+
+		if (_rebuildGate)
+		{
+			_logger.Log($"TryLoadModule skipped during rebuild: {modId}/{scriptPath}");
+			return false;
+		}
 
 		try
 		{
@@ -72,23 +91,36 @@ public sealed class ModScriptRuntime : IScriptRuntimeResetter, IDisposable
 		ArgumentException.ThrowIfNullOrWhiteSpace(entry);
 		ArgumentNullException.ThrowIfNull(callContext);
 
+		if (_rebuildGate)
+		{
+			return new ModScriptInvokeResult { Success = false, Error = "Script runtime is rebuilding." };
+		}
+
 		try
 		{
+			Func<ScriptContextFacade, object> fn;
+			var generation = 0;
 			lock (_gate)
 			{
 				EnsureEnv();
+				generation = _generation;
 				var cacheKey = (modId, scriptPath, entry);
-				var fn = _entryCache.GetOrAdd(cacheKey, _ =>
+				fn = _entryCache.GetOrAdd(cacheKey, _ =>
 				{
 					var specifier = BuildSpecifier(modId, scriptPath);
 					var module = _env!.ExecuteModule(specifier);
 					return module.Get<Func<ScriptContextFacade, object>>(entry);
 				});
-
-				var facade = new ScriptContextFacade(callContext, _logger);
-				var rawReturn = fn(facade);
-				return new ModScriptInvokeResult { Success = true, RawReturn = rawReturn };
 			}
+
+			if (_rebuildGate || generation != _generation)
+			{
+				return new ModScriptInvokeResult { Success = false, Error = "Script runtime was recreated during invoke." };
+			}
+
+			var facade = new ScriptContextFacade(callContext, _logger);
+			var rawReturn = fn(facade);
+			return new ModScriptInvokeResult { Success = true, RawReturn = rawReturn };
 		}
 		catch (Exception ex)
 		{

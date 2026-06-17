@@ -23,6 +23,7 @@ public sealed class UiStateMachine
 			(UiLifecycleState.Opening, UiLifecycleState.Opened) => true,
 			(UiLifecycleState.Opened, UiLifecycleState.Closing) => true,
 			(UiLifecycleState.Closing, UiLifecycleState.Closed) => true,
+			(UiLifecycleState.Closed, UiLifecycleState.Created) => true,
 			_ => false,
 		};
 	}

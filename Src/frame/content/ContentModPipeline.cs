@@ -47,6 +47,19 @@ public sealed class ContentModPipeline
 	{
 		ArgumentNullException.ThrowIfNull(enabledModIds);
 
+		_scriptRuntimeResetter.BeginRebuild();
+		try
+		{
+			return RebuildCore(enabledModIds);
+		}
+		finally
+		{
+			_scriptRuntimeResetter.EndRebuild();
+		}
+	}
+
+	private ContentLoadReport RebuildCore(IReadOnlyList<string> enabledModIds)
+	{
 		var discovery = _discovery.Scan(_modRootDirectory);
 		foreach (var skip in discovery.SkippedMods)
 		{
