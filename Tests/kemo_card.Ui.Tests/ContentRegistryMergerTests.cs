@@ -17,7 +17,7 @@ public sealed class ContentRegistryMergerTests
 			ContentModTestHelper.EmptyBundle("b") with { Cards = new[] { "strike" } },
 		};
 
-		merger.Merge(bundles, tables, out var report);
+		merger.Merge(bundles, tables, out var report, out _);
 
 		Assert.That(tables[EContentCategory.Card], Does.Contain("strike"));
 		Assert.That(report.IdConflicts, Has.Count.EqualTo(1));
@@ -39,7 +39,7 @@ public sealed class ContentRegistryMergerTests
 			},
 		};
 
-		merger.Merge(bundles, tables, out var report);
+		merger.Merge(bundles, tables, out var report, out _);
 
 		Assert.That(tables[EContentCategory.Card], Does.Contain("foo"));
 		Assert.That(tables[EContentCategory.Skill], Does.Contain("foo"));

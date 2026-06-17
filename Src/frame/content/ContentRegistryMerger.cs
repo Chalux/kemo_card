@@ -5,7 +5,8 @@ public sealed class ContentRegistryMerger
 	public void Merge(
 		IReadOnlyList<ModContentBundle> bundles,
 		Dictionary<EContentCategory, HashSet<string>> tables,
-		out ContentLoadReport report)
+		out ContentLoadReport report,
+		out Dictionary<(EContentCategory Category, string Id), string> ownerModIds)
 	{
 		var conflicts = new List<ContentIdConflictEntry>();
 		var ownerById = new Dictionary<(EContentCategory Category, string Id), string>();
@@ -24,6 +25,7 @@ public sealed class ContentRegistryMerger
 		}
 
 		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>());
+		ownerModIds = ownerById;
 	}
 
 	private static void TryAddAll(

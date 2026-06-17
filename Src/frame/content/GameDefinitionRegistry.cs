@@ -19,6 +19,8 @@ public sealed class GameDefinitionRegistry
 
 	public int DefinitionVersion { get; private set; }
 
+	private readonly Dictionary<(EContentCategory Category, string Id), string> _ownerModIds = new();
+
 	public void Rebuild(IReadOnlyList<ModContentBundle> bundles, out ContentLoadReport report)
 	{
 		foreach (var set in _tables.Values)
@@ -26,8 +28,15 @@ public sealed class GameDefinitionRegistry
 			set.Clear();
 		}
 
+		_ownerModIds.Clear();
+
 		var merger = new ContentRegistryMerger();
-		merger.Merge(bundles, _tables, out var mergeReport);
+		merger.Merge(bundles, _tables, out var mergeReport, out var ownerModIds);
+		foreach (var (key, modId) in ownerModIds)
+		{
+			_ownerModIds[key] = modId;
+		}
+
 		Store.Rebuild(bundles, mergeReport.IdConflicts);
 
 		var validator = new ContentDefinitionValidator();
@@ -47,12 +56,16 @@ public sealed class GameDefinitionRegistry
 	public bool Contains(EContentCategory category, string id) =>
 		_tables[category].Contains(id);
 
+	public bool TryGetOwnerModId(EContentCategory category, string id, out string modId) =>
+		_ownerModIds.TryGetValue((category, id), out modId!);
+
 	private void RemoveInvalidDefinitions(IReadOnlyList<ContentDefinitionValidationError> errors)
 	{
 		foreach (var error in errors)
 		{
 			_tables[error.Category].Remove(error.DefinitionId);
 			Store.Remove(error.Category, error.DefinitionId);
+			_ownerModIds.Remove((error.Category, error.DefinitionId));
 		}
 	}
 }
