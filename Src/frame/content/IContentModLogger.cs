@@ -7,4 +7,6 @@ public interface IContentModLogger
 	void LogConflict(ContentIdConflictEntry entry);
 
 	void LogValidationError(ContentDefinitionValidationError entry);
+
+	void LogScriptLoadError(ScriptLoadError entry);
 }

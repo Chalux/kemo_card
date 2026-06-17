@@ -1,3 +1,5 @@
+using KemoCard.Frame.Scripting;
+
 namespace KemoCard.Frame.Content;
 
 public sealed class ContentModPipeline
@@ -8,24 +10,35 @@ public sealed class ContentModPipeline
 	private readonly IContentModLogger _logger;
 	private readonly IContentModUserNotifier _notifier;
 	private readonly IContentModTranslationLoader _translationLoader;
+	private readonly IScriptRuntimeResetter _scriptRuntimeResetter;
+	private readonly ModScriptCatalog _scriptCatalog;
+	private readonly ModScriptPrewarmer? _scriptPrewarmer;
 
 	public ContentModPipeline(
 		string modRootDirectory,
 		GameDefinitionRegistry registry,
 		IContentModLogger logger,
 		IContentModUserNotifier notifier,
-		IContentModTranslationLoader? translationLoader = null)
+		IScriptRuntimeResetter scriptRuntimeResetter,
+		ModScriptCatalog scriptCatalog,
+		IContentModTranslationLoader? translationLoader = null,
+		ModScriptPrewarmer? scriptPrewarmer = null)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(modRootDirectory);
 		ArgumentNullException.ThrowIfNull(registry);
 		ArgumentNullException.ThrowIfNull(logger);
 		ArgumentNullException.ThrowIfNull(notifier);
+		ArgumentNullException.ThrowIfNull(scriptRuntimeResetter);
+		ArgumentNullException.ThrowIfNull(scriptCatalog);
 
 		_modRootDirectory = modRootDirectory;
 		Registry = registry;
 		_logger = logger;
 		_notifier = notifier;
+		_scriptRuntimeResetter = scriptRuntimeResetter;
+		_scriptCatalog = scriptCatalog;
 		_translationLoader = translationLoader ?? new NullContentModTranslationLoader();
+		_scriptPrewarmer = scriptPrewarmer;
 	}
 
 	public GameDefinitionRegistry Registry { get; }
@@ -84,13 +97,23 @@ public sealed class ContentModPipeline
 			_logger.LogValidationError(validationError);
 		}
 
+		_scriptCatalog.Rebuild(activation.OrderedActiveMods);
+		_scriptRuntimeResetter.Recreate();
+
+		var scriptLoadErrors = _scriptPrewarmer?.Warm().ToList() ?? [];
+		foreach (var scriptError in scriptLoadErrors)
+		{
+			_logger.LogScriptLoadError(scriptError);
+		}
+
 		var allSkipped = activation.SkippedMods
 			.Concat(loadSkipped)
 			.ToList();
 		var finalReport = new ContentLoadReport(
 			allSkipped,
 			registryReport.IdConflicts,
-			registryReport.ValidationErrors);
+			registryReport.ValidationErrors,
+			scriptLoadErrors);
 		_notifier.OnModLoadCompleted(finalReport);
 		return finalReport;
 	}

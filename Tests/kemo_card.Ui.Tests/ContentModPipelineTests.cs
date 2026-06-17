@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Scripting;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
@@ -16,7 +17,13 @@ public sealed class ContentModPipelineTests
 		ContentModTestHelper.AddCard(addonDir, "strike");
 
 		var registry = new GameDefinitionRegistry();
-		var pipeline = new ContentModPipeline(root, registry, new NullContentModLogger(), new NullContentModUserNotifier());
+		var pipeline = new ContentModPipeline(
+			root,
+			registry,
+			new NullContentModLogger(),
+			new NullContentModUserNotifier(),
+			NullScriptRuntimeResetter.Instance,
+			new ModScriptCatalog());
 		var report = pipeline.Rebuild(new[] { "base.game", "addon.mod" });
 
 		Assert.That(registry.Contains(EContentCategory.Card, "strike"), Is.True);

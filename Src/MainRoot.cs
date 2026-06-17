@@ -2,6 +2,7 @@ using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Mvc;
+using KemoCard.Frame.Scripting;
 using KemoCard.Frame.Ui;
 using KemoCard.Mod.Global;
 
@@ -40,5 +41,8 @@ public partial class MainRoot : Control
 
         GlobalMod = modResult.GlobalMod;
         ContentModPipeline = modResult.ContentModPipeline;
+        ScriptRuntime = modResult.ScriptRuntime;
     }
+
+    public ModScriptRuntime? ScriptRuntime { get; private set; }
 }

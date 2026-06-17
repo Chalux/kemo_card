@@ -20,4 +20,9 @@ public sealed class GodotContentModLogger : IContentModLogger
 		GD.PushWarning(
 			$"[ContentMod] Validation {entry.Category}/{entry.DefinitionId}: {entry.Message}");
 	}
+
+	public void LogScriptLoadError(ScriptLoadError entry)
+	{
+		GD.PushWarning($"[ContentMod] Script load {entry.ModId}/{entry.ScriptPath}: {entry.Message}");
+	}
 }

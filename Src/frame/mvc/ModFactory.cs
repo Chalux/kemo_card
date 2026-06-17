@@ -1,5 +1,6 @@
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Scripting;
 using KemoCard.Frame.Ui;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Save;
@@ -26,6 +27,18 @@ public sealed class ModStartupResult
     public required GlobalSaveService GlobalSaveService { get; init; }
 
     public required ContentModPipeline ContentModPipeline { get; init; }
+
+    public required ModScriptRuntime ScriptRuntime { get; init; }
+
+    public required PuertsContentEffectScriptHost ContentEffectScriptHost { get; init; }
+
+    public required StoryScriptInvoker StoryScriptInvoker { get; init; }
+
+    public required EventScriptInvoker EventScriptInvoker { get; init; }
+
+    public required BattleScriptInvoker BattleScriptInvoker { get; init; }
+
+    public required EnemyAiScriptInvoker EnemyAiScriptInvoker { get; init; }
 }
 
 /// <summary>
@@ -38,14 +51,20 @@ public sealed class ModFactory
         ArgumentNullException.ThrowIfNull(context);
 
         var global = BootstrapGlobalMod(context);
-        var contentModPipeline = BootstrapContentMods(context, global.Mod);
+        var content = BootstrapContentMods(context, global.Mod);
 
         return new ModStartupResult
         {
             GlobalMod = global.Mod,
             GlobalController = global.Controller,
             GlobalSaveService = global.SaveService,
-            ContentModPipeline = contentModPipeline,
+            ContentModPipeline = content.Pipeline,
+            ScriptRuntime = content.ScriptRuntime,
+            ContentEffectScriptHost = content.ContentEffectScriptHost,
+            StoryScriptInvoker = content.StoryScriptInvoker,
+            EventScriptInvoker = content.EventScriptInvoker,
+            BattleScriptInvoker = content.BattleScriptInvoker,
+            EnemyAiScriptInvoker = content.EnemyAiScriptInvoker,
         };
     }
 
@@ -62,23 +81,45 @@ public sealed class ModFactory
         return (mod, controller, saveService);
     }
 
-    private static ContentModPipeline BootstrapContentMods(ModStartupContext context, GlobalMod globalMod)
+    private static (
+        ContentModPipeline Pipeline,
+        ModScriptRuntime ScriptRuntime,
+        PuertsContentEffectScriptHost ContentEffectScriptHost,
+        StoryScriptInvoker StoryScriptInvoker,
+        EventScriptInvoker EventScriptInvoker,
+        BattleScriptInvoker BattleScriptInvoker,
+        EnemyAiScriptInvoker EnemyAiScriptInvoker) BootstrapContentMods(
+        ModStartupContext context,
+        GlobalMod globalMod)
     {
         ContentModBootstrap.EnsureDefaultModsCopied(
             context.ContentModRootDirectory,
             context.BundledContentModsDirectory);
 
         var registry = new GameDefinitionRegistry();
+        var catalog = new ModScriptCatalog();
+        var scriptRuntime = new ModScriptRuntime(catalog, registry, new NullModScriptLogger());
+        var prewarmer = new ModScriptPrewarmer(scriptRuntime, registry);
         var pipeline = new ContentModPipeline(
             context.ContentModRootDirectory,
             registry,
             new GodotContentModLogger(),
             new NullContentModUserNotifier(),
-            new GodotContentModTranslationLoader());
+            scriptRuntime,
+            catalog,
+            new GodotContentModTranslationLoader(),
+            prewarmer);
 
         var enabledModIds = globalMod.Current.EnabledModIds ?? GlobalSaveDto.CreateDefault().EnabledModIds!;
         pipeline.Rebuild(enabledModIds);
 
-        return pipeline;
+        return (
+            pipeline,
+            scriptRuntime,
+            new PuertsContentEffectScriptHost(scriptRuntime, registry),
+            new StoryScriptInvoker(scriptRuntime, registry),
+            new EventScriptInvoker(scriptRuntime, registry),
+            new BattleScriptInvoker(scriptRuntime, registry),
+            new EnemyAiScriptInvoker(scriptRuntime, registry));
     }
 }

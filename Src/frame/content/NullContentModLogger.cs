@@ -13,4 +13,8 @@ public sealed class NullContentModLogger : IContentModLogger
 	public void LogValidationError(ContentDefinitionValidationError entry)
 	{
 	}
+
+	public void LogScriptLoadError(ScriptLoadError entry)
+	{
+	}
 }

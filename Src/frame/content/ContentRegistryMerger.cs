@@ -24,7 +24,7 @@ public sealed class ContentRegistryMerger
 			TryAddAll(bundle.ModId, EContentCategory.Effect, bundle.Effects, tables, ownerById, conflicts);
 		}
 
-		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>());
+		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>(), Array.Empty<ScriptLoadError>());
 		ownerModIds = ownerById;
 	}
 

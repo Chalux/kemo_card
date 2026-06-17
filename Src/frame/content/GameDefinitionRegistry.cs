@@ -50,7 +50,8 @@ public sealed class GameDefinitionRegistry
 		report = new ContentLoadReport(
 			mergeReport.SkippedMods,
 			mergeReport.IdConflicts,
-			validationErrors);
+			validationErrors,
+			Array.Empty<ScriptLoadError>());
 	}
 
 	public bool Contains(EContentCategory category, string id) =>

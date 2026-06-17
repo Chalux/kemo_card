@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Scripting;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
@@ -15,7 +16,14 @@ public sealed class ContentModTranslationLoaderTests
 
 		var loader = new RecordingContentModTranslationLoader();
 		var registry = new GameDefinitionRegistry();
-		var pipeline = new ContentModPipeline(root, registry, new NullContentModLogger(), new NullContentModUserNotifier(), loader);
+		var pipeline = new ContentModPipeline(
+			root,
+			registry,
+			new NullContentModLogger(),
+			new NullContentModUserNotifier(),
+			NullScriptRuntimeResetter.Instance,
+			new ModScriptCatalog(),
+			loader);
 
 		pipeline.Rebuild(["base.game", "addon.mod"]);
 		Assert.That(loader.ClearCount, Is.EqualTo(1));
