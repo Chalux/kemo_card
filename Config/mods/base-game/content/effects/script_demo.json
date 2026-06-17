@@ -1,0 +1,6 @@
+{
+  "kind": "ExecuteScript",
+  "scriptPath": "effects/script_demo.js",
+  "scriptEntry": "execute",
+  "tags": ["script", "demo"]
+}
