@@ -5,6 +5,7 @@ namespace KemoCard.Frame.Scripting;
 public sealed class ModScriptLoader : ILoader
 {
 	private readonly ModScriptCatalog _catalog;
+	private readonly DefaultLoader _fallback = new();
 
 	public ModScriptLoader(ModScriptCatalog catalog)
 	{
@@ -12,21 +13,28 @@ public sealed class ModScriptLoader : ILoader
 		_catalog = catalog;
 	}
 
-	public bool FileExists(string filepath) => TryResolve(filepath, out _);
+	public bool FileExists(string filepath)
+	{
+		if (TryResolveModScript(filepath, out _))
+		{
+			return true;
+		}
+
+		return _fallback.FileExists(filepath);
+	}
 
 	public string ReadFile(string filepath, out string debugpath)
 	{
-		if (!TryResolve(filepath, out var fullPath))
+		if (TryResolveModScript(filepath, out var fullPath))
 		{
-			debugpath = filepath;
-			return string.Empty;
+			debugpath = fullPath;
+			return File.ReadAllText(fullPath);
 		}
 
-		debugpath = fullPath;
-		return File.ReadAllText(fullPath);
+		return _fallback.ReadFile(filepath, out debugpath);
 	}
 
-	private bool TryResolve(string specifier, out string fullPath)
+	private bool TryResolveModScript(string specifier, out string fullPath)
 	{
 		fullPath = string.Empty;
 		var slash = specifier.IndexOf('/');
