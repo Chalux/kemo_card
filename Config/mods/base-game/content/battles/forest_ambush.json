@@ -1,0 +1,16 @@
+{
+  "displayNameId": "battle.forest_ambush.name",
+  "descId": "battle.forest_ambush.desc",
+  "waves": [
+    { "enemySpawns": [{ "enemyId": "slime", "count": 2 }] },
+    { "enemySpawns": [{ "enemyId": "slime_elite", "count": 1, "hpScale": 1.5 }] }
+  ],
+  "rewards": {
+    "entries": [
+      { "kind": "Gold", "params": { "min": 15, "max": 25 } },
+      { "kind": "CardChoice", "params": { "count": 3, "pool": "common_attack" } }
+    ]
+  },
+  "backgroundPath": "battles/forest.png",
+  "tags": ["forest", "ambush"]
+}

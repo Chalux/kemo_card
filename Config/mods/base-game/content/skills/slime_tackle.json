@@ -1,0 +1,5 @@
+{
+  "displayNameId": "skill.slime_tackle.name",
+  "descId": "skill.slime_tackle.desc",
+  "effectRefs": [{ "effectId": "slime_damage" }]
+}

@@ -2,102 +2,200 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public static class ElementFlags
 {
-	public const int None = 0;
-	public const int Fire = 1 << 0;
+    public const int None = 0;
+    public const int Fire = 1 << 0;
 }
 
 public enum ECostType
 {
-	None,
-	Energy,
-	Health,
-	Gold,
-	Discard,
-	X,
+    None,
+    Energy,
+    Health,
+    Gold,
+    Discard,
+    X,
 }
 
 public enum ECardType
 {
-	Physics,
-	Magical,
-	Support,
-	Guard,
-	Resist,
-	Weak,
-	Counter,
-	Healing,
-	Curse,
+    Physics,
+    Magical,
+    Support,
+    Guard,
+    Resist,
+    Weak,
+    Counter,
+    Healing,
+    Curse,
 }
 
 public enum ECostScalingKind
 {
-	None,
-	X,
-	PerDiscard,
-	PerCardInHand,
-	PerEnemyAlive,
-	PerAllyAlive,
+    None,
+    X,
+    PerDiscard,
+    PerCardInHand,
+    PerEnemyAlive,
+    PerAllyAlive,
 }
 
 public enum ETargetSide
 {
-	Self,
-	Ally,
-	Enemy,
-	Any,
+    Self,
+    Ally,
+    Enemy,
+    Any,
 }
 
 public enum ETargetScope
 {
-	Self,
-	Single,
-	All,
-	RandomN,
+    Self,
+    Single,
+    All,
+    RandomN,
 }
 
 public enum ERetargetPolicy
 {
-	Default,
-	RandomLegal,
-	HighestHp,
-	LowestHp,
-	Skip,
+    Default,
+    RandomLegal,
+    HighestHp,
+    LowestHp,
+    Skip,
 }
 
 public enum ERarity
 {
-	Common,
-	Uncommon,
-	Rare,
-	Epic,
-	Legendary,
+    Common,
+    Uncommon,
+    Rare,
+    Epic,
+    Legendary,
 }
 
 public enum EBuffDurationType
 {
-	Permanent,
-	Turns,
-	Combat,
-	UntilDispelled,
+    Permanent,
+    Turns,
+    Combat,
+    UntilDispelled,
 }
 
 public enum EBuffStackRule
 {
-	Add,
-	Refresh,
-	Replace,
+    Add,
+    Refresh,
+    Replace,
 }
 
 public enum EEffectKind
 {
-	Damage,
-	Heal,
-	ApplyBuff,
-	RemoveBuff,
-	Draw,
-	Discard,
-	GainResource,
-	ModifyStat,
-	ExecuteScript,
-	ChainEffects,
+    Damage,
+    Heal,
+    ApplyBuff,
+    RemoveBuff,
+    Draw,
+    Discard,
+    GainResource,
+    ModifyStat,
+    ExecuteScript,
+    ChainEffects,
+}
+
+[Flags]
+public enum EElement
+{
+    None = 0,
+    Fire = 1,
+    Water = 1 << 2,
+    Wind = 1 << 3,
+    Earth = 1 << 4,
+    Dark = 1 << 5,
+    Light = 1 << 6,
+}
+
+public enum ERole
+{
+    None,
+    /// <summary>
+    /// 战士 物理输出
+    /// </summary>
+    Warrior,
+    /// <summary>
+    /// 术士 魔法输出
+    /// </summary>
+    Wizard,
+    /// <summary>
+    /// 治疗者 治疗
+    /// </summary>
+    Healer,
+    /// <summary>
+    /// 守护者 防御
+    /// </summary>
+    Guard,
+    /// <summary>
+    /// 护盾
+    /// </summary>
+    Shield,
+    /// <summary>
+    /// 控制者 控制
+    /// </summary>
+    Controller,
+    /// <summary>
+    /// 支援者 支援
+    /// </summary>
+    Support,
+    /// <summary>
+    /// 卡牌手 卡牌伤害
+    /// </summary>
+    CardPlayer,
+    /// <summary>
+    /// 剑士 物理普攻输出
+    /// </summary>
+    SwordMan,
+    /// <summary>
+    /// 法师 魔法普攻输出
+    /// </summary>
+    Mage,
+    /// <summary>
+    /// 炼金术士 道具制造
+    /// </summary>
+    Alchemist,
+}
+
+public enum EEventKind
+{
+    Data,
+    Script,
+}
+
+public enum ERewardKind
+{
+    Gold,
+    CardChoice,
+    ItemGrant,
+    Effect,
+}
+
+[Flags]
+public enum ERace
+{
+    None = 0,
+    Human = 1,
+    Canine = 1 << 1,
+    Feline = 1 << 2,
+    Bird = 1 << 3,
+    Insect = 1 << 4,
+    Beast = 1 << 5,
+    Fish = 1 << 6,
+    Reptile = 1 << 7,
+    Plant = 1 << 8,
+    Machine = 1 << 9,
+    Demonic = 1 << 10,
+    Angel = 1 << 11,
+    Dragon = 1 << 12,
+    God = 1 << 13,
+    Devil = 1 << 14,
+    Undead = 1 << 15,
+    UnKnown = 1 << 16,
 }

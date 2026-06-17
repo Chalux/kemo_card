@@ -97,6 +97,6 @@ public sealed class ContentDefinitionTests
 		registry.Rebuild(new[] { bundle }, out var report);
 
 		Assert.That(report.ValidationErrors, Has.Count.EqualTo(1));
-		Assert.That(registry.Contains(ContentCategory.Card, "bad_card"), Is.False);
+		Assert.That(registry.Contains(EContentCategory.Card, "bad_card"), Is.False);
 	}
 }

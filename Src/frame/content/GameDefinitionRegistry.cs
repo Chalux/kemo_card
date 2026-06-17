@@ -2,16 +2,17 @@ namespace KemoCard.Frame.Content;
 
 public sealed class GameDefinitionRegistry
 {
-	private readonly Dictionary<ContentCategory, HashSet<string>> _tables = new()
+	private readonly Dictionary<EContentCategory, HashSet<string>> _tables = new()
 	{
-		[ContentCategory.Character] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Battle] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Event] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Card] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Item] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Skill] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Buff] = new HashSet<string>(StringComparer.Ordinal),
-		[ContentCategory.Effect] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Character] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Enemy] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Battle] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Event] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Card] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Item] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Skill] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Buff] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Effect] = new HashSet<string>(StringComparer.Ordinal),
 	};
 
 	public GameDefinitionStore Store { get; } = new();
@@ -43,7 +44,7 @@ public sealed class GameDefinitionRegistry
 			validationErrors);
 	}
 
-	public bool Contains(ContentCategory category, string id) =>
+	public bool Contains(EContentCategory category, string id) =>
 		_tables[category].Contains(id);
 
 	private void RemoveInvalidDefinitions(IReadOnlyList<ContentDefinitionValidationError> errors)

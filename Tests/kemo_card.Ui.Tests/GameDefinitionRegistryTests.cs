@@ -12,7 +12,7 @@ public sealed class GameDefinitionRegistryTests
 		var reg = new GameDefinitionRegistry();
 		reg.Rebuild(Array.Empty<ModContentBundle>(), out _);
 
-		Assert.That(reg.Contains(ContentCategory.Card, "missing"), Is.False);
+		Assert.That(reg.Contains(EContentCategory.Card, "missing"), Is.False);
 	}
 
 	[Test]
@@ -34,7 +34,7 @@ public sealed class GameDefinitionRegistryTests
 
 		reg.Rebuild(new[] { bundle }, out var report);
 
-		Assert.That(reg.Contains(ContentCategory.Card, "strike"), Is.True);
+		Assert.That(reg.Contains(EContentCategory.Card, "strike"), Is.True);
 		Assert.That(reg.Store.TryGetCard("strike", out var card), Is.True);
 		Assert.That(card.DisplayNameId, Is.EqualTo("card.strike.name"));
 		Assert.That(report.IdConflicts, Is.Empty);

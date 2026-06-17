@@ -1,0 +1,5 @@
+{
+  "displayNameId": "skill.potion_use.name",
+  "descId": "skill.potion_use.desc",
+  "effectRefs": [{ "effectId": "potion_heal" }]
+}

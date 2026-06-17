@@ -1,7 +1,8 @@
 # 卡牌 / 技能 / Buff / 效果 内容 DTO 设计规格
 
 **日期**：2026-06-16  
-**状态**：已实现（与代码 `Src/frame/content/definitions/` 对齐）  
+**最后同步**：2026-06-17（与代码 `Src/frame/content/definitions/` 对齐）  
+**状态**：已实现  
 **范围**：Card / Skill / Buff / Effect 四类 Mod JSON DTO、枚举、加载与校验
 
 ---
@@ -35,11 +36,31 @@ Skill DTO **不含** `ESkillTrigger` / `IsInstant`。
 
 见 `CardDto.cs`。无 `descId`；描述由 UI 组合 `skillRefs` 对应技能的 `descId`。升级链：`cardGroupId` + `upgradeTier`。
 
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `element` | int | 位标志（`ElementFlags`）；尚未迁移为 `EElement` |
+| `role` | ERole | 与 Character / Enemy 共用枚举 |
+| `costType` | ECostType | |
+| `cost` | int | |
+| `skillRefs` | SkillRefDto[] | |
+| `cardType` | ECardType | |
+| `targetSide` / `targetScope` / `targetCount` / `retargetPolicy` | | 目标规格 |
+| `rarity` | ERarity | |
+| `cardGroupId` | string? | 升级链分组 |
+| `upgradeTier` | int | |
+| `playConditions` | ConditionRefDto[] | |
+| `costScaling` | CostScalingDto? | |
+| `hideInDex` / `isExclusive` / `priority` | | |
+| `animationId` / `sfxId` | string? | |
+| `artPath` / `tags` | | |
+
 ---
 
 ## 4. 枚举
 
-`ECostType`, `ECardType`, `ECostScalingKind`, `ETargetSide`, `ETargetScope`, `ERetargetPolicy`, `ERarity`, `EBuffDurationType`, `EBuffStackRule`, `EEffectKind`。
+`ECostType`, `ECardType`, `ECostScalingKind`, `ETargetSide`, `ETargetScope`, `ERetargetPolicy`, `ERarity`, `EBuffDurationType`, `EBuffStackRule`, `EEffectKind`, `ERole`。
+
+`EElement` / `ERace` / `EEventKind` / `ERewardKind` 定义于同一文件，供 Character / Battle / Event 等 DTO 使用（见 `2026-06-16-character-battle-event-item-dto-design.md`）。
 
 ---
 

@@ -1,0 +1,18 @@
+{
+  "displayNameId": "event.shrine.name",
+  "descId": "event.shrine.desc",
+  "eventKind": "Data",
+  "artPath": "events/shrine.png",
+  "pages": [
+    { "textId": "event.shrine.page1", "imagePath": "events/shrine_scene.png" }
+  ],
+  "options": [
+    {
+      "optionId": "take_gold",
+      "labelId": "event.shrine.option.gold",
+      "descId": "event.shrine.option.gold.desc",
+      "effectRefs": [{ "effectId": "shrine_gold" }]
+    }
+  ],
+  "tags": ["shrine"]
+}

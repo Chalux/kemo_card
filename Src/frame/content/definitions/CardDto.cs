@@ -23,7 +23,7 @@ public sealed class CardDto
 	public List<SkillRefDto> SkillRefs { get; init; } = [];
 
 	[JsonPropertyName("role")]
-	public int Role { get; init; }
+	public ERole Role { get; init; } = ERole.None;
 
 	[JsonPropertyName("hideInDex")]
 	public bool HideInDex { get; init; }

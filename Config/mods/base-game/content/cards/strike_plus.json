@@ -4,7 +4,7 @@
   "costType": "Energy",
   "cost": 1,
   "skillRefs": [{ "skillId": "strike_hit", "params": { "bonusDamage": 3 } }],
-  "role": 1,
+  "role": "Warrior",
   "priority": 100,
   "cardType": "Physics",
   "targetSide": "Enemy",

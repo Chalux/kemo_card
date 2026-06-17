@@ -1,0 +1,4 @@
+{
+  "kind": "Damage",
+  "params": { "amount": 5 }
+}

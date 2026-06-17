@@ -1,0 +1,11 @@
+{
+  "displayNameId": "char.kemo.name",
+  "descId": "char.kemo.desc",
+  "element": "Fire",
+  "role": "Warrior",
+  "skillRefs": [{ "skillId": "kemo_dash" }],
+  "buffRefs": [{ "buffId": "kemo_talent" }],
+  "cards": ["strike", "strike_plus"],
+  "artPath": "chars/kemo.png",
+  "tags": ["starter"]
+}

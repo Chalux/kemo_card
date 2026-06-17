@@ -1,8 +1,9 @@
 namespace KemoCard.Frame.Content;
 
-public enum ContentCategory
+public enum EContentCategory
 {
 	Character,
+	Enemy,
 	Battle,
 	Event,
 	Card,

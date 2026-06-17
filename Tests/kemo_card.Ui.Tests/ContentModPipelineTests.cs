@@ -19,7 +19,7 @@ public sealed class ContentModPipelineTests
 		var pipeline = new ContentModPipeline(root, registry, new NullContentModLogger(), new NullContentModUserNotifier());
 		var report = pipeline.Rebuild(new[] { "base.game", "addon.mod" });
 
-		Assert.That(registry.Contains(ContentCategory.Card, "strike"), Is.True);
+		Assert.That(registry.Contains(EContentCategory.Card, "strike"), Is.True);
 		Assert.That(report.IdConflicts, Has.Count.EqualTo(1));
 	}
 }

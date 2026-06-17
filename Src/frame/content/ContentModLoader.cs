@@ -11,6 +11,11 @@ public sealed class ContentModLoader
 		var contentRoot = Path.Combine(entry.FolderPath, manifest.ContentRoot);
 		try
 		{
+			var characters = LoadDefinitions<CharacterDto>(contentRoot, "characters");
+			var enemies = LoadDefinitions<EnemyDto>(contentRoot, "enemies");
+			var battles = LoadDefinitions<BattleDto>(contentRoot, "battles");
+			var events = LoadDefinitions<EventDto>(contentRoot, "events");
+			var items = LoadDefinitions<ItemDto>(contentRoot, "items");
 			var cards = LoadDefinitions<CardDto>(contentRoot, "cards");
 			var skills = LoadDefinitions<SkillDto>(contentRoot, "skills");
 			var buffs = LoadDefinitions<BuffDto>(contentRoot, "buffs");
@@ -18,15 +23,25 @@ public sealed class ContentModLoader
 
 			return new ModContentBundle(
 				manifest.ModId,
-				CollectIds(contentRoot, "characters"),
-				CollectIds(contentRoot, "battles"),
-				CollectIds(contentRoot, "events"),
+				[.. characters.Keys],
+				[.. enemies.Keys],
+				[.. battles.Keys],
+				[.. events.Keys],
 				[.. cards.Keys],
-				CollectIds(contentRoot, "items"),
+				[.. items.Keys],
 				[.. skills.Keys],
 				[.. buffs.Keys],
 				[.. effects.Keys],
-				new ModDefinitionsBundle(cards, skills, buffs, effects));
+				new ModDefinitionsBundle(
+					characters,
+					enemies,
+					battles,
+					events,
+					items,
+					cards,
+					skills,
+					buffs,
+					effects));
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
 		{
@@ -82,20 +97,5 @@ public sealed class ContentModLoader
 
 		return JsonSerializer.Deserialize<T>(stream.ToArray(), ContentDefinitionJson.Options)
 			?? throw new JsonException($"Failed to deserialize definition '{id}'.");
-	}
-
-	private static IReadOnlyList<string> CollectIds(string contentRoot, string folderName)
-	{
-		var dir = Path.Combine(contentRoot, folderName);
-		if (!Directory.Exists(dir))
-		{
-			return [];
-		}
-
-		return [.. Directory.EnumerateFiles(dir, "*.json", SearchOption.TopDirectoryOnly)
-			.Select(Path.GetFileNameWithoutExtension)
-			.Where(static id => !string.IsNullOrWhiteSpace(id))
-			.Select(static id => id!)
-			.OrderBy(static id => id, StringComparer.Ordinal)];
 	}
 }

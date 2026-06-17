@@ -4,22 +4,23 @@ public sealed class ContentRegistryMerger
 {
 	public void Merge(
 		IReadOnlyList<ModContentBundle> bundles,
-		Dictionary<ContentCategory, HashSet<string>> tables,
+		Dictionary<EContentCategory, HashSet<string>> tables,
 		out ContentLoadReport report)
 	{
 		var conflicts = new List<ContentIdConflictEntry>();
-		var ownerById = new Dictionary<(ContentCategory Category, string Id), string>();
+		var ownerById = new Dictionary<(EContentCategory Category, string Id), string>();
 
 		foreach (var bundle in bundles)
 		{
-			TryAddAll(bundle.ModId, ContentCategory.Character, bundle.Characters, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Battle, bundle.Battles, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Event, bundle.Events, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Card, bundle.Cards, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Item, bundle.Items, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Skill, bundle.Skills, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Buff, bundle.Buffs, tables, ownerById, conflicts);
-			TryAddAll(bundle.ModId, ContentCategory.Effect, bundle.Effects, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Character, bundle.Characters, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Enemy, bundle.Enemies, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Battle, bundle.Battles, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Event, bundle.Events, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Card, bundle.Cards, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Item, bundle.Items, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Skill, bundle.Skills, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Buff, bundle.Buffs, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Effect, bundle.Effects, tables, ownerById, conflicts);
 		}
 
 		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>());
@@ -27,10 +28,10 @@ public sealed class ContentRegistryMerger
 
 	private static void TryAddAll(
 		string modId,
-		ContentCategory category,
+		EContentCategory category,
 		IReadOnlyList<string> ids,
-		Dictionary<ContentCategory, HashSet<string>> tables,
-		Dictionary<(ContentCategory Category, string Id), string> ownerById,
+		Dictionary<EContentCategory, HashSet<string>> tables,
+		Dictionary<(EContentCategory Category, string Id), string> ownerById,
 		List<ContentIdConflictEntry> conflicts)
 	{
 		var set = tables[category];

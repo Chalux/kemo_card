@@ -1,0 +1,4 @@
+{
+  "kind": "GainResource",
+  "params": { "resource": "Gold", "amount": 50 }
+}

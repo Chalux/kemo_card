@@ -1,0 +1,11 @@
+{
+  "displayNameId": "item.health_potion.name",
+  "descId": "item.health_potion.desc",
+  "rarity": "Common",
+  "useSkillRefs": [{ "skillId": "potion_use" }],
+  "targetSpec": { "side": "Ally", "scope": "Single" },
+  "maxStack": 3,
+  "artPath": "items/health_potion.png",
+  "shopPrice": 50,
+  "tags": ["potion", "healing"]
+}

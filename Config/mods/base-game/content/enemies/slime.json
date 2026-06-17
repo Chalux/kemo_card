@@ -1,0 +1,10 @@
+{
+  "displayNameId": "enemy.slime.name",
+  "descId": "enemy.slime.desc",
+  "maxHp": 30,
+  "element": "None",
+  "role": "None",
+  "skillRefs": [{ "skillId": "slime_tackle" }],
+  "artPath": "enemies/slime.png",
+  "tags": ["beast"]
+}

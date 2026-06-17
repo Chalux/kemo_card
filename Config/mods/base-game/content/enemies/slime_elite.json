@@ -1,0 +1,10 @@
+{
+  "displayNameId": "enemy.slime_elite.name",
+  "descId": "enemy.slime_elite.desc",
+  "maxHp": 45,
+  "element": "None",
+  "role": "Guard",
+  "skillRefs": [{ "skillId": "slime_tackle" }],
+  "artPath": "enemies/slime_elite.png",
+  "tags": ["beast", "elite"]
+}
