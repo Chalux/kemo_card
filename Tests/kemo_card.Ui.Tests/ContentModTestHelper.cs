@@ -83,6 +83,13 @@ internal static class ContentModTestHelper
 		WriteJson(modDir, "buffs", buffId, json);
 	}
 
+	public static void AddScript(string modDir, string relativePath, string jsSource)
+	{
+		var path = Path.Combine(modDir, "scripts", relativePath);
+		Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+		File.WriteAllText(path, jsSource);
+	}
+
 	public static ModContentBundle EmptyBundle(string modId) => new(
 		modId,
 		[],
