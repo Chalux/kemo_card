@@ -43,19 +43,19 @@ public sealed class GameDefinitionRegistry
 			Store.Rebuild(bundles, mergeReport.IdConflicts);
 
 			var validator = new ContentDefinitionValidator();
-			var validationErrors = validator.Validate(Store);
+			var foundValidationErrors = validator.Validate(Store);
 			var removedValidationErrors = Array.Empty<ContentDefinitionValidationError>();
-			if (validationErrors.Count > 0)
+			if (foundValidationErrors.Count > 0)
 			{
-				RemoveInvalidDefinitions(validationErrors);
-				removedValidationErrors = validationErrors.ToArray();
+				RemoveInvalidDefinitions(foundValidationErrors);
+				removedValidationErrors = foundValidationErrors.ToArray();
 			}
 
 			DefinitionVersion++;
 			report = new ContentLoadReport(
 				mergeReport.SkippedMods,
 				mergeReport.IdConflicts,
-				validationErrors,
+				Array.Empty<ContentDefinitionValidationError>(),
 				Array.Empty<ScriptLoadError>(),
 				removedValidationErrors);
 		}

@@ -63,6 +63,7 @@ public partial class MainRoot : Control
     public override void _ExitTree()
     {
         GlobalEvents.Bus.OffAll();
+        GlobalController?.Dispose();
         GlobalMod?.Dispose();
         ScriptRuntime?.Dispose();
         _startup = null;

@@ -204,7 +204,8 @@ public sealed class ContentDefinitionExtendedTests
 		var registry = new GameDefinitionRegistry();
 		registry.Rebuild(new[] { bundle }, out var report);
 
-		Assert.That(report.ValidationErrors, Has.Count.EqualTo(1));
+		Assert.That(report.ValidationErrors, Is.Empty);
+		Assert.That(report.RemovedValidationErrors, Has.Count.EqualTo(1));
 		Assert.That(registry.Contains(EContentCategory.Battle, "bad_battle"), Is.False);
 	}
 
@@ -230,7 +231,8 @@ public sealed class ContentDefinitionExtendedTests
 		var registry = new GameDefinitionRegistry();
 		registry.Rebuild(new[] { bundle }, out var report);
 
-		Assert.That(report.ValidationErrors, Has.Count.EqualTo(1));
+		Assert.That(report.ValidationErrors, Is.Empty);
+		Assert.That(report.RemovedValidationErrors, Has.Count.EqualTo(1));
 		Assert.That(registry.Contains(EContentCategory.Event, "script_event"), Is.False);
 	}
 
@@ -252,7 +254,8 @@ public sealed class ContentDefinitionExtendedTests
 		var registry = new GameDefinitionRegistry();
 		registry.Rebuild(new[] { bundle }, out var report);
 
-		Assert.That(report.ValidationErrors, Has.Count.EqualTo(1));
+		Assert.That(report.ValidationErrors, Is.Empty);
+		Assert.That(report.RemovedValidationErrors, Has.Count.EqualTo(1));
 		Assert.That(registry.Contains(EContentCategory.Item, "empty_potion"), Is.False);
 	}
 }

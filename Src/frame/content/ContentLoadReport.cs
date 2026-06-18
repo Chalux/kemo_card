@@ -32,6 +32,7 @@ public sealed class ContentLoadReport
 		SkippedMods.Count > 0
 		|| IdConflicts.Count > 0
 		|| ValidationErrors.Count > 0
+		|| RemovedValidationErrors.Count > 0
 		|| ScriptLoadErrors.Count > 0;
 
 	public static ContentLoadReport Empty { get; } = new(

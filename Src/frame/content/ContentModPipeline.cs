@@ -105,7 +105,7 @@ public sealed class ContentModPipeline
 			_logger.LogConflict(conflict);
 		}
 
-		foreach (var validationError in registryReport.ValidationErrors)
+		foreach (var validationError in registryReport.RemovedValidationErrors)
 		{
 			_logger.LogValidationError(validationError);
 		}
@@ -126,7 +126,8 @@ public sealed class ContentModPipeline
 			allSkipped,
 			registryReport.IdConflicts,
 			registryReport.ValidationErrors,
-			scriptLoadErrors);
+			scriptLoadErrors,
+			registryReport.RemovedValidationErrors);
 		_notifier.OnModLoadCompleted(finalReport);
 		return finalReport;
 	}

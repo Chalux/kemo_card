@@ -75,4 +75,7 @@ public sealed class CardDto
 
 	[JsonPropertyName("sfxId")]
 	public string? SfxId { get; init; }
+
+	[JsonPropertyName("stats")]
+	public CardStatBlockDto? Stats { get; init; }
 }
