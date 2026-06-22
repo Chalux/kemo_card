@@ -4,6 +4,10 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public sealed class CardStatBlockDto
 {
+	[JsonPropertyName("attributes")]
+	public Dictionary<string, float> Attributes { get; init; } = new(StringComparer.Ordinal);
+
+	// 兼容旧版内容字段，后续可迁移为 attributes 字典。
 	[JsonPropertyName("hpCap")]
 	public int HpCap { get; init; }
 

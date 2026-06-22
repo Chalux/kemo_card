@@ -11,4 +11,13 @@ public sealed record ModContentBundle(
 	IReadOnlyList<string> Skills,
 	IReadOnlyList<string> Buffs,
 	IReadOnlyList<string> Effects,
-	ModDefinitionsBundle Definitions);
+	ModDefinitionsBundle Definitions)
+{
+	public IReadOnlyList<string> Attributes { get; init; } = [];
+
+	public IReadOnlyList<string> GameplayEffects { get; init; } = [];
+
+	public IReadOnlyList<string> GameplayTags { get; init; } = [];
+
+	public IReadOnlyList<string> SkillActions { get; init; } = [];
+}

@@ -58,5 +58,8 @@ public sealed class ContentRegistryMergerTests
 			[EContentCategory.Skill] = new(StringComparer.Ordinal),
 			[EContentCategory.Buff] = new(StringComparer.Ordinal),
 			[EContentCategory.Effect] = new(StringComparer.Ordinal),
+			[EContentCategory.Attribute] = new(StringComparer.Ordinal),
+			[EContentCategory.GameplayEffect] = new(StringComparer.Ordinal),
+			[EContentCategory.GameplayTag] = new(StringComparer.Ordinal),
 		};
 }

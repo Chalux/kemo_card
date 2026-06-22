@@ -74,6 +74,16 @@ public static class ModScriptPathCollector
 			}
 		}
 
+		foreach (var (id, action) in store.SkillActions)
+		{
+			if (action.Kind == ESkillActionKind.ExecuteScript &&
+				!string.IsNullOrWhiteSpace(action.ScriptPath) &&
+				registry.TryGetOwnerModId(EContentCategory.SkillAction, id, out var modId))
+			{
+				paths.Add((modId, action.ScriptPath));
+			}
+		}
+
 		return paths
 			.Distinct()
 			.OrderBy(static pair => pair.ModId, StringComparer.Ordinal)

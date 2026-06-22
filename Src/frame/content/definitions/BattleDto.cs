@@ -30,4 +30,7 @@ public sealed class BattleDto
 
 	[JsonPropertyName("tags")]
 	public List<string> Tags { get; init; } = [];
+
+	[JsonPropertyName("combatRuleIds")]
+	public List<string> CombatRuleIds { get; init; } = [];
 }

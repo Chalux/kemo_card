@@ -2,6 +2,11 @@
   "displayNameId": "enemy.slime.name",
   "descId": "enemy.slime.desc",
   "maxHp": 30,
+  "baseAttributes": {
+    "MaxHealth": 30,
+    "PhysicalAttack": 5,
+    "PhysicalDefense": 1
+  },
   "element": "None",
   "role": "None",
   "skillRefs": [{ "skillId": "slime_tackle" }],

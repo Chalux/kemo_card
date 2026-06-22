@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 
 namespace KemoCard.Frame.Content;
 
@@ -36,6 +37,9 @@ public sealed class ContentDefinitionValidator
 		ValidateSkills(store, errors);
 		ValidateBuffs(store, errors);
 		ValidateEffects(store, errors);
+		ValidateSkillActions(store, errors);
+		ValidateGameplayTags(store, errors);
+		ValidateGameplayEffects(store, errors);
 		return errors;
 	}
 
@@ -87,12 +91,15 @@ public sealed class ContentDefinitionValidator
 	{
 		foreach (var enemy in store.Enemies.Values)
 		{
-			if (enemy.MaxHp <= 0)
+			var maxHealth = enemy.BaseAttributes.TryGetValue(AttributeIds.MaxHealth, out var value)
+				? value
+				: enemy.MaxHp;
+			if (maxHealth <= 0f)
 			{
 				errors.Add(new ContentDefinitionValidationError(
 					EContentCategory.Enemy,
 					enemy.Id,
-					"maxHp must be greater than 0."));
+					"baseAttributes.MaxHealth/maxHp must be greater than 0."));
 			}
 
 			ValidateSkillRefs(EContentCategory.Enemy, enemy.Id, enemy.SkillRefs, store, errors);
@@ -313,12 +320,19 @@ public sealed class ContentDefinitionValidator
 	{
 		foreach (var skill in store.Skills.Values)
 		{
-			ValidateEffectRefs(
-				EContentCategory.Skill,
-				skill.Id,
-				skill.EffectRefs,
-				store,
-				errors);
+			if (skill.ActionRefs.Count > 0)
+			{
+				ValidateActionRefs(EContentCategory.Skill, skill.Id, skill.ActionRefs, store, errors);
+			}
+			else
+			{
+				ValidateEffectRefs(
+					EContentCategory.Skill,
+					skill.Id,
+					skill.EffectRefs,
+					store,
+					errors);
+			}
 		}
 	}
 
@@ -354,6 +368,96 @@ public sealed class ContentDefinitionValidator
 			if (effect.Kind == EEffectKind.ApplyBuff)
 			{
 				ValidateBuffIdInParams(effect, store, errors);
+			}
+		}
+	}
+
+	private static void ValidateSkillActions(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+	{
+		foreach (var action in store.SkillActions.Values)
+		{
+			if (action.Kind == ESkillActionKind.ExecuteScript && string.IsNullOrWhiteSpace(action.ScriptPath))
+			{
+				errors.Add(new ContentDefinitionValidationError(
+					EContentCategory.SkillAction,
+					action.Id,
+					"ExecuteScript requires scriptPath."));
+			}
+
+			if (action.Kind == ESkillActionKind.ChainActions)
+			{
+				ValidateActionRefs(EContentCategory.SkillAction, action.Id, action.ActionRefs, store, errors);
+			}
+
+			if (action.Kind is ESkillActionKind.ApplyGameplayEffect or ESkillActionKind.RemoveGameplayEffect)
+			{
+				var gameplayEffectId = GetStringParam(action.Params, "gameplayEffectId");
+				if (string.IsNullOrWhiteSpace(gameplayEffectId))
+				{
+					errors.Add(new ContentDefinitionValidationError(
+						EContentCategory.SkillAction,
+						action.Id,
+						$"{action.Kind} requires params.gameplayEffectId."));
+				}
+			}
+		}
+	}
+
+	private static void ValidateGameplayTags(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+	{
+		foreach (var gameplayTag in store.GameplayTags.Values)
+		{
+			if (!IsValidGameplayTagString(gameplayTag.Id))
+			{
+				errors.Add(new ContentDefinitionValidationError(
+					EContentCategory.GameplayTag,
+					gameplayTag.Id,
+					$"Invalid gameplay tag id '{gameplayTag.Id}'."));
+			}
+
+			if (!string.IsNullOrWhiteSpace(gameplayTag.Parent))
+			{
+				if (!IsValidGameplayTagString(gameplayTag.Parent!))
+				{
+					errors.Add(new ContentDefinitionValidationError(
+						EContentCategory.GameplayTag,
+						gameplayTag.Id,
+						$"Invalid gameplay tag parent '{gameplayTag.Parent}'."));
+				}
+				else if (!store.TryGetGameplayTag(gameplayTag.Parent!, out _))
+				{
+					errors.Add(new ContentDefinitionValidationError(
+						EContentCategory.GameplayTag,
+						gameplayTag.Id,
+						$"Unknown gameplay tag parent '{gameplayTag.Parent}'."));
+				}
+			}
+		}
+	}
+
+	private static void ValidateGameplayEffects(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+	{
+		foreach (var gameplayEffect in store.GameplayEffects.Values)
+		{
+			foreach (var modifier in gameplayEffect.Modifiers)
+			{
+				if (!store.TryGetAttribute(modifier.AttributeId, out _))
+				{
+					errors.Add(new ContentDefinitionValidationError(
+						EContentCategory.GameplayEffect,
+						gameplayEffect.Id,
+						$"Unknown attributeId '{modifier.AttributeId}' in modifier."));
+				}
+			}
+
+			if (store.GameplayTags.Count > 0)
+			{
+				ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.GrantedTags, store, errors);
+				ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.ApplicationRequiredTags, store, errors);
+				ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.ApplicationBlockedTags, store, errors);
+				ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.OngoingRequiredTags, store, errors);
+				ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.ImmunityTags, store, errors);
+				ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.RemoveEffectsWithTags, store, errors);
 			}
 		}
 	}
@@ -437,6 +541,83 @@ public sealed class ContentDefinitionValidator
 					$"Unknown effectId '{effectRef.EffectId}'."));
 			}
 		}
+	}
+
+	private static void ValidateActionRefs(
+		EContentCategory category,
+		string definitionId,
+		IReadOnlyList<SkillActionRefDto> actionRefs,
+		GameDefinitionStore store,
+		List<ContentDefinitionValidationError> errors)
+	{
+		foreach (var actionRef in actionRefs)
+		{
+			if (!store.TryGetSkillAction(actionRef.ActionId, out _))
+			{
+				errors.Add(new ContentDefinitionValidationError(
+					category,
+					definitionId,
+					$"Unknown actionId '{actionRef.ActionId}'."));
+			}
+		}
+	}
+
+	private static void ValidateGameplayTagRefs(
+		EContentCategory category,
+		string definitionId,
+		IReadOnlyList<string> tags,
+		GameDefinitionStore store,
+		List<ContentDefinitionValidationError> errors)
+	{
+		foreach (var gameplayTag in tags)
+		{
+			if (!IsValidGameplayTagString(gameplayTag))
+			{
+				errors.Add(new ContentDefinitionValidationError(
+					category,
+					definitionId,
+					$"Invalid gameplay tag '{gameplayTag}'."));
+				continue;
+			}
+
+			if (!store.TryGetGameplayTag(gameplayTag, out _))
+			{
+				errors.Add(new ContentDefinitionValidationError(
+					category,
+					definitionId,
+					$"Unknown gameplay tag '{gameplayTag}'."));
+			}
+		}
+	}
+
+	private static bool IsValidGameplayTagString(string tag)
+	{
+		if (string.IsNullOrWhiteSpace(tag))
+		{
+			return false;
+		}
+
+		if (tag.StartsWith(".", StringComparison.Ordinal) || tag.EndsWith(".", StringComparison.Ordinal))
+		{
+			return false;
+		}
+
+		if (tag.Contains("..", StringComparison.Ordinal))
+		{
+			return false;
+		}
+
+		foreach (var ch in tag)
+		{
+			if (char.IsLetterOrDigit(ch) || ch == '.' || ch == '_' || ch == '-')
+			{
+				continue;
+			}
+
+			return false;
+		}
+
+		return true;
 	}
 
 	private static string? GetStringParam(Dictionary<string, object>? parameters, string key)

@@ -19,6 +19,10 @@ config/icon="res://icon.svg"
 
 project/assembly_name="kemo_card"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://Resource/Locale/strings.zh_CN.translation", "res://Resource/Locale/strings.en.translation")

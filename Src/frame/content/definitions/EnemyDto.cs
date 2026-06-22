@@ -16,6 +16,9 @@ public sealed class EnemyDto
 	[JsonPropertyName("maxHp")]
 	public int MaxHp { get; init; }
 
+	[JsonPropertyName("baseAttributes")]
+	public Dictionary<string, float> BaseAttributes { get; init; } = new(StringComparer.Ordinal);
+
 	[JsonPropertyName("element")]
 	public EElement Element { get; init; }
 

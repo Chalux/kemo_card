@@ -4,6 +4,14 @@
   "costType": "Energy",
   "cost": 1,
   "skillRefs": [{ "skillId": "strike_hit" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 4,
+      "PhysicalAttack": 2,
+      "MaxEnergy": 2,
+      "InitialEnergy": 1
+    }
+  },
   "role": "Warrior",
   "priority": 100,
   "cardType": "Physics",

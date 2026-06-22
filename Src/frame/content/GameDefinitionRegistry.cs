@@ -14,6 +14,10 @@ public sealed class GameDefinitionRegistry
 		[EContentCategory.Skill] = new HashSet<string>(StringComparer.Ordinal),
 		[EContentCategory.Buff] = new HashSet<string>(StringComparer.Ordinal),
 		[EContentCategory.Effect] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.Attribute] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.GameplayEffect] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.GameplayTag] = new HashSet<string>(StringComparer.Ordinal),
+		[EContentCategory.SkillAction] = new HashSet<string>(StringComparer.Ordinal),
 	};
 
 	public GameDefinitionStore Store { get; } = new();

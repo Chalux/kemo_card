@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.damage_taken_scale.name",
+  "defaultBase": 0,
+  "allowNegative": true,
+  "isMeta": false
+}

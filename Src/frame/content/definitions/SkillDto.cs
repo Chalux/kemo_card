@@ -16,6 +16,9 @@ public sealed class SkillDto
 	[JsonPropertyName("effectRefs")]
 	public List<EffectRefDto> EffectRefs { get; init; } = [];
 
+	[JsonPropertyName("actionRefs")]
+	public List<SkillActionRefDto> ActionRefs { get; init; } = [];
+
 	[JsonPropertyName("targetOverride")]
 	public TargetSpecDto? TargetOverride { get; init; }
 

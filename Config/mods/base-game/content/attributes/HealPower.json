@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.heal_power.name",
+  "defaultBase": 0,
+  "allowNegative": true,
+  "isMeta": false
+}

@@ -1,5 +1,6 @@
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 
 namespace KemoCard.Mod.Combat;
 
@@ -97,19 +98,29 @@ public sealed class CharacterInstance
 		return deck.Validate(GetBuildableCardIds(obtainedCardIds));
 	}
 
-	public CharacterAttributes ComputeAttributes(GameDefinitionRegistry definitions)
+	public Dictionary<string, float> ComputeAttributeMap(GameDefinitionRegistry definitions)
 	{
+		ArgumentNullException.ThrowIfNull(definitions);
 		var deck = GetCurrentDeck();
 		if (deck is null)
-			return CharacterAttributes.Zero;
+			return new Dictionary<string, float>(StringComparer.Ordinal);
 
-		var total = CharacterAttributes.Zero;
+		var totals = new Dictionary<string, float>(StringComparer.Ordinal);
 		foreach (var cardId in deck.CardIds)
 		{
 			if (!definitions.Store.TryGetCard(cardId, out var card) || card.Stats is null)
 				continue;
-			total += CharacterAttributes.FromCardStats(card.Stats);
+			var contribution = AttributeContributionMapper.MapCardStats(card.Stats);
+			foreach (var (attributeId, value) in contribution)
+			{
+				totals.TryGetValue(attributeId, out var current);
+				totals[attributeId] = current + value;
+			}
 		}
-		return total;
+
+		return totals;
 	}
+
+	public CharacterAttributes ComputeAttributes(GameDefinitionRegistry definitions) =>
+		CharacterAttributes.FromMap(ComputeAttributeMap(definitions));
 }

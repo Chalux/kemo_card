@@ -13,6 +13,10 @@ public sealed class GameDefinitionStore
 	private readonly Dictionary<string, SkillDto> _skills = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, BuffDto> _buffs = new(StringComparer.Ordinal);
 	private readonly Dictionary<string, EffectDto> _effects = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, AttributeDefDto> _attributes = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, GameplayEffectDefDto> _gameplayEffects = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, GameplayTagDefDto> _gameplayTags = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, SkillActionDto> _skillActions = new(StringComparer.Ordinal);
 
 	public void Rebuild(
 		IReadOnlyList<ModContentBundle> bundles,
@@ -27,6 +31,10 @@ public sealed class GameDefinitionStore
 		_skills.Clear();
 		_buffs.Clear();
 		_effects.Clear();
+		_attributes.Clear();
+		_gameplayEffects.Clear();
+		_gameplayTags.Clear();
+		_skillActions.Clear();
 
 		var loserKeys = BuildLoserKeys(idConflicts);
 		foreach (var bundle in bundles)
@@ -53,6 +61,14 @@ public sealed class GameDefinitionStore
 
 	public bool TryGetEffect(string id, out EffectDto dto) => _effects.TryGetValue(id, out dto!);
 
+	public bool TryGetAttribute(string id, out AttributeDefDto dto) => _attributes.TryGetValue(id, out dto!);
+
+	public bool TryGetGameplayEffect(string id, out GameplayEffectDefDto dto) => _gameplayEffects.TryGetValue(id, out dto!);
+
+	public bool TryGetGameplayTag(string id, out GameplayTagDefDto dto) => _gameplayTags.TryGetValue(id, out dto!);
+
+	public bool TryGetSkillAction(string id, out SkillActionDto dto) => _skillActions.TryGetValue(id, out dto!);
+
 	public IReadOnlyDictionary<string, CharacterDto> Characters => _characters;
 
 	public IReadOnlyDictionary<string, EnemyDto> Enemies => _enemies;
@@ -70,6 +86,14 @@ public sealed class GameDefinitionStore
 	public IReadOnlyDictionary<string, BuffDto> Buffs => _buffs;
 
 	public IReadOnlyDictionary<string, EffectDto> Effects => _effects;
+
+	public IReadOnlyDictionary<string, AttributeDefDto> Attributes => _attributes;
+
+	public IReadOnlyDictionary<string, GameplayEffectDefDto> GameplayEffects => _gameplayEffects;
+
+	public IReadOnlyDictionary<string, GameplayTagDefDto> GameplayTags => _gameplayTags;
+
+	public IReadOnlyDictionary<string, SkillActionDto> SkillActions => _skillActions;
 
 	internal void Remove(EContentCategory category, string id)
 	{
@@ -102,6 +126,18 @@ public sealed class GameDefinitionStore
 			case EContentCategory.Effect:
 				_effects.Remove(id);
 				break;
+			case EContentCategory.Attribute:
+				_attributes.Remove(id);
+				break;
+			case EContentCategory.GameplayEffect:
+				_gameplayEffects.Remove(id);
+				break;
+			case EContentCategory.GameplayTag:
+				_gameplayTags.Remove(id);
+				break;
+			case EContentCategory.SkillAction:
+				_skillActions.Remove(id);
+				break;
 		}
 	}
 
@@ -130,6 +166,10 @@ public sealed class GameDefinitionStore
 		MergeCategory(bundle.ModId, EContentCategory.Skill, bundle.Definitions.Skills, _skills, loserKeys);
 		MergeCategory(bundle.ModId, EContentCategory.Buff, bundle.Definitions.Buffs, _buffs, loserKeys);
 		MergeCategory(bundle.ModId, EContentCategory.Effect, bundle.Definitions.Effects, _effects, loserKeys);
+		MergeCategory(bundle.ModId, EContentCategory.Attribute, bundle.Definitions.Attributes, _attributes, loserKeys);
+		MergeCategory(bundle.ModId, EContentCategory.GameplayEffect, bundle.Definitions.GameplayEffects, _gameplayEffects, loserKeys);
+		MergeCategory(bundle.ModId, EContentCategory.GameplayTag, bundle.Definitions.GameplayTags, _gameplayTags, loserKeys);
+		MergeCategory(bundle.ModId, EContentCategory.SkillAction, bundle.Definitions.SkillActions, _skillActions, loserKeys);
 	}
 
 	private static void MergeCategory<T>(

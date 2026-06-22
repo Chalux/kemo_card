@@ -20,6 +20,10 @@ public sealed class ContentModLoader
 			var skills = LoadDefinitions<SkillDto>(contentRoot, "skills");
 			var buffs = LoadDefinitions<BuffDto>(contentRoot, "buffs");
 			var effects = LoadDefinitions<EffectDto>(contentRoot, "effects");
+			var skillActions = LoadDefinitions<SkillActionDto>(contentRoot, "skill_actions");
+			var attributes = LoadDefinitions<AttributeDefDto>(contentRoot, "attributes");
+			var gameplayEffects = LoadDefinitions<GameplayEffectDefDto>(contentRoot, "gameplay_effects");
+			var gameplayTags = LoadDefinitions<GameplayTagDefDto>(contentRoot, "tags");
 
 			return new ModContentBundle(
 				manifest.ModId,
@@ -41,7 +45,19 @@ public sealed class ContentModLoader
 					cards,
 					skills,
 					buffs,
-					effects));
+					effects)
+				{
+					Attributes = attributes,
+					GameplayEffects = gameplayEffects,
+					GameplayTags = gameplayTags,
+					SkillActions = skillActions,
+				})
+			{
+				Attributes = [.. attributes.Keys],
+				GameplayEffects = [.. gameplayEffects.Keys],
+				GameplayTags = [.. gameplayTags.Keys],
+				SkillActions = [.. skillActions.Keys],
+			};
 		}
 		catch (Exception ex)
 		{

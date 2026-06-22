@@ -1,0 +1,18 @@
+{
+  "displayNameId": "ge.weak.name",
+  "durationPolicy": "HasDuration",
+  "durationTurns": 2,
+  "stackingPolicy": "AggregateByTarget",
+  "maxStacks": 3,
+  "modifiers": [
+    {
+      "attributeId": "DamageTakenScale",
+      "operation": "Add",
+      "magnitude": { "kind": "Scalar", "scalar": 1 }
+    }
+  ],
+  "grantedTags": ["debuff.weak"],
+  "hooks": {
+    "onApply": [{ "actionId": "weak_apply_marker" }]
+  }
+}

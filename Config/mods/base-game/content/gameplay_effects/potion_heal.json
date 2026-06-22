@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.potion_heal.name",
+  "durationPolicy": "Instant",
+  "modifiers": [
+    {
+      "attributeId": "Healing",
+      "operation": "Override",
+      "magnitude": { "kind": "SetByCaller", "callerName": "Amount" }
+    }
+  ]
+}

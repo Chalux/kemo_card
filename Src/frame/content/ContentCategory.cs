@@ -11,4 +11,8 @@ public enum EContentCategory
 	Skill,
 	Buff,
 	Effect,
+	SkillAction,
+	Attribute,
+	GameplayEffect,
+	GameplayTag,
 }

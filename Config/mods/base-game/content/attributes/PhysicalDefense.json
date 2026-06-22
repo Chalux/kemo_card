@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.physical_defense.name",
+  "defaultBase": 0,
+  "allowNegative": true,
+  "isMeta": false
+}

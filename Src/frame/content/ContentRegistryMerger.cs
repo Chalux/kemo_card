@@ -22,6 +22,10 @@ public sealed class ContentRegistryMerger
 			TryAddAll(bundle.ModId, EContentCategory.Skill, bundle.Skills, tables, ownerById, conflicts);
 			TryAddAll(bundle.ModId, EContentCategory.Buff, bundle.Buffs, tables, ownerById, conflicts);
 			TryAddAll(bundle.ModId, EContentCategory.Effect, bundle.Effects, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.Attribute, bundle.Attributes, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.GameplayEffect, bundle.GameplayEffects, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.GameplayTag, bundle.GameplayTags, tables, ownerById, conflicts);
+			TryAddAll(bundle.ModId, EContentCategory.SkillAction, bundle.SkillActions, tables, ownerById, conflicts);
 		}
 
 		report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>(), Array.Empty<ScriptLoadError>());
@@ -36,7 +40,12 @@ public sealed class ContentRegistryMerger
 		Dictionary<(EContentCategory Category, string Id), string> ownerById,
 		List<ContentIdConflictEntry> conflicts)
 	{
-		var set = tables[category];
+		if (!tables.TryGetValue(category, out var set))
+		{
+			set = new HashSet<string>(StringComparer.Ordinal);
+			tables[category] = set;
+		}
+
 		foreach (var id in ids)
 		{
 			var key = (category, id);

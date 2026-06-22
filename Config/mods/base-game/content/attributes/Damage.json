@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.damage.name",
+  "defaultBase": 0,
+  "allowNegative": false,
+  "isMeta": false
+}

@@ -22,6 +22,10 @@ internal static class ContentModTestHelper
 		Directory.CreateDirectory(Path.Combine(dir, "content", "skills"));
 		Directory.CreateDirectory(Path.Combine(dir, "content", "buffs"));
 		Directory.CreateDirectory(Path.Combine(dir, "content", "effects"));
+		Directory.CreateDirectory(Path.Combine(dir, "content", "skill_actions"));
+		Directory.CreateDirectory(Path.Combine(dir, "content", "attributes"));
+		Directory.CreateDirectory(Path.Combine(dir, "content", "gameplay_effects"));
+		Directory.CreateDirectory(Path.Combine(dir, "content", "tags"));
 		var requiredJson = required is { Length: > 0 }
 			? string.Join(", ", required.Select(static r => $"\"{r}\""))
 			: "";
@@ -82,6 +86,26 @@ internal static class ContentModTestHelper
 	public static void AddBuff(string modDir, string buffId, string json = "{}")
 	{
 		WriteJson(modDir, "buffs", buffId, json);
+	}
+
+	public static void AddSkillAction(string modDir, string actionId, string json = "{}")
+	{
+		WriteJson(modDir, "skill_actions", actionId, json);
+	}
+
+	public static void AddAttribute(string modDir, string attributeId, string json = "{}")
+	{
+		WriteJson(modDir, "attributes", attributeId, json);
+	}
+
+	public static void AddGameplayEffect(string modDir, string gameplayEffectId, string json = "{}")
+	{
+		WriteJson(modDir, "gameplay_effects", gameplayEffectId, json);
+	}
+
+	public static void AddGameplayTag(string modDir, string gameplayTagId, string json = "{}")
+	{
+		WriteJson(modDir, "tags", gameplayTagId, json);
 	}
 
 	public static void AddScript(string modDir, string relativePath, string jsSource)

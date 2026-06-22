@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using NUnit.Framework;
@@ -34,6 +35,6 @@ public sealed class CharacterBattleInstanceTests
 		Assert.That(battle.HandSlots.All(slot => slot.IsEmpty), Is.True);
 		Assert.That(battle.CurrentEnergy, Is.EqualTo(1));
 		Assert.That(battle.MaxEnergy, Is.EqualTo(3));
-		Assert.That(battle.BaseAttributes.HpCap, Is.EqualTo(9));
+		Assert.That(battle.BaseAttributes[AttributeIds.MaxHealth], Is.EqualTo(9f));
 	}
 }

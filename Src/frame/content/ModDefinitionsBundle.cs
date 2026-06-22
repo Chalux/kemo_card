@@ -13,6 +13,18 @@ public sealed record ModDefinitionsBundle(
 	IReadOnlyDictionary<string, BuffDto> Buffs,
 	IReadOnlyDictionary<string, EffectDto> Effects)
 {
+	public IReadOnlyDictionary<string, AttributeDefDto> Attributes { get; init; } =
+		new Dictionary<string, AttributeDefDto>(StringComparer.Ordinal);
+
+	public IReadOnlyDictionary<string, GameplayEffectDefDto> GameplayEffects { get; init; } =
+		new Dictionary<string, GameplayEffectDefDto>(StringComparer.Ordinal);
+
+	public IReadOnlyDictionary<string, GameplayTagDefDto> GameplayTags { get; init; } =
+		new Dictionary<string, GameplayTagDefDto>(StringComparer.Ordinal);
+
+	public IReadOnlyDictionary<string, SkillActionDto> SkillActions { get; init; } =
+		new Dictionary<string, SkillActionDto>(StringComparer.Ordinal);
+
 	public static ModDefinitionsBundle Empty { get; } = new(
 		new Dictionary<string, CharacterDto>(StringComparer.Ordinal),
 		new Dictionary<string, EnemyDto>(StringComparer.Ordinal),

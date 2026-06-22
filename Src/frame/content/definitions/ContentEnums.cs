@@ -102,6 +102,17 @@ public enum EEffectKind
     ChainEffects,
 }
 
+public enum ESkillActionKind
+{
+	Draw,
+	Discard,
+	GainResource,
+	ExecuteScript,
+	ChainActions,
+	ApplyGameplayEffect,
+	RemoveGameplayEffect,
+}
+
 [Flags]
 public enum EElement
 {
@@ -161,6 +172,10 @@ public enum ERole
     /// 炼金术士 道具制造
     /// </summary>
     Alchemist,
+    /// <summary>
+    /// 元素师 元素球伤害
+    /// </summary>
+    Elementist,
 }
 
 public enum EEventKind

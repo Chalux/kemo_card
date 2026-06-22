@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests.Combat;
@@ -8,7 +9,7 @@ namespace KemoCard.Ui.Tests.Combat;
 public sealed class CardStatBlockTests
 {
 	[Test]
-	public void CardDto_deserializes_stats_block()
+	public void CardDto_deserializes_stats_block_with_attribute_dictionary()
 	{
 		const string json = """
 			{
@@ -21,6 +22,10 @@ public sealed class CardStatBlockTests
 			  "targetScope": "Single",
 			  "rarity": "Common",
 			  "stats": {
+			    "attributes": {
+			      "MaxHealth": 7,
+			      "PhysicalAttack": 3
+			    },
 			    "hpCap": 5,
 			    "physicalAttack": 2,
 			    "maxEnergy": 3,
@@ -32,6 +37,8 @@ public sealed class CardStatBlockTests
 		var card = JsonSerializer.Deserialize<CardDto>(json, ContentDefinitionJson.Options)!;
 
 		Assert.That(card.Stats, Is.Not.Null);
+		Assert.That(card.Stats!.Attributes[AttributeIds.MaxHealth], Is.EqualTo(7f));
+		Assert.That(card.Stats.Attributes[AttributeIds.PhysicalAttack], Is.EqualTo(3f));
 		Assert.That(card.Stats!.HpCap, Is.EqualTo(5));
 		Assert.That(card.Stats.PhysicalAttack, Is.EqualTo(2));
 		Assert.That(card.Stats.MaxEnergy, Is.EqualTo(3));

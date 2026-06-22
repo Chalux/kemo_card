@@ -1,5 +1,10 @@
 {
   "displayNameId": "skill.slime_tackle.name",
   "descId": "skill.slime_tackle.desc",
-  "effectRefs": [{ "effectId": "slime_damage" }]
+  "actionRefs": [
+    {
+      "actionId": "apply_slime_damage",
+      "params": { "Amount": 5 }
+    }
+  ]
 }
