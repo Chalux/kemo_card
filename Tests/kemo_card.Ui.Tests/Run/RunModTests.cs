@@ -35,6 +35,30 @@ public sealed class RunModTests
     }
 
     [Test]
+    public void ToDto_and_RestoreFrom_preserves_character_decks()
+    {
+        var mod = new RunMod();
+        var character = new CharacterInstance(new CharacterDto { Id = "hero", Cards = ["c1", "c2"] }, "inst-1");
+        var buildable = new HashSet<string>(StringComparer.Ordinal) { "c1", "c2", "card.x" };
+        character.TryEditDeck(0, deck => deck.TryAddCard("card.x", buildable));
+        character.TryCreateDeck();
+        character.TrySetCurrentDeck(1);
+        mod.AddToCharacterPool(character);
+
+        var dto = mod.ToDto();
+        var restored = new RunMod();
+        restored.RestoreFrom(dto);
+
+        Assert.That(restored.CharacterPool, Has.Count.EqualTo(1));
+        var restoredCharacter = restored.CharacterPool[0];
+        Assert.That(restoredCharacter.InstanceId, Is.EqualTo("inst-1"));
+        Assert.That(restoredCharacter.Decks, Has.Count.EqualTo(2));
+        Assert.That(restoredCharacter.Decks[0].CardIds, Is.EquivalentTo(new[] { "c1", "c2", "card.x" }));
+        Assert.That(restoredCharacter.Decks[1].CardIds, Is.EquivalentTo(new[] { "c1", "c2" }));
+        Assert.That(restoredCharacter.CurrentDeckIndex, Is.EqualTo(1));
+    }
+
+    [Test]
     public void ToDto_and_RestoreFrom_preserves_card_collection()
     {
         var mod = new RunMod();

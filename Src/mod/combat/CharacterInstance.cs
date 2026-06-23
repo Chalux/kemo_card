@@ -72,6 +72,21 @@ public sealed class CharacterInstance
 		return true;
 	}
 
+	public void ApplyDeckSnapshots(IReadOnlyList<IReadOnlyList<string>> deckSnapshots, int currentDeckIndex)
+	{
+		ArgumentNullException.ThrowIfNull(deckSnapshots);
+		if (deckSnapshots.Count == 0)
+			return;
+
+		_decks.Clear();
+		foreach (var cardIds in deckSnapshots)
+			_decks.Add(new DeckPreset(Guid.NewGuid().ToString("N"), null, cardIds));
+
+		CurrentDeckIndex = currentDeckIndex >= 0 && currentDeckIndex < _decks.Count
+			? currentDeckIndex
+			: 0;
+	}
+
 	public DeckPreset? GetCurrentDeck()
 	{
 		if (_decks.Count == 0 || CurrentDeckIndex < 0 || CurrentDeckIndex >= _decks.Count)

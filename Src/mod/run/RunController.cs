@@ -310,7 +310,6 @@ public sealed class RunController : BaseController<RunMod>
             throw new InvalidOperationException("所有槽位必须上阵角色才能进入战斗。");
 
         _battleSnapshot = Model.ToDto();
-        Model.Phase = ERunPhase.Battle;
 
         var activeParty = Model.ActiveParty;
         var battleCharacters = new List<CharacterBattleInstance>();
@@ -346,6 +345,7 @@ public sealed class RunController : BaseController<RunMod>
             initialPhase: ECombatPhase.Player,
             runSeed: runSeed);
 
+        Model.Phase = ERunPhase.Battle;
         return _simulation;
     }
 
@@ -374,7 +374,9 @@ public sealed class RunController : BaseController<RunMod>
         {
             if (_battleSnapshot != null)
             {
-                Model.RestoreFrom(_battleSnapshot);
+                var instanceLookup = Model.CharacterPool
+                    .ToDictionary(c => c.InstanceId, c => c, StringComparer.Ordinal);
+                Model.RestoreFrom(_battleSnapshot, instanceLookup);
                 _battleSnapshot = null;
             }
 

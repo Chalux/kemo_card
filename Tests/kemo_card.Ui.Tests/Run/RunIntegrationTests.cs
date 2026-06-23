@@ -69,7 +69,6 @@ public sealed class RunIntegrationTests
             Assert.That(loaded.CurrentRing, Is.EqualTo(2));
             Assert.That(loaded.SharedGold, Is.EqualTo(200));
 
-            simulation.Dispose();
         }
         finally
         {

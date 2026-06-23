@@ -117,6 +117,7 @@ public sealed partial class RunMod : BaseMod
         {
             DefinitionId = c.DefinitionId,
             InstanceId = c.InstanceId,
+            DefinitionCardIds = c.Definition?.Cards.ToList() ?? [],
             Decks = c.Decks.Select(d => new DeckSnapshotDto { CardIds = d.CardIds.ToList() }).ToList(),
             CurrentDeckIndex = c.CurrentDeckIndex,
         }).ToList();
@@ -182,8 +183,14 @@ public sealed partial class RunMod : BaseMod
             }
 
             var instance = new CharacterInstance(
-                new CharacterDto { Id = entry.DefinitionId, Cards = [] },
+                new CharacterDto { Id = entry.DefinitionId, Cards = entry.DefinitionCardIds },
                 entry.InstanceId);
+            if (entry.Decks.Count > 0)
+            {
+                instance.ApplyDeckSnapshots(
+                    entry.Decks.Select(d => (IReadOnlyList<string>)d.CardIds).ToList(),
+                    entry.CurrentDeckIndex);
+            }
             _characterPool.Add(instance);
         }
 

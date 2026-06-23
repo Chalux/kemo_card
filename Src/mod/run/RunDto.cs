@@ -19,6 +19,7 @@ public sealed record CharacterPoolEntryDto
 {
     public string DefinitionId { get; init; } = "";
     public string InstanceId { get; init; } = "";
+    public List<string> DefinitionCardIds { get; init; } = [];
     public List<DeckSnapshotDto> Decks { get; init; } = [];
     public int CurrentDeckIndex { get; init; }
 }
