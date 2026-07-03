@@ -1,37 +1,77 @@
-using KemoCard.Frame.Ui;
+using KemoCard.Frame.StateMachine;
+using KemoCard.Frame.UI.Def;
+using KemoCard.Frame.UI.States;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
 
 /// <summary>
-/// 对话框切换相关的生命周期约束测试（不依赖 Godot 场景树）。
-/// OpenDlgAsync 在切换挂载阶段使用 CancellationToken.None 关闭旧对话框，
-/// 并在 PlayOpenAsync 失败时通过 QueueFree 清理；此处验证状态机是否支持该流程。
+/// 对话框切换相关的状态流转测试（不依赖 Godot 场景树）。
+/// 验证泛型 StateMachine 在执行完整 UI 生命周期流转时的行为。
 /// </summary>
 [TestFixture]
 public sealed class UiManagerDlgSwitchTests
 {
-	[Test]
-	public void Dlg_switch_lifecycle_sequence_is_valid()
-	{
-		var sm = new UiStateMachine();
-		Assert.That(sm.TryTransitionTo(UiLifecycleState.Opening), Is.True);
-		Assert.That(sm.TryTransitionTo(UiLifecycleState.Opened), Is.True);
-		Assert.That(sm.TryTransitionTo(UiLifecycleState.Closing), Is.True);
-		Assert.That(sm.TryTransitionTo(UiLifecycleState.Closed), Is.True);
-	}
+    [Test]
+    public void Full_open_lifecycle_sequence_transitions_correctly()
+    {
+        var sm = new StateMachine<EUIState, IUIStateContext>();
+        var steps = new List<EUIState>();
 
-	[Test]
-	public void Failed_open_can_reset_via_closed_to_created()
-	{
-		var sm = new UiStateMachine();
-		sm.TryTransitionTo(UiLifecycleState.Opening);
-		sm.TryTransitionTo(UiLifecycleState.Opened);
-		sm.TryTransitionTo(UiLifecycleState.Closing);
-		sm.TryTransitionTo(UiLifecycleState.Closed);
-		sm.TryTransitionTo(UiLifecycleState.Created);
+        sm.Configure(EUIState.Wait, null,
+            onExit: (target, _) => steps.Add(EUIState.Wait));
+        sm.Configure(EUIState.Load,
+            onEnter: (from, _, _) => steps.Add(EUIState.Load));
+        sm.Configure(EUIState.PreLoad,
+            onEnter: (from, _, _) => steps.Add(EUIState.PreLoad));
+        sm.Configure(EUIState.Create,
+            onEnter: (from, _, _) => steps.Add(EUIState.Create));
+        sm.Configure(EUIState.Open,
+            onEnter: (from, _, _) => steps.Add(EUIState.Open));
 
-		Assert.That(sm.TryTransitionTo(UiLifecycleState.Opening), Is.True);
-		Assert.That(sm.Current, Is.EqualTo(UiLifecycleState.Opening));
-	}
+        sm.SetInitialState(EUIState.Wait);
+        sm.TransitionTo(EUIState.Load);
+        sm.TransitionTo(EUIState.PreLoad);
+        sm.TransitionTo(EUIState.Create);
+        sm.TransitionTo(EUIState.Open);
+
+        Assert.That(sm.CurrentState, Is.EqualTo(EUIState.Open));
+        Assert.That(steps, Is.EqualTo(new[] { EUIState.Wait, EUIState.Load, EUIState.PreLoad, EUIState.Create, EUIState.Open }));
+    }
+
+    [Test]
+    public void Close_lifecycle_sequence_transitions_correctly()
+    {
+        var sm = new StateMachine<EUIState, IUIStateContext>();
+        var steps = new List<EUIState>();
+
+        sm.Configure(EUIState.Open, null,
+            onExit: (target, _) => steps.Add(EUIState.Open));
+        sm.Configure(EUIState.Close,
+            onEnter: (from, _, _) => steps.Add(EUIState.Close),
+            onExit: (target, _) => steps.Add(EUIState.Close));
+        sm.Configure(EUIState.CloseDone,
+            onEnter: (from, _, _) => steps.Add(EUIState.CloseDone));
+
+        sm.SetInitialState(EUIState.Open);
+        sm.TransitionTo(EUIState.Close);
+        sm.TransitionTo(EUIState.CloseDone);
+
+        Assert.That(sm.CurrentState, Is.EqualTo(EUIState.CloseDone));
+        Assert.That(steps, Is.EqualTo(new[] { EUIState.Open, EUIState.Close, EUIState.Close, EUIState.CloseDone }));
+    }
+
+    [Test]
+    public void Reopen_after_close_completes_full_cycle()
+    {
+        var sm = new StateMachine<EUIState, IUIStateContext>();
+
+        sm.SetInitialState(EUIState.CloseDone);
+        sm.TransitionTo(EUIState.Wait);
+        sm.TransitionTo(EUIState.Load);
+        sm.TransitionTo(EUIState.Create);
+        sm.TransitionTo(EUIState.Open);
+
+        Assert.That(sm.CurrentState, Is.EqualTo(EUIState.Open));
+    }
 }

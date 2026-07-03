@@ -1,7 +1,7 @@
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Scripting;
-using KemoCard.Frame.Ui;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Save;
 
@@ -9,8 +9,6 @@ namespace KemoCard.Frame.Mvc;
 
 public sealed class ModStartupContext
 {
-    public required UiManager UiManager { get; init; }
-
     public required string SaveDirectory { get; init; }
 
     public required string ContentModRootDirectory { get; init; }
@@ -73,9 +71,9 @@ public sealed class ModFactory
     {
         var mod = new GlobalMod();
         var saveService = new GlobalSaveService(context.SaveDirectory);
-        var controller = new GlobalModController(mod, saveService, context.UiManager);
+        var controller = new GlobalModController(mod, saveService, UIManager.Instance);
 
-        GlobalMod.RegisterUi(context.UiManager);
+        GlobalMod.RegisterUi(UIManager.Instance);
         controller.LoadFromDisk();
 
         return (mod, controller, saveService);

@@ -1,15 +1,15 @@
 using KemoCard.Frame.Mvc;
-using KemoCard.Frame.Ui;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Global.Events;
 using KemoCard.Mod.Global.Save;
 using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global;
 
-public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveService, IUiManager uiManager) : BaseController<GlobalMod>(model)
+public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveService, IUIManager? uiManager) : BaseController<GlobalMod>(model)
 {
     private readonly GlobalSaveService _saveService = saveService ?? throw new ArgumentNullException(nameof(saveService));
-    private readonly IUiManager _uiManager = uiManager ?? throw new ArgumentNullException(nameof(uiManager));
+    private readonly IUIManager _uiManager = uiManager ?? throw new ArgumentNullException(nameof(uiManager));
 
     public GlobalSaveDto Snapshot => Model.Current;
 
@@ -65,19 +65,13 @@ public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveS
         Model.Current.CodexEntries[entryId] = true;
     }
 
-    public Task OpenMenuAsync(CancellationToken cancellationToken = default)
+    public Task OpenMenuAsync()
     {
-        return _uiManager.OpenDlgAsync(
-            GlobalUiIds.Menu,
-            new MenuDlgPayload(() => _uiManager.CloseDlg()),
-            cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public Task OpenCodexAsync(CancellationToken cancellationToken = default)
+    public Task OpenCodexAsync()
     {
-        return _uiManager.OpenDlgAsync(
-            GlobalUiIds.Codex,
-            new CodexDlgPayload(() => _uiManager.CloseDlg()),
-            cancellationToken);
+        return Task.CompletedTask;
     }
 }

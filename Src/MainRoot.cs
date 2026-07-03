@@ -3,7 +3,7 @@ using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.Scripting;
-using KemoCard.Frame.Ui;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Save;
 
@@ -37,23 +37,10 @@ public partial class MainRoot : Control
 
     public override void _Ready()
     {
-        var uiManager = GetNodeOrNull<UiManager>("UiManager");
-        var dlgHost = GetNodeOrNull<Control>("DlgCanvas/DlgHost");
-        var popupStack = GetNodeOrNull<Control>("PopupCanvas/PopupStack");
-        if (uiManager is null || dlgHost is null || popupStack is null)
-        {
-            GD.PushError("MainRoot: missing UiManager, DlgCanvas/DlgHost, or PopupCanvas/PopupStack.");
-            CallDeferred(MethodName.QuitGame);
-            return;
-        }
-
-        uiManager.Configure(dlgHost, popupStack);
-
         EventDispatcher.Configure(new GodotEventDispatcherLogger());
 
         _startup = ModFactory.Bootstrap(new()
         {
-            UiManager = uiManager,
             SaveDirectory = ProjectSettings.GlobalizePath("user://saves"),
             ContentModRootDirectory = ProjectSettings.GlobalizePath("user://mods"),
             BundledContentModsDirectory = ProjectSettings.GlobalizePath("res://Config/mods"),

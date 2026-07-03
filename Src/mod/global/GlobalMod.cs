@@ -1,5 +1,5 @@
 using KemoCard.Frame.Mvc;
-using KemoCard.Frame.Ui;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Global.Save;
 using KemoCard.Mod.Global.Ui;
 
@@ -33,16 +33,8 @@ public sealed partial class GlobalMod : BaseMod
 
     public GlobalSaveDto Current { get; internal set; } = GlobalSaveDto.CreateDefault();
 
-    public static void RegisterUi(UiManager uiManager)
+    public static void RegisterUi(UIManager uiManager)
     {
         ArgumentNullException.ThrowIfNull(uiManager);
-
-        uiManager.RegisterDlg<MenuDlg, MenuDlgPayload>(
-            GlobalUiIds.Menu,
-            static _ => new MenuDlg());
-
-        uiManager.RegisterDlg<CodexDlg, CodexDlgPayload>(
-            GlobalUiIds.Codex,
-            static _ => new CodexDlg());
     }
 }

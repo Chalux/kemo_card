@@ -1,0 +1,135 @@
+using Godot;
+using KemoCard.Frame.UI.Def;
+
+namespace KemoCard.Frame.UI.Base;
+
+/// <summary>
+/// 基础 UI 类，所有 UI 都应该继承自此类
+/// </summary>
+public abstract partial class BaseUI : Control, IUIMeta
+{
+    /// <summary>
+    /// 点击事件的回调函数
+    /// </summary>
+    private readonly Dictionary<Node, Action> _clickActions = [];
+    /// <summary>
+    /// Control 节点的 GuiInput 事件处理器映射，用于反订阅
+    /// </summary>
+    private readonly Dictionary<Node, Control.GuiInputEventHandler> _guiInputHandlers = [];
+
+    /// <summary>
+    /// UI 的 ID
+    /// </summary>
+    public abstract string UIId { get; }
+    /// <summary>
+    /// UI 的目录
+    /// </summary>
+    public abstract string UIDir { get; }
+    /// <summary>
+    /// UI 的类型
+    /// </summary>
+    public abstract EUIType UIType { get; }
+    /// <summary>
+    /// 基础打开选项
+    /// </summary>
+    public virtual UIOpenOpt? BaseOpenOpt => null;
+    /// <summary>
+    /// 打开选项
+    /// </summary>
+    public virtual UIOpenOpt? OpenOpt => null;
+
+    /// <summary>
+    /// 获取 UI 的场景路径
+    /// </summary>
+    public string GetScenePath()
+    {
+        return $"res://{UIDir}/{UIId}.tscn";
+    }
+
+    public override void _Ready()
+    {
+        OnReady();
+    }
+
+    public override void _ExitTree()
+    {
+        ClearLifeCycle();
+        base._ExitTree();
+    }
+
+    protected virtual void OnReady()
+    {
+    }
+
+    #region 生命周期
+    protected void ClearLifeCycle()
+    {
+        foreach (var (node, action) in _clickActions)
+        {
+            if (IsInstanceValid(node))
+            {
+                if (node is BaseButton btn)
+                {
+                    btn.Pressed -= action;
+                }
+                else if (node is Control ctrl)
+                {
+                    if (_guiInputHandlers.TryGetValue(node, out var guiHandler))
+                    {
+                        ctrl.GuiInput -= guiHandler;
+                    }
+                }
+            }
+        }
+        _clickActions.Clear();
+        _guiInputHandlers.Clear();
+    }
+
+    protected void OnClicks(params (Node node, Action action)[] clicks)
+    {
+        foreach (var (node, action) in clicks)
+        {
+            OnClicks(node, action);
+        }
+    }
+
+    protected void OnClicks(Node node, Action callback)
+    {
+        if (_clickActions.TryGetValue(node, out Action? existingAction))
+        {
+            if (node is BaseButton oldBtn)
+            {
+                oldBtn.Pressed -= existingAction;
+            }
+            else if (node is Control oldCtrl)
+            {
+                if (_guiInputHandlers.TryGetValue(node, out var oldGuiHandler))
+                {
+                    oldCtrl.GuiInput -= oldGuiHandler;
+                }
+            }
+            _clickActions.Remove(node);
+            _guiInputHandlers.Remove(node);
+        }
+
+        _clickActions[node] = callback;
+
+        if (node is BaseButton button)
+        {
+            button.Pressed += callback;
+        }
+        else if (node is Control ctrl)
+        {
+            void GuiHandler(InputEvent @event)
+            {
+                if (@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left && mouseBtn.Pressed)
+                {
+                    callback();
+                }
+            }
+            ctrl.GuiInput += GuiHandler;
+            _guiInputHandlers[node] = GuiHandler;
+        }
+    }
+    #endregion
+}

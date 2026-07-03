@@ -222,7 +222,7 @@ public sealed class EventTableGenerator : IIncrementalGenerator
         sb.AppendLine($"{indent}{{");
         foreach (var e in events)
         {
-            var listener = $"global::KemoCard.Frame.Mvc.EventListener<{e.PayloadFq}>";
+            var listener = $"global::KemoCard.Frame.Mvc.IEventListener<{e.PayloadFq}>";
             sb.AppendLine($"{indent}    public {listener} On{e.Name}(");
             sb.AppendLine($"{indent}        global::System.Action<{e.PayloadFq}, {listener}> handler,");
             sb.AppendLine($"{indent}        object? caller = null)");

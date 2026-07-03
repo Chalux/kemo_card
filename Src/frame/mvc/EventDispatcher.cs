@@ -25,18 +25,30 @@ internal interface IEventListener
     void InvokeUntyped(object? payload);
 }
 
-public sealed class EventListener<TPayload> : IEventListener
+/// <summary>
+/// 对外暴露的监听器只读视图。外部通过此接口访问 Key、Caller、IsActive 及调用 Off() 取消订阅。
+/// </summary>
+public interface IEventListener<TPayload>
+{
+    EventKey<TPayload> Key { get; }
+    object Caller { get; }
+    bool Once { get; }
+    bool IsActive { get; }
+    void Off();
+}
+
+internal sealed class EventListener<TPayload> : IEventListener, IEventListener<TPayload>
 {
     public EventDispatcher Owner { get; init; }
     public EventKey<TPayload> Key { get; init; }
-    public Action<TPayload, EventListener<TPayload>> Handler { get; init; }
+    public Action<TPayload, IEventListener<TPayload>> Handler { get; init; }
     public object Caller { get; init; }
     public bool Once { get; init; }
     public bool IsActive { get; internal set; }
 
     int IEventListener.EventId => Key.Id;
 
-    internal EventListener(EventDispatcher owner, EventKey<TPayload> key, Action<TPayload, EventListener<TPayload>> handler, object caller, bool once)
+    internal EventListener(EventDispatcher owner, EventKey<TPayload> key, Action<TPayload, IEventListener<TPayload>> handler, object caller, bool once)
     {
         Owner = owner;
         Key = key;
@@ -134,9 +146,9 @@ public sealed class EventDispatcher
     /// 注册监听器。<paramref name="caller"/> 为 <c>null</c> 时归一化为 <see cref="EventConst.NoneCaller"/>。
     /// 同一 key + handler + caller 已存在活跃 listener 时返回已有实例（不升级 Once 标志）。
     /// </summary>
-    public EventListener<TPayload> On<TPayload>(
+    public IEventListener<TPayload> On<TPayload>(
         EventKey<TPayload> key,
-        Action<TPayload, EventListener<TPayload>> handler,
+        Action<TPayload, IEventListener<TPayload>> handler,
         object? caller,
         bool once = false)
     {
@@ -182,7 +194,7 @@ public sealed class EventDispatcher
 
     public void Once<TPayload>(
         EventKey<TPayload> key,
-        Action<TPayload, EventListener<TPayload>> handler,
+        Action<TPayload, IEventListener<TPayload>> handler,
         object? caller)
         => On(key, handler, caller, true);
 
@@ -234,7 +246,7 @@ public sealed class EventDispatcher
     /// </summary>
     public bool Has<TPayload>(
         EventKey<TPayload> key,
-        Action<TPayload, EventListener<TPayload>>? handler = null,
+        Action<TPayload, IEventListener<TPayload>>? handler = null,
         object? caller = null)
     {
         lock (_gate)
@@ -289,7 +301,7 @@ public sealed class EventDispatcher
     /// </summary>
     public void Off<TPayload>(
         EventKey<TPayload> key,
-        Action<TPayload, EventListener<TPayload>>? handler = null,
+        Action<TPayload, IEventListener<TPayload>>? handler = null,
         object? caller = null)
     {
         lock (_gate)
@@ -383,7 +395,7 @@ public sealed class EventDispatcher
         }
     }
 
-    public void OffListener<TPayload>(EventListener<TPayload> listener)
+    internal void OffListener<TPayload>(EventListener<TPayload> listener)
     {
         if (listener.Owner != this)
         {
@@ -459,7 +471,7 @@ public sealed class EventDispatcher
 
     private bool TryFindActiveListener<TPayload>(
         int id,
-        Action<TPayload, EventListener<TPayload>> handler,
+        Action<TPayload, IEventListener<TPayload>> handler,
         object caller,
         out EventListener<TPayload> existing)
     {

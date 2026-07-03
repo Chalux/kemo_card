@@ -117,7 +117,7 @@ public sealed class EventDispatcherTests
         var key = new EventKey<IntPayload>(5);
         var callerA = new object();
         var callerB = new object();
-        Action<IntPayload, EventListener<IntPayload>> handler = static (_, _) => { };
+        Action<IntPayload, IEventListener<IntPayload>> handler = static (_, _) => { };
 
         bus.On(key, handler, callerA);
         bus.On(key, handler, callerB);
@@ -172,7 +172,7 @@ public sealed class EventDispatcherTests
         var bus = new EventDispatcher();
         var key = new EventKey<IntPayload>(10);
         var count = 0;
-        Action<IntPayload, EventListener<IntPayload>> handler = (_, _) => count++;
+        Action<IntPayload, IEventListener<IntPayload>> handler = (_, _) => count++;
 
         var first = bus.On(key, handler, this);
         var second = bus.On(key, handler, this);
@@ -270,7 +270,7 @@ public sealed class EventDispatcherTests
         var bus = new EventDispatcher();
         var key = new EventKey<IntPayload>(15);
         var count = 0;
-        Action<IntPayload, EventListener<IntPayload>> handler = (_, _) => count++;
+        Action<IntPayload, IEventListener<IntPayload>> handler = (_, _) => count++;
 
         var first = bus.On(key, handler, this);
         bus.Once(key, handler, this);
