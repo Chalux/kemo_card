@@ -1,4 +1,5 @@
 using KemoCard.Frame.StateMachine;
+using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 
 namespace KemoCard.Frame.UI.States;
@@ -10,58 +11,32 @@ public sealed class UICloseStateHandler : IStateHandler<EUIState, IUIStateContex
 {
     public EUIState State => EUIState.Close;
 
-    public Action<EUIState, IUIStateContext, object?>? OnEnter => OnEnterAction;
-    public Action<EUIState, IUIStateContext>? OnExit => null;
+    public Action<EUIState, IUIStateContext?, object?>? OnEnter => OnEnterAction;
+    public Action<EUIState, IUIStateContext?>? OnExit => null;
 
-    public void OnEnterAction(EUIState state, IUIStateContext context, object? data)
+    public static void OnEnterAction(EUIState state, IUIStateContext? context, object? data)
     {
-        UIVo vo = context.UIVo;
-        vo.CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        UIVo? vo = context?.UIVo;
+        if (vo == null) return;
 
-        if (vo.UI == null || vo.OpenTime == 0)
+        vo.Lifecycle.CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        if (vo.Runtime.UI == null || vo.Lifecycle.OpenTime == 0)
         {
-            vo.StateMachine.TransitionTo(EUIState.Destroy);
+            vo.StateMachine.TransitionTo(EUIState.Destroy, context);
             return;
         }
 
-        if (vo.Mask != null)
+        if (vo.Runtime.Mask != null)
         {
-            vo.ClearMaskAnim();
-            vo.Mask.AnimState = EUIAnimState.Close;
-            vo.ClearMaskAnimCallback = vo.Mask.InternalCloseAnim(() =>
+            vo.Anim.StartMaskCloseAnim(vo.Runtime.Mask, () => { });
+        }
+
+        vo.Anim.StartCloseAnim(vo.OpenOpt.AnimType, vo.Runtime.UI,
+            () =>
             {
-                if (vo.Mask!.AnimState == EUIAnimState.Close)
-                {
-                    vo.Mask.AnimState = EUIAnimState.None;
-                }
-
-                vo.Mask.InternalClose();
-                vo.Mask.QueueFree();
+                if (vo.StateMachine.CurrentState != EUIState.Close) return;
+                vo.StateMachine.TransitionTo(EUIState.CloseDone, context);
             });
-        }
-
-        if (vo.OpenOpt.AnimType != EAnimType.None)
-        {
-            vo.ClearAnim();
-            vo.UI!.AnimState = EUIAnimState.Close;
-            vo.ClearAnimCallback = vo.UI.InternalCloseAnim(() =>
-            {
-                if (vo.UI!.AnimState == EUIAnimState.Close)
-                {
-                    vo.UI!.AnimState = EUIAnimState.None;
-                }
-
-                if (vo.StateMachine.CurrentState != EUIState.Close)
-                {
-                    return;
-                }
-
-                vo.StateMachine.TransitionTo(EUIState.CloseDone);
-            });
-        }
-        else
-        {
-            vo.StateMachine.TransitionTo(EUIState.CloseDone);
-        }
     }
 }

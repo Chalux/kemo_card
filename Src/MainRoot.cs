@@ -4,6 +4,7 @@ using KemoCard.Frame.Content;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.Scripting;
 using KemoCard.Frame.UI;
+using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Save;
 
@@ -37,6 +38,8 @@ public partial class MainRoot : Control
 
     public override void _Ready()
     {
+        InitUIManager();
+
         EventDispatcher.Configure(new GodotEventDispatcherLogger());
 
         _startup = ModFactory.Bootstrap(new()
@@ -44,6 +47,34 @@ public partial class MainRoot : Control
             SaveDirectory = ProjectSettings.GlobalizePath("user://saves"),
             ContentModRootDirectory = ProjectSettings.GlobalizePath("user://mods"),
             BundledContentModsDirectory = ProjectSettings.GlobalizePath("res://Config/mods"),
+        });
+    }
+
+    private void InitUIManager()
+    {
+        var registry = new UIRuntimeRegistry();
+        GlobalMod.RegisterUi(registry);
+
+        var uiManager = new UIManager();
+        AddChild(uiManager);
+
+        uiManager.Init(new UIManagerInitOpt
+        {
+            Registry = registry,
+            StageRoot = this,
+            Layers =
+            [
+                EUILayer.Win,
+                EUILayer.Dlg,
+                EUILayer.Loading,
+                EUILayer.Pop,
+            ],
+            TopLayers =
+            [
+                EUILayer.Debug,
+                EUILayer.Notice,
+                EUILayer.Guide,
+            ],
         });
     }
 

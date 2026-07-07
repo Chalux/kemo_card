@@ -10,37 +10,39 @@ public readonly struct UIOpenPayload(UIVo vo)
 }
 
 /// <summary>
-/// 打开 UI 状态处理器
+/// 打开 UI 状态处理器: 初始化事件、播放动画、派发事件
 /// </summary>
 public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext>
 {
     public EUIState State => EUIState.Open;
 
-    public Action<EUIState, IUIStateContext, object?>? OnEnter => OnEnterAction;
-    public Action<EUIState, IUIStateContext>? OnExit => null;
+    public Action<EUIState, IUIStateContext?, object?>? OnEnter => OnEnterAction;
+    public Action<EUIState, IUIStateContext?>? OnExit => null;
 
-    public void OnEnterAction(EUIState state, IUIStateContext context, object? data)
+    public static void OnEnterAction(EUIState state, IUIStateContext? context, object? data)
     {
+        if (context == null) return;
         UIVo vo = context.UIVo;
         UIManager manager = context.UIManager;
-        BaseWin win = vo.UI!;
+        BaseWin win = vo.Runtime.UI!;
 
-        vo.OpenTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        vo.Lifecycle.OpenTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         if (data != null)
         {
-            vo.AddToNode();
+            vo.Runtime.AddToNode();
         }
 
         win.Payload = vo.Payload;
         vo.OpenOpt.OnOpenBefore?.Invoke(vo);
         vo.OpenOpt.OnOpenBefore = null;
 
-        bool isFirstOpen = data == null;
+        bool isFirstOpen = data is not OpenTransitionData { IsReopen: true };
         if (isFirstOpen)
         {
-            vo.Mask?.InternalInitEvent();
-            win.InternalInitEvent();
+            if (vo.Runtime.Mask is IUILifecycleInvoker maskInvoker)
+                maskInvoker.InvokeInitEvent();
+            ((IUILifecycleInvoker)win).InvokeInitEvent();
 
             if (vo.StateMachine.CurrentState != EUIState.Open)
             {
@@ -48,57 +50,25 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
             }
         }
 
-        if (vo.Mask != null)
+        if (vo.Runtime.Mask != null)
         {
-            vo.ClearMaskAnim();
-            vo.Mask.AnimState = EUIAnimState.Open;
-            vo.ClearMaskAnimCallback = vo.Mask.InternalOpenAnim(() =>
-            {
-                if (vo.Mask!.AnimState == EUIAnimState.Open)
-                {
-                    vo.Mask.AnimState = EUIAnimState.None;
-                }
-
-                vo.Mask.InternalOpenAnimDone();
-            });
-            vo.Mask.InternalOpen();
+            vo.Anim.StartMaskOpenAnim(vo.Runtime.Mask, () => { });
+            ((IUILifecycleInvoker)vo.Runtime.Mask).InvokeMaskOpen();
         }
 
-        win.InternalOpen();
-        vo.Mask?.InternalUIOpen();
+        ((IUILifecycleInvoker)win).InvokeOpen();
+        ((IUILifecycleInvoker?)vo.Runtime.Mask)?.InvokeMaskUIOpen();
 
         if (vo.StateMachine.CurrentState != EUIState.Open)
         {
             return;
         }
 
-        bool playAnim = vo.OpenOpt.AnimType != EAnimType.None;
-        if (playAnim && vo.OpenOpt.AnimType == EAnimType.SkipReOpen && data is "reOpen")
-        {
-            playAnim = false;
-        }
+        OpenTransitionData transitionData = data as OpenTransitionData? ?? default;
+        vo.Anim.StartOpenAnim(vo.OpenOpt.AnimType, transitionData, win,
+            () => manager.LayerManager.UpdateLayers());
 
-        if (playAnim)
-        {
-            vo.ClearAnim();
-            win.AnimState = EUIAnimState.Open;
-            vo.ClearAnimCallback = win.InternalOpenAnim(() =>
-            {
-                if (win.AnimState == EUIAnimState.Open)
-                {
-                    win.AnimState = EUIAnimState.None;
-                }
-
-                win.InternalOpenAnimDone();
-                manager.UpdateLayers();
-            });
-        }
-        else
-        {
-            manager.UpdateLayers();
-        }
-
-        manager.EventDispatcher.Send<UIOpenPayload>(UIEvent.Open, new(vo));
+        manager.EventDispatcher.Send(UIEvent.Open, new(vo));
         vo.OpenOpt.OnOpen?.Invoke(vo);
         context.OpenNext();
     }

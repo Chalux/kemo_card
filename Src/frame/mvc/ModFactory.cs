@@ -73,7 +73,6 @@ public sealed class ModFactory
         var saveService = new GlobalSaveService(context.SaveDirectory);
         var controller = new GlobalModController(mod, saveService, UIManager.Instance);
 
-        GlobalMod.RegisterUi(UIManager.Instance);
         controller.LoadFromDisk();
 
         return (mod, controller, saveService);

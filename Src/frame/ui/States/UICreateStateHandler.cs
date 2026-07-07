@@ -1,4 +1,5 @@
 using KemoCard.Frame.StateMachine;
+using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 
 namespace KemoCard.Frame.UI.States;
@@ -10,24 +11,30 @@ public sealed class UICreateStateHandler : IStateHandler<EUIState, IUIStateConte
 {
     public EUIState State => EUIState.Create;
 
-    public Action<EUIState, IUIStateContext, object?>? OnEnter => OnEnterAction;
-    public Action<EUIState, IUIStateContext>? OnExit => null;
+    public Action<EUIState, IUIStateContext?, object?>? OnEnter => OnEnterAction;
+    public Action<EUIState, IUIStateContext?>? OnExit => null;
 
-    public static void OnEnterAction(EUIState state, IUIStateContext context, object? data)
+    public static void OnEnterAction(EUIState state, IUIStateContext? context, object? data)
     {
-        UIVo vo = context.UIVo;
-        vo.CreateTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        UIVo? vo = context?.UIVo;
+        if (vo == null) return;
 
-        vo.Mask?.Init(vo);
-        vo.AddToNode();
+        vo.Lifecycle.CreateTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        vo.UI!.InternalCreate();
+        if (vo.Runtime.Mask != null) vo.Runtime.Mask.UIVo = vo;
+        vo.Runtime.Mask?.Init(vo);
+        vo.Runtime.AddToNode();
+
+        if (vo.Runtime.UI is IUILifecycleInvoker invoker)
+        {
+            invoker.InvokeCreate();
+        }
 
         if (vo.StateMachine.CurrentState != EUIState.Create)
         {
             return;
         }
 
-        vo.StateMachine.TransitionTo(EUIState.Open);
+        vo.StateMachine.TransitionTo(EUIState.Open, context);
     }
 }

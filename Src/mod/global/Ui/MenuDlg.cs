@@ -1,24 +1,33 @@
 using Godot;
-using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
+using KemoCard.Frame.UI.Def;
+using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
-public readonly record struct MenuDlgPayload(Action Close);
-
-public partial class MenuDlg : BaseDlg
+public partial class MenuDlg : BaseDlg<EmptyPayload>
 {
-    public override string UIId => throw new NotImplementedException();
+    [Export] public Button? StartBtn { get; set; }
+    [Export] public Button? LoadBtn { get; set; }
+    [Export] public Button? SettingsBtn { get; set; }
+    [Export] public Button? QuitBtn { get; set; }
 
-    public override string UIDir => throw new NotImplementedException();
+    public override string UIId => GlobalUiIds.Menu;
+    public override string UIDir => "Src/mod/global/Ui";
+
+    protected override void InitEvent()
+    {
+        if (StartBtn != null)
+        {
+            OnClicks(StartBtn, Close);
+        }
+    }
 
     protected override void OnOpen()
     {
-        throw new NotImplementedException();
     }
 
     protected override void UpdateView()
     {
-        throw new NotImplementedException();
     }
 }

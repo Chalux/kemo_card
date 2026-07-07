@@ -1,24 +1,21 @@
 using Godot;
-using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
+using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
-public readonly record struct CodexDlgPayload(Action Close);
+public record struct CodexDlgPayload;
 
-public partial class CodexDlg : BaseDlg
+public partial class CodexDlg : BaseDlg<CodexDlgPayload>
 {
-    public override string UIId => throw new NotImplementedException();
-
-    public override string UIDir => throw new NotImplementedException();
+    public override string UIId => GlobalUiIds.Codex;
+    public override string UIDir => "Src/mod/global/Ui";
 
     protected override void OnOpen()
     {
-        throw new NotImplementedException();
     }
 
     protected override void UpdateView()
     {
-        throw new NotImplementedException();
     }
 }

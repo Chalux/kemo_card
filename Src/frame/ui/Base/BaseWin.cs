@@ -2,7 +2,7 @@ using KemoCard.Frame.UI.Def;
 
 namespace KemoCard.Frame.UI.Base;
 
-public abstract partial class BaseWin : BaseUI
+public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
 {
     public UIVo? UIVo { get; set; }
     public object? Payload { get; set; }
@@ -17,12 +17,8 @@ public abstract partial class BaseWin : BaseUI
         HideBelow = true,
     };
 
-    #region 生命周期（子类override）
-    protected virtual void OnPreLoad(Action done, Action fail)
-    {
-        done();
-    }
-
+    #region 生命周期（子类 override）
+    protected virtual void OnPreLoad(Action done, Action fail) => done();
     protected virtual void OnCreate() { }
     protected virtual void InitEvent() { }
     protected abstract void OnOpen();
@@ -46,16 +42,26 @@ public abstract partial class BaseWin : BaseUI
     protected virtual void OnLayerVisibleUpdate() { }
     #endregion
 
-    #region 内部生命周期（UIVo状态机调用）
-    internal void InternalPreLoad(Action done, Action fail) => OnPreLoad(done, fail);
-    internal void InternalCreate() => OnCreate();
-    internal void InternalInitEvent() => InitEvent();
-    internal void InternalOpen() => OnOpen();
-    internal Action? InternalOpenAnim(Action done) => OnOpenAnim(done);
-    internal Action? InternalCloseAnim(Action done) => OnCloseAnim(done);
-    internal void InternalClose() => OnClose();
-    internal void InternalLayerVisibleUpdate() => OnLayerVisibleUpdate();
-    internal void InternalOpenAnimDone() => OnOpenAnimDone();
+    #region IUILifecycleInvoker 显式实现
+    void IUILifecycleInvoker.InvokePreLoad(Action done, Action fail) => OnPreLoad(done, fail);
+    void IUILifecycleInvoker.InvokeCreate() => OnCreate();
+    void IUILifecycleInvoker.InvokeInitEvent() => InitEvent();
+    void IUILifecycleInvoker.InvokeOpen() => OnOpen();
+    Action? IUILifecycleInvoker.InvokeOpenAnim(Action done) => OnOpenAnim(done);
+    Action? IUILifecycleInvoker.InvokeCloseAnim(Action done) => OnCloseAnim(done);
+    void IUILifecycleInvoker.InvokeClose() => OnClose();
+    void IUILifecycleInvoker.InvokeLayerVisibleUpdate() => OnLayerVisibleUpdate();
+    void IUILifecycleInvoker.InvokeOpenAnimDone() => OnOpenAnimDone();
+
+    // Mask 生命周期（Win 不支持，空实现）
+    void IUILifecycleInvoker.InvokeMaskOpen() { }
+    void IUILifecycleInvoker.InvokeMaskUIOpen() { }
+    void IUILifecycleInvoker.InvokeMaskOpenAnimDone() { }
+    void IUILifecycleInvoker.InvokeMaskClose() { }
+    void IUILifecycleInvoker.InvokeMaskUIClose() { }
+    void IUILifecycleInvoker.InvokeMaskUIDestroy() { }
+    Action? IUILifecycleInvoker.InvokeMaskOpenAnim(Action done) { done(); return null; }
+    Action? IUILifecycleInvoker.InvokeMaskCloseAnim(Action done) { done(); return null; }
     #endregion
 
     public void Close()

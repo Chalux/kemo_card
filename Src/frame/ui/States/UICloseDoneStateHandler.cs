@@ -1,4 +1,5 @@
 using KemoCard.Frame.StateMachine;
+using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 
 namespace KemoCard.Frame.UI.States;
@@ -15,45 +16,47 @@ public sealed class UICloseDoneStateHandler : IStateHandler<EUIState, IUIStateCo
 {
     public EUIState State => EUIState.CloseDone;
 
-    public Action<EUIState, IUIStateContext, object?>? OnEnter => OnEnterAction;
-    public Action<EUIState, IUIStateContext>? OnExit => null;
+    public Action<EUIState, IUIStateContext?, object?>? OnEnter => OnEnterAction;
+    public Action<EUIState, IUIStateContext?>? OnExit => null;
 
-    public void OnEnterAction(EUIState state, IUIStateContext context, object? data)
+    public static void OnEnterAction(EUIState state, IUIStateContext? context, object? data)
     {
-        UIVo vo = context.UIVo;
-        UIManager manager = context.UIManager;
+        UIVo? vo = context?.UIVo;
+        if (vo == null) return;
 
-        vo.CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        vo.UI!.InternalClose();
-        vo.Mask?.InternalUIClose();
+        UIManager? manager = context?.UIManager;
+        if (manager == null) return;
+
+        vo.Lifecycle.CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        ((IUILifecycleInvoker)vo.Runtime.UI!).InvokeClose();
+        ((IUILifecycleInvoker?)vo.Runtime.Mask)?.InvokeMaskUIClose();
 
         if (vo.StateMachine.CurrentState != EUIState.CloseDone)
         {
             return;
         }
 
-        UILayer? layer = manager.GetLayer(vo.OpenOpt.Layer ?? EUILayer.Dlg);
+        UILayer? layer = manager.LayerManager.GetLayer(vo.OpenOpt.Layer ?? EUILayer.Dlg);
         layer?.RemoveUI(vo.Id);
-        // vo.UI.RemoveFromParent();
-        vo.UI.GetParent()?.RemoveChild(vo.UI);
+        vo.Runtime.UI!.GetParent()?.RemoveChild(vo.Runtime.UI);
 
         if (vo.OpenOpt.CacheTime == -1)
         {
-            vo.DestroyTime = -1;
-            vo.StateMachine.TransitionTo(EUIState.Cache);
+            vo.Lifecycle.DestroyTime = -1;
+            vo.StateMachine.TransitionTo(EUIState.Cache, context);
         }
         else if (vo.OpenOpt.CacheTime > 0)
         {
-            vo.DestroyTime = vo.CloseTime + vo.OpenOpt.CacheTime;
-            vo.StateMachine.TransitionTo(EUIState.Cache);
+            vo.Lifecycle.DestroyTime = vo.Lifecycle.CloseTime + vo.OpenOpt.CacheTime;
+            vo.StateMachine.TransitionTo(EUIState.Cache, context);
         }
         else
         {
-            vo.DestroyTime = vo.CloseTime;
-            vo.StateMachine.TransitionTo(EUIState.Destroy);
+            vo.Lifecycle.DestroyTime = vo.Lifecycle.CloseTime;
+            vo.StateMachine.TransitionTo(EUIState.Destroy, context);
         }
 
-        manager.UpdateLayers();
-        manager.EventDispatcher.Send(UIEvent.Close, new(vo));
+        manager.LayerManager.UpdateLayers();
+        manager.EventDispatcher.Send(UIEvent.Close, new UIClosePayload(vo));
     }
 }

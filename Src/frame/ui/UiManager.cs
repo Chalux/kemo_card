@@ -3,8 +3,8 @@ using KemoCard.Frame.Mvc;
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
-using KemoCard.Frame.UI.Route;
 using KemoCard.Frame.UI.States;
+using KemoCard.Frame.Util;
 using static Godot.Control;
 
 namespace KemoCard.Frame.UI;
@@ -15,6 +15,7 @@ namespace KemoCard.Frame.UI;
 public interface IUIManager
 {
     Task<UIVo?> OpenAsync(string id, object? payload = null, UIOpenOpt? openOpt = null);
+    Task<UIVo?> OpenAsync<TPayload>(UiId<TPayload> id, TPayload payload, UIOpenOpt? openOpt = null);
     Task<UIVo?> OpenChildAsync(string childId, object? payload = null, UIOpenOpt? openOpt = null);
     void Close(string id);
     void CloseAllPop();
@@ -22,34 +23,35 @@ public interface IUIManager
     void CloseAllExclude(IReadOnlyList<string>? excludeIds = null);
     UIVo? GetUIVo(string id);
     BaseWin? GetWin(string id);
+    T? GetWin<T>(string id) where T : BaseWin;
     UILayer? GetLayer(EUILayer layer);
     bool IsUITop(string Id);
     string GetPath(string id);
+
+    /// <summary>UI 导航栈</summary>
+    UIStack NavStack { get; }
+    /// <summary>返回上一级 UI（关闭当前，恢复上一个）</summary>
+    Task<UIVo?> BackAsync();
 }
 
 /// <summary>
-/// UI 管理器
+/// UI 管理器：门面角色，委托给 UILayerManager / UIVoRegistry / UIOpenCoordinator 等子组件。
 /// </summary>
 public partial class UIManager : Node, IUIManager
 {
     public static UIManager? Instance { get; private set; }
 
     public EventDispatcher EventDispatcher { get; } = new();
+    public UIStack NavStack { get; } = new();
 
-    internal Dictionary<string, UIVo> UIVoMap { get; } = [];
-    internal readonly Dictionary<EUILayer, UILayer> LayerMap = [];
+    internal UILayerManager LayerManager { get; } = new();
+    internal UIVoRegistry VoRegistry { get; private set; } = null!;
+    internal UIOpenCoordinator OpenCoordinator { get; private set; } = null!;
 
-    private Control _uiRoot = null!;
-    private Control _uiTopRoot = null!;
     private UIRuntimeRegistry _registry = null!;
-    private readonly Queue<UIVo> _openQueue = [];
-    private UIVo? _currOpening = null;
+    private bool _inited;
     private EUILayer[] _layers = [];
-    private EUILayer[] _topLayers = [];
-    private EUILayer[] _allLayers = [];
-    private bool _inited = false;
-    private double _cacheCheckAccumulator = 0;
-    private List<IStateHandler<EUIState, IUIStateContext>> _handlers = null!;
+    private GodotMainThreadSyncContext? _syncContext;
 
     public override void _Ready()
     {
@@ -58,25 +60,19 @@ public partial class UIManager : Node, IUIManager
 
     public override void _ExitTree()
     {
+        _syncContext?.Uninstall();
         if (Instance == this) Instance = null;
     }
 
     public override void _Process(double delta)
     {
+        _syncContext?.Pump();
         if (!_inited) return;
 
-        _cacheCheckAccumulator += delta;
-        if (_cacheCheckAccumulator < 1) return;
-
-        _cacheCheckAccumulator = 0;
-        TickCacheDestroy();
-        OpenNext();
+        OpenCoordinator.CheckLoadTimeout();
+        VoRegistry.TickCacheDestroy(delta);
     }
 
-    /// <summary>
-    /// 初始化 UI 管理器
-    /// </summary>
-    /// <param name="opt">初始化选项</param>
     public void Init(UIManagerInitOpt opt)
     {
         if (_inited)
@@ -88,34 +84,33 @@ public partial class UIManager : Node, IUIManager
         _inited = true;
         Instance = this;
 
+        _syncContext = new GodotMainThreadSyncContext();
+        _syncContext.Install();
+
         _registry = opt.Registry;
-
-        _handlers = [.. opt.StateHandlers ?? CreateDefaultStateHandlers()];
-
-        _uiRoot = opt.UIRoot ?? CreateFullScreenRoot("UIRoot");
-        _uiTopRoot = opt.UITopRoot ?? CreateFullScreenRoot("UITopRoot");
-
-        if (_uiRoot.GetParent() == null)
-        {
-            opt.StageRoot?.AddChild(_uiRoot);
-        }
-
-        if (_uiTopRoot.GetParent() == null)
-        {
-            opt.StageRoot?.AddChild(_uiTopRoot);
-        }
-
         _layers = [.. opt.Layers];
-        _topLayers = [.. opt.TopLayers];
-        _allLayers = [.. _layers, .. _topLayers];
 
-        BuildLayers(_uiRoot, _layers, opt.LayerOpenOpts, false);
-        BuildLayers(_uiTopRoot, _topLayers, opt.LayerOpenOpts, true);
+        var handlers = opt.StateHandlers ?? CreateDefaultStateHandlers();
+        VoRegistry = new UIVoRegistry(this, handlers);
+        OpenCoordinator = new UIOpenCoordinator(this);
 
-        UIRouteRegistry.Validate([.. _registry.GetAllMap().Keys]);
+        Control uiRoot = opt.UIRoot ?? CreateFullScreenRoot("UIRoot");
+        Control uiTopRoot = opt.UITopRoot ?? CreateFullScreenRoot("UITopRoot");
+
+        if (uiRoot.GetParent() == null) opt.StageRoot?.AddChild(uiRoot);
+        if (uiTopRoot.GetParent() == null) opt.StageRoot?.AddChild(uiTopRoot);
+
+        LayerManager.Init(uiRoot, uiTopRoot, [.. opt.Layers], [.. opt.TopLayers], opt.LayerOpenOpts);
+
+        _registry.Validate();
     }
 
     #region 打开/关闭
+    public Task<UIVo?> OpenAsync<TPayload>(UiId<TPayload> id, TPayload payload, UIOpenOpt? openOpt = null)
+    {
+        return OpenAsync(id.Value, payload, openOpt);
+    }
+
     public Task<UIVo?> OpenAsync(string id, object? payload = null, UIOpenOpt? openOpt = null)
     {
         TaskCompletionSource<UIVo?> tcs = new();
@@ -147,14 +142,14 @@ public partial class UIManager : Node, IUIManager
             return tcs.Task;
         }
 
-        if (!UIVoMap.TryGetValue(id, out UIVo? vo))
-        {
-            vo = new UIVo(id, entry.Type, payload, this, _handlers);
-            UIVoMap[id] = vo;
-        }
+        UIVo vo = VoRegistry.GetOrCreate(id, entry.Type, payload);
 
-        vo.OpenOpt?.OnFail?.Invoke();
+        // 重用已有 VO：优雅结束上一轮未完成的打开任务
+        vo.OpenTaskSource?.TrySetResult(vo);
+        vo.OpenTaskSource = null;
+
         vo.Payload = payload;
+        vo.OpenTaskSource = tcs;
 
         Action<IUIVoHandle>? userOnOpen = finalOpt.OnOpen;
         Action? userOnFail = finalOpt.OnFail;
@@ -179,13 +174,13 @@ public partial class UIManager : Node, IUIManager
             return tcs.Task;
         }
 
-        EnqueueOpen(vo);
+        OpenCoordinator.EnqueueOpen(vo);
         return tcs.Task;
     }
 
     public Task<UIVo?> OpenChildAsync(string childId, object? payload = null, UIOpenOpt? openOpt = null)
     {
-        string? parent = UIRouteRegistry.GetParent(childId);
+        string? parent = _registry.GetParentId(childId);
         if (parent == null)
         {
             GD.PushError($"UI 管理器: 打开子UI<{childId}> 失败，无父路由。回退为普通 OpenAsync");
@@ -205,8 +200,8 @@ public partial class UIManager : Node, IUIManager
                 return Task.FromResult<UIVo?>(null);
             }
 
-            UIRouteMeta? curMeta = UIRouteRegistry.GetMeta(cur);
-            string? curParent = UIRouteRegistry.GetParent(cur);
+            UIRouteMeta? curMeta = _registry.Get(cur)?.RouteMeta;
+            string? curParent = _registry.GetParentId(cur);
             if (curParent == null)
             {
                 return OpenAsync(cur, voForCur, optForRoot);
@@ -218,7 +213,7 @@ public partial class UIManager : Node, IUIManager
                 voDict["pgeId"] = cur;
             }
 
-            string? grand = UIRouteRegistry.GetParent(curParent);
+            string? grand = _registry.GetParentId(curParent);
             if (grand == null)
             {
                 UIOpenOpt finalOpt = curMeta?.ParentOpenOpt?.Clone() ?? DefaultUIOpenOpt.Value;
@@ -233,257 +228,117 @@ public partial class UIManager : Node, IUIManager
 
     public void Close(string id)
     {
-        if (!UIVoMap.TryGetValue(id, out UIVo? vo))
-        {
-            return;
-        }
+        UIVo? vo = VoRegistry.Get(id);
+        if (vo == null) return;
 
-        if (_currOpening == vo)
-        {
-            _currOpening = null;
-        }
+        OpenCoordinator.ResetCurrentOpening(vo);
+        OpenCoordinator.RemoveFromQueue(vo);
 
-        RemoveFromOpenQueue(vo);
+        if (vo.Lifecycle.OpenTime == 0)
+        {
+            vo.OpenTaskSource?.TrySetResult(null);
+            vo.OpenTaskSource = null;
+        }
 
         if (!vo.IsClose)
         {
             vo.StateMachine.TransitionTo(EUIState.Close, new UIStateContext(vo, this));
         }
 
-        OpenNext();
+        OpenCoordinator.OpenNext();
     }
 
     public void CloseAllPop()
     {
-        foreach (var vo in UIVoMap.Values)
+        foreach (var vo in VoRegistry.Map.Values)
         {
             if (vo.IsOpen && vo.Type == EUIType.Pop)
-            {
                 Close(vo.Id);
-            }
         }
     }
 
     public void CloseAllByType(EUIType type)
     {
-        foreach (var vo in UIVoMap.Values)
+        foreach (var vo in VoRegistry.Map.Values)
         {
             if (vo.IsOpen && vo.Type == type)
-            {
                 Close(vo.Id);
-            }
         }
     }
 
     public void CloseAllExclude(IReadOnlyList<string>? excludeIds = null)
     {
         excludeIds ??= [];
-        foreach (var vo in UIVoMap.Values)
+        foreach (var vo in VoRegistry.Map.Values)
         {
-            if (!vo.IsOpen || vo.Layer?.IsTop == true)
-            {
-                continue;
-            }
-
-            if (excludeIds.Contains(vo.Id))
-            {
-                continue;
-            }
-
+            if (!vo.IsOpen || vo.Runtime.Layer?.IsTop == true) continue;
+            if (excludeIds.Contains(vo.Id)) continue;
             Close(vo.Id);
         }
+    }
+
+    public async Task<UIVo?> BackAsync()
+    {
+        if (NavStack.Count < 2) return null;
+
+        string? currentId = NavStack.Top;
+        string? prevId = NavStack.Back();
+
+        if (currentId != null) Close(currentId);
+
+        UIVo? existing = VoRegistry.Get(prevId!);
+        if (existing != null && existing.IsOpen) return existing;
+
+        UIRuntimeEntry? entry = _registry.Get(prevId!);
+        if (entry == null) return null;
+
+        return await OpenAsync(prevId!, null, null);
     }
     #endregion
 
     #region 查询
-    public UIVo? GetUIVo(string id)
-    {
-        return UIVoMap.TryGetValue(id, out UIVo? vo) ? vo : null;
-    }
+    public UIVo? GetUIVo(string id) => VoRegistry.Get(id);
 
     public BaseWin? GetWin(string id)
     {
-        UIVo? vo = GetUIVo(id);
-        return vo != null && vo.IsOpen ? vo.UI : null;
+        UIVo? vo = VoRegistry.Get(id);
+        return vo != null && vo.IsOpen ? vo.Runtime.UI : null;
     }
 
-    public UILayer? GetLayer(EUILayer id)
+    public T? GetWin<T>(string id) where T : BaseWin
     {
-        return LayerMap.TryGetValue(id, out UILayer? layer) ? layer : null;
+        UIVo? vo = VoRegistry.Get(id);
+        return vo != null && vo.IsOpen ? vo.Runtime.UI as T : null;
     }
+
+    public UILayer? GetLayer(EUILayer id) => LayerManager.GetLayer(id);
 
     public bool IsUITop(string Id)
     {
-        UIVo? vo = GetUIVo(Id);
-        if (vo?.Layer == null)
-        {
-            return false;
-        }
+        UIVo? vo = VoRegistry.Get(Id);
+        if (vo?.Runtime.Layer == null) return false;
 
-        int layerIdx = Array.IndexOf(_layers, vo.Layer.Type);
+        int layerIdx = Array.IndexOf(_layers, vo.Runtime.Layer.Type);
         for (int i = layerIdx + 1; i < _layers.Length; i++)
         {
-            UILayer? layer = GetLayer(_layers[i]);
+            UILayer? layer = LayerManager.GetLayer(_layers[i]);
             if (layer != null && layer.UISort.Any(ui => ui.UIVo?.OpenOpt.NoCover != true))
-            {
                 return false;
-            }
         }
 
-        IReadOnlyList<BaseWin> layerUIs = [.. vo.Layer.UISort.Where(ui => ui.UIVo?.OpenOpt.NoCover != true)];
-
+        IReadOnlyList<BaseWin> layerUIs = [.. vo.Runtime.Layer.UISort.Where(ui => ui.UIVo?.OpenOpt.NoCover != true)];
         return layerUIs.Count > 0 && layerUIs[^1].UIId == Id;
     }
 
-    public string GetPath(string id)
-    {
-        return _registry.Get(id)?.ScenePath ?? "";
-    }
-
+    public string GetPath(string id) => _registry.Get(id)?.ScenePath ?? "";
     #endregion
 
-    #region 内部方法 队列/层级/缓存
-    internal void OpenNext()
-    {
-        if (_currOpening != null)
-        {
-            switch (_currOpening.StateMachine.CurrentState)
-            {
-                case EUIState.Load:
-                    long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    if (now - _currOpening.LoadTime > UIConsts.UI_LOAD_TIMEOUT)
-                    {
-                        _currOpening.StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(_currOpening, this));
-                        _currOpening = null;
-                        OpenNext();
-                    }
+    #region 内部方法
+    internal void OpenNext() => OpenCoordinator.OpenNext();
+    internal void UpdateLayers() => CallDeferred(MethodName.UpdateLayersDeferred);
 
-                    return;
-                case EUIState.PreLoad:
-                    long now2 = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    if (now2 - _currOpening.LoadTime > UIConsts.UI_LOAD_TIMEOUT)
-                    {
-                        _currOpening.StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(_currOpening, this));
-                        _currOpening = null;
-                        OpenNext();
-                    }
+    private void UpdateLayersDeferred() => LayerManager.UpdateLayers();
 
-                    return;
-                default:
-                    _currOpening = null;
-                    OpenNext();
-                    return;
-            }
-        }
-
-        while (_openQueue.Count > 0)
-        {
-            UIVo vo = _openQueue.Peek();
-            _currOpening = vo;
-            vo.StateMachine.TransitionTo(EUIState.Load, new UIStateContext(vo, this));
-            return;
-        }
-    }
-
-    internal void UpdateLayers()
-    {
-        CallDeferred(MethodName.UpdateLayersDeferred);
-    }
-
-    private void UpdateLayersDeferred()
-    {
-        bool hide = false;
-        object hideKey = "hideBelow";
-        for (int i = _allLayers.Length - 1; i >= 0; i--)
-        {
-            UILayer? layer = GetLayer(_allLayers[i]);
-            if (layer == null)
-            {
-                continue;
-            }
-
-            layer.HideBool.Set(hideKey, hide);
-
-            IReadOnlyList<BaseWin> uis = layer.UISort;
-            for (int j = uis.Count - 1; j >= 0; j--)
-            {
-                UIVo? vo = uis[j].UIVo;
-                if (vo == null)
-                {
-                    continue;
-                }
-
-                vo.HideBool.Set(hideKey, hide);
-                if (!hide)
-                {
-                    hide = vo.OpenOpt.HideBelow;
-                }
-            }
-        }
-    }
-
-    private void TickCacheDestroy()
-    {
-        long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        List<string> toDestroy = new();
-
-        foreach (var (id, vo) in UIVoMap)
-        {
-            if (vo.StateMachine.CurrentState != EUIState.Cache || vo.DestroyTime == -1)
-            {
-                continue;
-            }
-
-            if (now >= vo.DestroyTime)
-            {
-                toDestroy.Add(id);
-            }
-        }
-
-        foreach (var id in toDestroy)
-        {
-            UIVoMap[id].StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(UIVoMap[id], this));
-        }
-    }
-
-    private void EnqueueOpen(UIVo vo)
-    {
-        UIVo[] arr = _openQueue.ToArray();
-        _openQueue.Clear();
-
-        foreach (var item in arr)
-        {
-            if (item != vo)
-            {
-                _openQueue.Enqueue(item);
-            }
-        }
-
-        if (_currOpening == vo)
-        {
-            _currOpening = null;
-        }
-
-        _openQueue.Enqueue(vo);
-        OpenNext();
-    }
-
-    private void RemoveFromOpenQueue(UIVo vo)
-    {
-        UIVo[] arr = _openQueue.ToArray();
-        _openQueue.Clear();
-
-        foreach (var item in arr)
-        {
-            if (item != vo)
-            {
-                _openQueue.Enqueue(item);
-            }
-        }
-    }
-    #endregion
-
-    #region 初始化辅助
     private static IEnumerable<IStateHandler<EUIState, IUIStateContext>> CreateDefaultStateHandlers()
     {
         yield return new UILoadStateHandler();
@@ -495,34 +350,6 @@ public partial class UIManager : Node, IUIManager
         yield return new UIDestroyStateHandler();
     }
 
-    private void BuildLayers(
-        Control root,
-        IEnumerable<EUILayer> layers,
-        Dictionary<EUILayer, UIOpenOpt>? openOpts,
-        bool isTop)
-    {
-        foreach (EUILayer l in layers)
-        {
-            openOpts ??= [];
-            openOpts.TryGetValue(l, out UIOpenOpt? opt);
-            UILayer layer = new(l.ToString(), l, opt ?? DefaultUIOpenOpt.Value, isTop);
-            LayerMap[l] = layer;
-            root.AddChild(layer);
-            layer.SetAnchorsPreset(LayoutPreset.FullRect);
-        }
-    }
-
-    private static Control CreateFullScreenRoot(string name)
-    {
-        Control root = new()
-        {
-            Name = name,
-            MouseFilter = MouseFilterEnum.Ignore,
-            AnchorsPreset = (int)LayoutPreset.FullRect,
-        };
-        return root;
-    }
-
     private UILayer? ResolveLayer(UIRuntimeEntry entry, UIOpenOpt? openOpt, out string? failReason)
     {
         failReason = null;
@@ -532,18 +359,14 @@ public partial class UIManager : Node, IUIManager
             case EUIType.Dlg:
                 {
                     EUILayer? layerId = openOpt?.Layer ?? entry.OpenOpt?.Layer ?? entry.BaseOpenOpt?.Layer ?? DefaultUIOpenOpt.Value.Layer!;
-                    UILayer? layer = GetLayer((EUILayer)layerId);
+                    UILayer? layer = LayerManager.GetLayer((EUILayer)layerId);
                     if (layer == null)
-                    {
                         failReason = $"UI 管理器: 打开UI<{entry.Id}> 失败，层级<{layerId}> 不存在。";
-                    }
                     return layer;
                 }
             case EUIType.Pge:
                 if (openOpt?.Parent == null)
-                {
                     failReason = $"UI 管理器: 打开UI<{entry.Id}> 失败，父UI不存在。";
-                }
                 return null;
             case EUIType.Pop:
                 {
@@ -552,14 +375,10 @@ public partial class UIManager : Node, IUIManager
                         failReason = $"UI 管理器: 打开UI<{entry.Id}> 失败，气泡参数Target不存在。";
                         return null;
                     }
-
                     EUILayer? layerId = openOpt.Layer ?? entry.OpenOpt?.Layer ?? entry.BaseOpenOpt?.Layer;
                     if (layerId != null)
-                    {
-                        return GetLayer((EUILayer)layerId);
-                    }
-
-                    return FindLayer(openOpt.Pop.Target) ?? GetLayer(EUILayer.Pop);
+                        return LayerManager.GetLayer((EUILayer)layerId);
+                    return UILayerManager.FindLayerForNode(openOpt.Pop.Target) ?? LayerManager.GetLayer(EUILayer.Pop);
                 }
             default:
                 failReason = $"UI 管理器: 打开UI<{entry.Id}> 失败，类型<{entry.Type}> 不支持打开。";
@@ -574,21 +393,13 @@ public partial class UIManager : Node, IUIManager
         MergeInto(result, layer?.OpenOpt);
         MergeInto(result, entry.OpenOpt);
         MergeInto(result, openOpt);
-
-        if (layer != null)
-        {
-            result.Layer = layer.Type;
-        }
-
+        if (layer != null) result.Layer = layer.Type;
         return result;
     }
 
     private static void MergeInto(UIOpenOpt target, UIOpenOpt? source)
     {
-        if (source == null)
-        {
-            return;
-        }
+        if (source == null) return;
         if (source.Layer != null) target.Layer = source.Layer;
         if (source.Parent != null) target.Parent = source.Parent;
         target.CacheTime = source.CacheTime;
@@ -605,25 +416,18 @@ public partial class UIManager : Node, IUIManager
         if (source.PreLoadResList != null) target.PreLoadResList = source.PreLoadResList;
     }
 
-    private static UILayer? FindLayer(Node node)
+    private static Control CreateFullScreenRoot(string name)
     {
-        Node? cur = node;
-        while (cur != null)
+        return new Control
         {
-            if (cur is UILayer layer)
-            {
-                return layer;
-            }
-            cur = cur.GetParent();
-        }
-        return null;
+            Name = name,
+            MouseFilter = MouseFilterEnum.Ignore,
+            AnchorsPreset = (int)LayoutPreset.FullRect,
+        };
     }
     #endregion
 }
 
-/// <summary>
-/// UI 管理器初始化选项
-/// </summary>
 public sealed class UIManagerInitOpt
 {
     public required UIRuntimeRegistry Registry { get; init; }
@@ -633,7 +437,6 @@ public sealed class UIManagerInitOpt
     public required IEnumerable<EUILayer> Layers { get; init; }
     public required IEnumerable<EUILayer> TopLayers { get; init; }
     public Dictionary<EUILayer, UIOpenOpt>? LayerOpenOpts { get; init; }
-    public EventDispatcher? EventDispatcher { get; init; }
     public IEnumerable<IStateHandler<EUIState, IUIStateContext>>? StateHandlers { get; init; }
 }
 
@@ -641,12 +444,7 @@ public sealed class UIStateContext(UIVo vo, UIManager manager) : IUIStateContext
 {
     public UIVo UIVo { get; } = vo;
     public UIManager UIManager { get; } = manager;
-    public void OpenNext() => OpenNextFunc();
-
-    private void OpenNextFunc()
-    {
-        manager.OpenNext();
-    }
+    public void OpenNext() => UIManager.OpenNext();
 }
 
 public static class UIEvent

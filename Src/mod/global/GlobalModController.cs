@@ -1,5 +1,6 @@
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
+using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Global.Events;
 using KemoCard.Mod.Global.Save;
 using KemoCard.Mod.Global.Ui;
@@ -65,13 +66,15 @@ public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveS
         Model.Current.CodexEntries[entryId] = true;
     }
 
-    public Task OpenMenuAsync()
+    public async Task OpenMenuAsync()
     {
-        return Task.CompletedTask;
+        if (_uiManager == null) return;
+        await _uiManager.OpenAsync(GlobalUiIds.Menu, default, null);
     }
 
-    public Task OpenCodexAsync()
+    public async Task OpenCodexAsync()
     {
-        return Task.CompletedTask;
+        if (_uiManager == null) return;
+        await _uiManager.OpenAsync(GlobalUiIds.Codex, default, null);
     }
 }

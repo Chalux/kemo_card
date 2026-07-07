@@ -1,5 +1,6 @@
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
+using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Global.Save;
 using KemoCard.Mod.Global.Ui;
 
@@ -23,7 +24,6 @@ public static partial class GlobalModEventTable
 
 /// <summary>
 /// 全局模块组合根：全局存档 + 通用界面（菜单、图鉴等）。
-/// On*/Notify* 包装方法由 Source Generator 依据 <see cref="GlobalModEventTable"/> 生成。
 /// </summary>
 public sealed partial class GlobalMod : BaseMod
 {
@@ -33,8 +33,26 @@ public sealed partial class GlobalMod : BaseMod
 
     public GlobalSaveDto Current { get; internal set; } = GlobalSaveDto.CreateDefault();
 
-    public static void RegisterUi(UIManager uiManager)
+    /// <summary>
+    /// 声明式注册当前模块所有 UI。
+    /// </summary>
+    public static IEnumerable<UIRegistration> GetUIRegistrations()
     {
-        ArgumentNullException.ThrowIfNull(uiManager);
+        yield return UIRegistration.Window(GlobalUiIds.Menu, "Src/mod/global/Ui");
+
+        yield return UIRegistration.Dialog(GlobalUiIds.Codex, "Src/mod/global/Ui");
+    }
+
+    /// <summary>
+    /// 将此模块的 UI 注册到运行时注册表。
+    /// </summary>
+    public static void RegisterUi(UIRuntimeRegistry registry)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
+
+        foreach (var reg in GetUIRegistrations())
+        {
+            registry.Register(reg.ToRuntimeEntry());
+        }
     }
 }

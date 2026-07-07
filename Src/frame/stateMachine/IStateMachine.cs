@@ -14,6 +14,6 @@ public interface IStateMachine<TState, TContext> where TState : notnull, Enum
 public interface IStateHandler<TState, TContext> where TState : notnull, Enum
 {
     TState State { get; }
-    Action<TState, TContext, object?>? OnEnter { get; }
-    Action<TState, TContext>? OnExit { get; }
+    Action<TState, TContext?, object?>? OnEnter { get; }
+    Action<TState, TContext?>? OnExit { get; }
 }
