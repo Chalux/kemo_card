@@ -3,13 +3,14 @@
     "tasks": [
         {
             "label": "build",
-            "command": "dotnet",
+            "command": "D:\\Godot_v4.6.1-stable_mono_win64\\Godot_v4.6.1-stable_mono_win64.exe",
             "type": "process",
             "args": [
-                "build",
-                "${workspaceFolder}/kemo_card.sln",
-                "/property:GenerateFullPaths=true",
-                "/consoleloggerparameters:NoSummary;ForceNoAlign"
+                "--build-solutions",
+                "--path",
+                "${workspaceRoot}",
+                "--no-window",
+                "-q"
             ],
             "problemMatcher": "$msCompile"
         },

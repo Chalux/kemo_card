@@ -106,7 +106,7 @@ public partial class UIManager : Node, IUIManager
     }
 
     #region 打开/关闭
-    public Task<UIVo?> OpenAsync<TPayload>(UiId<TPayload> id, TPayload payload, UIOpenOpt? openOpt = null)
+    public Task<UIVo?> OpenAsync<TPayload>(UiId<TPayload> id, TPayload? payload = default, UIOpenOpt? openOpt = null)
     {
         return OpenAsync(id.Value, payload, openOpt);
     }

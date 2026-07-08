@@ -1,3 +1,4 @@
+using Godot;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
@@ -7,10 +8,9 @@ using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global;
 
-public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveService, IUIManager? uiManager) : BaseController<GlobalMod>(model)
+public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveService) : BaseController<GlobalMod>(model)
 {
     private readonly GlobalSaveService _saveService = saveService ?? throw new ArgumentNullException(nameof(saveService));
-    private readonly IUIManager _uiManager = uiManager ?? throw new ArgumentNullException(nameof(uiManager));
 
     public GlobalSaveDto Snapshot => Model.Current;
 
@@ -66,15 +66,13 @@ public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveS
         Model.Current.CodexEntries[entryId] = true;
     }
 
-    public async Task OpenMenuAsync()
+    public static async Task<UIVo?> OpenMenuAsync()
     {
-        if (_uiManager == null) return;
-        await _uiManager.OpenAsync(GlobalUiIds.Menu, default, null);
+        return await (UIManager.Instance?.OpenAsync<MenuDlg>(new UiId<MenuDlg>(GlobalUiIds.Menu), default, null) ?? Task.FromResult<UIVo?>(null));
     }
 
-    public async Task OpenCodexAsync()
+    public static async Task<UIVo?> OpenCodexAsync()
     {
-        if (_uiManager == null) return;
-        await _uiManager.OpenAsync(GlobalUiIds.Codex, default, null);
+        return await (UIManager.Instance?.OpenAsync<CodexDlg>(new UiId<CodexDlg>(GlobalUiIds.Codex), default, null) ?? Task.FromResult<UIVo?>(null));
     }
 }

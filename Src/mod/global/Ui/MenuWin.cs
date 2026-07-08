@@ -5,7 +5,7 @@ using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
-public partial class MenuDlg : BaseDlg<EmptyPayload>
+public partial class MenuDlg : BaseWin<EmptyPayload>
 {
     [Export] public Button? StartBtn { get; set; }
     [Export] public Button? LoadBtn { get; set; }

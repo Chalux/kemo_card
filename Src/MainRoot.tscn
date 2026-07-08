@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://j1ysiytagpcj"]
 
-[ext_resource type="Script" uid="uid://bcotyklakv7gg" path="res://Src/MainRoot.cs" id="1_55wfv"]
-[ext_resource type="Script" path="res://Src/frame/ui/UiManager.cs" id="2_umgr"]
+[ext_resource type="Script" uid="uid://btrylbfpdovye" path="res://Src/MainRoot.cs" id="1_55wfv"]
 
 [node name="MainRoot" type="Control" unique_id=1651992361]
 layout_mode = 3
@@ -11,28 +10,3 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_55wfv")
-
-[node name="DlgCanvas" type="CanvasLayer" parent="."]
-layer = 10
-
-[node name="DlgHost" type="Control" parent="DlgCanvas"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="PopupCanvas" type="CanvasLayer" parent="."]
-layer = 20
-
-[node name="PopupStack" type="Control" parent="PopupCanvas"]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="UiManager" type="Node" parent="."]
-script = ExtResource("2_umgr")
