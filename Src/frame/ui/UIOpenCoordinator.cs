@@ -47,7 +47,7 @@ public sealed class UIOpenCoordinator(UIManager manager)
 
         while (_openQueue.Count > 0)
         {
-            UIVo vo = _openQueue.Peek();
+            UIVo vo = _openQueue.Dequeue();
             _currOpening = vo;
             vo.StateMachine.TransitionTo(EUIState.Load, new UIStateContext(vo, _manager));
             return;

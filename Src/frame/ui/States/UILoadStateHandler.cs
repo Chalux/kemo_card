@@ -45,7 +45,7 @@ public sealed class UILoadStateHandler : IStateHandler<EUIState, IUIStateContext
 					OpenTransitionData reopenTag = fromState == EUIState.Close
 						? OpenTransitionData.CloseOpen
 						: OpenTransitionData.Reopen;
-					vo.StateMachine.TransitionTo(EUIState.Load, context, reopenTag);
+					vo.StateMachine.TransitionTo(EUIState.PreLoad, context, reopenTag);
 					return;
 				}
 				break;

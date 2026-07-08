@@ -5,7 +5,7 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu"]
 bg_color = Color(0.15, 0.15, 0.2, 0.95)
 
-[node name="MenuDlg" type="Control" unique_id=1218940125]
+[node name="MenuDlg" type="Control" unique_id=1218940125 node_paths=PackedStringArray("StartBtn", "LoadBtn", "SettingsBtn", "QuitBtn")]
 layout_mode = 3
 anchors_preset = 8
 anchor_left = 0.5
@@ -19,6 +19,10 @@ offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
+StartBtn = NodePath("VBox/StartBtn")
+LoadBtn = NodePath("VBox/LoadBtn")
+SettingsBtn = NodePath("VBox/SettingsBtn")
+QuitBtn = NodePath("VBox/QuitBtn")
 
 [node name="Panel" type="Panel" parent="." unique_id=1723274310]
 layout_mode = 0

@@ -5,7 +5,7 @@ using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
-public partial class MenuDlg : BaseWin<EmptyPayload>
+public partial class MenuWin : BaseWin<EmptyPayload>
 {
     [Export] public Button? StartBtn { get; set; }
     [Export] public Button? LoadBtn { get; set; }
@@ -17,10 +17,10 @@ public partial class MenuDlg : BaseWin<EmptyPayload>
 
     protected override void InitEvent()
     {
-        if (StartBtn != null)
-        {
-            OnClicks(StartBtn, Close);
-        }
+        // if (StartBtn != null)
+        // {
+        //     OnClicks(StartBtn, Close);
+        // }
     }
 
     protected override void OnOpen()
