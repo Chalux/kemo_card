@@ -3,6 +3,7 @@
   "element": 1,
   "costType": "Energy",
   "cost": 1,
+  "baseValue": 9,
   "skillRefs": [{ "skillId": "strike_hit", "params": { "bonusDamage": 3 } }],
   "role": "Warrior",
   "priority": 100,

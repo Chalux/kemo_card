@@ -3,6 +3,7 @@
   "element": 1,
   "costType": "Energy",
   "cost": 1,
+  "baseValue": 6,
   "skillRefs": [{ "skillId": "strike_hit" }],
   "stats": {
     "attributes": {

@@ -60,6 +60,7 @@ public sealed class ContentDefinitionTests
 			DisplayNameId = "card.strike.name",
 			CostType = ECostType.Energy,
 			Cost = 1,
+			BaseValue = 6,
 			CardType = ECardType.Physics,
 			Rarity = ERarity.Common,
 			SkillRefs = [new SkillRefDto { SkillId = "strike_hit" }],
@@ -72,6 +73,8 @@ public sealed class ContentDefinitionTests
 		Assert.That(restored!.Id, Is.EqualTo("strike"));
 		Assert.That(restored.CardType, Is.EqualTo(ECardType.Physics));
 		Assert.That(restored.SkillRefs[0].SkillId, Is.EqualTo("strike_hit"));
+		Assert.That(restored.BaseValue, Is.EqualTo(6));
+		Assert.That(json, Does.Contain("baseValue"));
 	}
 
 	[Test]

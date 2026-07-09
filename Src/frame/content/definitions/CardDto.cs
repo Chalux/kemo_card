@@ -19,6 +19,9 @@ public sealed class CardDto
 	[JsonPropertyName("cost")]
 	public int Cost { get; init; }
 
+	[JsonPropertyName("baseValue")]
+	public int BaseValue { get; init; }
+
 	[JsonPropertyName("skillRefs")]
 	public List<SkillRefDto> SkillRefs { get; init; } = [];
 
