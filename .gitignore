@@ -11,3 +11,7 @@
 *.user
 *.suo
 *.cs.uid
+
+# Git worktrees
+.worktrees/
+
