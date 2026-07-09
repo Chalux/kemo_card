@@ -1,12 +1,10 @@
-using Godot;
 using KemoCard.Frame.UI.Base;
-using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
 public record struct CodexDlgPayload;
 
-public partial class CodexDlg : BaseDlg<CodexDlgPayload>
+public partial class CodexDlg : BaseDlg
 {
     public override string UIId => GlobalUiIds.Codex;
     public override string UIDir => "Src/mod/global/Ui";

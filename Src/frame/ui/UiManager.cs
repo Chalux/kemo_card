@@ -418,12 +418,14 @@ public partial class UIManager : Node, IUIManager
 
     private static Control CreateFullScreenRoot(string name)
     {
-        return new Control
+        var root = new Control
         {
             Name = name,
             MouseFilter = MouseFilterEnum.Ignore,
-            AnchorsPreset = (int)LayoutPreset.FullRect,
         };
+        // C# 中赋值 AnchorsPreset 属性无效，必须用 SetAnchorsAndOffsetsPreset
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        return root;
     }
     #endregion
 }

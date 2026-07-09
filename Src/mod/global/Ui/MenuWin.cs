@@ -1,15 +1,14 @@
 using Godot;
 using KemoCard.Frame.UI.Base;
-using KemoCard.Frame.UI.Def;
-using KemoCard.Mod.Global.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
-public partial class MenuWin : BaseWin<EmptyPayload>
+public partial class MenuWin : BaseWin
 {
     [Export] public Button? StartBtn { get; set; }
     [Export] public Button? LoadBtn { get; set; }
     [Export] public Button? SettingsBtn { get; set; }
+    [Export] public Button? CodexBtn { get; set; }
     [Export] public Button? QuitBtn { get; set; }
 
     public override string UIId => GlobalUiIds.Menu;
@@ -17,10 +16,15 @@ public partial class MenuWin : BaseWin<EmptyPayload>
 
     protected override void InitEvent()
     {
-        // if (StartBtn != null)
-        // {
-        //     OnClicks(StartBtn, Close);
-        // }
+        if (CodexBtn != null)
+        {
+            OnClicks(CodexBtn, () => _ = GlobalModController.OpenCodexAsync());
+        }
+
+        if (QuitBtn != null)
+        {
+            OnClicks(QuitBtn, () => GetTree().Quit());
+        }
     }
 
     protected override void OnOpen()

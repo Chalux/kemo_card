@@ -1,11 +1,10 @@
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Scripting;
-using KemoCard.Frame.UI;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Save;
 
-namespace KemoCard.Frame.Mvc;
+namespace KemoCard.Mod;
 
 public sealed class ModStartupContext
 {
@@ -51,7 +50,7 @@ public sealed class ModFactory
 		var global = BootstrapGlobalMod(context);
 		var content = BootstrapContentMods(context, global.Mod);
 
-		return new ModStartupResult
+		var result = new ModStartupResult
 		{
 			GlobalMod = global.Mod,
 			GlobalController = global.Controller,
@@ -64,6 +63,9 @@ public sealed class ModFactory
 			BattleScriptInvoker = content.BattleScriptInvoker,
 			EnemyAiScriptInvoker = content.EnemyAiScriptInvoker,
 		};
+
+		AppRoot.Initialize(result);
+		return result;
 	}
 
 	private static (GlobalMod Mod, GlobalModController Controller, GlobalSaveService SaveService) BootstrapGlobalMod(

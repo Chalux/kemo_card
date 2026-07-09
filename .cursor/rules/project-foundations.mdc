@@ -14,6 +14,13 @@ alwaysApply: true
 
 - **代码只使用C#来写，不使用GDScript**
 
+## 本地化
+
+- **所有面向用户的文本内容都必须使用本地化**（翻译键），禁止在场景、脚本中硬编码可见文案。
+- **日志除外**：`GD.Print` / `PushWarning` / 调试输出等可直接使用明文。
+- 场景控件的 `text` 等属性填写翻译键（如 `UI_MENU_TITLE`），由 Godot 自动翻译；C# 非 Node 场景用 `Localization.Tr(key)`。
+- 新增文案时同步写入 `Resource/Locale/strings.csv`（及需要时的 mod 翻译 CSV）。
+
 ## 目录布局
 
 | 用途 | 路径 |
@@ -28,6 +35,10 @@ alwaysApply: true
 | 资源（贴图、音频、场景资源等） | `Resource/` |
 
 新增文件时按上表归类；不确定时优先放在 `Src/mod/` 并在 PR/说明中注明，或拆成可组合的小模块再放入 `Src/frame/` / `Src/utils/`。
+
+## 模块依赖
+
+- **`Src/frame/` 不得依赖或调用 `Src/mod/`**：框架层保持业务无关；禁止引用 `KemoCard.Mod.*` 命名空间、加载 mod 场景/资源路径，或直接调用 mod 内类型与方法。依赖方向只能是 `mod` → `frame`（以及 `utils` / `fixed`），不能反向。
 
 ## Git 提交规范
 

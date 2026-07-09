@@ -5,7 +5,8 @@ namespace KemoCard.Frame.Scripting;
 public sealed class ModScriptLoader : ILoader
 {
 	private readonly ModScriptCatalog _catalog;
-	private readonly DefaultLoader _fallback = new();
+	// NuGet 将内置脚本拷到 OutDir/puerts/；Godot 进程 CWD 是项目根，须用程序集目录作 root。
+	private readonly DefaultLoader _fallback = new(AppContext.BaseDirectory);
 
 	public ModScriptLoader(ModScriptCatalog catalog)
 	{

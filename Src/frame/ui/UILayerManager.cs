@@ -84,7 +84,8 @@ public sealed class UILayerManager
             UILayer layer = new(l.ToString(), l, opt ?? DefaultUIOpenOpt.Value, isTop);
             _layerMap[l] = layer;
             root.AddChild(layer);
-            layer.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            // SetAnchorsPreset 只改锚点；需同时清零 offset 才能铺满父节点
+            layer.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         }
     }
 }

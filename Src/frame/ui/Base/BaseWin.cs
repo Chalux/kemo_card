@@ -10,6 +10,25 @@ public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
 
     public override EUIType UIType => EUIType.Win;
 
+    /// <summary>
+    /// 以强类型读取 Payload。不使用泛型 Godot 子类，避免 ScriptManagerBridge 热重载重复注册。
+    /// </summary>
+    protected TPayload GetTypedPayload<TPayload>()
+    {
+        if (Payload is TPayload typed)
+        {
+            return typed;
+        }
+
+        throw new InvalidOperationException(
+            $"UI<{UIId}> 的 Payload 类型与期望不匹配，期望 {typeof(TPayload).Name}，实际 {Payload?.GetType().Name ?? "null"}");
+    }
+
+    /// <summary>
+    /// 以强类型写入 Payload。
+    /// </summary>
+    protected void SetTypedPayload<TPayload>(TPayload value) => Payload = value;
+
     public override UIOpenOpt? BaseOpenOpt => new()
     {
         Layer = EUILayer.Win,

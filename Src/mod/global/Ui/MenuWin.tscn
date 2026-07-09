@@ -5,8 +5,22 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu"]
 bg_color = Color(0.15, 0.15, 0.2, 0.95)
 
-[node name="MenuDlg" type="Control" unique_id=1218940125 node_paths=PackedStringArray("StartBtn", "LoadBtn", "SettingsBtn", "QuitBtn")]
+[node name="MenuDlg" type="Control" unique_id=1218940125 node_paths=PackedStringArray("StartBtn", "LoadBtn", "SettingsBtn", "CodexBtn", "QuitBtn")]
 layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+StartBtn = NodePath("Panel/VBox/StartBtn")
+LoadBtn = NodePath("Panel/VBox/LoadBtn")
+SettingsBtn = NodePath("Panel/VBox/SettingsBtn")
+CodexBtn = NodePath("Panel/VBox/CodexBtn")
+QuitBtn = NodePath("Panel/VBox/QuitBtn")
+
+[node name="Panel" type="Panel" parent="." unique_id=1723274310]
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -18,41 +32,37 @@ offset_right = 150.0
 offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1_menu")
-StartBtn = NodePath("VBox/StartBtn")
-LoadBtn = NodePath("VBox/LoadBtn")
-SettingsBtn = NodePath("VBox/SettingsBtn")
-QuitBtn = NodePath("VBox/QuitBtn")
-
-[node name="Panel" type="Panel" parent="." unique_id=1723274310]
-layout_mode = 0
-offset_right = 300.0
-offset_bottom = 400.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_menu")
 
-[node name="VBox" type="VBoxContainer" parent="." unique_id=779539337]
-layout_mode = 0
-offset_left = 40.0
-offset_top = 40.0
-offset_right = 260.0
-offset_bottom = 360.0
+[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=779539337]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="Title" type="Label" parent="VBox" unique_id=293406181]
+[node name="Title" type="Label" parent="Panel/VBox" unique_id=293406181]
 layout_mode = 2
-text = "主菜单"
+text = "UI_MENU_TITLE"
+horizontal_alignment = 1
 
-[node name="StartBtn" type="Button" parent="VBox" unique_id=866888484]
+[node name="StartBtn" type="Button" parent="Panel/VBox" unique_id=866888484]
 layout_mode = 2
-text = "新游戏"
+text = "UI_MENU_NEW_GAME"
 
-[node name="LoadBtn" type="Button" parent="VBox" unique_id=1535473950]
+[node name="LoadBtn" type="Button" parent="Panel/VBox" unique_id=1535473950]
 layout_mode = 2
-text = "继续游戏"
+text = "UI_MENU_CONTINUE"
 
-[node name="SettingsBtn" type="Button" parent="VBox" unique_id=1101588564]
+[node name="SettingsBtn" type="Button" parent="Panel/VBox" unique_id=1101588564]
 layout_mode = 2
-text = "设置"
+text = "UI_MENU_SETTINGS"
 
-[node name="QuitBtn" type="Button" parent="VBox" unique_id=522458133]
+[node name="CodexBtn" type="Button" parent="Panel/VBox" unique_id=1128775345]
 layout_mode = 2
-text = "退出"
+text = "UI_CODEX_TITLE"
+
+[node name="QuitBtn" type="Button" parent="Panel/VBox" unique_id=522458133]
+layout_mode = 2
+text = "UI_MENU_QUIT"
