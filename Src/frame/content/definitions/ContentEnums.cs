@@ -3,7 +3,12 @@ namespace KemoCard.Frame.Content.Definitions;
 public static class ElementFlags
 {
     public const int None = 0;
-    public const int Fire = 1 << 0;
+    public const int Red = 1 << 0;
+    public const int Blue = 1 << 1;
+    public const int Green = 1 << 2;
+    public const int Yellow = 1 << 3;
+    public const int Yin = 1 << 4;
+    public const int Yang = 1 << 5;
 }
 
 public enum ECostType
@@ -117,12 +122,12 @@ public enum ESkillActionKind
 public enum EElement
 {
     None = 0,
-    Fire = 1,
-    Water = 1 << 2,
-    Wind = 1 << 3,
-    Earth = 1 << 4,
-    Dark = 1 << 5,
-    Light = 1 << 6,
+    Red = 1,
+    Blue = 1 << 2,
+    Green = 1 << 3,
+    Yellow = 1 << 4,
+    Yin = 1 << 5,
+    Yang = 1 << 6,
 }
 
 public enum ERole

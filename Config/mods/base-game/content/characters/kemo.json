@@ -1,7 +1,7 @@
 {
   "displayNameId": "char.kemo.name",
   "descId": "char.kemo.desc",
-  "element": "Fire",
+  "element": "Red",
   "role": "Warrior",
   "skillRefs": [{ "skillId": "kemo_dash" }],
   "buffRefs": [{ "buffId": "kemo_talent" }],

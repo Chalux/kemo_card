@@ -70,7 +70,7 @@ public sealed class ContentDefinitionExtendedTests
 			{
 			  "displayNameId": "char.kemo.name",
 			  "descId": "char.kemo.desc",
-			  "element": "Fire",
+			  "element": "Red",
 			  "role": "Warrior",
 			  "skillRefs": [{ "skillId": "kemo_dash" }],
 			  "buffRefs": [{ "buffId": "kemo_talent" }],
@@ -161,7 +161,7 @@ public sealed class ContentDefinitionExtendedTests
 			Id = "kemo",
 			DisplayNameId = "char.kemo.name",
 			DescId = "char.kemo.desc",
-			Element = EElement.Fire,
+			Element = EElement.Red,
 			Role = ERole.Warrior,
 			SkillRefs = [new SkillRefDto { SkillId = "kemo_dash" }],
 			BuffRefs = [new BuffRefDto { BuffId = "kemo_talent" }],
@@ -172,7 +172,7 @@ public sealed class ContentDefinitionExtendedTests
 		var restored = JsonSerializer.Deserialize<CharacterDto>(json, ContentDefinitionJson.Options);
 
 		Assert.That(restored, Is.Not.Null);
-		Assert.That(restored!.Element, Is.EqualTo(EElement.Fire));
+		Assert.That(restored!.Element, Is.EqualTo(EElement.Red));
 		Assert.That(restored.BuffRefs[0].BuffId, Is.EqualTo("kemo_talent"));
 	}
 
