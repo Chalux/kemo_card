@@ -1,0 +1,93 @@
+[gd_scene format=4 uid="uid://c4e8o1dsbyc7e"]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseCardItem.cs" id="1_o0l0o"]
+[ext_resource type="Shader" path="res://Src/mod/global/Ui/Comp/BaseCardItem.gdshader" id="2_vsqsq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ytd70"]
+shader = ExtResource("2_vsqsq")
+shader_parameter/colors = PackedVector4Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/color_count = 1
+shader_parameter/rotation = 0.0
+shader_parameter/radius = 0.5
+
+[node name="BaseCardItem" type="Control" unique_id=1269321399 node_paths=PackedStringArray("_trArt", "_trCardFrame", "_txtCardCost", "_txtCardType", "_txtCardVal", "_crAttr")]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_o0l0o")
+_trArt = NodePath("CArtRoot/TRArt")
+_trCardFrame = NodePath("TRCardFrame")
+_txtCardCost = NodePath("TCost")
+_txtCardType = NodePath("TType")
+_txtCardVal = NodePath("TCardVal")
+_crAttr = NodePath("CRAttr")
+
+[node name="CRPlaceholder" type="ColorRect" parent="." unique_id=1632414068]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 208.0
+metadata/_edit_use_anchors_ = true
+
+[node name="CRBg" type="ColorRect" parent="." unique_id=166304840]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 152.0
+offset_bottom = 200.0
+color = Color(0.07510843, 0.1482965, 0.28160223, 0.7647059)
+metadata/_edit_use_anchors_ = true
+
+[node name="CArtRoot" type="Control" parent="." unique_id=811903462]
+clip_contents = true
+anchors_preset = 0
+offset_right = 160.0
+offset_bottom = 208.0
+
+[node name="TRArt" type="TextureRect" parent="CArtRoot" unique_id=1029861998]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 208.0
+expand_mode = 1
+stretch_mode = 2
+
+[node name="TRCardFrame" type="TextureRect" parent="." unique_id=178255637]
+layout_mode = 0
+offset_right = 160.0
+offset_bottom = 208.0
+
+[node name="TCost" type="Label" parent="." unique_id=895413140]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 8.0
+offset_right = 192.0
+offset_bottom = 32.0
+text = ""
+horizontal_alignment = 1
+
+[node name="TType" type="Label" parent="." unique_id=1436998973]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 177.0
+offset_right = 32.0
+offset_bottom = 200.0
+grow_vertical = 0
+text = ""
+
+[node name="TCardVal" type="Label" parent="." unique_id=1976366092]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 177.0
+offset_right = 152.0
+offset_bottom = 200.0
+text = ""
+horizontal_alignment = 2
+
+[node name="CRAttr" type="ColorRect" parent="." unique_id=1587445200]
+material = SubResource("ShaderMaterial_ytd70")
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 32.0
+offset_bottom = 32.0
