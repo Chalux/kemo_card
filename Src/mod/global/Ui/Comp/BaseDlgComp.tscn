@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://dnod4h20yq5su"]
+
+[ext_resource type="Texture2D" path="res://Resource/Assets/Icon/cancel.svg" id="1_xcole"]
+
+[node name="BaseDlgComp" type="Control" unique_id=1648768781]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DlgBg" type="NinePatchRect" parent="." unique_id=1624308508]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BgColorRect" type="ColorRect" parent="DlgBg" unique_id=1319711502]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.07510843, 0.1482965, 0.28160223, 0.7647059)
+
+[node name="CloseBtn" type="Button" parent="DlgBg" unique_id=1861420465]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.9444444
+anchor_right = 1.0
+anchor_bottom = 0.09876543
+grow_horizontal = 0
+icon = ExtResource("1_xcole")
+expand_icon = true
+metadata/_edit_use_anchors_ = true

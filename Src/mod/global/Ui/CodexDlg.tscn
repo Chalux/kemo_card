@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://dco70o6yus7fk"]
 
 [ext_resource type="Script" uid="uid://bisjbii3b2qwu" path="res://Src/mod/global/Ui/CodexDlg.cs" id="1_x5fxm"]
+[ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_ii0j4"]
+[ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="3_tnh6y"]
+[ext_resource type="PackedScene" uid="uid://c6tqm743fyjtl" path="res://Src/mod/global/Ui/Comp/BasePager.tscn" id="4_egqms"]
 
 [node name="CodexDlg" type="Control" unique_id=1495356838]
 layout_mode = 3
@@ -10,3 +13,130 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_x5fxm")
+
+[node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("2_ii0j4")]
+layout_mode = 1
+offset_left = 128.0
+offset_top = 64.0
+offset_right = -128.0
+offset_bottom = -72.0
+
+[node name="TabContainer" type="TabContainer" parent="." unique_id=2144659579]
+layout_mode = 0
+anchor_left = 0.1388889
+anchor_top = 0.14814815
+anchor_right = 0.8454861
+anchor_bottom = 0.8518519
+current_tab = 0
+metadata/_edit_use_anchors_ = true
+
+[node name="UI_CARD" type="Control" parent="TabContainer" unique_id=169329727]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="ItemListConditions" type="ItemList" parent="TabContainer/UI_CARD" unique_id=1150691685]
+layout_mode = 0
+anchor_left = 0.02948403
+anchor_top = 0.05882353
+anchor_right = 0.3243243
+anchor_bottom = 0.75529414
+metadata/_edit_use_anchors_ = true
+
+[node name="OBCardTypeSelector" type="OptionButton" parent="TabContainer/UI_CARD" unique_id=1175027382]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.02948403
+anchor_top = 0.79294115
+anchor_right = 0.10810811
+anchor_bottom = 0.8494118
+metadata/_edit_use_anchors_ = true
+
+[node name="OBCardOperateSelector" type="OptionButton" parent="TabContainer/UI_CARD" unique_id=2089973766]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.13759215
+anchor_top = 0.79294115
+anchor_right = 0.21621622
+anchor_bottom = 0.8494118
+metadata/_edit_use_anchors_ = true
+
+[node name="OBCardValSelector" type="OptionButton" parent="TabContainer/UI_CARD" unique_id=1107163914]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.24570024
+anchor_top = 0.79294115
+anchor_right = 0.3243243
+anchor_bottom = 0.8494118
+metadata/_edit_use_anchors_ = true
+
+[node name="IptTxtFilter" type="LineEdit" parent="TabContainer/UI_CARD" unique_id=766004567]
+layout_mode = 0
+offset_left = 136.0
+offset_top = 377.0
+offset_right = 260.0
+offset_bottom = 408.0
+placeholder_text = "UI_CODEX_TXT_FILTER"
+
+[node name="BAdd" type="Button" parent="TabContainer/UI_CARD" unique_id=1759687585]
+layout_mode = 0
+anchor_left = 0.02948403
+anchor_top = 0.8870588
+anchor_right = 0.14742015
+anchor_bottom = 0.96
+text = "UI_OP_ADD"
+metadata/_edit_use_anchors_ = true
+
+[node name="Control" type="Control" parent="TabContainer/UI_CARD" unique_id=642701578]
+layout_mode = 1
+anchor_left = 0.35380834
+anchor_top = 0.05882353
+anchor_right = 0.96314496
+anchor_bottom = 0.8682353
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="GridContainerCardList" type="GridContainer" parent="TabContainer/UI_CARD/Control" unique_id=1292484503]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.97096777
+anchor_bottom = 0.87906975
+offset_right = 206.4
+offset_bottom = 129.6
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.7, 0.7)
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 4
+metadata/_edit_use_anchors_ = true
+
+[node name="BaseCardItem" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1269321399 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem2" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1827231589 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem3" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=851331133 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem4" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=2054858552 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem5" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1286298373 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem6" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=693910254 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem7" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=966911258 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BaseCardItem8" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1201054966 instance=ExtResource("3_tnh6y")]
+layout_mode = 2
+
+[node name="BasePager" parent="TabContainer/UI_CARD" unique_id=525618807 instance=ExtResource("4_egqms")]
+layout_mode = 1
+offset_left = 434.0
+offset_top = 345.0
+offset_right = -44.0
+offset_bottom = -48.0

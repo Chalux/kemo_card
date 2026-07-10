@@ -1,0 +1,57 @@
+[gd_scene format=3 uid="uid://c6tqm743fyjtl"]
+
+[ext_resource type="Script" uid="uid://dppxblowa7203" path="res://Src/mod/global/Ui/Comp/BasePager.cs" id="1_ehxjf"]
+
+[node name="BasePager" type="Control" unique_id=525618807 node_paths=PackedStringArray("_btnFirst", "_btnPrevious", "_txtCurrent", "_btnNext", "_btnFinal", "_iptPage", "_btnGoto")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ehxjf")
+_btnFirst = NodePath("HBoxContainer/BtnFirst")
+_btnPrevious = NodePath("HBoxContainer/BtnPrevious")
+_txtCurrent = NodePath("HBoxContainer/TxtCurrent")
+_btnNext = NodePath("HBoxContainer/BtnNext")
+_btnFinal = NodePath("HBoxContainer/BtnFinal")
+_iptPage = NodePath("HBoxContainer/IptPage")
+_btnGoto = NodePath("HBoxContainer/BtnGoto")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=2085596457]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BtnFirst" type="Button" parent="HBoxContainer" unique_id=909475644]
+layout_mode = 2
+text = "<<"
+
+[node name="BtnPrevious" type="Button" parent="HBoxContainer" unique_id=607789457]
+layout_mode = 2
+text = "<"
+
+[node name="TxtCurrent" type="Label" parent="HBoxContainer" unique_id=1102103656]
+layout_mode = 2
+text = "99/99"
+
+[node name="BtnNext" type="Button" parent="HBoxContainer" unique_id=1945438959]
+layout_mode = 2
+text = ">"
+
+[node name="BtnFinal" type="Button" parent="HBoxContainer" unique_id=1407433099]
+layout_mode = 2
+text = ">>"
+
+[node name="IptPage" type="LineEdit" parent="HBoxContainer" unique_id=1567504866]
+custom_minimum_size = Vector2(80, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "UI_PAGER_INPUT_PAGE"
+
+[node name="BtnGoto" type="Button" parent="HBoxContainer" unique_id=613965600]
+layout_mode = 2
+text = "UI_PAGER_GOTO"
