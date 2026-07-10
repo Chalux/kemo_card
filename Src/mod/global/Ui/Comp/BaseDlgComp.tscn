@@ -1,14 +1,18 @@
 [gd_scene format=3 uid="uid://dnod4h20yq5su"]
 
+[ext_resource type="Script" uid="uid://bhaivy831p83n" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.cs" id="1_gvkcd"]
 [ext_resource type="Texture2D" path="res://Resource/Assets/Icon/cancel.svg" id="1_xcole"]
 
-[node name="BaseDlgComp" type="Control" unique_id=1648768781]
+[node name="BaseDlgComp" type="Control" unique_id=1648768781 node_paths=PackedStringArray("_btnClose")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_gvkcd")
+_btnClose = NodePath("DlgBg/CloseBtn")
 
 [node name="DlgBg" type="NinePatchRect" parent="." unique_id=1624308508]
 layout_mode = 1
@@ -17,6 +21,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="BgColorRect" type="ColorRect" parent="DlgBg" unique_id=1319711502]
 layout_mode = 1
@@ -25,6 +30,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 color = Color(0.07510843, 0.1482965, 0.28160223, 0.7647059)
 
 [node name="CloseBtn" type="Button" parent="DlgBg" unique_id=1861420465]
