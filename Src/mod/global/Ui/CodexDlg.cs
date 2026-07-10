@@ -273,9 +273,39 @@ public partial class CodexDlg : BaseDlg
 
 	private void OnPagerPageChanged(int _) => FillCurrentPage();
 
-	private void RefreshFilteredList(bool resetPage) { }
+	private void RefreshFilteredList(bool resetPage)
+	{
+		var store = AppRoot.Services.ContentModPipeline.Registry.Store;
+		var text = _iptTxtFilter?.Text ?? "";
+		_filteredCards = CardCodexQuery.Filter(
+			store.Cards.Values,
+			_conditions,
+			text,
+			Localization.Tr,
+			id => store.TryGetSkill(id, out var skill) ? skill : null);
 
-	private void FillCurrentPage() { }
+		if (_pager != null)
+		{
+			var pages = CardCodexQuery.TotalPages(_filteredCards.Count, CardCodexQuery.PageSize);
+			_pager.TotalPages = pages;
+			if (resetPage)
+			{
+				_pager.SetPage(0);
+			}
+		}
+
+		FillCurrentPage();
+	}
+
+	private void FillCurrentPage()
+	{
+		var page = _pager?.CurrentPage ?? 0;
+		var slice = CardCodexQuery.SlicePage(_filteredCards, page, CardCodexQuery.PageSize);
+		for (var i = 0; i < _cardSlots.Count; i++)
+		{
+			_cardSlots[i].SetData(i < slice.Count ? slice[i] : null);
+		}
+	}
 
 	#endregion
 }
