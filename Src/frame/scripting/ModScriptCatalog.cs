@@ -4,17 +4,42 @@ namespace KemoCard.Frame.Scripting;
 
 public sealed class ModScriptCatalog
 {
-	private readonly Dictionary<string, string> _folderByModId = new(StringComparer.Ordinal);
+	private readonly Dictionary<string, (string FolderPath, string ContentRoot)> _byModId =
+		new(StringComparer.Ordinal);
 
 	public void Rebuild(IReadOnlyList<DiscoveredModEntry> activeMods)
 	{
-		_folderByModId.Clear();
+		_byModId.Clear();
 		foreach (var entry in activeMods)
 		{
-			_folderByModId[entry.Manifest.ModId] = entry.FolderPath;
+			var contentRoot = string.IsNullOrWhiteSpace(entry.Manifest.ContentRoot)
+				? "content"
+				: entry.Manifest.ContentRoot;
+			_byModId[entry.Manifest.ModId] = (entry.FolderPath, contentRoot);
 		}
 	}
 
-	public bool TryGetFolderPath(string modId, out string folderPath) =>
-		_folderByModId.TryGetValue(modId, out folderPath!);
+	public bool TryGetFolderPath(string modId, out string folderPath)
+	{
+		if (_byModId.TryGetValue(modId, out var entry))
+		{
+			folderPath = entry.FolderPath;
+			return true;
+		}
+
+		folderPath = null!;
+		return false;
+	}
+
+	public bool TryGetContentRootPath(string modId, out string contentRootPath)
+	{
+		if (_byModId.TryGetValue(modId, out var entry))
+		{
+			contentRootPath = Path.Combine(entry.FolderPath, entry.ContentRoot);
+			return true;
+		}
+
+		contentRootPath = null!;
+		return false;
+	}
 }
