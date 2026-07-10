@@ -70,6 +70,13 @@ public partial class CodexDlg : BaseDlg
 
 	protected override void OnOpen()
 	{
+		_conditions.Clear();
+		_itemListConditions?.Clear();
+		if (_iptTxtFilter != null)
+		{
+			_iptTxtFilter.Text = "";
+		}
+
 		CacheCardSlots();
 		PopulateFieldOptions();
 		RebuildOpAndValOptions();
