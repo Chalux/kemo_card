@@ -72,6 +72,7 @@ public static class CardCodexQuery
 			.Where(c => !c.HideInDex)
 			.Where(c => conditions.All(cond => MatchesCondition(c, cond)))
 			.Where(c => string.IsNullOrEmpty(query) || MatchesText(c, query, translate, tryGetSkill))
+			.OrderBy(c => c.Id, StringComparer.Ordinal)
 			.ToList();
 	}
 

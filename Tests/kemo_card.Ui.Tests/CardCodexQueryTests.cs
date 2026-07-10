@@ -127,7 +127,7 @@ public sealed class CardCodexQueryTests
 		};
 
 		var byName = CardCodexQuery.Filter(cards, [], "火焰", Tr, GetSkill);
-		Assert.That(byName.Select(c => c.Id), Is.EqualTo(new[] { "n", "d" }).AsCollection);
+		Assert.That(byName.Select(c => c.Id), Is.EqualTo(new[] { "d", "n" }).AsCollection);
 		// "火焰" 命中卡名「火焰打击」与技能描述「造成火焰伤害」
 
 		var empty = CardCodexQuery.Filter(cards, [], "  ", Tr, GetSkill);
