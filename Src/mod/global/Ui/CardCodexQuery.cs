@@ -60,6 +60,93 @@ public static class CardCodexQuery
 		};
 	}
 
+	public static IReadOnlyList<CardDto> Filter(
+		IEnumerable<CardDto> cards,
+		IReadOnlyList<CardFilterCondition> conditions,
+		string textQuery,
+		Func<string, string> translate,
+		Func<string, SkillDto?> tryGetSkill)
+	{
+		var query = textQuery?.Trim() ?? "";
+		return cards
+			.Where(c => !c.HideInDex)
+			.Where(c => conditions.All(cond => MatchesCondition(c, cond)))
+			.Where(c => string.IsNullOrEmpty(query) || MatchesText(c, query, translate, tryGetSkill))
+			.ToList();
+	}
+
+	public static bool MatchesText(
+		CardDto card,
+		string query,
+		Func<string, string> translate,
+		Func<string, SkillDto?> tryGetSkill)
+	{
+		if (ContainsIgnoreCase(translate(card.DisplayNameId), query)
+			|| ContainsIgnoreCase(card.DisplayNameId, query))
+		{
+			return true;
+		}
+
+		foreach (var skillRef in card.SkillRefs)
+		{
+			var skill = tryGetSkill(skillRef.SkillId);
+			if (skill == null || string.IsNullOrEmpty(skill.DescId))
+			{
+				continue;
+			}
+
+			if (ContainsIgnoreCase(translate(skill.DescId), query)
+				|| ContainsIgnoreCase(skill.DescId, query))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static IReadOnlyList<CardDto> SlicePage(IReadOnlyList<CardDto> cards, int page, int pageSize)
+	{
+		if (cards.Count == 0 || pageSize <= 0 || page < 0)
+		{
+			return Array.Empty<CardDto>();
+		}
+
+		var start = page * pageSize;
+		if (start >= cards.Count)
+		{
+			return Array.Empty<CardDto>();
+		}
+
+		var count = Math.Min(pageSize, cards.Count - start);
+		var slice = new CardDto[count];
+		for (var i = 0; i < count; i++)
+		{
+			slice[i] = cards[start + i];
+		}
+
+		return slice;
+	}
+
+	public static int TotalPages(int itemCount, int pageSize)
+	{
+		if (itemCount <= 0 || pageSize <= 0)
+		{
+			return 0;
+		}
+
+		return (itemCount + pageSize - 1) / pageSize;
+	}
+
+	public static IReadOnlyList<string> CollectTags(IEnumerable<CardDto> cards) =>
+		cards
+			.Where(c => !c.HideInDex)
+			.SelectMany(c => c.Tags)
+			.Where(t => !string.IsNullOrWhiteSpace(t))
+			.Distinct(StringComparer.Ordinal)
+			.OrderBy(t => t, StringComparer.Ordinal)
+			.ToList();
+
 	private static bool MatchEnum<T>(T actual, CardFilterCondition condition) where T : struct, Enum
 	{
 		if (!Enum.TryParse<T>(condition.ValueId, ignoreCase: false, out var expected))
@@ -117,4 +204,8 @@ public static class CardCodexQuery
 			_ => false,
 		};
 	}
+
+	private static bool ContainsIgnoreCase(string haystack, string needle) =>
+		!string.IsNullOrEmpty(haystack)
+		&& haystack.Contains(needle, StringComparison.OrdinalIgnoreCase);
 }

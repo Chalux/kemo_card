@@ -79,4 +79,79 @@ public sealed class CardCodexQueryTests
 		Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.Role, ECardFilterOp.NotEqual, nameof(ERole.Warrior), "")), Is.True);
 		Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.CostType, ECardFilterOp.Equal, nameof(ECostType.Health), "")), Is.True);
 	}
+
+	[Test]
+	public void Filter_excludes_hide_in_dex_and_ands_conditions()
+	{
+		var cards = new Dictionary<string, CardDto>
+		{
+			["a"] = Card(id: "a", type: ECardType.Physics, cost: 1),
+			["b"] = Card(id: "b", type: ECardType.Physics, cost: 3),
+			["c"] = Card(id: "c", type: ECardType.Magical, cost: 1),
+			["h"] = Card(id: "h", type: ECardType.Physics, cost: 1, hideInDex: true),
+		};
+
+		var conditions = new[]
+		{
+			new CardFilterCondition(ECardFilterField.CardType, ECardFilterOp.Equal, nameof(ECardType.Physics), ""),
+			new CardFilterCondition(ECardFilterField.Cost, ECardFilterOp.LessOrEqual, "2", ""),
+		};
+
+		var result = CardCodexQuery.Filter(cards.Values, conditions, textQuery: "", _ => "", _ => null);
+		Assert.That(result.Select(c => c.Id), Is.EqualTo(new[] { "a" }));
+	}
+
+	[Test]
+	public void Filter_text_matches_name_and_skill_desc()
+	{
+		var cards = new[]
+		{
+			Card(id: "n", displayNameId: "card.fire.name", skillIds: ["s1"]),
+			Card(id: "d", displayNameId: "card.ice.name", skillIds: ["s2"]),
+			Card(id: "x", displayNameId: "card.rock.name", skillIds: ["s3"]),
+		};
+
+		string Tr(string key) => key switch
+		{
+			"card.fire.name" => "火焰打击",
+			"card.ice.name" => "寒冰护盾",
+			"skill.s2.desc" => "造成火焰伤害",
+			_ => key,
+		};
+
+		SkillDto? GetSkill(string id) => id switch
+		{
+			"s1" => new SkillDto { Id = "s1", DescId = "skill.s1.desc" },
+			"s2" => new SkillDto { Id = "s2", DescId = "skill.s2.desc" },
+			_ => null,
+		};
+
+		var byName = CardCodexQuery.Filter(cards, [], "火焰", Tr, GetSkill);
+		Assert.That(byName.Select(c => c.Id), Is.EqualTo(new[] { "n", "d" }).AsCollection);
+		// "火焰" 命中卡名「火焰打击」与技能描述「造成火焰伤害」
+
+		var empty = CardCodexQuery.Filter(cards, [], "  ", Tr, GetSkill);
+		Assert.That(empty.Count, Is.EqualTo(3));
+	}
+
+	[Test]
+	public void SlicePage_and_collect_tags()
+	{
+		var cards = Enumerable.Range(0, 10)
+			.Select(i => Card(id: $"c{i:D2}", tags: i % 2 == 0 ? ["even", "shared"] : ["odd"]))
+			.ToList();
+
+		var page0 = CardCodexQuery.SlicePage(cards, page: 0, pageSize: 8);
+		Assert.That(page0.Count, Is.EqualTo(8));
+		Assert.That(page0[0].Id, Is.EqualTo("c00"));
+
+		var page1 = CardCodexQuery.SlicePage(cards, page: 1, pageSize: 8);
+		Assert.That(page1.Count, Is.EqualTo(2));
+
+		Assert.That(CardCodexQuery.TotalPages(10, 8), Is.EqualTo(2));
+		Assert.That(CardCodexQuery.TotalPages(0, 8), Is.EqualTo(0));
+
+		var tags = CardCodexQuery.CollectTags(cards);
+		Assert.That(tags, Is.EqualTo(new[] { "even", "odd", "shared" }));
+	}
 }
