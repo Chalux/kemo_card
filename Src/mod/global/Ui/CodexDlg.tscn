@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="3_tnh6y"]
 [ext_resource type="PackedScene" uid="uid://c6tqm743fyjtl" path="res://Src/mod/global/Ui/Comp/BasePager.tscn" id="4_egqms"]
 
-[node name="CodexDlg" type="Control" unique_id=1495356838]
+[node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_iptTxtFilter", "_gridCardList", "_pager")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,6 +13,14 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_x5fxm")
+_obField = NodePath("TabContainer/UI_CARD/OBCardTypeSelector")
+_obOp = NodePath("TabContainer/UI_CARD/OBCardOperateSelector")
+_obVal = NodePath("TabContainer/UI_CARD/OBCardValSelector")
+_itemListConditions = NodePath("TabContainer/UI_CARD/ItemListConditions")
+_btnAdd = NodePath("TabContainer/UI_CARD/BAdd")
+_iptTxtFilter = NodePath("TabContainer/UI_CARD/IptTxtFilter")
+_gridCardList = NodePath("TabContainer/UI_CARD/Control/GridContainerCardList")
+_pager = NodePath("TabContainer/UI_CARD/BasePager")
 
 [node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("2_ii0j4")]
 layout_mode = 1
