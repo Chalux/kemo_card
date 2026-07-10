@@ -43,6 +43,8 @@ public sealed class ContentModPipeline
 
 	public GameDefinitionRegistry Registry { get; }
 
+	public ModScriptCatalog ScriptCatalog => _scriptCatalog;
+
 	public ContentLoadReport Rebuild(IReadOnlyList<string> enabledModIds)
 	{
 		ArgumentNullException.ThrowIfNull(enabledModIds);
