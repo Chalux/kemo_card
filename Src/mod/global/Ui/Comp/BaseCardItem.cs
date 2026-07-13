@@ -32,6 +32,20 @@ public partial class BaseCardItem : Control
     {
         base._Ready();
         MouseFilter = MouseFilterEnum.Stop;
+        IgnoreMouseOnDescendants(this);
+    }
+
+    private static void IgnoreMouseOnDescendants(Node node)
+    {
+        foreach (var child in node.GetChildren())
+        {
+            if (child is Control control)
+            {
+                control.MouseFilter = MouseFilterEnum.Ignore;
+            }
+
+            IgnoreMouseOnDescendants(child);
+        }
     }
 
     public override void _GuiInput(InputEvent @event)
