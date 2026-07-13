@@ -15,3 +15,6 @@
 # Git worktrees
 .worktrees/
 
+# Brainstorm visual companion sessions
+.superpowers/
+
