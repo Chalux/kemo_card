@@ -16,6 +16,7 @@ public partial class BaseCardItem : Control
     [Export] private Label? _txtCardType;
     [Export] private Label? _txtCardVal;
     [Export] private ColorRect? _crAttr;
+    [Export] public ECardClickAction ClickAction { get; set; } = ECardClickAction.OpenDetails;
 
     private CardDto? _card;
     private int _baseValue;
