@@ -1,5 +1,6 @@
 {
   "displayNameId": "card.strike_plus.name",
+  "artistNameId": "card.strike.artist",
   "element": 1,
   "costType": "Energy",
   "cost": 1,
