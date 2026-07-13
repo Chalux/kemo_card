@@ -10,10 +10,13 @@ namespace MainRoot;
 
 public partial class MainRoot : Control
 {
+    private const string KeywordTipLayerPath = "res://Src/mod/global/Ui/Tip/KeywordTipLayer.tscn";
+
     public override void _Ready()
     {
         BootstrapServices();
         InitUIManager();
+        EnsureKeywordTipLayer();
         _ = GlobalModController.OpenMenuAsync();
 
         EventDispatcher.Configure(new GodotEventDispatcherLogger());
@@ -57,6 +60,19 @@ public partial class MainRoot : Control
                 EUILayer.Guide,
             ],
         });
+    }
+
+    private void EnsureKeywordTipLayer()
+    {
+        if (!ResourceLoader.Exists(KeywordTipLayerPath))
+        {
+            GD.PushWarning($"MainRoot: 未找到词条提示层场景 {KeywordTipLayerPath}");
+            return;
+        }
+
+        var packed = ResourceLoader.Load<PackedScene>(KeywordTipLayerPath);
+        var layer = packed.Instantiate();
+        AddChild(layer);
     }
 
     public override void _ExitTree()

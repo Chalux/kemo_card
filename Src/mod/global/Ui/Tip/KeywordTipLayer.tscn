@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Tip/KeywordTipService.cs" id="1_svc"]
+
+[node name="KeywordTipLayer" type="CanvasLayer" node_paths=PackedStringArray("_tipRoot", "_tipStack")]
+layer = 100
+script = ExtResource("1_svc")
+_tipRoot = NodePath("TipRoot")
+_tipStack = NodePath("TipRoot/TipStack")
+
+[node name="TipRoot" type="Control" parent="."]
+visible = false
+layout_mode = 0
+mouse_filter = 2
+
+[node name="TipStack" type="VBoxContainer" parent="TipRoot"]
+layout_mode = 0
+mouse_filter = 2
+theme_override_constants/separation = 6
