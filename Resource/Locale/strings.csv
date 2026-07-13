@@ -58,3 +58,9 @@ UI_ROLE_SWORD_MAN,剑士,Sword Man
 UI_ROLE_MAGE,法师,Mage
 UI_ROLE_ALCHEMIST,炼金术士,Alchemist
 UI_ROLE_ELEMENTIST,元素师,Elementist
+KW_EXHAUST_TITLE,消耗,Exhaust
+KW_EXHAUST_DESC,使用后移出战斗。,Remove from combat when played.
+KW_RETAIN_TITLE,保留,Retain
+KW_RETAIN_DESC,回合结束时留在手牌。,Keep in hand at end of turn.
+KW_DEAL_DAMAGE_TITLE,伤害,Damage
+KW_DEAL_DAMAGE_DESC,造成 {amount} 点伤害。,Deal {amount} damage.
