@@ -3,7 +3,10 @@ using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Content.Keywords;
+using KemoCard.Frame.UI;
+using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Global.Def;
+using KemoCard.Mod.Global.Ui;
 using KemoCard.Mod.Global.Ui.Tip;
 
 namespace KemoCard.Mod.Global.Ui.Comp;
@@ -22,6 +25,54 @@ public partial class BaseCardItem : Control
     private int _baseValue;
     private int? _displayOverride;
     private ECostType _costType = ECostType.None;
+
+    #region 点击交互
+
+    public override void _Ready()
+    {
+        base._Ready();
+        MouseFilter = MouseFilterEnum.Stop;
+    }
+
+    public override void _GuiInput(InputEvent @event)
+    {
+        if (ClickAction != ECardClickAction.OpenDetails || _card == null)
+        {
+            return;
+        }
+
+        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false } mb
+            && !mb.IsEcho())
+        {
+            TryOpenDetails();
+            AcceptEvent();
+        }
+    }
+
+    private void TryOpenDetails()
+    {
+        if (_card == null)
+        {
+            return;
+        }
+
+        var ui = UIManager.Instance;
+        if (ui == null)
+        {
+            GD.PushWarning("BaseCardItem: UIManager.Instance 为空，无法打开卡牌详情。");
+            return;
+        }
+
+        _ = ui.OpenAsync(
+            new UiId<CardDetailsDlgPayload>(GlobalUiIds.CardDetails),
+            new CardDetailsDlgPayload
+            {
+                CardId = _card.Id,
+                DisplayValue = _displayOverride,
+            });
+    }
+
+    #endregion
 
     #region 整体绑定
 
