@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://b6q632yjwjopr"]
+
+[ext_resource type="Script" uid="uid://dp1x2epf01bvb" path="res://Src/mod/global/Ui/CardDetailsDlg.cs" id="1_adodo"]
+[ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="1_iai23"]
+[ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="2_xn1gd"]
+
+[node name="CardDetailsDlg" type="Control" unique_id=2040403557 node_paths=PackedStringArray("_cardItem", "_txtCardName", "_txtModName", "_txtArtistName", "_rtCardDesc")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_adodo")
+_cardItem = NodePath("BaseDlgComp/BaseCardItem")
+_txtCardName = NodePath("BaseDlgComp/TxtCardName")
+_txtModName = NodePath("BaseDlgComp/TxtModName")
+_txtArtistName = NodePath("BaseDlgComp/TxtArtistName")
+_rtCardDesc = NodePath("BaseDlgComp/RTCardDesc")
+
+[node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("1_iai23")]
+layout_mode = 1
+offset_left = 152.0
+offset_top = 88.0
+offset_right = -88.0
+offset_bottom = -88.0
+
+[node name="BaseCardItem" parent="BaseDlgComp" unique_id=1269321399 instance=ExtResource("2_xn1gd")]
+layout_mode = 1
+anchor_left = 0.04385965
+anchor_top = 0.11440678
+anchor_right = 0.32456142
+anchor_bottom = 0.87711865
+ClickAction = 0
+
+
+[node name="TxtCardName" type="Label" parent="BaseDlgComp" unique_id=1202729569]
+layout_mode = 0
+anchor_left = 0.35964912
+anchor_top = 0.118644066
+anchor_right = 0.622807
+anchor_bottom = 0.22033899
+offset_right = -32.0
+theme_override_font_sizes/font_size = 32
+text = "UI_CARD_NAME"
+metadata/_edit_use_anchors_ = true
+
+[node name="TxtModName" type="Label" parent="BaseDlgComp" unique_id=1920470385]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.6754386
+anchor_top = 0.118644066
+anchor_right = 0.9385965
+anchor_bottom = 0.22033899
+theme_override_font_sizes/font_size = 32
+text = "UI_CARD_NAME"
+metadata/_edit_use_anchors_ = true
+
+[node name="TxtArtistName" type="Label" parent="BaseDlgComp" unique_id=696577813]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.35964912
+anchor_top = 0.2309322
+anchor_right = 0.622807
+anchor_bottom = 0.33262712
+theme_override_font_sizes/font_size = 32
+text = "UI_CARD_NAME"
+metadata/_edit_use_anchors_ = true
+
+[node name="RTCardDesc" type="RichTextLabel" parent="BaseDlgComp" unique_id=1311945422]
+layout_mode = 0
+anchor_left = 0.35964912
+anchor_top = 0.3559322
+anchor_right = 0.95614034
+anchor_bottom = 0.86440676
+theme_override_font_sizes/normal_font_size = 32
+theme_override_font_sizes/bold_font_size = 32
+theme_override_font_sizes/bold_italics_font_size = 32
+theme_override_font_sizes/italics_font_size = 32
+theme_override_font_sizes/mono_font_size = 32
+bbcode_enabled = true
+text = "UI_CARD_DESC"
+metadata/_edit_use_anchors_ = true
