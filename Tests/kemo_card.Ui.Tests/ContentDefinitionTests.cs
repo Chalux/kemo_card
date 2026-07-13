@@ -58,6 +58,7 @@ public sealed class ContentDefinitionTests
 		{
 			Id = "strike",
 			DisplayNameId = "card.strike.name",
+			ArtistNameId = "card.strike.artist",
 			CostType = ECostType.Energy,
 			Cost = 1,
 			BaseValue = 6,
@@ -74,7 +75,9 @@ public sealed class ContentDefinitionTests
 		Assert.That(restored.CardType, Is.EqualTo(ECardType.Physics));
 		Assert.That(restored.SkillRefs[0].SkillId, Is.EqualTo("strike_hit"));
 		Assert.That(restored.BaseValue, Is.EqualTo(6));
+		Assert.That(restored.ArtistNameId, Is.EqualTo("card.strike.artist"));
 		Assert.That(json, Does.Contain("baseValue"));
+		Assert.That(json, Does.Contain("artistNameId"));
 	}
 
 	[Test]
