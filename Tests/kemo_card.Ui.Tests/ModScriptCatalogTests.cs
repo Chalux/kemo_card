@@ -35,4 +35,31 @@ public sealed class ModScriptCatalogTests
 		var catalog = new ModScriptCatalog();
 		Assert.That(catalog.TryGetContentRootPath("missing", out _), Is.False);
 	}
+
+	[Test]
+	public void TryGetDisplayNameKey_returns_manifest_display_name()
+	{
+		var catalog = new ModScriptCatalog();
+		catalog.Rebuild(
+		[
+			new DiscoveredModEntry(
+				Path.Combine(Path.GetTempPath(), "unused"),
+				new ContentModManifestDto
+				{
+					ModId = "base.game",
+					DisplayName = "MOD_BASE_GAME_DISPLAY_NAME",
+					ContentRoot = "content",
+				}),
+		]);
+
+		Assert.That(catalog.TryGetDisplayNameKey("base.game", out var key), Is.True);
+		Assert.That(key, Is.EqualTo("MOD_BASE_GAME_DISPLAY_NAME"));
+	}
+
+	[Test]
+	public void TryGetDisplayNameKey_unknown_returns_false()
+	{
+		var catalog = new ModScriptCatalog();
+		Assert.That(catalog.TryGetDisplayNameKey("missing", out _), Is.False);
+	}
 }
