@@ -122,6 +122,7 @@ public static class CardUiDefinitions
 		{
 			ECostType.None => "",
 			ECostType.X => "X",
+			ECostType.Discard => "∅",
 			_ => cost.ToString(),
 		};
 }
