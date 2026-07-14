@@ -38,7 +38,9 @@ alwaysApply: true
 
 ## 模块依赖
 
-- **`Src/frame/` 不得依赖或调用 `Src/mod/`**：框架层保持业务无关；禁止引用 `KemoCard.Mod.*` 命名空间、加载 mod 场景/资源路径，或直接调用 mod 内类型与方法。依赖方向只能是 `mod` → `frame`（以及 `utils` / `fixed`），不能反向。
+- **`Src/frame/` 可以引用 Godot**（节点、资源加载、`AudioServer` 等引擎 API 均可），与 `UIManager` 等现有 frame 组件一致。
+- **`Src/frame/` 不得依赖或调用 `Src/mod/`**：框架层保持业务无关；禁止引用 `KemoCard.Mod.*` 命名空间、加载业务 mod 场景/内容路径，或直接调用 mod 内类型与方法。依赖方向只能是 `mod` → `frame`（以及 `utils` / `fixed`），不能反向。
+- **`Src/fixed/`**：仅放对 Godot / 引擎的补丁与 workaround；通用可复用运行时能力优先放 `frame`，不要仅因「用了 Godot」就放进 `fixed`。
 
 ## Git 提交规范
 
