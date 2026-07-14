@@ -11,7 +11,7 @@ public sealed class KeywordCatalog
 
     public static KeywordCatalog Shared => SharedInstance;
 
-    /// <summary>冲突覆盖等警告回调；运行时可接到 GD.PushWarning。</summary>
+    /// <summary>冲突覆盖等警告回调；运行时可接到 AppLog.Warning。</summary>
     public Action<string>? WarningHandler { get; set; }
 
     public void Register(KeywordEntry entry)

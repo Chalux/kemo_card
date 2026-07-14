@@ -1,5 +1,5 @@
-using Godot;
 using KemoCard.Frame.Content.Keywords;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Mod.Global.Def;
 
@@ -12,7 +12,7 @@ public static class BuiltinKeywords
     {
         ArgumentNullException.ThrowIfNull(catalog);
 
-        catalog.WarningHandler ??= msg => GD.PushWarning(msg);
+        catalog.WarningHandler ??= msg => AppLog.Warning(msg, "Keyword");
 
         catalog.Register(new KeywordEntry("exhaust", "KW_EXHAUST_TITLE", "KW_EXHAUST_DESC"));
         catalog.Register(new KeywordEntry("retain", "KW_RETAIN_TITLE", "KW_RETAIN_DESC"));

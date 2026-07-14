@@ -15,14 +15,15 @@ public partial class MainRoot : Control
 
     public override void _Ready()
     {
-        AppLog.Configure(new GodotAppLog());
+        var appLog = new GodotAppLog();
+        AppLog.Configure(appLog);
 
         BootstrapServices();
         InitUIManager();
         EnsureKeywordTipLayer();
         _ = GlobalModController.OpenMenuAsync();
 
-        EventDispatcher.Configure(new GodotEventDispatcherLogger());
+        EventDispatcher.Configure(new GodotEventDispatcherLogger(appLog));
     }
 
     private static void BootstrapServices()

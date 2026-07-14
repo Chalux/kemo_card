@@ -1,7 +1,7 @@
-using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Keywords;
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Def;
@@ -74,7 +74,7 @@ public sealed class ModFactory
 
     private static void RegisterBuiltinKeywords()
     {
-        KeywordCatalog.Shared.WarningHandler = msg => GD.PushWarning(msg);
+        KeywordCatalog.Shared.WarningHandler = msg => AppLog.Warning(msg, "Keyword");
         KeywordCatalog.Shared.Clear();
         BuiltinKeywords.RegisterAll(KeywordCatalog.Shared);
     }
@@ -106,14 +106,15 @@ public sealed class ModFactory
             context.ContentModRootDirectory,
             context.BundledContentModsDirectory);
 
+        var appLog = new StaticAppLogBridge();
         var registry = new GameDefinitionRegistry();
         var catalog = new ModScriptCatalog();
-        var scriptRuntime = new ModScriptRuntime(catalog, registry, new NullModScriptLogger());
+        var scriptRuntime = new ModScriptRuntime(catalog, registry, new AppLogModScriptLogger(appLog));
         var prewarmer = new ModScriptPrewarmer(scriptRuntime, registry);
         var pipeline = new ContentModPipeline(
             context.ContentModRootDirectory,
             registry,
-            new GodotContentModLogger(),
+            new GodotContentModLogger(appLog),
             new NullContentModUserNotifier(),
             scriptRuntime,
             catalog,
