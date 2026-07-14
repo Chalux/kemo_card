@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Fixed.Godot;
 
@@ -39,14 +40,14 @@ public sealed class GodotContentModTranslationLoader : IContentModTranslationLoa
 		var resourcePath = ProjectSettings.LocalizePath(absolutePath);
 		if (string.IsNullOrEmpty(resourcePath))
 		{
-			GD.PushWarning($"[ContentMod] Mod '{modId}': cannot localize translation path '{absolutePath}'.");
+			AppLog.Warning($"Mod '{modId}': cannot localize translation path '{absolutePath}'.", "ContentMod");
 			return;
 		}
 
 		var translation = ResourceLoader.Load<Translation>(resourcePath);
 		if (translation is null)
 		{
-			GD.PushWarning($"[ContentMod] Mod '{modId}': failed to load translation '{resourcePath}'.");
+			AppLog.Warning($"Mod '{modId}': failed to load translation '{resourcePath}'.", "ContentMod");
 			return;
 		}
 

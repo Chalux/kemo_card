@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Frame.UI.Def;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.UI;
 
@@ -98,7 +99,7 @@ public sealed class UIRuntimeRegistry
 
             if (!string.IsNullOrEmpty(route.ParentId) && !registeredIds.Contains(route.ParentId))
             {
-                GD.PushError($"UIRoute: 路由 {id} 的父路由 {route.ParentId} 未注册");
+                AppLog.Error($"UIRoute: 路由 {id} 的父路由 {route.ParentId} 未注册", "UI");
             }
         }
 
@@ -110,7 +111,7 @@ public sealed class UIRuntimeRegistry
             {
                 if (!idSet.Add(cur))
                 {
-                    GD.PushError($"UIRoute: 路由 {cur} 存在循环引用");
+                    AppLog.Error($"UIRoute: 路由 {cur} 存在循环引用", "UI");
                     break;
                 }
                 cur = GetParentId(cur);

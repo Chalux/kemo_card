@@ -2,6 +2,7 @@ using Godot;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Frame.Util;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.UI;
 
@@ -26,7 +27,7 @@ public sealed class UIRuntimeData(UIVo owner)
 
         if (parent == null)
         {
-            GD.PushError($"界面<{_owner.Id}>挂载失败：无有效父节点");
+            AppLog.Error($"界面<{_owner.Id}>挂载失败：无有效父节点", "UI");
             return;
         }
 

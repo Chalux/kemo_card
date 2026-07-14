@@ -1,4 +1,5 @@
 using Godot;
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Base;
@@ -77,7 +78,7 @@ public partial class UIManager : Node, IUIManager
     {
         if (_inited)
         {
-            GD.PushError("UI 管理器已初始化，请勿重复初始化.");
+            AppLog.Error("UI 管理器已初始化，请勿重复初始化.", "UI");
             return;
         }
 
@@ -118,7 +119,7 @@ public partial class UIManager : Node, IUIManager
         UIRuntimeEntry? entry = _registry.Get(id);
         if (entry == null)
         {
-            GD.PushError($"UI 管理器: 打开UI<{id}> 失败, 路由未注册");
+            AppLog.Error($"UI 管理器: 打开UI<{id}> 失败, 路由未注册", "UI");
             openOpt?.OnFail?.Invoke();
             tcs.SetResult(null);
             return tcs.Task;
@@ -127,7 +128,7 @@ public partial class UIManager : Node, IUIManager
         UILayer? layer = ResolveLayer(entry, openOpt, out string? failReason);
         if (failReason != null)
         {
-            GD.PushError(failReason);
+            AppLog.Error(failReason, "UI");
             openOpt?.OnFail?.Invoke();
             tcs.SetResult(null);
             return tcs.Task;
@@ -183,7 +184,7 @@ public partial class UIManager : Node, IUIManager
         string? parent = _registry.GetParentId(childId);
         if (parent == null)
         {
-            GD.PushError($"UI 管理器: 打开子UI<{childId}> 失败，无父路由。回退为普通 OpenAsync");
+            AppLog.Error($"UI 管理器: 打开子UI<{childId}> 失败，无父路由。回退为普通 OpenAsync", "UI");
             return OpenAsync(childId, payload, openOpt);
         }
 
@@ -196,7 +197,7 @@ public partial class UIManager : Node, IUIManager
         {
             if (!visited.Add(cur))
             {
-                GD.PushError($"UI 管理器: 路由存在环，终止于：<{childId}> 。");
+                AppLog.Error($"UI 管理器: 路由存在环，终止于：<{childId}> 。", "UI");
                 return Task.FromResult<UIVo?>(null);
             }
 

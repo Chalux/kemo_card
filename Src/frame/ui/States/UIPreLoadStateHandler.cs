@@ -2,6 +2,7 @@ using Godot;
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.UI.States;
 
@@ -37,7 +38,7 @@ public sealed class UIPreLoadStateHandler : IStateHandler<EUIState, IUIStateCont
         },
         () =>
         {
-            GD.PushError($"UI 管理器: 预加载UI<{vo.Id}> 失败。");
+            AppLog.Error($"UI 管理器: 预加载UI<{vo.Id}> 失败。", "UI");
             vo.StateMachine.TransitionTo(EUIState.Destroy, context);
             context?.OpenNext();
         });

@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.Util;
 
@@ -89,7 +90,7 @@ public sealed class GodotMainThreadSyncContext : SynchronizationContext
             }
             catch (Exception e)
             {
-                Godot.GD.PushError($"SynchronizationContext 回调异常: {e}");
+                AppLog.Error($"SynchronizationContext 回调异常: {e}", "SyncContext");
             }
         }
     }

@@ -3,6 +3,7 @@ using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Frame.Util;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.UI.States;
 
@@ -94,7 +95,7 @@ public sealed class UILoadStateHandler : IStateHandler<EUIState, IUIStateContext
 
 			if (scenes.Length == 0 || scenes[0] == null)
 			{
-				GD.PushError($"UI 管理器: 加载UI<{vo.Id}> 失败，资源<{string.Join(",", paths)}> 不存在。");
+				AppLog.Error($"UI 管理器: 加载UI<{vo.Id}> 失败，资源<{string.Join(",", paths)}> 不存在。", "UI");
 				vo.StateMachine.TransitionTo(EUIState.Destroy, context);
 				context?.OpenNext();
 				return;
@@ -103,7 +104,7 @@ public sealed class UILoadStateHandler : IStateHandler<EUIState, IUIStateContext
 			Node? node = scenes[0]!.Instantiate();
 			if (node is not BaseWin win)
 			{
-				GD.PushError($"UI 管理器: 加载UI<{vo.Id}> 失败，根节点不是BaseWin。");
+				AppLog.Error($"UI 管理器: 加载UI<{vo.Id}> 失败，根节点不是BaseWin。", "UI");
 				node?.QueueFree();
 				vo.StateMachine.TransitionTo(EUIState.Destroy, context);
 				context?.OpenNext();
@@ -136,7 +137,7 @@ public sealed class UILoadStateHandler : IStateHandler<EUIState, IUIStateContext
 		}
 		catch (Exception e)
 		{
-			GD.PushError($"UI 管理器: 加载UI<{vo.Id}> 失败，{e.Message}");
+			AppLog.Error($"UI 管理器: 加载UI<{vo.Id}> 失败，{e.Message}", "UI");
 			vo.StateMachine.TransitionTo(EUIState.Destroy, context);
 			context?.OpenNext();
 		}

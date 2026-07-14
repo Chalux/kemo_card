@@ -1,4 +1,5 @@
 using Godot;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.Util;
 
@@ -8,14 +9,14 @@ public static class UIResourceLoader
 	{
 		if (string.IsNullOrEmpty(path))
 		{
-			GD.PushError("UIResourceLoader: 资源路径不能为空.");
+			AppLog.Error("资源路径不能为空.", "UIResourceLoader");
 			return null;
 		}
 
 		Error err = ResourceLoader.LoadThreadedRequest(path);
 		if (err != Error.Ok && err != Error.AlreadyInUse)
 		{
-			GD.PushError($"UIResourceLoader: 请求加载资源失败 '{path}': {err}.");
+			AppLog.Error($"请求加载资源失败 '{path}': {err}.", "UIResourceLoader");
 			return null;
 		}
 
@@ -30,7 +31,7 @@ public static class UIResourceLoader
 					return ResourceLoader.LoadThreadedGet(path) as PackedScene;
 				case ResourceLoader.ThreadLoadStatus.InvalidResource:
 				case ResourceLoader.ThreadLoadStatus.Failed:
-					GD.PushError($"UIResourceLoader: 加载资源失败 '{path}': {status}.");
+					AppLog.Error($"加载资源失败 '{path}': {status}.", "UIResourceLoader");
 					return null;
 				default:
 					await Task.Delay(100, cancellationToken);
