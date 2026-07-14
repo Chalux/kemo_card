@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/SettingDropdownRow.cs" id="1_dropdown"]
+
+[node name="SettingDropdownRow" type="HBoxContainer" node_paths=PackedStringArray("NameLabel", "OptionButton")]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_constants/separation = 12
+script = ExtResource("1_dropdown")
+NameLabel = NodePath("NameLabel")
+OptionButton = NodePath("OptionButton")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 2
+size_flags_vertical = 4
+text = "SETTING_NAME"
+
+[node name="Spacer" type="Control" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="OptionButton" type="OptionButton" parent="."]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+size_flags_vertical = 4

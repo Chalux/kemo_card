@@ -1,0 +1,36 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/SettingToggleRow.cs" id="1_toggle"]
+
+[node name="SettingToggleRow" type="HBoxContainer" node_paths=PackedStringArray("NameLabel", "Track", "Knob")]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_constants/separation = 12
+script = ExtResource("1_toggle")
+NameLabel = NodePath("NameLabel")
+Track = NodePath("Track")
+Knob = NodePath("Track/Knob")
+
+[node name="NameLabel" type="Label" parent="."]
+layout_mode = 2
+size_flags_vertical = 4
+text = "SETTING_NAME"
+
+[node name="Spacer" type="Control" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Track" type="ColorRect" parent="."]
+custom_minimum_size = Vector2(56, 28)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 0
+color = Color(0.32, 0.32, 0.36, 1)
+
+[node name="Knob" type="ColorRect" parent="Track"]
+offset_left = 3.0
+offset_top = 3.0
+offset_right = 25.0
+offset_bottom = 25.0
+mouse_filter = 2
+color = Color(0.95, 0.95, 0.97, 1)
