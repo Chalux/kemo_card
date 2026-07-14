@@ -66,3 +66,9 @@ KW_RETAIN_DESC,回合结束时留在手牌。,Keep in hand at end of turn.
 KW_DEAL_DAMAGE_TITLE,伤害,Damage
 KW_DEAL_DAMAGE_DESC,造成 {amount} 点伤害。,Deal {amount} damage.
 UI_MENU_MAIN_SETTING,主设置,Main Settings
+UI_ALERT_TITLE,提示,Alert
+UI_ALERT_DESC,请确认操作。,Please confirm.
+UI_ALERT_OK,确定,OK
+UI_ALERT_CANCEL,取消,Cancel
+UI_ALERT_DISPLAY_TITLE,确认显示设置,Confirm Display Settings
+UI_ALERT_DISPLAY_DESC,显示设置已临时应用。{0} 秒后未确认将还原。,Display settings applied temporarily. Reverting in {0}s if not confirmed.

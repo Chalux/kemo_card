@@ -42,6 +42,8 @@ public sealed partial class GlobalMod : BaseMod
 
         yield return UIRegistration.Dialog(GlobalUiIds.Codex, "Src/mod/global/Ui");
         yield return UIRegistration.Dialog(GlobalUiIds.CardDetails, "Src/mod/global/Ui");
+        yield return UIRegistration.Dialog(GlobalUiIds.Setting, "Src/mod/global/Ui");
+        yield return UIRegistration.Dialog(GlobalUiIds.Alert, "Src/mod/global/Ui");
     }
 
     /// <summary>
