@@ -1,7 +1,7 @@
 # 音频管理器（Sound）设计
 
 **日期**：2026-07-14  
-**状态**：已定稿待实现  
+**状态**：已实现  
 **范围**：frame 层音频服务（BGM / Ambient / SFX、总线音量与静音、流缓存、静态门面），以及启动时从 `GlobalSave.Settings` 恢复；不含设置 UI、交叉淡入淡出、空间音频。
 
 **参考**：旧项目 `kemo-card/Scripts/Core/SoundManager.cs`（审查后改进静音/渐变/无 SFX API/硬单例等问题）。
