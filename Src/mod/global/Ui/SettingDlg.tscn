@@ -28,10 +28,12 @@ LanguageRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollCont
 
 [node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("1_rixra")]
 layout_mode = 1
-offset_left = 128.0
-offset_top = 64.0
-offset_right = -128.0
-offset_bottom = -64.0
+anchors_preset = -1
+anchor_left = 0.11111111
+anchor_top = 0.09876543
+anchor_right = 0.8888889
+anchor_bottom = 0.90123457
+metadata/_edit_use_anchors_ = true
 
 [node name="TabContainer" type="TabContainer" parent="BaseDlgComp" unique_id=1502747723]
 layout_mode = 1
@@ -60,47 +62,24 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="WindowModeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
+[node name="WindowModeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1217916540 instance=ExtResource("2_dropdown")]
 
-[node name="ResolutionRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
+[node name="ResolutionRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1937118252 instance=ExtResource("2_dropdown")]
 
-[node name="VSyncRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("3_toggle")]
-layout_mode = 2
+[node name="VSyncRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2122576042 instance=ExtResource("3_toggle")]
 
-[node name="MaxFpsRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
+[node name="MaxFpsRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2049693217 instance=ExtResource("2_dropdown")]
 
-[node name="MasterMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("3_toggle")]
-layout_mode = 2
+[node name="MasterMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1472657531 instance=ExtResource("3_toggle")]
 
-[node name="MasterVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("4_slider")]
-layout_mode = 2
-MinValue = 0.0
-MaxValue = 100.0
-Step = 1.0
-DefaultValue = 100.0
+[node name="MasterVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1467974067 instance=ExtResource("4_slider")]
 
-[node name="MusicMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("3_toggle")]
-layout_mode = 2
+[node name="MusicMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2078536112 instance=ExtResource("3_toggle")]
 
-[node name="MusicVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("4_slider")]
-layout_mode = 2
-MinValue = 0.0
-MaxValue = 100.0
-Step = 1.0
-DefaultValue = 100.0
+[node name="MusicVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=383275956 instance=ExtResource("4_slider")]
 
-[node name="SfxMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("3_toggle")]
-layout_mode = 2
+[node name="SfxMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2005594333 instance=ExtResource("3_toggle")]
 
-[node name="SfxVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("4_slider")]
-layout_mode = 2
-MinValue = 0.0
-MaxValue = 100.0
-Step = 1.0
-DefaultValue = 100.0
+[node name="SfxVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2144398692 instance=ExtResource("4_slider")]
 
-[node name="LanguageRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
+[node name="LanguageRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1701606078 instance=ExtResource("2_dropdown")]

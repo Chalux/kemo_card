@@ -15,6 +15,10 @@ run/main_scene="uid://j1ysiytagpcj"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
+[audio]
+
+buses/default_bus_layout="uid://fd5hvb3qte7v"
+
 [dotnet]
 
 project/assembly_name="kemo_card"

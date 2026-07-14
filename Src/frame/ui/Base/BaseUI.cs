@@ -69,7 +69,7 @@ public abstract partial class BaseUI : Control, IUIMeta
         {
             if (IsInstanceValid(node))
             {
-                if (node is BaseButton btn)
+                if (node is Button btn)
                 {
                     btn.Pressed -= action;
                 }
@@ -112,7 +112,7 @@ public abstract partial class BaseUI : Control, IUIMeta
     {
         if (_clickActions.TryGetValue(node, out Action? existingAction))
         {
-            if (node is BaseButton oldBtn)
+            if (node is Button oldBtn)
             {
                 oldBtn.Pressed -= existingAction;
             }
@@ -129,7 +129,8 @@ public abstract partial class BaseUI : Control, IUIMeta
 
         _clickActions[node] = callback;
 
-        if (node is BaseButton button)
+        // Godot.Button（含项目 BaseButton）走 Pressed；进缓存 RemoveChild 后需在重开时再次 InitEvent 绑定
+        if (node is Button button)
         {
             button.Pressed += callback;
         }

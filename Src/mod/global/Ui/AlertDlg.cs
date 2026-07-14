@@ -13,7 +13,6 @@ public partial class AlertDlg : BaseDlg
 
     private AlertDlgPayload _payload = new();
     private bool _handled;
-    private bool _eventsBound;
     private bool _countdownActive;
     private double _remaining;
     private int _displayedSeconds = -1;
@@ -23,13 +22,7 @@ public partial class AlertDlg : BaseDlg
 
     protected override void InitEvent()
     {
-        if (_eventsBound)
-        {
-            return;
-        }
-
-        _eventsBound = true;
-
+        // 可重复调用：缓存重开后 ClearLifeCycle 已清空订阅，OnClicks 会重新挂上
         if (_btnOk != null)
         {
             OnClicks(_btnOk, OnOkPressed);
@@ -127,16 +120,21 @@ public partial class AlertDlg : BaseDlg
 
         _handled = true;
         StopCountdown();
-        if (ok)
+        try
         {
-            _payload.OkCallback?.Invoke();
+            if (ok)
+            {
+                _payload.OkCallback?.Invoke();
+            }
+            else
+            {
+                _payload.CancelCallback?.Invoke();
+            }
         }
-        else
+        finally
         {
-            _payload.CancelCallback?.Invoke();
+            Close();
         }
-
-        Close();
     }
 
     private void StopCountdown()
