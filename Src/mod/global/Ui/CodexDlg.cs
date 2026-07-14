@@ -20,6 +20,7 @@ public partial class CodexDlg : BaseDlg
 	[Export] private OptionButton? _obVal;
 	[Export] private ItemList? _itemListConditions;
 	[Export] private Button? _btnAdd;
+	[Export] private Button? _btnSearch;
 	[Export] private LineEdit? _iptTxtFilter;
 	[Export] private GridContainer? _gridCardList;
 	[Export] private BasePager? _pager;
@@ -51,6 +52,11 @@ public partial class CodexDlg : BaseDlg
 			OnClicks(_btnAdd, OnAddPressed);
 		}
 
+		if (_btnSearch != null)
+		{
+			OnClicks(_btnSearch, OnSearchPressed);
+		}
+
 		if (_itemListConditions != null)
 		{
 			_itemListConditions.ItemClicked += OnConditionItemClicked;
@@ -59,7 +65,6 @@ public partial class CodexDlg : BaseDlg
 		if (_iptTxtFilter != null)
 		{
 			_iptTxtFilter.TextSubmitted += OnTextSubmitted;
-			_iptTxtFilter.FocusExited += OnTextFocusExited;
 		}
 
 		if (_pager != null)
@@ -253,7 +258,6 @@ public partial class CodexDlg : BaseDlg
 		var display = $"{Localization.Tr(CodexFilterDefinitions.GetFieldLocaleKey(field))} {Localization.Tr(CodexFilterDefinitions.GetOpLocaleKey(op))} {_obVal.GetItemText(_obVal.Selected)}";
 		_conditions.Add(new CardFilterCondition(field, op, valueId, display));
 		_itemListConditions?.AddItem(display);
-		RefreshFilteredList(resetPage: true);
 	}
 
 	private void OnConditionItemClicked(long index, Vector2 _, long mouseButtonIndex)
@@ -271,12 +275,11 @@ public partial class CodexDlg : BaseDlg
 
 		_conditions.RemoveAt(i);
 		_itemListConditions?.RemoveItem(i);
-		RefreshFilteredList(resetPage: true);
 	}
 
-	private void OnTextSubmitted(string _) => RefreshFilteredList(resetPage: true);
+	private void OnSearchPressed() => RefreshFilteredList(resetPage: true);
 
-	private void OnTextFocusExited() => RefreshFilteredList(resetPage: true);
+	private void OnTextSubmitted(string _) => RefreshFilteredList(resetPage: true);
 
 	private void OnPagerPageChanged(int _) => FillCurrentPage();
 

@@ -1,7 +1,7 @@
 {
   "modId": "base.game",
   "displayName": "MOD_BASE_GAME_DISPLAY_NAME",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "loadOrder": 0,
   "dependencies": {
     "required": [],

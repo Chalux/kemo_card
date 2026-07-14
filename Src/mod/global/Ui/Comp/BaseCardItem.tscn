@@ -11,6 +11,7 @@ shader_parameter/rotation = 0.0
 shader_parameter/radius = 0.5
 
 [node name="BaseCardItem" type="Control" unique_id=1269321399 node_paths=PackedStringArray("_trArt", "_trCardFrame", "_txtCardCost", "_txtCardType", "_txtCardVal", "_crAttr")]
+custom_minimum_size = Vector2(160, 208)
 layout_mode = 3
 anchor_right = 0.1388889
 anchor_bottom = 0.32098764

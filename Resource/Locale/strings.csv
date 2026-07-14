@@ -18,6 +18,7 @@ UI_CARD_TYPE_HEALING,疗,Heal
 UI_CARD_TYPE_CURSE,咒,Cur
 UI_CARD,卡牌,Card
 UI_OP_ADD,添加,Add
+UI_SEARCH,搜索,Search
 UI_PAGER_GOTO,前往,Goto
 UI_PAGER_INPUT_PAGE,填写页数,Input Page
 UI_CODEX_TXT_FILTER,卡名或效果文本,Card Name Or Effect Text
@@ -64,3 +65,4 @@ KW_RETAIN_TITLE,保留,Retain
 KW_RETAIN_DESC,回合结束时留在手牌。,Keep in hand at end of turn.
 KW_DEAL_DAMAGE_TITLE,伤害,Damage
 KW_DEAL_DAMAGE_DESC,造成 {amount} 点伤害。,Deal {amount} damage.
+UI_MENU_MAIN_SETTING,主设置,Main Settings

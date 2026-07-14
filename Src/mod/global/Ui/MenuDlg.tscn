@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://35esqhm5l1i1"]
+
+[ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="1_4farf"]
+
+[node name="MenuDlg" type="Control" unique_id=1987764950]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("1_4farf")]
+layout_mode = 1
+offset_left = 128.0
+offset_top = 64.0
+offset_right = -128.0
+offset_bottom = -64.0
+
+[node name="TabContainer" type="TabContainer" parent="BaseDlgComp" unique_id=1502747723]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.026785715
+anchor_top = 0.10769231
+anchor_right = 0.97321427
+anchor_bottom = 0.95384616
+current_tab = 0
+metadata/_edit_use_anchors_ = true
+
+[node name="UI_MENU_MAIN_SETTING" type="MarginContainer" parent="BaseDlgComp/TabContainer" unique_id=940192917]
+layout_mode = 2
+metadata/_tab_index = 0

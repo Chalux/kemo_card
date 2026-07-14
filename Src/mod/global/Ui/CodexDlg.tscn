@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="3_tnh6y"]
 [ext_resource type="PackedScene" uid="uid://c6tqm743fyjtl" path="res://Src/mod/global/Ui/Comp/BasePager.tscn" id="4_egqms"]
 
-[node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_iptTxtFilter", "_gridCardList", "_pager")]
+[node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,11 +13,12 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_x5fxm")
-_obField = NodePath("TabContainer/UI_CARD/OBCardTypeSelector")
-_obOp = NodePath("TabContainer/UI_CARD/OBCardOperateSelector")
-_obVal = NodePath("TabContainer/UI_CARD/OBCardValSelector")
+_obField = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardTypeSelector")
+_obOp = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardOperateSelector")
+_obVal = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardValSelector")
 _itemListConditions = NodePath("TabContainer/UI_CARD/ItemListConditions")
 _btnAdd = NodePath("TabContainer/UI_CARD/BAdd")
+_btnSearch = NodePath("TabContainer/UI_CARD/BtnSearch")
 _iptTxtFilter = NodePath("TabContainer/UI_CARD/IptTxtFilter")
 _gridCardList = NodePath("TabContainer/UI_CARD/Control/GridContainerCardList")
 _pager = NodePath("TabContainer/UI_CARD/BasePager")
@@ -52,31 +53,26 @@ anchor_right = 0.3243243
 anchor_bottom = 0.75529414
 metadata/_edit_use_anchors_ = true
 
-[node name="OBCardTypeSelector" type="OptionButton" parent="TabContainer/UI_CARD" unique_id=1175027382]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.02948403
-anchor_top = 0.79294115
-anchor_right = 0.10810811
-anchor_bottom = 0.8494118
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/UI_CARD" unique_id=605029749]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 337.0
+offset_right = 381.0
+offset_bottom = 369.0
+
+[node name="OBCardTypeSelector" type="OptionButton" parent="TabContainer/UI_CARD/HBoxContainer" unique_id=1175027382]
+layout_mode = 2
+size_flags_horizontal = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="OBCardOperateSelector" type="OptionButton" parent="TabContainer/UI_CARD" unique_id=2089973766]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.13759215
-anchor_top = 0.79294115
-anchor_right = 0.21621622
-anchor_bottom = 0.8494118
+[node name="OBCardOperateSelector" type="OptionButton" parent="TabContainer/UI_CARD/HBoxContainer" unique_id=2089973766]
+layout_mode = 2
+size_flags_horizontal = 3
 metadata/_edit_use_anchors_ = true
 
-[node name="OBCardValSelector" type="OptionButton" parent="TabContainer/UI_CARD" unique_id=1107163914]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.24570024
-anchor_top = 0.79294115
-anchor_right = 0.3243243
-anchor_bottom = 0.8494118
+[node name="OBCardValSelector" type="OptionButton" parent="TabContainer/UI_CARD/HBoxContainer" unique_id=1107163914]
+layout_mode = 2
+size_flags_horizontal = 3
 metadata/_edit_use_anchors_ = true
 
 [node name="IptTxtFilter" type="LineEdit" parent="TabContainer/UI_CARD" unique_id=766004567]
@@ -101,21 +97,36 @@ metadata/_edit_use_anchors_ = true
 layout_mode = 1
 anchor_left = 0.35380834
 anchor_top = 0.05882353
-anchor_right = 0.96314496
-anchor_bottom = 0.8682353
+anchor_right = 0.9041769
+anchor_bottom = 0.75529414
 mouse_filter = 2
 metadata/_edit_use_anchors_ = true
 
-[node name="GridContainerCardList" type="GridContainer" parent="TabContainer/UI_CARD/Control" unique_id=1292484503]
+[node name="ColorRect" type="ColorRect" parent="TabContainer/UI_CARD/Control" unique_id=1200481427]
 layout_mode = 1
-anchors_preset = -1
-anchor_right = 0.97096777
-anchor_bottom = 0.87906975
-offset_right = 206.4
-offset_bottom = 129.6
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-scale = Vector2(0.7, 0.7)
+color = Color(0.5568628, 0.80784315, 0.9254902, 0.28627452)
+
+[node name="GridContainerCardList" type="GridContainer" parent="TabContainer/UI_CARD/Control" unique_id=1292484503]
+custom_minimum_size = Vector2(688, 432)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.039285693
+anchor_top = 0.062162142
+anchor_right = 0.96071434
+anchor_bottom = 0.93783784
+offset_left = -137.59999
+offset_top = -86.399994
+offset_right = 137.59998
+offset_bottom = 86.399994
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.6, 0.6)
+pivot_offset_ratio = Vector2(0.5, 0.5)
 theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 16
 columns = 4
@@ -153,4 +164,13 @@ anchor_top = 0.8117647
 anchor_right = 0.9459459
 anchor_bottom = 0.8870588
 offset_left = 3.0517578e-05
+metadata/_edit_use_anchors_ = true
+
+[node name="BtnSearch" type="Button" parent="TabContainer/UI_CARD" unique_id=1357079192]
+layout_mode = 0
+anchor_left = 0.35380834
+anchor_top = 0.8870588
+anchor_right = 0.46805897
+anchor_bottom = 0.96
+text = "UI_SEARCH"
 metadata/_edit_use_anchors_ = true

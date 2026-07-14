@@ -1,6 +1,6 @@
 # 图鉴卡牌过滤与分页设计
 
-**日期：** 2026-07-10  
+**日期：** 2026-07-10（2026-07-14 同步：搜索按钮触发右侧刷新）  
 **状态：** 已确认
 
 ## 1. 目标
@@ -13,13 +13,14 @@
 
 - 在 `CodexDlg.cs` 绑定并驱动现有场景节点：
   - `OBCardTypeSelector` / `OBCardOperateSelector` / `OBCardValSelector`
-  - `ItemListConditions`、`BAdd`、`IptTxtFilter`
+  - `ItemListConditions`、`BAdd`、`BtnSearch`、`IptTxtFilter`
   - `GridContainerCardList`（8 个 `BaseCardItem`）、`BasePager`
 - 条件过滤字段：卡牌类型、费用、元素、角色（Role）、费用类型、标签（Tags）
 - 文本搜索：匹配本地化卡名与关联技能效果文案（`skillRefs` → `SkillDto.DescId`）
-- 条件列表展示 / 添加 / 点击移除；变更后立刻刷新列表与分页
+- 条件列表展示 / 添加 / 点击移除；**右侧卡牌列表仅在点击「搜索」或文本框回车时刷新**
+- 打开图鉴时清空条件与文本，并立即显示全部可见卡牌
 - 排除 `HideInDex == true` 的卡牌
-- 新增必要本地化键（字段名、操作符、角色/费用类型/元素等展示文案）
+- 新增必要本地化键（字段名、操作符、角色/费用类型/元素等展示文案、`UI_SEARCH`）
 - 纯过滤逻辑可单测（不依赖 Godot 节点）
 
 ### 不做
@@ -81,10 +82,10 @@ readonly record struct CardFilterCondition(
 
 - `DisplayText`：写入 `ItemListConditions` 的本地化可读串（如「卡牌类型 = 物」）。
 - 多条件之间 **AND**。
-- 「添加」：校验当前三项有效后追加；立即 `RefreshCardList(resetPage: true)`。
-- 点击 `ItemListConditions` 某项：移除对应条件；立即刷新（重置到第 0 页）。
+- 「添加」：校验当前三项有效后追加到左侧条件列表；**不**刷新右侧卡牌列表。
+- 点击 `ItemListConditions` 某项：移除对应条件；**不**刷新右侧卡牌列表。
 
-### 4.4 文本搜索（`IptTxtFilter`）
+### 4.4 文本搜索（`IptTxtFilter`）与搜索触发
 
 - 不进入条件列表。
 - 与条件列表 **AND**。
@@ -92,12 +93,16 @@ readonly record struct CardFilterCondition(
 - 匹配目标（子串、忽略大小写）：
   1. `Localization.Tr(card.DisplayNameId)`（若翻译结果仍为键，则同时尝试原始 `DisplayNameId`）
   2. 每个 `skillRefs` 对应技能的 `Localization.Tr(skill.DescId)`
-- 触发：`TextSubmitted`（回车）与 `FocusExited`（失焦）时刷新。
+- **右侧列表刷新触发点**（调用 `RefreshFilteredList(resetPage: true)`）：
+  1. 点击 `BtnSearch`
+  2. `IptTxtFilter` 的 `TextSubmitted`（回车）
+  3. 打开图鉴（`OnOpen`：清空条件与文本后展示全部卡）
+- **不**在失焦（`FocusExited`）或条件增删时自动刷新右侧列表。
 
 ## 5. 列表与分页
 
 - `PageSize = 8`，对应场景中已有 8 个 `BaseCardItem` 子节点（按子节点顺序复用，不动态增删）。
-- 打开对话框 / 过滤变更：过滤全量 → 计算 `TotalPages = ceil(count / 8)`（0 条时 TotalPages=0）→ `SetPage(0)` → 填充当前页。
+- 打开对话框 / 用户触发搜索：过滤全量 → 计算 `TotalPages = ceil(count / 8)`（0 条时 TotalPages=0）→ `SetPage(0)` → 填充当前页。
 - 翻页：`BasePager.OnPageChanged` / `PageChanged` → 仅重填当前页槽位。
 - 槽位：有数据 `SetData(card)`；无数据 `SetData(null)` 并保持节点可见占位（或隐藏由 `SetData(null)` 现有清空逻辑处理；保持 8 格布局不增删节点）。
 
@@ -114,7 +119,7 @@ readonly record struct CardFilterCondition(
 - 字段：`UI_CODEX_FILTER_CARD_TYPE` / `COST` / `ELEMENT` / `ROLE` / `COST_TYPE` / `TAG`
 - 操作：`UI_CODEX_OP_EQ` / `NE` / `LE` / `GE` / `CONTAINS` / `EXACT`
 - 元素 / 角色 / 费用类型展示键（若尚无）
-- 已有：`UI_CODEX_TXT_FILTER`、`UI_OP_ADD`、`UI_CARD_TYPE_*`
+- 已有：`UI_CODEX_TXT_FILTER`、`UI_OP_ADD`、`UI_SEARCH`、`UI_CARD_TYPE_*`
 
 ## 7. 文件变更（预期）
 
@@ -130,9 +135,9 @@ readonly record struct CardFilterCondition(
 ## 8. 验收
 
 1. 打开图鉴卡牌 Tab，默认显示全部非 `HideInDex` 卡，分页正确。
-2. 选择字段/操作/值后点「添加」，条件出现在 ItemList，列表与分页立即更新。
-3. 点击条件项可移除，列表立即恢复对应结果。
+2. 选择字段/操作/值后点「添加」，条件出现在 ItemList，**右侧列表暂不变化**；点「搜索」或回车后列表与分页更新。
+3. 点击条件项可移除左侧条件，**右侧仍保持上次搜索结果**；再次搜索后才应用。
 4. 多条件 AND；文本搜索与条件 AND。
 5. 标签条件「包含」可筛出带该 tag 的卡。
-6. 翻页不丢失当前过滤；过滤变更回到第 1 页。
+6. 翻页不丢失当前已应用过滤；每次搜索回到第 1 页。
 7. 无硬编码用户可见文案。
