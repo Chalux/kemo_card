@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Fixed.Godot;
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
@@ -14,6 +15,8 @@ public partial class MainRoot : Control
 
     public override void _Ready()
     {
+        AppLog.Configure(new GodotAppLog());
+
         BootstrapServices();
         InitUIManager();
         EnsureKeywordTipLayer();
@@ -66,7 +69,7 @@ public partial class MainRoot : Control
     {
         if (!ResourceLoader.Exists(KeywordTipLayerPath))
         {
-            GD.PushWarning($"MainRoot: 未找到词条提示层场景 {KeywordTipLayerPath}");
+            AppLog.Warning($"未找到词条提示层场景 {KeywordTipLayerPath}", "MainRoot");
             return;
         }
 
