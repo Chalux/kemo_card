@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Fixed.Godot;
+using KemoCard.Frame.Audio;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
@@ -19,11 +20,22 @@ public partial class MainRoot : Control
         AppLog.Configure(appLog);
 
         BootstrapServices();
+        InitSoundManager();
         InitUIManager();
         EnsureKeywordTipLayer();
         _ = GlobalModController.OpenMenuAsync();
 
         EventDispatcher.Configure(new GodotEventDispatcherLogger(appLog));
+    }
+
+    private void InitSoundManager()
+    {
+        var manager = new SoundManager();
+        AddChild(manager);
+        Sound.Configure(manager);
+
+        var settings = AppRoot.Services.GlobalController.Snapshot.Settings;
+        AudioSettingsLoader.Apply(manager, settings);
     }
 
     private static void BootstrapServices()
@@ -81,6 +93,7 @@ public partial class MainRoot : Control
 
     public override void _ExitTree()
     {
+        Sound.Configure(NullSoundService.Instance);
         GlobalEvents.Bus.OffAll();
         AppRoot.Shutdown();
         base._ExitTree();
