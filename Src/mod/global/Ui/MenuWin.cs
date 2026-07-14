@@ -16,6 +16,11 @@ public partial class MenuWin : BaseWin
 
     protected override void InitEvent()
     {
+        if (SettingsBtn != null)
+        {
+            OnClicks(SettingsBtn, () => _ = GlobalModController.OpenSettingAsync());
+        }
+
         if (CodexBtn != null)
         {
             OnClicks(CodexBtn, () => _ = GlobalModController.OpenCodexAsync());

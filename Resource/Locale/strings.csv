@@ -72,3 +72,21 @@ UI_ALERT_OK,确定,OK
 UI_ALERT_CANCEL,取消,Cancel
 UI_ALERT_DISPLAY_TITLE,确认显示设置,Confirm Display Settings
 UI_ALERT_DISPLAY_DESC,显示设置已临时应用。{0} 秒后未确认将还原。,Display settings applied temporarily. Reverting in {0}s if not confirmed.
+UI_SETTING_WINDOW_MODE,显示模式,Window Mode
+UI_SETTING_RESOLUTION,分辨率,Resolution
+UI_SETTING_VSYNC,垂直同步,VSync
+UI_SETTING_MAX_FPS,最高帧率,Max FPS
+UI_SETTING_MASTER_MUTE,主音量静音,Master Mute
+UI_SETTING_MASTER_VOLUME,主音量,Master Volume
+UI_SETTING_MUSIC_MUTE,音乐静音,Music Mute
+UI_SETTING_MUSIC_VOLUME,音乐音量,Music Volume
+UI_SETTING_SFX_MUTE,音效静音,SFX Mute
+UI_SETTING_SFX_VOLUME,音效音量,SFX Volume
+UI_SETTING_LANGUAGE,语言,Language
+UI_SETTING_WINDOW_MODE_WINDOWED,窗口,Windowed
+UI_SETTING_WINDOW_MODE_BORDERLESS_WINDOW,无边框窗口,Borderless Window
+UI_SETTING_WINDOW_MODE_BORDERLESS_FULLSCREEN,无边框全屏,Borderless Fullscreen
+UI_SETTING_WINDOW_MODE_FULLSCREEN,全屏,Fullscreen
+UI_SETTING_FPS_UNLIMITED,不限制,Unlimited
+UI_LOCALE_ZH_CN,简体中文,Simplified Chinese
+UI_LOCALE_EN,English,English

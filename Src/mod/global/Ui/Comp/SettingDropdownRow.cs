@@ -49,6 +49,17 @@ public partial class SettingDropdownRow : BaseCmp
         }
     }
 
+    public void SetSelectedId(string id, bool notify)
+    {
+        _suppress = true;
+        var ok = TrySelectById(id);
+        _suppress = false;
+        if (ok && notify)
+        {
+            ValueChanged?.Invoke(GetSelectedId());
+        }
+    }
+
     #endregion
 
     #region 生命周期
@@ -97,17 +108,6 @@ public partial class SettingDropdownRow : BaseCmp
         }
 
         OptionButton.Selected = 0;
-    }
-
-    private void SetSelectedId(string id, bool notify)
-    {
-        _suppress = true;
-        var ok = TrySelectById(id);
-        _suppress = false;
-        if (ok && notify)
-        {
-            ValueChanged?.Invoke(GetSelectedId());
-        }
     }
 
     private bool TrySelectById(string id)
