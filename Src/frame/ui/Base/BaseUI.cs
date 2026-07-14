@@ -16,6 +16,7 @@ public abstract partial class BaseUI : Control, IUIMeta
     /// Control 节点的 GuiInput 事件处理器映射，用于反订阅
     /// </summary>
     private readonly Dictionary<Node, Control.GuiInputEventHandler> _guiInputHandlers = [];
+    private readonly List<Action> _unbindActions = [];
 
     /// <summary>
     /// UI 的 ID
@@ -83,6 +84,20 @@ public abstract partial class BaseUI : Control, IUIMeta
         }
         _clickActions.Clear();
         _guiInputHandlers.Clear();
+        for (var i = _unbindActions.Count - 1; i >= 0; i--)
+        {
+            try { _unbindActions[i](); }
+            catch { /* 离开树时忽略反订阅异常 */ }
+        }
+        _unbindActions.Clear();
+    }
+
+    protected void Bind(Action subscribe, Action unsubscribe)
+    {
+        ArgumentNullException.ThrowIfNull(subscribe);
+        ArgumentNullException.ThrowIfNull(unsubscribe);
+        subscribe();
+        _unbindActions.Add(unsubscribe);
     }
 
     protected void OnClicks(params (Node node, Action action)[] clicks)
