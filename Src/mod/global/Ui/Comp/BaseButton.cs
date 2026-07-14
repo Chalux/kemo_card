@@ -1,6 +1,7 @@
 using Godot;
 using KemoCard.Frame.Content.Keywords;
 using KemoCard.Mod.Global.Ui.Tip;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Mod.Global.Ui.Comp;
 
@@ -235,7 +236,7 @@ public partial class BaseButton : Button
         var service = KeywordTipService.Current;
         if (service == null)
         {
-            GD.PushWarning("BaseButton: KeywordTipService.Current 为空，无法显示词条提示。");
+            AppLog.Warning("BaseButton: KeywordTipService.Current 为空，无法显示词条提示。", "BaseButton");
             return;
         }
 

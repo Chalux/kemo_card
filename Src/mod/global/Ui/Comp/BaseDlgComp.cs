@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Frame.UI.Base;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Mod.Global.Ui.Comp;
 
@@ -56,7 +57,7 @@ public partial class BaseDlgComp : Control
 		var win = FindOwnerWin();
 		if (win == null)
 		{
-			GD.PushWarning("BaseDlgComp: 未找到父级 BaseWin，无法关闭。");
+			AppLog.Warning("BaseDlgComp: 未找到父级 BaseWin，无法关闭。", "BaseDlgComp");
 			return;
 		}
 

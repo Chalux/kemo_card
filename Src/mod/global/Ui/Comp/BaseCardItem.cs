@@ -8,6 +8,7 @@ using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui;
 using KemoCard.Mod.Global.Ui.Tip;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Mod.Global.Ui.Comp;
 
@@ -73,7 +74,7 @@ public partial class BaseCardItem : Control
 		var ui = UIManager.Instance;
 		if (ui == null)
 		{
-			GD.PushWarning("BaseCardItem: UIManager.Instance 为空，无法打开卡牌详情。");
+			AppLog.Warning("BaseCardItem: UIManager.Instance 为空，无法打开卡牌详情。", "BaseCardItem");
 			return;
 		}
 
@@ -122,7 +123,7 @@ public partial class BaseCardItem : Control
 		var service = KeywordTipService.Current;
 		if (service == null)
 		{
-			GD.PushWarning("BaseCardItem: KeywordTipService.Current 为空，无法显示词条提示。");
+			AppLog.Warning("BaseCardItem: KeywordTipService.Current 为空，无法显示词条提示。", "BaseCardItem");
 			return;
 		}
 
@@ -205,7 +206,7 @@ public partial class BaseCardItem : Control
 
 			if (bitCount > 3)
 			{
-				GD.PushWarning($"BaseCardItem: element flags truncated to 3 colors (flags={elementFlags}).");
+				AppLog.Warning($"BaseCardItem: element flags truncated to 3 colors (flags={elementFlags}).", "BaseCardItem");
 			}
 		}
 
@@ -364,7 +365,7 @@ public partial class BaseCardItem : Control
 		}
 		catch (Exception ex)
 		{
-			GD.PushWarning($"BaseCardItem: mod art load failed: {ex.Message}");
+			AppLog.Warning($"BaseCardItem: mod art load failed: {ex.Message}", "BaseCardItem");
 		}
 
 		var resPath = $"res://Resource/Assets/{artPath.Replace('\\', '/')}";
@@ -377,7 +378,7 @@ public partial class BaseCardItem : Control
 		}
 		catch (Exception ex)
 		{
-			GD.PushWarning($"BaseCardItem: resource art load failed: {ex.Message}");
+			AppLog.Warning($"BaseCardItem: resource art load failed: {ex.Message}", "BaseCardItem");
 		}
 
 		return null;

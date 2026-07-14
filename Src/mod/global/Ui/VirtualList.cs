@@ -3,6 +3,7 @@ namespace KemoCard.Mod.Global.Ui;
 using Godot;
 using System;
 using System.Collections.Generic;
+using KemoCard.Frame.Logging;
 
 /// <summary>
 /// 虚拟列表组件，参考 LayaAir List 和 FairyGUI GList 的虚拟列表设计。
@@ -100,7 +101,7 @@ public partial class VirtualList : Control
 
         if (ScrollArea == null)
         {
-            GD.PushError("VirtualList: ScrollArea 未设置");
+            AppLog.Error("VirtualList: ScrollArea 未设置", "VirtualList");
             return;
         }
 
@@ -298,7 +299,7 @@ public partial class VirtualList : Control
     {
         if (ItemTemplate == null)
         {
-            GD.PushError("VirtualList: ItemTemplate 未设置，无法创建列表项");
+            AppLog.Error("VirtualList: ItemTemplate 未设置，无法创建列表项", "VirtualList");
             return new Control();
         }
 
@@ -308,7 +309,7 @@ public partial class VirtualList : Control
             return itemControl;
         }
 
-        GD.PushError("VirtualList: ItemTemplate 的根节点必须是 Control 类型");
+        AppLog.Error("VirtualList: ItemTemplate 的根节点必须是 Control 类型", "VirtualList");
         instance?.QueueFree();
         return new Control();
     }

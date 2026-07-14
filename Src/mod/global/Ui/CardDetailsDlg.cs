@@ -8,6 +8,7 @@ using KemoCard.Mod;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui.Comp;
 using KemoCard.Mod.Global.Ui.Tip;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Mod.Global.Ui;
 
@@ -66,7 +67,7 @@ public partial class CardDetailsDlg : BaseDlg
 		var payload = GetTypedPayload<CardDetailsDlgPayload>();
 		if (string.IsNullOrWhiteSpace(payload.CardId))
 		{
-			GD.PushWarning("CardDetailsDlg: CardId 为空。");
+			AppLog.Warning("CardDetailsDlg: CardId 为空。", "CardDetailsDlg");
 			Close();
 			return;
 		}
@@ -74,7 +75,7 @@ public partial class CardDetailsDlg : BaseDlg
 		var store = AppRoot.Services.ContentModPipeline.Registry.Store;
 		if (!store.TryGetCard(payload.CardId, out var card))
 		{
-			GD.PushWarning($"CardDetailsDlg: 未找到卡牌 {payload.CardId}。");
+			AppLog.Warning($"CardDetailsDlg: 未找到卡牌 {payload.CardId}。", "CardDetailsDlg");
 			Close();
 			return;
 		}
@@ -163,7 +164,7 @@ public partial class CardDetailsDlg : BaseDlg
 		var metaStr = meta.AsString();
 		if (!CardDescBuilder.TryParseKeywordMeta(metaStr, out var keywordId))
 		{
-			GD.PushWarning($"CardDetailsDlg: 非法 keyword meta: {metaStr}");
+			AppLog.Warning($"CardDetailsDlg: 非法 keyword meta: {metaStr}", "CardDetailsDlg");
 			return;
 		}
 
@@ -175,7 +176,7 @@ public partial class CardDetailsDlg : BaseDlg
 		var service = KeywordTipService.Current;
 		if (service == null)
 		{
-			GD.PushWarning("CardDetailsDlg: KeywordTipService.Current 为空。");
+			AppLog.Warning("CardDetailsDlg: KeywordTipService.Current 为空。", "CardDetailsDlg");
 			return;
 		}
 

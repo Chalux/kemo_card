@@ -1,6 +1,7 @@
 using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content.Keywords;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Mod.Global.Ui.Tip;
 
@@ -58,14 +59,14 @@ public partial class KeywordTipService : CanvasLayer
 
         if (_tipRoot == null || _tipStack == null)
         {
-            GD.PushWarning("KeywordTipService: TipRoot/TipStack 未绑定，无法显示提示。");
+            AppLog.Warning("KeywordTipService: TipRoot/TipStack 未绑定，无法显示提示。", "Keyword");
             return;
         }
 
         EnsurePanelScene();
         if (_panelScene == null)
         {
-            GD.PushWarning("KeywordTipService: 无法加载 KeywordTipPanel 场景。");
+            AppLog.Warning("KeywordTipService: 无法加载 KeywordTipPanel 场景。", "Keyword");
             return;
         }
 
@@ -80,7 +81,7 @@ public partial class KeywordTipService : CanvasLayer
         {
             if (!catalog.TryGet(request.KeywordId, out var entry) || entry == null)
             {
-                GD.PushWarning($"KeywordTipService: 未知词条 id '{request.KeywordId}'，已跳过。");
+                AppLog.Warning($"KeywordTipService: 未知词条 id '{request.KeywordId}'，已跳过。", "Keyword");
                 continue;
             }
 
