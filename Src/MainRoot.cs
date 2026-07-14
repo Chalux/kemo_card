@@ -1,6 +1,8 @@
 using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Audio;
+using KemoCard.Frame.Display;
+using KemoCard.Frame.Locale;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
@@ -36,6 +38,9 @@ public partial class MainRoot : Control
 
         var settings = AppRoot.Services.GlobalController.Snapshot.Settings;
         AudioSettingsLoader.Apply(manager, settings);
+        var displayState = DisplaySettingsParser.Parse(settings);
+        DisplaySettingsApplier.Apply(GetWindow(), displayState);
+        LocaleSettingsApplier.Apply(displayState.LanguageCode);
     }
 
     private static void BootstrapServices()
