@@ -78,4 +78,39 @@ public static class CodexFilterDefinitions
 		};
 		return key.Length > 0;
 	}
+
+	public static string GetCharFieldLocaleKey(ECharFilterField field) => field switch
+	{
+		ECharFilterField.Element => "UI_CODEX_FILTER_ELEMENT",
+		ECharFilterField.Role => "UI_CODEX_FILTER_ROLE",
+		ECharFilterField.Race => "UI_CODEX_FILTER_RACE",
+		ECharFilterField.Tag => "UI_CODEX_FILTER_TAG",
+		_ => field.ToString(),
+	};
+
+	public static bool TryGetRaceLocaleKey(ERace race, out string key)
+	{
+		key = race switch
+		{
+			ERace.Human => "UI_RACE_HUMAN",
+			ERace.Canine => "UI_RACE_CANINE",
+			ERace.Feline => "UI_RACE_FELINE",
+			ERace.Bird => "UI_RACE_BIRD",
+			ERace.Insect => "UI_RACE_INSECT",
+			ERace.Beast => "UI_RACE_BEAST",
+			ERace.Fish => "UI_RACE_FISH",
+			ERace.Reptile => "UI_RACE_REPTILE",
+			ERace.Plant => "UI_RACE_PLANT",
+			ERace.Machine => "UI_RACE_MACHINE",
+			ERace.Demonic => "UI_RACE_DEMONIC",
+			ERace.Angel => "UI_RACE_ANGEL",
+			ERace.Dragon => "UI_RACE_DRAGON",
+			ERace.God => "UI_RACE_GOD",
+			ERace.Devil => "UI_RACE_DEVIL",
+			ERace.Undead => "UI_RACE_UNDEAD",
+			ERace.UnKnown => "UI_RACE_UNKNOWN",
+			_ => "",
+		};
+		return key.Length > 0;
+	}
 }

@@ -59,6 +59,9 @@ UI_ROLE_SWORD_MAN,剑士,Sword Man
 UI_ROLE_MAGE,法师,Mage
 UI_ROLE_ALCHEMIST,炼金术士,Alchemist
 UI_ROLE_ELEMENTIST,元素师,Elementist
+UI_CARD_TIP_COST_SUFFIX,费, Cost
+UI_CARD_TIP_COST_SUFFIX_X,费, Cost
+UI_CARD_TIP_EXCLUSIVE_PREFIX,专属于此角色：,Exclusive to:
 KW_EXHAUST_TITLE,消耗,Exhaust
 KW_EXHAUST_DESC,使用后移出战斗。,Remove from combat when played.
 KW_RETAIN_TITLE,保留,Retain
@@ -90,3 +93,25 @@ UI_SETTING_WINDOW_MODE_FULLSCREEN,全屏,Fullscreen
 UI_SETTING_FPS_UNLIMITED,不限制,Unlimited
 UI_LOCALE_ZH_CN,简体中文,Simplified Chinese
 UI_LOCALE_EN,English,English
+UI_CHARACTER,角色,Character
+UI_CODEX_FILTER_RACE,种族,Race
+UI_CODEX_CHAR_TXT_FILTER,角色名或描述,Character Name Or Desc
+UI_CODEX_ANIM,动作,Anim
+UI_CHARACTER_DETAILS_TITLE,角色详情,Character Details
+UI_RACE_HUMAN,人族,Human
+UI_RACE_CANINE,犬科,Canine
+UI_RACE_FELINE,猫科,Feline
+UI_RACE_BIRD,鸟类,Bird
+UI_RACE_INSECT,昆虫,Insect
+UI_RACE_BEAST,野兽,Beast
+UI_RACE_FISH,水族,Fish
+UI_RACE_REPTILE,爬行,Reptile
+UI_RACE_PLANT,植物,Plant
+UI_RACE_MACHINE,机械,Machine
+UI_RACE_DEMONIC,恶魔,Demonic
+UI_RACE_ANGEL,天使,Angel
+UI_RACE_DRAGON,龙族,Dragon
+UI_RACE_GOD,神族,God
+UI_RACE_DEVIL,魔族,Devil
+UI_RACE_UNDEAD,不死,Undead
+UI_RACE_UNKNOWN,未知,Unknown
