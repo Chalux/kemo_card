@@ -1,0 +1,222 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace KemoCard.Frame.Notification;
+
+/// <summary>
+/// 红点系统静态门面。管理节点注册、父子关系树、事件驱动评估和状态分发。
+/// </summary>
+public static class RedDotService
+{
+    private static readonly Dictionary<string, RedDotNode> _nodes = new();
+    private static readonly HashSet<string> _dirtyIds = new();
+    private static readonly Dictionary<string, List<string>> _pendingParents = new();
+    private static bool _initialized;
+
+    /// <summary>
+    /// 状态变更事件。(id, active)
+    /// </summary>
+    public static event Action<string, bool>? OnStateChanged;
+
+    /// <summary>
+    /// 清理所有注册节点、脏标记和挂起的父子关系。
+    /// </summary>
+    public static void Configure()
+    {
+        _nodes.Clear();
+        _dirtyIds.Clear();
+        _pendingParents.Clear();
+        _initialized = true;
+    }
+
+    /// <summary>
+    /// 注册纯聚合节点（无检查函数，仅通过子节点聚合判定）。
+    /// </summary>
+    public static void RegisterNode(
+        string id,
+        params (Action subscribe, Action unsubscribe)[] triggers)
+    {
+        RegisterNodeInternal(id, null, RedDotOverride.None, triggers);
+    }
+
+    /// <summary>
+    /// 注册叶子节点（默认不重载）。
+    /// </summary>
+    public static void RegisterNode(
+        string id,
+        Func<bool>? checkFunc,
+        params (Action subscribe, Action unsubscribe)[] triggers)
+    {
+        RegisterNodeInternal(id, checkFunc, RedDotOverride.None, triggers);
+    }
+
+    /// <summary>
+    /// 注册节点并指定重载策略。
+    /// </summary>
+    public static void RegisterNode(
+        string id,
+        RedDotOverride @override,
+        Func<bool>? checkFunc,
+        params (Action subscribe, Action unsubscribe)[] triggers)
+    {
+        RegisterNodeInternal(id, checkFunc, @override, triggers);
+    }
+
+    private static void RegisterNodeInternal(
+        string id,
+        Func<bool>? checkFunc,
+        RedDotOverride @override,
+        (Action subscribe, Action unsubscribe)[] triggers)
+    {
+        if (!_initialized)
+        {
+            Configure();
+        }
+
+        // 重复注册：清理旧的 EventSubscriptions
+        if (_nodes.TryGetValue(id, out var existing))
+        {
+            foreach (var unsub in existing.EventSubscriptions)
+            {
+                unsub();
+            }
+            existing.EventSubscriptions.Clear();
+        }
+
+        var node = new RedDotNode(id, checkFunc, @override);
+        _nodes[id] = node;
+
+        // 注册事件触发器
+        foreach (var (subscribe, unsubscribe) in triggers)
+        {
+            subscribe();
+            node.EventSubscriptions.Add(unsubscribe);
+        }
+
+        // 恢复已挂起的父子关系
+        if (_pendingParents.TryGetValue(id, out var pendingParents))
+        {
+            foreach (var parentId in pendingParents)
+            {
+                if (_nodes.TryGetValue(parentId, out var parentNode))
+                {
+                    node.Parent = parentNode;
+                    parentNode.Children.Add(node);
+                }
+            }
+            _pendingParents.Remove(id);
+        }
+
+        // 首评（同步）
+        if (@override != RedDotOverride.None)
+        {
+            node.Active = @override == RedDotOverride.ForceActive;
+        }
+        else if (checkFunc != null)
+        {
+            node.LastEvaluated = checkFunc();
+            node.Active = node.LastEvaluated || node.Children.Any(c => c.Active);
+        }
+
+        // 首评后若有 Parent → 触发父节点重新聚合
+        if (node.Parent != null)
+        {
+            EvaluateActive(node.Parent);
+        }
+    }
+
+    /// <summary>
+    /// 建立父子关系。支持任意注册顺序。
+    /// </summary>
+    public static void RegisterParent(string childId, string parentId)
+    {
+        if (!_initialized)
+        {
+            Configure();
+        }
+
+        var childExists = _nodes.TryGetValue(childId, out var child);
+        var parentExists = _nodes.TryGetValue(parentId, out var parent);
+
+        if (childExists && parentExists)
+        {
+            if (child!.Parent == parent)
+            {
+                return; // 已存在相同关系，跳过
+            }
+            // 从旧父节点移除
+            child.Parent?.Children.Remove(child);
+            child.Parent = parent;
+            parent!.Children.Add(child);
+            // 父节点需重新聚合
+            EvaluateActive(parent);
+        }
+        else
+        {
+            // 暂存挂起：至少一方尚未注册
+            if (!_pendingParents.ContainsKey(childId))
+            {
+                _pendingParents[childId] = new List<string>();
+            }
+            if (!_pendingParents[childId].Contains(parentId))
+            {
+                _pendingParents[childId].Add(parentId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 查询节点激活状态。O(1) 字典查询，未注册返回 false。
+    /// </summary>
+    public static bool IsActive(string id)
+    {
+        return _nodes.TryGetValue(id, out var node) && node.Active;
+    }
+
+    /// <summary>
+    /// 反注册节点，清理事件订阅并从父节点移除。
+    /// </summary>
+    public static void UnregisterNode(string id)
+    {
+        if (_nodes.TryGetValue(id, out var node))
+        {
+            foreach (var unsub in node.EventSubscriptions)
+            {
+                unsub();
+            }
+            node.EventSubscriptions.Clear();
+            node.Parent?.Children.Remove(node);
+            _nodes.Remove(id);
+        }
+    }
+
+    /// <summary>
+    /// 将节点标记为脏，暂不实际评估（评估由后续 Task 的 _FlushAll 完成）。
+    /// </summary>
+    internal static void MarkDirty(RedDotNode node)
+    {
+        _dirtyIds.Add(node.Id);
+    }
+
+    /// <summary>
+    /// 同步评估节点激活状态：有重载优先，否则自身 checkFunc 或任一子节点激活即为激活。
+    /// </summary>
+    private static void EvaluateActive(RedDotNode node)
+    {
+        if (node.Override == RedDotOverride.ForceActive)
+        {
+            node.Active = true;
+            return;
+        }
+        if (node.Override == RedDotOverride.ForceInactive)
+        {
+            node.Active = false;
+            return;
+        }
+
+        var selfActive = node.CheckFunc != null && node.LastEvaluated;
+        var childrenActive = node.Children.Any(c => c.Active);
+        node.Active = selfActive || childrenActive;
+    }
+}
