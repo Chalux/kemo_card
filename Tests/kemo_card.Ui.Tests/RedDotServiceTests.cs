@@ -169,4 +169,75 @@ public sealed class RedDotServiceTests
 
         Assert.That(RedDotService.IsActive("A"), Is.True);
     }
+
+    [Test]
+    public void SetOverride_ForceActive_overrides_checkFunc()
+    {
+        RedDotService.RegisterNode("A", () => false);
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+        RedDotService.SetOverride("A", RedDotOverride.ForceActive);
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.True);
+    }
+
+    [Test]
+    public void SetOverride_ForceInactive_overrides_checkFunc()
+    {
+        RedDotService.RegisterNode("A", () => true);
+        Assert.That(RedDotService.IsActive("A"), Is.True);
+        RedDotService.SetOverride("A", RedDotOverride.ForceInactive);
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+    }
+
+    [Test]
+    public void SetOverride_back_to_None_uses_LastEvaluated()
+    {
+        RedDotService.RegisterNode("A", () => true);
+        RedDotService.SetOverride("A", RedDotOverride.ForceInactive);
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+        RedDotService.SetOverride("A", RedDotOverride.None);
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.True);
+    }
+
+    [Test]
+    public void UnregisterNode_cascades_to_children()
+    {
+        RedDotService.RegisterNode("Parent");
+        RedDotService.RegisterNode("Parent/Child1", () => true);
+        RedDotService.RegisterNode("Parent/Child2", () => true);
+        RedDotService.RegisterParent("Parent/Child1", "Parent");
+        RedDotService.RegisterParent("Parent/Child2", "Parent");
+        Assert.That(RedDotService.IsActive("Parent"), Is.True);
+
+        RedDotService.UnregisterNode("Parent");
+        Assert.That(RedDotService.IsActive("Parent"), Is.False);
+        Assert.That(RedDotService.IsActive("Parent/Child1"), Is.False);
+        Assert.That(RedDotService.IsActive("Parent/Child2"), Is.False);
+    }
+
+    [Test]
+    public void UnregisterParent_only_disconnects_relationship()
+    {
+        RedDotService.RegisterNode("Parent", () => true);
+        RedDotService.RegisterNode("Parent/Child", () => true);
+        RedDotService.RegisterParent("Parent/Child", "Parent");
+        Assert.That(RedDotService.IsActive("Parent"), Is.True);
+
+        RedDotService.UnregisterParent("Parent/Child", "Parent");
+        RedDotService.InternalFlushAll();
+
+        Assert.That(RedDotService.IsActive("Parent"), Is.True);
+        Assert.That(RedDotService.IsActive("Parent/Child"), Is.True);
+    }
+
+    [Test]
+    public void SetOverride_same_value_noop()
+    {
+        RedDotService.RegisterNode("A", () => false);
+        RedDotService.SetOverride("A", RedDotOverride.None);
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+    }
 }

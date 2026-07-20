@@ -192,20 +192,84 @@ public static class RedDotService
     }
 
     /// <summary>
-    /// 反注册节点，清理事件订阅并从父节点移除。
+    /// 运行时修改节点的重载策略。
+    /// </summary>
+    public static void SetOverride(string id, RedDotOverride @override)
+    {
+        if (!_nodes.TryGetValue(id, out var node))
+        {
+            return;
+        }
+
+        if (node.Override == @override)
+        {
+            return;
+        }
+
+        node.Override = @override;
+        MarkDirty(node);
+    }
+
+    /// <summary>
+    /// 级联反注册：递归删除所有后代，解绑事件，从父节点移除，最后从字典移除。
     /// </summary>
     public static void UnregisterNode(string id)
     {
-        if (_nodes.TryGetValue(id, out var node))
+        if (!_nodes.TryGetValue(id, out var node))
         {
-            foreach (var unsub in node.EventSubscriptions)
-            {
-                unsub();
-            }
-            node.EventSubscriptions.Clear();
-            node.Parent?.Children.Remove(node);
-            _nodes.Remove(id);
+            return;
         }
+
+        // 递归移除所有子节点
+        foreach (var child in node.Children.ToList())
+        {
+            UnregisterNode(child.Id);
+        }
+
+        // 解除事件订阅
+        foreach (var unsub in node.EventSubscriptions)
+        {
+            unsub();
+        }
+
+        node.EventSubscriptions.Clear();
+
+        // 从父节点移除
+        node.Parent?.Children.Remove(node);
+        if (node.Parent != null)
+        {
+            MarkDirty(node.Parent);
+        }
+
+        node.Parent = null;
+        node.Children.Clear();
+
+        _nodes.Remove(id);
+    }
+
+    /// <summary>
+    /// 仅断开父子关系，子节点保留。
+    /// </summary>
+    public static void UnregisterParent(string childId, string parentId)
+    {
+        if (!_nodes.TryGetValue(childId, out var child))
+        {
+            return;
+        }
+
+        if (!_nodes.TryGetValue(parentId, out var parent))
+        {
+            return;
+        }
+
+        if (child.Parent != parent)
+        {
+            return;
+        }
+
+        parent.Children.Remove(child);
+        child.Parent = null;
+        MarkDirty(parent);
     }
 
     /// <summary>
