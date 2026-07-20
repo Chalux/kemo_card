@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.cs" id="1_script"]
+
+[node name="CharacterPresenter" type="Control" node_paths=PackedStringArray("_portrait", "_animSprite")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+_portrait = NodePath("Portrait")
+_animSprite = NodePath("AnimSprite")
+
+[node name="Portrait" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AnimSprite" type="AnimatedSprite2D" parent="."]
+visible = false
+centered = true
