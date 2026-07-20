@@ -6,7 +6,7 @@
 
 ## 1. 目标
 
-在 `CodexDlg` 增加角色 Tab：过滤、分页、卡片展示、悬停摘要 tip，以及序列帧动作切换。同步扩展角色视觉资源模型（多表情立绘 + 路由 + 序列帧 presentation），供图鉴使用，并为后续对话 / 战斗复用预留同一解析入口。
+在 `CodexDlg` 增加角色 Tab：过滤、分页、卡片展示、悬停摘要 tip。同步扩展角色视觉资源模型（多表情立绘 + 路由 + 序列帧 presentation）。**序列帧动作切换放在角色详情对话框**（镜像卡牌详情打开方式），图鉴列表仅播默认动画。
 
 ## 2. 范围
 
@@ -18,8 +18,9 @@
 - `CharacterPresenter` 组件：优先播 `SpriteFrames`，否则显示默认立绘
 - `CharacterCodexQuery`：元素 / 职业 / 种族 / 标签过滤 + 文本搜索 + 分页
 - `CharacterSummaryBuilder`：悬停 tip 文案
-- `BaseCharacterItem` + `CodexDlg` 角色 Tab（含动作切换）
-- 本地化键（种族、过滤字段、Tab、动作相关）
+- `BaseCharacterItem` + `CodexDlg` 角色 Tab（列表只播 `defaultAnim`，点击打开详情）
+- `CharacterDetailsDlg`：展示 presenter + 名称/描述等基础信息；**动作切换 UI 仅在此对话框**
+- 本地化键（种族、过滤字段、Tab、动作、详情标题等）
 - 纯逻辑单测（Resolver / Query / SummaryBuilder）
 
 ### 不做
@@ -27,7 +28,8 @@
 - 战斗 UI / 战斗单位挂接
 - Spine（`presentation.kind` 可预留枚举值，本轮不实现）
 - Dialogue Manager 插件安装与 balloon 接线（见总项目说明；本轮只保证 Resolver API 可被后续桥接）
-- 角色详情弹窗
+- 图鉴列表内的动作切换控件
+- 详情内嵌专属卡牌网格 / 完整技能面板等重型内容（可后续加）
 - 图鉴解锁灰显
 
 ## 3. 架构
@@ -38,10 +40,16 @@ CharacterDto
   presentation ──► CharacterPresenter ──► AnimatedSprite2D | TextureRect
                          ▲
 CodexDlg [卡牌 Tab | 角色 Tab]
-  CharacterCodexQuery + BaseCharacterItem + 动作切换
+  CharacterCodexQuery + BaseCharacterItem (defaultAnim only)
+                         │ 点击 OpenDetails
+                         ▼
+              CharacterDetailsDlg
+                ├─ CharacterPresenter
+                ├─ 动作 OptionButton（ListAnims / Play）
+                └─ 名称 / 描述等基础文案
 ```
 
-依赖方向：`mod` → `frame`。DTO / 枚举在 `Src/frame/content/`；Resolver 纯逻辑可放 `frame` 或 `mod/global`（与内容加载同层优先 `frame`）；UI 组件与 Query / Builder 放 `Src/mod/global/Ui/`。
+依赖方向：`mod` → `frame`。DTO / 枚举在 `Src/frame/content/`；Resolver 纯逻辑优先 `frame`；UI 组件与 Query / Builder 放 `Src/mod/global/Ui/`。打开详情对齐 `CardDetailsDlg` / `BaseCardItem.ClickAction` 模式。
 
 ## 4. 角色视觉资源模型
 
@@ -124,10 +132,10 @@ ResolveByKey(character, portraitKey) → path
 
 - `Bind(CharacterDto)`：有可用 presentation → 加载并 `Play(defaultAnim)`；否则显示 `ResolveByKey(Neutral)` 立绘
 - `Play(animName)`：切换动画；不存在则回退 `defaultAnim`
-- `ListAnims()`：供图鉴动作切换 UI
-- 无 presentation 时隐藏 / 禁用动作切换
+- `ListAnims()`：供**角色详情**动作切换 UI
+- 无 presentation 时详情侧隐藏 / 禁用动作切换
 
-本轮仅图鉴消费；战斗后接同一组件。
+本轮图鉴列表与详情对话框消费；战斗后接同一组件。
 
 ## 5. 角色图鉴 UI
 
@@ -161,16 +169,25 @@ ResolveByKey(character, portraitKey) → path
 
 ### 5.3 BaseCharacterItem
 
-展示：立绘或序列帧 + 名称；元素色条可选（对齐卡牌元素色）。  
+展示：立绘或序列帧（仅 `defaultAnim`）+ 名称；元素色条可选（对齐卡牌元素色）。  
 悬停 tip：`CharacterSummaryBuilder` → `KeywordTipService.ShowCustomTips`。  
-点击：本轮无详情弹窗（`ClickAction` 默认无操作或 None）。
+点击：默认打开 `CharacterDetailsDlg`（对齐卡牌 `OpenDetails`；详情内嵌角色展示须关闭二次打开，避免递归）。
 
-### 5.4 动作切换
+### 5.4 CharacterDetailsDlg（动作切换仅在此）
 
-- 列表格默认 `Play(defaultAnim)`
-- **选中**某一角色卡片后，动作切换控件（`OptionButton`）对该角色的 presenter 生效
-- 选项 = `ListAnims()`；切换即 `Play`
-- 当前选中角色无 presentation → 控件禁用并清空
+镜像 `CardDetailsDlg`：
+
+| 项 | 约定 |
+|----|------|
+| Payload | `CharacterId: string`（必填） |
+| UI 注册 | `GlobalUiIds.CharacterDetails` |
+| Presenter | `Bind(character)`，默认 `Play(defaultAnim)` |
+| 动作切换 | `OptionButton`（键 `UI_CODEX_ANIM`）；选项 = `ListAnims()`；变更 → `Play` |
+| 无 presentation | 显示默认立绘；动作控件 `Visible = false` 或禁用 |
+| 文案 | 名称、描述（`descId`）；本轮不做专属卡网格 / 完整技能列表 |
+| 找不到角色 | Warning 并关闭 |
+
+图鉴列表**不提供**动作切换控件。
 
 ### 5.5 Tip 文案
 
@@ -190,6 +207,7 @@ ResolveByKey(character, portraitKey) → path
 | `UI_CODEX_FILTER_RACE` | 种族 | Race |
 | `UI_CODEX_CHAR_TXT_FILTER` | 角色名或描述 | Character Name Or Desc |
 | `UI_CODEX_ANIM` | 动作 | Anim |
+| `UI_CHARACTER_DETAILS_TITLE` | 角色详情 | Character Details |
 | `UI_RACE_*` | 各族名称 | … |
 
 过滤字段 Element/Role/Tag 可复用已有 `UI_CODEX_FILTER_*`；操作符复用已有 `UI_CODEX_OP_*`。
@@ -216,4 +234,4 @@ ResolveByKey(character, portraitKey) → path
 - 战斗单位挂 `CharacterPresenter`
 - 安装并集成 [Dialogue Manager](https://github.com/nathanhoad/godot_dialogue_manager)（约定见总项目说明），balloon 经 C# 桥接调用 `PortraitResolver.ResolveByRoute`
 - Spine `presentation.kind`
-- 角色详情弹窗（专属卡、技能列表等）
+- 角色详情扩展：专属卡列表、技能面板等
