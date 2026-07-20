@@ -15,9 +15,9 @@ public static class ContentDefinitionJson
             ReadCommentHandling = JsonCommentHandling.Skip,
             AllowTrailingCommas = true,
         };
-        options.Converters.Add(new JsonStringEnumConverter());
         options.Converters.Add(new FlagsEnumJsonConverter<ERace>());
         options.Converters.Add(new FlagsEnumJsonConverter<EElement>());
+        options.Converters.Add(new JsonStringEnumConverter());
         return options;
     }
 }

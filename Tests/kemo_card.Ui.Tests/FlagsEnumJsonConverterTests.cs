@@ -1,5 +1,4 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using KemoCard.Frame.Content.Definitions;
 using NUnit.Framework;
 
@@ -12,7 +11,6 @@ public sealed class FlagsEnumJsonConverterTests
     {
         var o = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         o.Converters.Add(new FlagsEnumJsonConverter<ERace>());
-        o.Converters.Add(new JsonStringEnumConverter());
         return o;
     }
 
