@@ -1,0 +1,88 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/CharacterDetailsDlg.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_dlg"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.tscn" id="3_presenter"]
+
+[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_rtCharDesc", "_lblAnim", "_optAnim")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+_presenter = NodePath("BaseDlgComp/CharacterPresenter")
+_txtTitle = NodePath("BaseDlgComp/TxtTitle")
+_txtCharName = NodePath("BaseDlgComp/TxtCharName")
+_rtCharDesc = NodePath("BaseDlgComp/RTCharDesc")
+_lblAnim = NodePath("BaseDlgComp/LblAnim")
+_optAnim = NodePath("BaseDlgComp/OptAnim")
+
+[node name="BaseDlgComp" parent="." instance=ExtResource("2_dlg")]
+layout_mode = 1
+offset_left = 152.0
+offset_top = 88.0
+offset_right = -88.0
+offset_bottom = -88.0
+
+[node name="TxtTitle" type="Label" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.04
+anchor_top = 0.04
+anchor_right = 0.5
+anchor_bottom = 0.12
+theme_override_font_sizes/font_size = 28
+text = "UI_CHARACTER_DETAILS_TITLE"
+
+[node name="CharacterPresenter" parent="BaseDlgComp" instance=ExtResource("3_presenter")]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.04
+anchor_top = 0.14
+anchor_right = 0.36
+anchor_bottom = 0.88
+mouse_filter = 2
+
+[node name="TxtCharName" type="Label" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.14
+anchor_right = 0.92
+anchor_bottom = 0.24
+theme_override_font_sizes/font_size = 32
+text = ""
+
+[node name="LblAnim" type="Label" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.26
+anchor_right = 0.52
+anchor_bottom = 0.34
+theme_override_font_sizes/font_size = 24
+text = "UI_CODEX_ANIM"
+vertical_alignment = 1
+
+[node name="OptAnim" type="OptionButton" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.53
+anchor_top = 0.26
+anchor_right = 0.92
+anchor_bottom = 0.34
+
+[node name="RTCharDesc" type="RichTextLabel" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.38
+anchor_right = 0.92
+anchor_bottom = 0.88
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = ""
+fit_content = false
+scroll_active = true
