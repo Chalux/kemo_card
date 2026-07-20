@@ -42,4 +42,10 @@ public sealed class CharacterDto
 
     [JsonPropertyName("initialEnergy")]
     public int InitialEnergy { get; init; } = 0;
+
+    [JsonPropertyName("portraits")]
+    public CharacterPortraitsDto? Portraits { get; init; }
+
+    [JsonPropertyName("presentation")]
+    public CharacterPresentationDto? Presentation { get; init; }
 }

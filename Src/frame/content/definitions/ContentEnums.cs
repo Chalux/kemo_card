@@ -98,13 +98,13 @@ public enum EEffectKind
 
 public enum ESkillActionKind
 {
-	Draw,
-	Discard,
-	GainResource,
-	ExecuteScript,
-	ChainActions,
-	ApplyGameplayEffect,
-	RemoveGameplayEffect,
+    Draw,
+    Discard,
+    GainResource,
+    ExecuteScript,
+    ChainActions,
+    ApplyGameplayEffect,
+    RemoveGameplayEffect,
 }
 
 [Flags]
@@ -207,4 +207,23 @@ public enum ERace
     Devil = 1 << 14,
     Undead = 1 << 15,
     UnKnown = 1 << 16,
+}
+
+public enum EPortraitKey
+{
+    Neutral,
+    Smile,
+    Angry,
+    Sad,
+    Surprised,
+    Hurt,
+    Serious,
+    Happy,
+    Naughty,
+}
+
+public enum EPresentationKind
+{
+    SpriteFrames,
+    Spine,
 }
