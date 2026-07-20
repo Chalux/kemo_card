@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Godot;
 
 namespace KemoCard.Frame.Notification;
 
@@ -12,6 +13,7 @@ public static class RedDotService
     private static readonly Dictionary<string, RedDotNode> _nodes = new();
     private static readonly HashSet<string> _dirtyIds = new();
     private static readonly Dictionary<string, List<string>> _pendingParents = new();
+    private static RedDotUpdateNode? _updateNode;
     private static bool _initialized;
 
     /// <summary>
@@ -21,13 +23,28 @@ public static class RedDotService
 
     /// <summary>
     /// 清理所有注册节点、脏标记和挂起的父子关系。
+    /// 不涉及 Godot 原生调用，可在测试环境下安全使用。
     /// </summary>
     public static void Configure()
     {
         _nodes.Clear();
         _dirtyIds.Clear();
         _pendingParents.Clear();
+        _updateNode = null;
         _initialized = true;
+    }
+
+    /// <summary>
+    /// 创建 RedDotUpdateNode 并挂到 SceneTree.Root，启用 CallDeferred 批处理。
+    /// 仅在 Godot 运行时（非测试环境）调用。
+    /// </summary>
+    internal static void SetupUpdateNode(SceneTree tree)
+    {
+        if (tree.Root != null)
+        {
+            _updateNode = new RedDotUpdateNode();
+            tree.Root.AddChild(_updateNode);
+        }
     }
 
     /// <summary>
@@ -196,7 +213,10 @@ public static class RedDotService
     /// </summary>
     internal static void MarkDirty(RedDotNode node)
     {
-        _dirtyIds.Add(node.Id);
+        if (_dirtyIds.Add(node.Id))
+        {
+            _updateNode?.CallDeferred("_FlushAll");
+        }
     }
 
     /// <summary>

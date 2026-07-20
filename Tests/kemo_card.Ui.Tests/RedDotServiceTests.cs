@@ -151,4 +151,22 @@ public sealed class RedDotServiceTests
         RedDotService.InternalFlushAll();
         Assert.That(RedDotService.IsActive("A"), Is.False);
     }
+
+    [Test]
+    public void MarkDirty_triggers_deferred_flush()
+    {
+        bool val = false;
+        RedDotService.RegisterNode("A", () => val);
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+
+        val = true;
+        var node = RedDotService.InternalGetNode("A");
+        node!.LastEvaluated = true;
+        RedDotService.MarkDirty(node);
+
+        // 直接调 InternalFlushAll 验证脏标记 -> 评估的链（不依赖 CallDeferred 的帧延迟）
+        RedDotService.InternalFlushAll();
+
+        Assert.That(RedDotService.IsActive("A"), Is.True);
+    }
 }
