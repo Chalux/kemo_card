@@ -5,6 +5,7 @@ using KemoCard.Frame.Display;
 using KemoCard.Frame.Locale;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Mvc;
+using KemoCard.Frame.Notification;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Mod;
@@ -24,6 +25,8 @@ public partial class MainRoot : Control
         BootstrapServices();
         InitSoundManager();
         InitUIManager();
+        RedDotService.Configure();
+        RedDotService.SetupUpdateNode(GetTree());
         EnsureKeywordTipLayer();
         _ = GlobalModController.OpenMenuAsync();
 
