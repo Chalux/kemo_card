@@ -219,4 +219,79 @@ public static class RedDotService
         var childrenActive = node.Children.Any(c => c.Active);
         node.Active = selfActive || childrenActive;
     }
+
+    /// <summary>
+    /// 手动触发重新评估：重新执行 checkFunc 并存 LastEvaluated，标记 Dirty。
+    /// </summary>
+    public static void Refresh(string id)
+    {
+        if (_nodes.TryGetValue(id, out var node))
+        {
+            if (node.CheckFunc != null)
+            {
+                node.LastEvaluated = node.CheckFunc();
+            }
+            MarkDirty(node);
+        }
+    }
+
+    /// <summary>
+    /// 批处理所有脏节点：重新评估并触发 OnStateChanged，父节点传播脏标记。
+    /// </summary>
+    internal static void InternalFlushAll()
+    {
+        var ids = _dirtyIds.ToList();
+        _dirtyIds.Clear();
+        foreach (var id in ids)
+        {
+            if (_nodes.TryGetValue(id, out var node))
+            {
+                var oldActive = node.Active;
+                EvaluateActive(node);
+                if (oldActive != node.Active)
+                {
+                    OnStateChanged?.Invoke(node.Id, node.Active);
+                    if (node.Parent != null)
+                    {
+                        MarkDirty(node.Parent);
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 供外部事件 handler 调用：重新执行 checkFunc，Override==None 时标记 Dirty。
+    /// </summary>
+    internal static void Nudge(string id)
+    {
+        if (_nodes.TryGetValue(id, out var node))
+        {
+            if (node.CheckFunc != null)
+            {
+                node.LastEvaluated = node.CheckFunc();
+            }
+            if (node.Override == RedDotOverride.None)
+            {
+                MarkDirty(node);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 供测试获取内部节点。
+    /// </summary>
+    internal static RedDotNode? InternalGetNode(string id)
+    {
+        _nodes.TryGetValue(id, out var node);
+        return node;
+    }
+
+    /// <summary>
+    /// 供测试绕过 RegisterNode 直接添加节点。
+    /// </summary>
+    internal static void InternalAddNodeDirect(RedDotNode node)
+    {
+        _nodes[node.Id] = node;
+    }
 }

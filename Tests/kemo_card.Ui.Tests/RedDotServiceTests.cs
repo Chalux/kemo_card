@@ -88,4 +88,67 @@ public sealed class RedDotServiceTests
         RedDotService.RegisterParent("Menu/Codex", "Menu");
         Assert.That(RedDotService.IsActive("Menu"), Is.True);
     }
+
+    [Test]
+    public void FlushAll_evaluates_dirty_nodes()
+    {
+        bool checkReturn = false;
+        RedDotService.RegisterNode("A", () => checkReturn);
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+        checkReturn = true;
+        RedDotService.Refresh("A");
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.True);
+    }
+
+    [Test]
+    public void OnStateChanged_fires_when_state_changes()
+    {
+        string? changedId = null;
+        bool? changedActive = null;
+        RedDotService.OnStateChanged += (id, active) => { changedId = id; changedActive = active; };
+        RedDotService.RegisterNode("A", () => false);
+        var node = RedDotService.InternalGetNode("A");
+        node!.LastEvaluated = true;
+        RedDotService.MarkDirty(node);
+        RedDotService.InternalFlushAll();
+        Assert.That(changedId, Is.EqualTo("A"));
+        Assert.That(changedActive, Is.True);
+    }
+
+    [Test]
+    public void OnStateChanged_does_not_fire_when_state_unchanged()
+    {
+        int fireCount = 0;
+        RedDotService.OnStateChanged += (_, _) => fireCount++;
+        RedDotService.RegisterNode("A", () => false);
+        RedDotService.Refresh("A");
+        RedDotService.InternalFlushAll();
+        Assert.That(fireCount, Is.Zero);
+    }
+
+    [Test]
+    public void Nudge_re_evaluates_and_marks_dirty_when_no_override()
+    {
+        bool val = false;
+        RedDotService.RegisterNode("B", () => val);
+        Assert.That(RedDotService.IsActive("B"), Is.False);
+        val = true;
+        RedDotService.Nudge("B");
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("B"), Is.True);
+    }
+
+    [Test]
+    public void Nudge_skips_when_override_active()
+    {
+        RedDotService.RegisterNode("A", RedDotOverride.ForceInactive, () => true);
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+        RedDotService.Nudge("A");
+        var node = RedDotService.InternalGetNode("A");
+        Assert.That(node!.LastEvaluated, Is.True);
+        RedDotService.InternalFlushAll();
+        Assert.That(RedDotService.IsActive("A"), Is.False);
+    }
 }
