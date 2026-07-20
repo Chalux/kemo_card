@@ -143,10 +143,17 @@ ResolveByKey(character, portraitKey) → path
 
 | 字段 | 对应 `CharacterDto` | 操作符 | 值来源 |
 |------|---------------------|--------|--------|
-| 元素 | `Element`（单值 `EElement`） | Equal / NotEqual | 枚举（跳过 None） |
+| 元素 | `Element`（`EElement` Flags） | Contains / Exact | 单元素位（跳过 None）；语义对齐卡牌元素过滤 |
 | 职业 | `Role` | Equal / NotEqual | `ERole` |
-| 种族 | `Race`（`ERace`，可为 Flags 组合值） | Equal / NotEqual | 常用单种族枚举项（跳过 None）；Equal = 整值相等 |
+| 种族 | `Race`（`ERace` Flags，**可多枚举按位组合**） | Contains / Exact | 单种族位（跳过 None） |
 | 标签 | `Tags` | Contains / Exact | 角色池 tags 去重 |
+
+**种族 Flags 约定：**
+
+- 内容 JSON 支持数组写法，按位或合并，例如 `"race": ["Human", "Canine"]` → `Human | Canine`（若当前反序列化仅支持单字符串，实现期补 Flags 数组转换器；单字符串 `"Human"` 仍合法）
+- **Contains**：`(raceFlags & bit) != 0`（拥有该种族位即可）
+- **Exact**：`raceFlags == bit`（仅含该一种族，不多不少）
+- 过滤下拉只列出单个种族位，不列出组合值
 
 文本搜索：本地化显示名、`descId` 译文、关联技能描述（与卡牌图鉴类似）。
 
@@ -170,8 +177,10 @@ ResolveByKey(character, portraitKey) → path
 | 行 | 内容 |
 |----|------|
 | Title | 角色名 |
-| Body 1 | `元素 职业 种族`（空格连接，None 跳过） |
+| Body 1 | `元素 职业 种族`（空格连接；None 跳过） |
 | Body 2+ | 技能描述纯文本（剥 BBCode）；多技能换行 |
+
+多 Flags 展示：元素、种族均按已置位枚举名本地化后用 `、` 连接（与卡牌 tip 多元素一致），再与职业用空格拼成第 1 行。
 
 ## 6. 本地化（新增键示例）
 
@@ -197,8 +206,9 @@ ResolveByKey(character, portraitKey) → path
 - `artPath` 兼容为 Neutral 单条
 - route 缺失 / 目标 entry 缺失 / 文件不存在 → Neutral
 - `custom:*` 路由与直取
-- CharacterCodexQuery：各字段 Equal/NotEqual、Tag Contains/Exact、文本搜索、分页
-- SummaryBuilder：meta 行拼接与技能剥离
+- CharacterCodexQuery：元素/种族 Flags 的 Contains/Exact、职业 Equal/NotEqual、Tag Contains/Exact、文本搜索、分页
+- SummaryBuilder：多元素/多种族 `、` 拼接与技能剥离
+- 种族 JSON 数组 → Flags 合并（有转换器时）
 - anims 白名单与 SpriteFrames 求交（纯逻辑可测列表计算）
 
 ## 9. 后续（非本轮）
