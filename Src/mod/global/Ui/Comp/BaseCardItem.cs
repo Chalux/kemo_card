@@ -21,11 +21,16 @@ public partial class BaseCardItem : Control
 	[Export] private Label? _txtCardVal;
 	[Export] private ColorRect? _crAttr;
 	[Export] public ECardClickAction ClickAction { get; set; } = ECardClickAction.OpenDetails;
+	[Export] public bool EnableHoverTip { get; set; }
+	[Export] public float TipDelaySec { get; set; } = 0.15f;
+	[Export] public TipSide PreferTipSide { get; set; } = TipSide.Right;
 
 	private CardDto? _card;
 	private int _baseValue;
 	private int? _displayOverride;
 	private ECostType _costType = ECostType.None;
+	private Tween? _tipDelayTween;
+	private bool _hoverTipActive;
 
 	#region 点击交互
 
@@ -34,6 +39,17 @@ public partial class BaseCardItem : Control
 		base._Ready();
 		MouseFilter = MouseFilterEnum.Stop;
 		IgnoreMouseOnDescendants(this);
+		MouseEntered += OnHoverTipEntered;
+		MouseExited += OnHoverTipExited;
+	}
+
+	public override void _ExitTree()
+	{
+		CancelHoverTipDelay();
+		KeywordTipService.Current?.HideTips(this);
+		MouseEntered -= OnHoverTipEntered;
+		MouseExited -= OnHoverTipExited;
+		base._ExitTree();
 	}
 
 	private static void IgnoreMouseOnDescendants(Node node)
@@ -133,6 +149,112 @@ public partial class BaseCardItem : Control
 	public void HideTips()
 	{
 		KeywordTipService.Current?.HideTips(this);
+	}
+
+	#endregion
+
+	#region 悬停摘要 Tip
+
+	private void OnHoverTipEntered()
+	{
+		if (!EnableHoverTip || _card == null)
+		{
+			return;
+		}
+
+		_hoverTipActive = true;
+		ScheduleHoverTip();
+	}
+
+	private void OnHoverTipExited()
+	{
+		_hoverTipActive = false;
+		CancelHoverTipDelay();
+		KeywordTipService.Current?.HideTips(this);
+	}
+
+	private void ScheduleHoverTip()
+	{
+		CancelHoverTipDelay();
+		if (TipDelaySec <= 0f)
+		{
+			ShowHoverTipNow();
+			return;
+		}
+
+		_tipDelayTween = CreateTween();
+		_tipDelayTween.TweenInterval(TipDelaySec);
+		_tipDelayTween.TweenCallback(Callable.From(ShowHoverTipNow));
+	}
+
+	private void CancelHoverTipDelay()
+	{
+		_tipDelayTween?.Kill();
+		_tipDelayTween = null;
+	}
+
+	private void ShowHoverTipNow()
+	{
+		if (!_hoverTipActive || !EnableHoverTip || _card == null)
+		{
+			return;
+		}
+
+		var service = KeywordTipService.Current;
+		if (service == null)
+		{
+			AppLog.Warning("BaseCardItem: KeywordTipService.Current 为空，无法显示卡牌摘要提示。", "BaseCardItem");
+			return;
+		}
+
+		GameDefinitionStore store;
+		try
+		{
+			store = AppRoot.Services.ContentModPipeline.Registry.Store;
+		}
+		catch (InvalidOperationException)
+		{
+			AppLog.Warning("BaseCardItem: AppRoot 未初始化，无法构建卡牌摘要。", "BaseCardItem");
+			return;
+		}
+
+		var tip = CardSummaryBuilder.Build(
+			_card,
+			id => store.TryGetSkill(id, out var skill) ? skill : null,
+			Localization.Tr,
+			cardId => ResolveExclusiveCharacterName(store, cardId));
+
+		if (string.IsNullOrWhiteSpace(tip.Title) && string.IsNullOrWhiteSpace(tip.Body))
+		{
+			return;
+		}
+
+		service.ShowCustomTips(this, [(tip.Title, tip.Body)], PreferTipSide);
+	}
+
+	private static string? ResolveExclusiveCharacterName(GameDefinitionStore store, string cardId)
+	{
+		foreach (var character in store.Characters.Values)
+		{
+			if (character.Cards == null || character.Cards.Count == 0)
+			{
+				continue;
+			}
+
+			if (!character.Cards.Contains(cardId))
+			{
+				continue;
+			}
+
+			if (string.IsNullOrWhiteSpace(character.DisplayNameId))
+			{
+				return null;
+			}
+
+			return Localization.Tr(character.DisplayNameId);
+		}
+
+		return null;
 	}
 
 	#endregion

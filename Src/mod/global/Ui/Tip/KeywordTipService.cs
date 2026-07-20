@@ -45,13 +45,67 @@ public partial class KeywordTipService : CanvasLayer
 
     public void ShowTips(Control anchor, IReadOnlyList<KeywordTipRequest> tips, TipSide preferSide = TipSide.Right)
     {
+        if (tips == null || tips.Count == 0)
+        {
+            HideTips();
+            return;
+        }
+
+        var catalog = KeywordCatalog.Shared;
+        var panels = new List<(string Title, string Desc)>(tips.Count);
+        foreach (var request in tips)
+        {
+            if (!catalog.TryGet(request.KeywordId, out var entry) || entry == null)
+            {
+                AppLog.Warning($"KeywordTipService: 未知词条 id '{request.KeywordId}'，已跳过。", "Keyword");
+                continue;
+            }
+
+            var title = Localization.Tr(entry.TitleKey);
+            var desc = KeywordTextFormatter.ApplyParams(Localization.Tr(entry.DescKey), request.Parameters);
+            panels.Add((title, desc));
+        }
+
+        ShowPanels(anchor, panels, preferSide);
+    }
+
+    public void ShowCustomTips(
+        Control anchor,
+        IReadOnlyList<(string Title, string Desc)> tips,
+        TipSide preferSide = TipSide.Right)
+    {
+        if (tips == null || tips.Count == 0)
+        {
+            HideTips();
+            return;
+        }
+
+        var panels = new List<(string Title, string Desc)>(tips.Count);
+        foreach (var tip in tips)
+        {
+            if (string.IsNullOrWhiteSpace(tip.Title) && string.IsNullOrWhiteSpace(tip.Desc))
+            {
+                continue;
+            }
+
+            panels.Add((tip.Title ?? "", tip.Desc ?? ""));
+        }
+
+        ShowPanels(anchor, panels, preferSide);
+    }
+
+    private void ShowPanels(
+        Control anchor,
+        IReadOnlyList<(string Title, string Desc)> panels,
+        TipSide preferSide)
+    {
         if (anchor == null || !GodotObject.IsInstanceValid(anchor))
         {
             HideTips();
             return;
         }
 
-        if (tips == null || tips.Count == 0)
+        if (panels == null || panels.Count == 0)
         {
             HideTips();
             return;
@@ -76,19 +130,10 @@ public partial class KeywordTipService : CanvasLayer
 
         ClearPanels();
 
-        var catalog = KeywordCatalog.Shared;
-        foreach (var request in tips)
+        foreach (var panelContent in panels)
         {
-            if (!catalog.TryGet(request.KeywordId, out var entry) || entry == null)
-            {
-                AppLog.Warning($"KeywordTipService: 未知词条 id '{request.KeywordId}'，已跳过。", "Keyword");
-                continue;
-            }
-
             var panel = _panelScene.Instantiate<KeywordTipPanel>();
-            var title = Localization.Tr(entry.TitleKey);
-            var desc = KeywordTextFormatter.ApplyParams(Localization.Tr(entry.DescKey), request.Parameters);
-            panel.SetContent(title, desc);
+            panel.SetContent(panelContent.Title, panelContent.Desc);
             _tipStack.AddChild(panel);
         }
 

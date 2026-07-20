@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ca3qugqk4qdpy"]
+
+[ext_resource type="Script" uid="uid://l77ry0h0d2hi" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="1_5pwr1"]
+
+[node name="BaseKemoButton" type="Button" unique_id=933934919]
+script = ExtResource("1_5pwr1")
