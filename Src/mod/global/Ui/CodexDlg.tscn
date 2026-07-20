@@ -4,8 +4,9 @@
 [ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_ii0j4"]
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="3_tnh6y"]
 [ext_resource type="PackedScene" uid="uid://c6tqm743fyjtl" path="res://Src/mod/global/Ui/Comp/BasePager.tscn" id="4_egqms"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
 
-[node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager")]
+[node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_tabContainer", "_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager", "_obCharField", "_obCharOp", "_obCharVal", "_itemListCharConditions", "_btnCharAdd", "_btnCharSearch", "_iptCharTxtFilter", "_gridCharList", "_charPager")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,6 +14,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_x5fxm")
+_tabContainer = NodePath("TabContainer")
 _obField = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardTypeSelector")
 _obOp = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardOperateSelector")
 _obVal = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardValSelector")
@@ -22,6 +24,15 @@ _btnSearch = NodePath("TabContainer/UI_CARD/BtnSearch")
 _iptTxtFilter = NodePath("TabContainer/UI_CARD/IptTxtFilter")
 _gridCardList = NodePath("TabContainer/UI_CARD/Control/GridContainerCardList")
 _pager = NodePath("TabContainer/UI_CARD/BasePager")
+_obCharField = NodePath("TabContainer/UI_CHARACTER/HBoxContainer/OBCharFieldSelector")
+_obCharOp = NodePath("TabContainer/UI_CHARACTER/HBoxContainer/OBCharOpSelector")
+_obCharVal = NodePath("TabContainer/UI_CHARACTER/HBoxContainer/OBCharValSelector")
+_itemListCharConditions = NodePath("TabContainer/UI_CHARACTER/ItemListConditions")
+_btnCharAdd = NodePath("TabContainer/UI_CHARACTER/BAdd")
+_btnCharSearch = NodePath("TabContainer/UI_CHARACTER/BtnSearch")
+_iptCharTxtFilter = NodePath("TabContainer/UI_CHARACTER/IptTxtFilter")
+_gridCharList = NodePath("TabContainer/UI_CHARACTER/Control/GridContainerCharList")
+_charPager = NodePath("TabContainer/UI_CHARACTER/BasePager")
 
 [node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("2_ii0j4")]
 layout_mode = 1
@@ -167,6 +178,148 @@ offset_left = 3.0517578e-05
 metadata/_edit_use_anchors_ = true
 
 [node name="BtnSearch" type="Button" parent="TabContainer/UI_CARD" unique_id=1357079192]
+layout_mode = 0
+anchor_left = 0.35380834
+anchor_top = 0.8870588
+anchor_right = 0.46805897
+anchor_bottom = 0.96
+text = "UI_SEARCH"
+metadata/_edit_use_anchors_ = true
+
+[node name="UI_CHARACTER" type="Control" parent="TabContainer" unique_id=169329728]
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="ItemListConditions" type="ItemList" parent="TabContainer/UI_CHARACTER" unique_id=2150691685]
+layout_mode = 0
+anchor_left = 0.02948403
+anchor_top = 0.05882353
+anchor_right = 0.3243243
+anchor_bottom = 0.75529414
+metadata/_edit_use_anchors_ = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/UI_CHARACTER" unique_id=1605029749]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 337.0
+offset_right = 381.0
+offset_bottom = 369.0
+
+[node name="OBCharFieldSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=2175027382]
+layout_mode = 2
+size_flags_horizontal = 3
+metadata/_edit_use_anchors_ = true
+
+[node name="OBCharOpSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=2089973767]
+layout_mode = 2
+size_flags_horizontal = 3
+metadata/_edit_use_anchors_ = true
+
+[node name="OBCharValSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=1107163915]
+layout_mode = 2
+size_flags_horizontal = 3
+metadata/_edit_use_anchors_ = true
+
+[node name="IptTxtFilter" type="LineEdit" parent="TabContainer/UI_CHARACTER" unique_id=1766004567]
+layout_mode = 0
+anchor_left = 0.16707617
+anchor_top = 0.8870588
+anchor_right = 0.31941032
+anchor_bottom = 0.96
+placeholder_text = "UI_CODEX_CHAR_TXT_FILTER"
+metadata/_edit_use_anchors_ = true
+
+[node name="BAdd" type="Button" parent="TabContainer/UI_CHARACTER" unique_id=1759687586]
+layout_mode = 0
+anchor_left = 0.02948403
+anchor_top = 0.8870588
+anchor_right = 0.14742015
+anchor_bottom = 0.96
+text = "UI_OP_ADD"
+metadata/_edit_use_anchors_ = true
+
+[node name="Control" type="Control" parent="TabContainer/UI_CHARACTER" unique_id=1642701578]
+layout_mode = 1
+anchor_left = 0.35380834
+anchor_top = 0.05882353
+anchor_right = 0.9041769
+anchor_bottom = 0.75529414
+mouse_filter = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="ColorRect" type="ColorRect" parent="TabContainer/UI_CHARACTER/Control" unique_id=1200481428]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.5568628, 0.80784315, 0.9254902, 0.28627452)
+
+[node name="GridContainerCharList" type="GridContainer" parent="TabContainer/UI_CHARACTER/Control" unique_id=1292484504]
+custom_minimum_size = Vector2(688, 432)
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.039285693
+anchor_top = 0.062162142
+anchor_right = 0.96071434
+anchor_bottom = 0.93783784
+offset_left = -137.59999
+offset_top = -86.399994
+offset_right = 137.59998
+offset_bottom = 86.399994
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.6, 0.6)
+pivot_offset_ratio = Vector2(0.5, 0.5)
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 4
+metadata/_edit_use_anchors_ = true
+
+[node name="BaseCharacterItem" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2269321399 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem2" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2827231589 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem3" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2851331133 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem4" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2054858553 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem5" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=1286298374 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem6" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=693910255 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem7" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=966911259 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BaseCharacterItem8" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=1201054967 instance=ExtResource("5_charitem")]
+layout_mode = 2
+EnableHoverTip = true
+
+[node name="BasePager" parent="TabContainer/UI_CHARACTER" unique_id=525618808 instance=ExtResource("4_egqms")]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5331695
+anchor_top = 0.8117647
+anchor_right = 0.9459459
+anchor_bottom = 0.8870588
+offset_left = 3.0517578e-05
+metadata/_edit_use_anchors_ = true
+
+[node name="BtnSearch" type="Button" parent="TabContainer/UI_CHARACTER" unique_id=1357079193]
 layout_mode = 0
 anchor_left = 0.35380834
 anchor_top = 0.8870588
