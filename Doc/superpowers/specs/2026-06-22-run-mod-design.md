@@ -2,9 +2,11 @@
 
 ## 概述
 
-Run Mod 管理一次游戏流程（Run）中跨战斗、跨事件持续存在的所有数据和逻辑。采用怪物火车式循环模型：数轮事件/奖励 → 强力战斗 → 重复 2-3 环。
+Run Mod 管理一次游戏流程（Run）中跨战斗、跨事件持续存在的所有数据和逻辑。采用怪物火车式循环模型：数轮事件/奖励 → 强力战斗 → 重复 2-3 环（环数等可由故事脚本白名单覆盖，见总规格）。
 
 定位为 combat 模块的上层编排者，通过 MVC 模式组织，与项目现有的 `GlobalMod` 架构保持一致。
+
+> **权威冲突**：玩法边界以 [2026-05-11-kemo-card-design.md](./2026-05-11-kemo-card-design.md) 为准。下文若与总规格冲突（尤其奖励分发、CardCollection 语义、开局角色、潜能/被动、SharedHp 生命周期、修饰归属），以总规格为准并以下文「已对齐」段落为准。
 
 ---
 
@@ -36,10 +38,13 @@ Src/mod/run/
 
 ```
 RunMod (BaseMod)
-├── [共享] RunId, CurrentRing, MaxRing, Phase, RunSeed, IsMultiplayer, BattleHistory
-├── [共享] CharacterPool ── List<CharacterInstance> ── 全队共享角色池
+├── [共享] RunId, StoryId, CurrentRing, MaxRing, Phase, RunSeed, IsMultiplayer
+├── [共享] ExperiencedBattles / ExperiencedEvents ── 账本（去重用，见总规格 4.3）
+├── [共享] BattleHistory ── 战斗统计（与账本分离，失败也可记录，不参与去重）
+├── [共享] CharacterPool ── List<CharacterInstance> ── 全队共享角色池（定义唯一；含潜能解放）
 ├── [共享] CardCollection ── HashSet<string> ── 全队共享卡牌收集
 ├── [单人] SharedGold ── int ── 仅单人模式使用，多人模式下忽略
+├── [单人] SharedModifiers ── List<RunModifier> ── 单人共享 Run 修饰（联机用槽位 Modifiers）
 ├── PlayerControllers ── List<PlayerController> ── 房间内的人类玩家列表（单人含 1 个 local）
 │        ├── PlayerId  ── 唯一标识
 │        ├── DisplayName ── 显示名
@@ -49,7 +54,7 @@ RunMod (BaseMod)
 └── PlayerRunState[4] ── 按槽位索引（0-3），每槽位独立数据
          ├── ActiveCharacter ── 当前上阵角色（从共享池选取，null=未上阵）
          ├── Gold            ── 仅多人模式的该槽位金币（单人模式金币在 SharedGold）
-         ├── Modifiers       ── 该槽位的 Run 修饰器列表
+         ├── Modifiers       ── 仅多人：该槽位的 Run 修饰器列表
          └── EventFlags      ── 该槽位的事件标记
 
 ActiveParty 是计算属性：
@@ -58,7 +63,7 @@ ActiveParty 是计算属性：
 
 **金币存储规则**：单人模式（`IsMultiplayer == false`）→ `RunMod.SharedGold`，全队共享。多人模式（`IsMultiplayer == true`）→ 每槽位 `PlayerRunState.Gold`，即使只有 1 名真实玩家也按多人规则。
 
-**控制权与槽位数据的分离**：`SlotOwnership` 管理"谁在操作这个槽位"，`PlayerRunState` 管理"槽位的游戏数据"。一个人类玩家可以控制多个槽位，奖励按槽位发放。
+**控制权与槽位数据的分离**：`SlotOwnership` 管理"谁在操作这个槽位"，`PlayerRunState` 管理"槽位的游戏数据"。一个人类玩家可以控制多个槽位。奖励分发：联机绑槽；单人走细粒度共享层（见 §5，不以「每槽一份」为单人权威）。
 
 ### 架构关系
 
@@ -112,14 +117,14 @@ flowchart LR
 
 - `RunController.StartBattle()` 调用时内部创建 `_battleSnapshot = RunMod.ToDto()`（纯内存操作）
 - `RunController.EndBattle()` 检测到失败时执行 `RunMod.RestoreFrom(_battleSnapshot)` 回滚
-- 战斗中消耗的金币、获得的卡牌等全部撤销
-- 回滚后 Run 回到 Event 阶段，玩家可调整编队后重新战斗
+- 战斗中消耗的药水/金币、修饰 charges、临时获得等 **全部撤销**（总规格：失败 = 纯时间成本，完整快照回滚）
+- 回滚后 Run 回到 Event 阶段，玩家可调整编队后重新战斗；无失败资源税、可无限重试
 
 ### RunController 公开 API
 
 ```csharp
-// 生命周期
-RunDto CreateRun(HostRng rng, IReadOnlyList<CharacterDto> candidates, bool isMultiplayer);
+// 生命周期（storyId 必选：Run 开始前必须选定故事脚本，总规格 4.1）
+RunDto CreateRun(string storyId, HostRng rng, IReadOnlyList<CharacterDto> candidates, bool isMultiplayer);
 RunDto LoadRun(RunDto dto);
 RunDto AbandonRun();
 
@@ -177,6 +182,7 @@ public sealed record RunDto
 {
     // 标识
     public string RunId { get; init; }
+    public string StoryId { get; init; }               // Run 开始前必选的故事脚本 id（总规格 4.1）
     public int SchemaVersion { get; init; }
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
@@ -186,6 +192,7 @@ public sealed record RunDto
     public int MaxRing { get; init; }
     public ERunPhase Phase { get; init; }
     public int RunSeed { get; init; }
+    public string RngStreamState { get; init; }        // 宿主 RNG 流状态（可复现，总规格 5.3.1）
 
     // 多人
     public bool IsMultiplayer { get; init; }
@@ -196,12 +203,23 @@ public sealed record RunDto
     public List<CharacterPoolEntryDto> CharacterPool { get; init; }    // 全队共享角色池
     public List<string> CardCollection { get; init; }                  // 全队共享卡牌收集
     public int SharedGold { get; init; }                               // 单人模式全队共享金币
+    public List<RunModifierDto> SharedModifiers { get; init; }         // 单人共享 Run 修饰（总规格 4.7）
+
+    // 账本（去重用，总规格 4.3；仅不可逆提交点写入）
+    public List<string> ExperiencedBattles { get; init; }              // 已胜利入账的战斗定义 id
+    public List<string> ExperiencedEvents { get; init; }               // 已生效入账的事件定义 id
+
+    // 当前阶段未提交的选项（若存在；事件/奖励选项刷新后尚未生效时随档保存，总规格 5.3.1）
+    public PendingChoiceDto? PendingChoice { get; init; }
 
     // 每槽位玩家私有数据（length=4，全队共享数据不在此处）
     public List<PlayerRunStateDto> PlayerStates { get; init; }
 
-    // 共享历史
+    // 共享历史（纯统计，与账本分离；失败也可记录，不参与去重）
     public List<BattleRecordDto> BattleHistory { get; init; }
+
+    // 诊断（总规格 5.3.1：加载不一致须提示风险）
+    public Dictionary<string, string> DefinitionVersions { get; init; } // 各管理器内容版本/哈希摘要
 }
 ```
 
@@ -235,6 +253,7 @@ public sealed record CharacterPoolEntryDto
 {
     public string DefinitionId { get; init; }
     public string InstanceId { get; init; }
+    public int PotentialLiberation { get; init; } // 潜能解放 [0,100]；重复角色 +20 后 clamp
     public List<DeckSnapshotDto> Decks { get; init; }
     public int CurrentDeckIndex { get; init; }
 }
@@ -247,11 +266,14 @@ public sealed record DeckSnapshotDto
 
 ### RunModifierDto
 
+> **已对齐总规格 4.7**：修饰是开战技能引用 + charges，不再是 float 数值袋。
+
 ```csharp
 public sealed record RunModifierDto
 {
-    public string ModifierId { get; init; }
-    public float Value { get; init; }
+    public string ModifierId { get; init; }   // 稳定 id（内容/诊断）
+    public string SkillId { get; init; }      // 开战释放的技能引用
+    public int Charges { get; init; }         // <=0（-1 或 0）常驻；>=1 消耗型
     public string Source { get; init; }
 }
 ```
@@ -269,6 +291,16 @@ public sealed record BattleRecordDto
 }
 ```
 
+### PendingChoiceDto
+
+```csharp
+public sealed record PendingChoiceDto
+{
+    public string SourceId { get; init; }        // 产生选项的事件/奖励来源定义 id
+    public List<string> OptionIds { get; init; } // 已刷新但未生效的选项（不入账本，可再次出现）
+}
+```
+
 ### RunConstants 常量
 
 ```csharp
@@ -278,17 +310,21 @@ public static class RunConstants
     public const int SlotCount = 4;
     public const int MaxSlotsPerPlayer = 4;
     public const int MinSlotsPerPlayer = 1;
+    public const int DefaultSoloRewardCountK = 3; // 单人每次 Reward 细粒度次数；故事可覆盖
+    public const int PotentialPerDuplicate = 20;
+    public const int MaxPotentialLiberation = 100;
 }
 ```
 
 ### 关键设计决策
 
 - **控制权与槽位数据分离**：`SlotOwnership` 管理"谁操作这个槽位"，`PlayerRunState` 管理槽位游戏数据。一个人类玩家可控制多个槽位。
-- **CharacterPool 与 CardCollection 全队共享**：所有槽位共享同一角色池和卡牌收集。各槽位从中选择上阵角色和构建卡组。
-- **进入战斗的硬约束**：`ActiveParty` 全部 4 个槽位的 `ActiveCharacter` 必须非 null，且所有槽位都已分配控制权（`AllSlotsAssigned() == true`）。
-- **CardCollection vs Deck.CardIds**：CardCollection 是「全队获得的全部卡牌」，Deck.CardIds 是「编入当前卡组的卡牌」。CardCollection 决定哪些额外卡牌可用，Deck.CardIds 是子集。两者都需要存档以支持回滚。
+- **CharacterPool 与 CardCollection 全队共享**：所有槽位共享同一角色池和卡牌收集。各槽位从中选择上阵角色和构建卡组。开局无预置池：由每槽角色 3 选 1（**硬去重**）与中途奖励填充（总规格 4.5）。
+- **角色定义唯一 + 潜能**：池内同一定义最多 1 实例；重复获得 → `PotentialLiberation += 20`（clamp 100）；满 100 移出随机角色投放池；满后再重复静默吞掉。被动为潜能六档解锁的自动技能，首发仅 BattleStart 触发。
+- **进入战斗的硬约束**：`ActiveParty` 全部 4 个槽位的 `ActiveCharacter` 必须非 null，且所有槽位都已分配控制权（`AllSlotsAssigned() == true`）；每槽卡组须通过总规格 4.6 校验（1–10 张、专属/`ERole`、升级链最高阶、每 id≤1）。
+- **CardCollection vs Deck.CardIds**：`CardCollection` 是 **解锁/配方**（可含升级链多阶 id），不是稀缺实体库存；`Deck.CardIds` 是「编入当前卡组」且须为收集上 **可编入最高阶** 的子集。链升阶时各卡组旧 id **自动替换**为新最高阶。两者都需要存档以支持回滚。换人仅环间/事件；战斗中不可换。
 - **ActiveParty 不单独存储**：由各 PlayerRunState 的 ActiveCharacter 拼合计算得出。
-- **存档不存完整 CharacterInstance**：只存 DefinitionId + InstanceId + Decks，重建时通过定义ID加载角色自带卡牌，再恢复卡组。
+- **存档不存完整 CharacterInstance**：只存 DefinitionId + InstanceId + PotentialLiberation + Decks，重建时通过定义ID加载角色自带卡牌，再恢复卡组与潜能。
 - **SchemaVersion 预留迁移能力**：首版为 1。
 
 ---
@@ -341,7 +377,15 @@ public sealed class RunRewardDistributor
     public CharacterSelectionResult SelectInitialCharacters(
         IReadOnlyList<CharacterDto> candidatePool, int pickCount, HostRng rng);
 
-    // 为所有有数据的槽位各生成一份奖励（数量一致）
+    // 单人路径：一次 Reward 生成 K 次细粒度奖励（不绑槽，进共享层；K 默认 3，可被故事覆盖）
+    public SoloRewardSet GenerateSoloRewards(
+        RunMod run,
+        GameDefinitionRegistry definitions,
+        int ringIndex,
+        int rewardCount,   // = K
+        HostRng rng);
+
+    // 联机路径：为所有有数据的槽位各生成一份奖励（绑槽分发，数量一致）
     public PerPlayerRewardSet GenerateRewards(
         IReadOnlyList<PlayerRunState?> playerStates,
         GameDefinitionRegistry definitions,
@@ -358,35 +402,43 @@ public sealed class RunRewardDistributor
 
 | 奖励类型 | 归属 | 说明 |
 |---|---|---|
-| Character | 全队共享 CharacterPool | 获得新角色加入共享池，所有槽位都可选用 |
-| Card | 全队共享 CardCollection | 获得卡牌加入共享收集 |
-| Gold | 单人：SharedGold / 多人：槽位独立 | 单人全队共享，多人各自独立管理 |
-| Modifier | 槽位独立 | 每个槽位独立管理 Run 修饰器 |
-| Heal | 战斗内生效 | 回复效果在战斗创建时注入 |
+| Character | 全队共享 CharacterPool | 新人入池（潜能 0）+ 初始卡写入；重复 → 潜能 +20；满 100 移出随机池；满后再重复静默（总规格 4.5） |
+| Card | 全队共享 CardCollection | 投放链 **最低 id**；重复则链升级并 **自动替换卡组**；满级移出投放池（总规格 4.6） |
+| Gold | 单人：SharedGold / 多人：槽位独立 | 首发仍投放；花费面见商店·道具规格；落地前默认不可耗尽 |
+| Modifier | 单人：SharedModifiers / 联机：槽位 Modifiers | 技能引用 + charges；单人共享；联机绑槽（总规格 4.7） |
+| Heal | **已废除** | 非战斗无 SharedHp；开战恒满血。战前增益改用修饰或开战技能 |
+| Potion/Item | 外移商店·道具规格 | 总规格仅占位；若已实装则失败回滚含其状态 |
 
-### 公平性保证
+### 分发策略（单人 / 联机分叉）
 
-单人和多人模式统一：遍历 `PlayerStates` 中有数据的槽位，每个槽位独立生成相同数量的奖励选项。各槽位使用独立的 RNG 子种子（`rng.Fork("reward.p{slot}")`），保证随机独立。
+框架须支持两种策略切换（总规格 4.7）：
 
-- 单人：遍历 4 个槽位，每个 1 份奖励 = 4 份
-- 3 人联机：遍历 3 个有数据的槽位，每个 1 份 = 3 份
+| 模式 | 策略 |
+|---|---|
+| 单人 | **不绑槽**：每次 Reward 默认 **K=3** 次细粒度奖励进入共享层（`CardCollection` / `SharedGold` / `SharedModifiers` 等）。K 可由故事白名单覆盖，**不以「每槽一份」为权威**。 |
+| 联机 | **绑槽**：遍历有数据槽位各生成奖励；RNG 子种子 `rng.Fork("reward.p{slot}")`。 |
+
+**Init 特例（单人/联机开局）**：每个槽位一次 **角色 3 选 1**（候选项 **硬去重** 已有/已选；池不足降为 2/1 选 1；凑不出 4 人 Fatal）；落选作废；选中进池并上阵。此为故事/Init 流程，不套用「单人常规不绑槽」否定开局按槽选人。
+
+> 旧表述「单人遍历 4 槽各 1 份 = 4 份」已废弃；默认权威为 K=3。  
+> **空 Reward**：单次细粒度抽取可发空；不强制用金币等类型凑满 K。
 
 ### RunModifier 在战斗中的生效
 
-`RunController.StartBattle()` 收集所有有数据槽位的 Modifiers，汇总为 `Dictionary<string, float>`，传入 `CombatSimulationFactory.TryCreate()`：
+> **已对齐总规格 4.7 / 2.2**：废除「Dictionary 数值袋注入 ASC」。修饰在 BattleStart 经技能管线释放。
 
 ```
 RunController.StartBattle()
-├── 遍历 PlayerStates，汇总各槽位的 Modifiers
-├── CombatSimulationFactory.TryCreate(
-│       party: ActiveParty,
-│       runSeed: RunSeed,
-│       runModifierValues: { modifierId → sum },
-│       ...)
-└── CombatSimulation 创建时将 modifier 注入到玩家 ASC
+├── 创建 CombatSimulation（party / runSeed / …；无 runModifierValues 数值袋）
+├── BattleStart 自动技能（顺序写死）：
+│       1) 被动：槽 0→3，同角色 requiredPotential 低→高
+│       2) 修饰：单人 SharedModifiers（或联机各槽列表按宿主约定展开）按插入序
+│          各尝试释放 SkillId 一次
+└── 进入首个玩家阶段
 ```
 
-修饰器在战斗创建时「冻结」为数值快照，战斗期间 Run 数据变化不影响已创建的 CombatSimulation。
+- **charges 扣减**：仅在 **战斗胜利不可逆结算** 时对 `charges >= 1` 的条目 `-1`，结果 `< 1` 则移除；`charges <= 0` 常驻不扣。
+- **失败回滚**：战前快照恢复修饰列表（含 charges），与药水/金币一致。
 
 ### RunRewardDistributor 是纯工具类
 
@@ -429,25 +481,30 @@ public sealed class RunController : BaseController<RunMod>
 ### 关键方法内部逻辑
 
 **CreateRun：**
-1. `RunId = Guid.NewGuid()`
-2. `RunSeed = rng.NextInt()`
+1. `RunId = Guid.NewGuid()`；固化 `StoryId`（未提供合法故事脚本 id → 拒绝创建）
+2. `RunSeed = rng.NextInt()`；记录定义版本摘要 `DefinitionVersions`
 3. 单人：创建 1 个 `PlayerController`（"local", IsOwner=true），`SlotOwnership` 4 槽位全指向 "local"
 4. 多人：房主分配各槽位控制权，`SlotOwnership` 必须覆盖全部 4 个槽位
-5. `RunRewardDistributor.SelectInitialCharacters()` 为共享角色池随机角色
-6. 每个槽位的 `ActiveCharacterIndex` 由玩家从共享池中选择
+5. 开局无预置 CharacterPool；按故事/Init 为 **每个槽位** 生成角色 **3 选 1**（硬去重；池不足降为 2/1；凑不出 4 人 Fatal；落选作废，不进池）
+6. 选中角色入池（潜能 0）并设为该槽 `ActiveCharacter`；初始卡写入 `CardCollection` 并自动编入该角色卡组
 7. `Phase = Event`，`CurrentRing = 1`
 
 **StartBattle：**
 1. `AllSlotsAssigned()` 检查 — 存在未分配槽位则拒绝
-2. `ValidateParty()` — 全部 4 个槽位的 `ActiveCharacter` 必须非 null
+2. `ValidateParty()` — 全部 4 个槽位的 `ActiveCharacter` 必须非 null；卡组通过 4.6 校验
 3. `_battleSnapshot = Model.ToDto()` — 保存快照
-4. 创建 `CombatSimulation`
+4. 创建 `CombatSimulation`；BattleStart：先被动后修饰（总规格 2.2 / 4.7）
 5. `Phase = Battle`
 
 **EndBattle：**
 1. `_simulation.Dispose()`
-2. 胜利：收集战利品 → 共享 `CardCollection` 更新、各槽位独立数据（Gold/Modifiers/EventFlags）更新，`Phase = RingEnd`
-3. 失败：`Model.RestoreFrom(_battleSnapshot)`，`Phase = Event`
+2. 胜利：收集战利品 → 共享 `CardCollection` / 潜能 / 单人 SharedGold·SharedModifiers（charges 扣减；或联机槽数据）更新；**该战斗定义 id 写入 `ExperiencedBattles`**（不可逆入账，总规格 4.3），`Phase = RingEnd`
+3. 失败：`Model.RestoreFrom(_battleSnapshot)`（完整回滚，含修饰 charges），**不写入账本**，`Phase = Event`
+
+**账本写入（总规格 4.3）：**
+- 战斗：仅胜利进入不可逆结算时写 `ExperiencedBattles`；失败回滚不入账，同战可再遇。
+- 事件：选项真正生效（进入 Reward 且宿主不可逆提交，即 `ApplyEventRewards` 提交点）时写 `ExperiencedEvents`；仅刷新为选项未执行不入账。
+- 卡牌 / 药水允许重复刷新，不进账本（升级链另按总规格 4.6）。
 
 **AbandonRun：**
 1. 如果有活跃的 `_simulation`，先 `Dispose()` 并丢弃战斗结果（不回滚）
@@ -463,7 +520,7 @@ public sealed class RunController : BaseController<RunMod>
 - 最多 4 人联机，固定 4 个游戏槽位
 - 房主有权分配每个槽位的控制权给任意玩家
 - 一人可控制多个槽位（如 2 人对战时每人控制 2 槽位）
-- 奖励按槽位发放（控制多槽位 = 获得多份奖励）
+- 联机奖励按槽位发放（控制多槽位 = 获得多份奖励）；单人见 §5 不绑槽策略
 
 ### 阶段约束
 
@@ -506,7 +563,7 @@ public sealed class RunController : BaseController<RunMod>
 
 | 对接点 | 说明 |
 |---|---|
-| `CombatSimulationFactory.TryCreate()` | 传入 ActiveParty + RunSeed + RunModifierValues 创建战斗。需要新增 `runModifierValues` 参数（`Dictionary<string, float>`），在 CombatSimulation 创建时注入玩家 ASC |
+| `CombatSimulationFactory.TryCreate()` | 传入 ActiveParty + RunSeed 等创建战斗；**不再**传入 float 修饰数值袋。BattleStart 被动/修饰由 RunController 按总规格顺序经技能管线触发 |
 | `CharacterInstance` | 角色池成员类型，已完整支持定义绑定和卡组管理 |
 | `GlobalSaveService` | RunSaveService 复用其原子写模式 |
 | `BaseMod / BaseController` | 继承项目 MVC 基础框架 |
