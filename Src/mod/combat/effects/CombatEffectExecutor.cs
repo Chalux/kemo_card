@@ -105,6 +105,13 @@ public sealed class CombatEffectExecutor
 
 		foreach (var target in targets)
 		{
+			// 规格 §1.3：Team 直伤对账本只结算一次，且不经分槽护盾/减伤钩子。
+			if (SharedHpSettlement.IsPlayerTeamLedger(target))
+			{
+				sim.PlayerTeam.ApplySharedDamage(amount);
+				continue;
+			}
+
 			var packet = new DamagePacket
 			{
 				Source = source,
@@ -117,6 +124,13 @@ public sealed class CombatEffectExecutor
 			if (packet.Amount <= 0)
 				continue;
 
+			// 规格 §1.2：玩家槽位没有 Health 当前值，分槽结算的结果直接扣共享账本。
+			if (SharedHpSettlement.IsPlayerSlot(target))
+			{
+				sim.PlayerTeam.ApplySharedDamage(packet.Amount);
+				continue;
+			}
+
 			var targetAsc = CombatGasBridge.ResolveTargetAsc(sim, target);
 			if (targetAsc is null)
 				continue;
@@ -127,6 +141,10 @@ public sealed class CombatEffectExecutor
 		}
 	}
 
+	/// <summary>
+	/// 规格 §1.3：治疗只回队伍共享账本。点名玩家槽位的治疗是软失败，
+	/// 在应用任何 GameplayEffect 之前就被剔除，避免留下半截副作用。
+	/// </summary>
 	private void ApplyHeal(
 		CombatSimulation sim,
 		CombatTargetRef source,
@@ -134,6 +152,10 @@ public sealed class CombatEffectExecutor
 		IReadOnlyDictionary<string, object> parameters)
 	{
 		var amount = ReadFloat(parameters, "amount", 0f);
+		var healableTargets = RejectSlotHealTargets(sim, targets);
+		if (healableTargets.Count == 0)
+			return;
+
 		if (TryGetGameplayEffectId(parameters, "healGameplayEffectId", out var gameplayEffectId))
 		{
 			var setByCaller = new Dictionary<string, object>(StringComparer.Ordinal)
@@ -142,12 +164,18 @@ public sealed class CombatEffectExecutor
 			};
 			foreach (var (key, value) in parameters)
 				setByCaller[key] = value;
-			if (_gameplayEffectApplicator.ApplyToTargets(sim, source, targets, gameplayEffectId, setByCaller))
+			if (_gameplayEffectApplicator.ApplyToTargets(sim, source, healableTargets, gameplayEffectId, setByCaller))
 				return;
 		}
 
-		foreach (var target in targets)
+		foreach (var target in healableTargets)
 		{
+			if (SharedHpSettlement.IsPlayerTeamLedger(target))
+			{
+				sim.PlayerTeam.HealShared(amount);
+				continue;
+			}
+
 			var targetAsc = CombatGasBridge.ResolveTargetAsc(sim, target);
 			if (targetAsc is null)
 				continue;
@@ -157,6 +185,25 @@ public sealed class CombatEffectExecutor
 			var updatedHealth = MathF.Min(maxHealth, currentHealth + amount);
 			targetAsc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, updatedHealth));
 		}
+	}
+
+	private static List<CombatTargetRef> RejectSlotHealTargets(
+		CombatSimulation sim,
+		IReadOnlyList<CombatTargetRef> targets)
+	{
+		var healable = new List<CombatTargetRef>(targets.Count);
+		foreach (var target in targets)
+		{
+			if (SharedHpSettlement.IsPlayerSlot(target))
+			{
+				sim.PlayerTeam.CountRejectedSlotHeal();
+				continue;
+			}
+
+			healable.Add(target);
+		}
+
+		return healable;
 	}
 
 	private static bool TryGetGameplayEffectId(

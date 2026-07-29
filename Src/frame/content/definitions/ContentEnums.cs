@@ -47,6 +47,10 @@ public enum ETargetScope
     Single,
     All,
     RandomN,
+    /// <summary>
+    /// 对该侧队伍账本一次结算（战斗规格 §1.3）；与 <see cref="All"/> 的分槽逐次结算相区分。
+    /// </summary>
+    Team,
 }
 
 public enum ERetargetPolicy
@@ -105,6 +109,8 @@ public enum ESkillActionKind
     ChainActions,
     ApplyGameplayEffect,
     RemoveGameplayEffect,
+    /// <summary>投放抽牌数量修正（规格 §4.2 / §4.3），不即时抽牌。</summary>
+    ModifyDrawCount,
 }
 
 [Flags]

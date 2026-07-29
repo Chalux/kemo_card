@@ -3,5 +3,9 @@ MOD_BASE_GAME_DISPLAY_NAME,基础内容,Base Content
 card.strike.name,打击,Strike
 card.strike.artist,示例画师,Sample Artist
 card.strike_plus.name,打击+,Strike+
+skill.kemo_dash.name,冲刺,Dash
+skill.kemo_dash.desc,对单个敌人造成 5 点伤害。,Deal 5 damage to a single enemy.
+skill.kemo_dash_charged.name,蓄力冲刺,Charged Dash
+skill.kemo_dash_charged.desc,对单个敌人造成 12 点伤害。,Deal 12 damage to a single enemy.
 skill.strike_hit.name,打击,Strike
 skill.strike_hit.desc,造成 6 点伤害。获得 [url=kw:exhaust]消耗[/url]。,Deal 6 damage. Gain [url=kw:exhaust]Exhaust[/url].

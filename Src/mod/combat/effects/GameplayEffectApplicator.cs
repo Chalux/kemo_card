@@ -4,6 +4,7 @@ using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Gas;
 using KemoCard.Mod.Combat.Runtime;
+using KemoCard.Mod.Combat.StateMachine;
 
 namespace KemoCard.Mod.Combat.Effects;
 
@@ -39,9 +40,22 @@ public sealed class GameplayEffectApplicator
 			if (targetAsc is null)
 				continue;
 
-			var result = targetAsc.ApplyGameplayEffect(
-				new GameplayEffectSpec(def, sourceAsc, targetAsc, setByCaller));
-			applied |= result.Success;
+			// 玩家侧目标的 Health 变化在此被转到共享账本（规格 §1.2 的「应用后转移」）。
+			SharedHpSettlement.RunTransferred(simulation, target, () =>
+			{
+				var result = targetAsc.ApplyGameplayEffect(
+					new GameplayEffectSpec(def, sourceAsc, targetAsc, setByCaller));
+				applied |= result.Success;
+			});
+
+			// 规格 §2.5：效果挂上封印后立刻清标记并视作已行动。
+			if (target.Side == ECombatSide.Player &&
+				target.Index >= 0 &&
+				target.Index < simulation.PlayerTeam.Characters.Count &&
+				simulation.PlayerTeam.Characters[target.Index].IsSealed)
+			{
+				CombatStateMachine.EnforceSeal(simulation, target.Index);
+			}
 		}
 
 		return applied;

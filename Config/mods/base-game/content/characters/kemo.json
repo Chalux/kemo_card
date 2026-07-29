@@ -5,6 +5,10 @@
   "role": "Warrior",
   "race": ["Human", "Canine"],
   "skillRefs": [{ "skillId": "kemo_dash" }],
+  "activeSkillChain": [
+    { "skillId": "kemo_dash", "cooldown": 3 },
+    { "skillId": "kemo_dash_charged", "cooldown": 4 }
+  ],
   "buffRefs": [{ "buffId": "kemo_talent" }],
   "cards": ["strike", "strike_plus"],
   "artPath": "chars/kemo.png",

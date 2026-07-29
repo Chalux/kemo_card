@@ -1,6 +1,7 @@
 using KemoCard.Mod.Combat.Commands;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Combat;
+using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.StateMachine;
@@ -23,8 +24,7 @@ public sealed class CombatStateMachine
 		switch (Phase)
 		{
 			case ECombatPhase.BattleStart:
-				TransitionTo(ECombatPhase.Player);
-				simulation.DomainManager.FireTurnStartHooks();
+				RunBattleStart(simulation);
 				break;
 			case ECombatPhase.CardExecution:
 				ExecuteCardExecutionPhase(simulation);
@@ -33,6 +33,67 @@ public sealed class CombatStateMachine
 				ExecuteEnemyPhase(simulation);
 				break;
 		}
+	}
+
+	/// <summary>
+	/// 规格 §6.1 BattleStart 权威顺序：注入技能（禁读写 SharedHp）→ 冻结补满 SharedHp
+	/// → 每人开局抽满手牌 → 进入首个玩家阶段管线。
+	/// </summary>
+	internal void RunBattleStart(CombatSimulation simulation)
+	{
+		ArgumentNullException.ThrowIfNull(simulation);
+
+		var team = simulation.PlayerTeam;
+		team.SharedHpLocked = true;
+		try
+		{
+			foreach (var entry in simulation.BattleStartSkills)
+				ExecuteBattleStartSkill(simulation, entry);
+		}
+		finally
+		{
+			team.SharedHpLocked = false;
+		}
+
+		team.FreezeAndFillSharedHp();
+
+		foreach (var character in team.Characters)
+			character.DrawWithReshuffle(CombatConstants.HandSlotCount, simulation.DrawRng);
+
+		TransitionTo(ECombatPhase.Player);
+		simulation.DomainManager.FireTurnStartHooks();
+		PlayerPhasePipeline.Run(simulation, isFirstPlayerPhase: true);
+	}
+
+	private static void ExecuteBattleStartSkill(CombatSimulation simulation, BattleStartSkillEntry entry)
+	{
+		// 非法技能 id：无操作（规格 §5.5 软失败）
+		if (!simulation.Definitions.Store.TryGetSkill(entry.SkillId, out var skill))
+			return;
+
+		var source = entry.SourceCharacterIndex >= 0
+			? new CombatTargetRef(ECombatSide.Player, entry.SourceCharacterIndex)
+			: CombatTargetRef.PlayerTeam;
+		ExecuteSkillPayload(simulation, skill, source, ResolveBattleStartTargets(simulation, skill, source));
+	}
+
+	/// <summary>
+	/// BattleStart 注入技能的目标解析：缺省为 self；玩家侧 <see cref="ETargetScope.All"/> 展开为全部槽位，
+	/// <see cref="ETargetScope.Team"/> 解析为队伍账本。开战阶段没有敌人行动上下文，其余组合一律退回 self。
+	/// </summary>
+	private static IReadOnlyList<CombatTargetRef> ResolveBattleStartTargets(
+		CombatSimulation simulation,
+		SkillDto skill,
+		CombatTargetRef source)
+	{
+		if (skill.TargetOverride is { Scope: ETargetScope.Team })
+			return [CombatTargetRef.PlayerTeam];
+		if (skill.TargetOverride is not { Scope: ETargetScope.All })
+			return [source];
+
+		return [.. Enumerable
+			.Range(0, simulation.PlayerTeam.Characters.Count)
+			.Select(index => new CombatTargetRef(ECombatSide.Player, index))];
 	}
 
 	public CombatApplyResult TryApply(CombatSimulation simulation, ICombatCommand command)
@@ -49,58 +110,218 @@ public sealed class CombatStateMachine
 
 	private static CombatApplyResult TryApplyPlayerPhase(CombatSimulation simulation, ICombatCommand command)
 	{
-		return command switch
+		var result = command switch
 		{
 			PlayCardCommand playCard => ApplyPlayCard(simulation, playCard),
-			CastInstantSkillCommand castSkill => ApplyCastInstantSkill(simulation, castSkill),
+			CastActiveSkillCommand castSkill => ApplyCastActiveSkill(simulation, castSkill),
 			ConfirmCharacterCommand confirm => ApplyConfirmCharacter(simulation, confirm),
+			UnconfirmCharacterCommand unconfirm => ApplyUnconfirmCharacter(simulation, unconfirm),
 			CancelQueuedCardCommand cancel => ApplyCancelQueuedCard(simulation, cancel),
 			_ => new CombatApplyResult(false, "玩家阶段尚未实现该指令。"),
 		};
+
+		// 规格 §3.3：费用变化不在阶段开始统一扫，而是玩家阶段内每次成功操作后即时对账。
+		if (result.Success)
+		{
+			QueuedCostReconciler.Reconcile(simulation);
+			EnforceSealsOnAllCharacters(simulation);
+		}
+
+		return result;
+	}
+
+	/// <summary>
+	/// 规格 §2.5：若角色处于封印，清空其全部手牌标记并退还各 <c>paid</c>，再视作已行动。
+	/// 未封印时无操作。资源（能量 / <c>S</c> / 牌）一律不回滚。
+	/// </summary>
+	public static void EnforceSeal(CombatSimulation simulation, int characterIndex)
+	{
+		ArgumentNullException.ThrowIfNull(simulation);
+		if (!TryGetCharacter(simulation, characterIndex, out var character, out _))
+			return;
+		if (!character.IsSealed)
+			return;
+
+		var markedEntries = simulation.CardQueue
+			.PeekAllOrdered()
+			.Where(entry => entry.CharacterIndex == characterIndex)
+			.ToList();
+		foreach (var entry in markedEntries)
+			CancelMarkAndRefund(simulation, entry);
+
+		character.SetHasActed(true);
+	}
+
+	private static void EnforceSealsOnAllCharacters(CombatSimulation simulation)
+	{
+		for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
+			EnforceSeal(simulation, i);
 	}
 
 	private static CombatApplyResult ApplyPlayCard(CombatSimulation simulation, PlayCardCommand command)
 	{
 		if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
 			return new CombatApplyResult(false, error);
+		if (character.IsSealed)
+			return new CombatApplyResult(false, "角色处于封印，无法标记卡牌。");
 		if (character.HasActed)
-			return new CombatApplyResult(false, "角色已行动，无法出牌。");
+			return new CombatApplyResult(false, "角色已确认，须先取消确认才能标记卡牌。");
 		if (command.HandSlotIndex < 0 || command.HandSlotIndex >= character.HandSlots.Count)
 			return new CombatApplyResult(false, "手牌槽位无效。");
 
 		var slot = character.HandSlots[command.HandSlotIndex];
 		if (slot.IsEmpty || slot.CardId is null || slot.RuntimeInstanceId is null)
 			return new CombatApplyResult(false, "指定槽位没有卡牌。");
+		if (slot.IsMarked)
+			return new CombatApplyResult(false, "该卡牌已标记入队。");
 		if (!simulation.Definitions.Store.TryGetCard(slot.CardId, out var card))
 			return new CombatApplyResult(false, "卡牌定义不存在。");
-		if (card.CostType == ECostType.Energy && !character.TryConsumeEnergy(card.Cost))
-			return new CombatApplyResult(false, "能量不足。");
+		if (card.CostType is not (ECostType.None or ECostType.Energy))
+			return new CombatApplyResult(false, "该费用类型尚未实装，无法标记入队。");
 
-		var entry = new QueuedCardEntry(
+		var paid = CardCostCalculator.Compute(simulation, command.CharacterIndex, card);
+		if (!character.TryConsumeAvailableEnergy(paid))
+			return new CombatApplyResult(false, "可用能量不足。");
+
+		var sequence = simulation.AllocateQueueSequence();
+		simulation.CardQueue.Enqueue(new QueuedCardEntry(
 			command.CharacterIndex,
 			slot.CardId,
 			slot.RuntimeInstanceId,
 			card.Priority,
 			command.Targets,
-			simulation.AllocateQueueSequence());
-		simulation.CardQueue.Enqueue(entry);
-		slot.ClearCard();
+			sequence,
+			paid));
+		slot.Mark(sequence);
 		return new CombatApplyResult(true);
 	}
 
-	private static CombatApplyResult ApplyCastInstantSkill(CombatSimulation simulation, CastInstantSkillCommand command)
+	#region 主动技蓄力链（规格 §5）
+
+	/// <summary>
+	/// 规格 §5.3 / §5.4：按当前 <c>S</c> 解析出最高可用档 → 按该档目标规格校验 targets
+	/// → 扣累计阈值 <c>T_k</c> → 执行技能载荷 → 处理目标丢失。不扣可用能量、不占已行动。
+	/// </summary>
+	private static CombatApplyResult ApplyCastActiveSkill(CombatSimulation simulation, CastActiveSkillCommand command)
 	{
-		if (!TryGetCharacter(simulation, command.CharacterIndex, out _, out var error))
+		if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
 			return new CombatApplyResult(false, error);
-		if (!simulation.Definitions.Store.TryGetSkill(command.SkillId, out var skill))
-			return new CombatApplyResult(false, "技能定义不存在。");
+		if (character.IsSealed)
+			return new CombatApplyResult(false, "角色处于封印，无法释放主动技。");
+		if (character.ActiveSkillChain.Count == 0)
+			return new CombatApplyResult(false, "该角色没有配置主动技。");
+
+		var tierIndex = character.ResolveCastableTier();
+		if (tierIndex < 0)
+			return new CombatApplyResult(false, "技能计数不足，无法释放主动技。");
+
+		var skillId = character.ActiveSkillChain[tierIndex].SkillId;
+		if (!simulation.Definitions.Store.TryGetSkill(skillId, out var skill))
+			return new CombatApplyResult(false, "主动技档位的技能定义不存在。");
+
+		var resolvedTargets = ResolveActiveSkillTargets(
+			simulation,
+			skill,
+			command.CharacterIndex,
+			command.Targets,
+			out var targetError);
+		if (resolvedTargets is null)
+			return new CombatApplyResult(false, targetError);
+
+		// 先扣阈值再跑载荷：载荷里可显式 +S 做连发（规格 §5.3）。
+		character.PaySkillCounter(character.GetTierThreshold(tierIndex));
 
 		var aliveEnemiesBefore = SnapshotAliveEnemyIndices(simulation);
 		var source = new CombatTargetRef(ECombatSide.Player, command.CharacterIndex);
-		ExecuteSkillPayload(simulation, skill, source, command.Targets);
-		ApplyInstantSkillTargetLossRollback(simulation, aliveEnemiesBefore);
+		var previousChannel = simulation.CurrentDiscardChannel;
+		simulation.SetDiscardChannel(EDiscardChannel.ActiveSkill);
+		try
+		{
+			ExecuteSkillPayload(simulation, skill, source, resolvedTargets);
+		}
+		finally
+		{
+			simulation.SetDiscardChannel(previousChannel);
+		}
+
+		HandleTargetLoss(simulation, aliveEnemiesBefore);
 		return new CombatApplyResult(true);
 	}
+
+	/// <summary>
+	/// 规格 §5.4 决议：<c>targets</c> 按「将释放档位」的技能目标规格校验，各档可配不同规格。
+	/// <see cref="SkillDto.TargetOverride"/> 缺省时视作 Self 单体（只接受空 targets 或指向施法者自己）。
+	/// </summary>
+	/// <returns>校验通过时返回结算用目标集合；失败返回 <c>null</c> 并给出 <paramref name="error"/>。</returns>
+	private static IReadOnlyList<CombatTargetRef>? ResolveActiveSkillTargets(
+		CombatSimulation simulation,
+		SkillDto skill,
+		int characterIndex,
+		IReadOnlyList<CombatTargetRef> targets,
+		out string error)
+	{
+		error = string.Empty;
+		var self = new CombatTargetRef(ECombatSide.Player, characterIndex);
+		var spec = skill.TargetOverride;
+		if (spec is null || spec.Scope is ETargetScope.Self)
+		{
+			if (targets.Count == 0 || (targets.Count == 1 && targets[0] == self))
+				return [self];
+
+			error = "该档主动技只能指向自己。";
+			return null;
+		}
+
+		if (spec.Scope is ETargetScope.Team)
+		{
+			if (spec.Side is ETargetSide.Enemy)
+			{
+				error = "敌方队伍账本尚未实装，该档主动技不能使用 Team 目标。";
+				return null;
+			}
+
+			if (targets.Count == 0 || (targets.Count == 1 && targets[0] == CombatTargetRef.PlayerTeam))
+				return [CombatTargetRef.PlayerTeam];
+
+			error = "该档主动技结算到己方队伍账本，只接受队伍目标。";
+			return null;
+		}
+
+		var legal = CollectLegalTargets(simulation, spec.Side, characterIndex);
+		if (legal.Count == 0)
+		{
+			error = "没有合法目标。";
+			return null;
+		}
+
+		if (spec.Scope is ETargetScope.All)
+		{
+			if (targets.Count == 0)
+				return legal;
+			if (targets.Count == legal.Count && targets.All(legal.Contains))
+				return targets;
+
+			error = "该档主动技作用于全体，目标集合与合法目标不一致。";
+			return null;
+		}
+
+		var maxTargets = spec.Scope is ETargetScope.RandomN ? Math.Max(1, spec.TargetCount) : 1;
+		if (targets.Count == 0 || targets.Count > maxTargets || targets.Distinct().Count() != targets.Count)
+		{
+			error = $"该档主动技需要 1 到 {maxTargets} 个互不重复的目标。";
+			return null;
+		}
+
+		if (!targets.All(legal.Contains))
+		{
+			error = "目标不在该档主动技的合法目标范围内。";
+			return null;
+		}
+
+		return targets;
+	}
+
+	#endregion
 
 	private static HashSet<int> SnapshotAliveEnemyIndices(CombatSimulation simulation)
 	{
@@ -114,10 +335,17 @@ public sealed class CombatStateMachine
 		return alive;
 	}
 
-	private static void ApplyInstantSkillTargetLossRollback(
+	/// <summary>
+	/// 规格 §2.3：玩家阶段出现单位丢失后，对目标集合包含丢失单位的**已标记牌整张取消标记**并退还
+	/// <c>paid</c>，再把持有者回退未确认。同角色其它仍合法的标记保留。
+	/// </summary>
+	internal static void HandleTargetLoss(
 		CombatSimulation simulation,
 		HashSet<int> aliveEnemiesBefore)
 	{
+		ArgumentNullException.ThrowIfNull(simulation);
+		ArgumentNullException.ThrowIfNull(aliveEnemiesBefore);
+
 		var lostEnemies = new HashSet<int>();
 		foreach (var index in aliveEnemiesBefore)
 		{
@@ -128,18 +356,19 @@ public sealed class CombatStateMachine
 		if (lostEnemies.Count == 0)
 			return;
 
-		var holdersToUnact = new HashSet<int>();
-		foreach (var entry in simulation.CardQueue.PeekAllOrdered())
-		{
-			if (entry.Targets.Any(target =>
-					target.Side == ECombatSide.Enemy && lostEnemies.Contains(target.Index)))
-			{
-				holdersToUnact.Add(entry.CharacterIndex);
-			}
-		}
+		var affectedEntries = simulation.CardQueue
+			.PeekAllOrdered()
+			.Where(entry => entry.Targets.Any(target =>
+				target.Side == ECombatSide.Enemy && lostEnemies.Contains(target.Index)))
+			.ToList();
 
-		foreach (var holderIndex in holdersToUnact)
-			simulation.PlayerTeam.Characters[holderIndex].SetHasActed(false);
+		var characters = simulation.PlayerTeam.Characters;
+		foreach (var entry in affectedEntries)
+		{
+			CancelMarkAndRefund(simulation, entry);
+			if (entry.CharacterIndex >= 0 && entry.CharacterIndex < characters.Count)
+				characters[entry.CharacterIndex].SetHasActed(false);
+		}
 	}
 
 	private static CombatApplyResult ApplyConfirmCharacter(CombatSimulation simulation, ConfirmCharacterCommand command)
@@ -150,8 +379,22 @@ public sealed class CombatStateMachine
 			return new CombatApplyResult(false, "角色索引无效。");
 
 		characters[index].SetHasActed(true);
-		if (characters.Count == 4 && characters.All(c => c.HasActed))
+		// 规格 §2.1 / §2.5：封印视作已行动。
+		if (characters.Count == 4 && characters.All(c => c.HasActed || c.IsSealed))
 			simulation.TransitionTo(ECombatPhase.CardExecution);
+		return new CombatApplyResult(true);
+	}
+
+	private static CombatApplyResult ApplyUnconfirmCharacter(
+		CombatSimulation simulation,
+		UnconfirmCharacterCommand command)
+	{
+		if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
+			return new CombatApplyResult(false, error);
+		if (character.IsSealed)
+			return new CombatApplyResult(false, "角色处于封印，无法取消确认。");
+
+		character.SetHasActed(false);
 		return new CombatApplyResult(true);
 	}
 
@@ -159,15 +402,41 @@ public sealed class CombatStateMachine
 	{
 		if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
 			return new CombatApplyResult(false, error);
+		if (character.HasActed)
+			return new CombatApplyResult(false, "角色已确认，须先取消确认才能取消标记。");
 
-		var removed = simulation.CardQueue.TryRemove(
-			entry => MatchesCancelCommand(entry, command),
-			out _);
-		if (!removed)
+		var entry = simulation.CardQueue
+			.PeekAllOrdered()
+			.FirstOrDefault(candidate => MatchesCancelCommand(candidate, command));
+		if (entry is null)
 			return new CombatApplyResult(false, "未找到可取消的卡牌。");
 
-		character.SetHasActed(false);
+		CancelMarkAndRefund(simulation, entry);
 		return new CombatApplyResult(true);
+	}
+
+	/// <summary>
+	/// 取消一项手牌标记：出队、退还 <see cref="QueuedCardEntry.Paid"/> 到当前可用能量、清除槽位标记。
+	/// 牌保留在原手牌槽（规格 §2.2 / §3.3）。
+	/// </summary>
+	internal static void CancelMarkAndRefund(CombatSimulation simulation, QueuedCardEntry entry)
+	{
+		ArgumentNullException.ThrowIfNull(simulation);
+		ArgumentNullException.ThrowIfNull(entry);
+
+		simulation.CardQueue.TryRemove(candidate => candidate.Sequence == entry.Sequence, out _);
+
+		var characters = simulation.PlayerTeam.Characters;
+		if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
+			return;
+
+		var character = characters[entry.CharacterIndex];
+		character.RefundAvailableEnergy(entry.Paid);
+		foreach (var slot in character.HandSlots)
+		{
+			if (string.Equals(slot.RuntimeInstanceId, entry.RuntimeInstanceId, StringComparison.Ordinal))
+				slot.Unmark();
+		}
 	}
 
 	private static bool MatchesCancelCommand(QueuedCardEntry entry, CancelQueuedCardCommand command)
@@ -184,22 +453,18 @@ public sealed class CombatStateMachine
 
 	private static void ExecuteCardExecutionPhase(CombatSimulation simulation)
 	{
-		while (simulation.CardQueue.TryDequeue(out var dequeued) && dequeued is not null)
+		simulation.SetDiscardChannel(EDiscardChannel.CardExecution);
+		try
 		{
-			if (!simulation.Definitions.Store.TryGetCard(dequeued.CardId, out var card))
-				continue;
-
-			var resolvedTargets = ResolveCardTargets(simulation, dequeued, card);
-			if (resolvedTargets.Count == 0)
-				continue;
-
-			var source = new CombatTargetRef(ECombatSide.Player, dequeued.CharacterIndex);
-			foreach (var skillRef in card.SkillRefs)
+			while (simulation.CardQueue.TryDequeue(out var dequeued) && dequeued is not null)
 			{
-				if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
-					continue;
-				ExecuteSkillPayload(simulation, skill, source, resolvedTargets, skillRef?.Params);
+				SettleQueuedCard(simulation, dequeued);
+				DiscardSettledCard(simulation, dequeued);
 			}
+		}
+		finally
+		{
+			simulation.SetDiscardChannel(EDiscardChannel.Other);
 		}
 
 		simulation.CheckEndConditions();
@@ -210,8 +475,38 @@ public sealed class CombatStateMachine
 		simulation.TransitionTo(ECombatPhase.Enemy);
 	}
 
+	/// <summary>结算一张已标记牌；目标解析后为空集即空放（规格 §2.4），不做任何回滚。</summary>
+	private static void SettleQueuedCard(CombatSimulation simulation, QueuedCardEntry entry)
+	{
+		if (!simulation.Definitions.Store.TryGetCard(entry.CardId, out var card))
+			return;
+
+		var resolvedTargets = ResolveCardTargets(simulation, entry, card);
+		if (resolvedTargets.Count == 0)
+			return;
+
+		var source = new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex);
+		foreach (var skillRef in card.SkillRefs)
+		{
+			if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
+				continue;
+			ExecuteSkillPayload(simulation, skill, source, resolvedTargets, skillRef?.Params);
+		}
+	}
+
+	/// <summary>规格 §2.1：结算完成（含空放）后把牌从手牌槽移入持有者弃牌堆。</summary>
+	private static void DiscardSettledCard(CombatSimulation simulation, QueuedCardEntry entry)
+	{
+		var characters = simulation.PlayerTeam.Characters;
+		if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
+			return;
+
+		characters[entry.CharacterIndex].MoveHandCardToGraveyard(entry.RuntimeInstanceId);
+	}
+
 	private static void ExecuteEnemyPhase(CombatSimulation simulation)
 	{
+		simulation.SetDiscardChannel(EDiscardChannel.Other);
 		for (var enemyIndex = 0; enemyIndex < simulation.EnemyTeam.Enemies.Count; enemyIndex++)
 		{
 			var enemy = simulation.EnemyTeam.Enemies[enemyIndex];
@@ -238,6 +533,7 @@ public sealed class CombatStateMachine
 		simulation.IncrementTurnNumber();
 		simulation.DomainManager.FireTurnStartHooks();
 		simulation.TransitionTo(ECombatPhase.Player);
+		PlayerPhasePipeline.Run(simulation, simulation.IsFirstPlayerPhase);
 	}
 
 	private static void ExecuteEnemySkill(CombatSimulation simulation, int enemyIndex, string skillId)
@@ -303,6 +599,10 @@ public sealed class CombatStateMachine
 		TargetSpecDto spec,
 		int sourceEnemyIndex)
 	{
+		// 规格 §1.3：scope: Team 对该侧队伍账本一次结算（敌方来源时「Enemy 侧」即玩家队伍）。
+		if (spec.Scope is ETargetScope.Team)
+			return ResolveTeamLedgerTarget(simulation, spec.Side is ETargetSide.Enemy or ETargetSide.Any);
+
 		var legal = CollectLegalTargetsForEnemy(simulation, spec.Side, sourceEnemyIndex);
 		if (legal.Count == 0)
 			return [];
@@ -346,20 +646,40 @@ public sealed class CombatStateMachine
 			}
 		}
 
-		if (side is ETargetSide.Enemy or ETargetSide.Any)
+		if (side is ETargetSide.Enemy or ETargetSide.Any && !simulation.PlayerTeam.IsDefeated)
 		{
-			if (!simulation.PlayerTeam.IsDefeated)
-				legal.Add(CombatTargetRef.PlayerTeam);
+			// 规格 §1.3：玩家侧点选的是槽位角色（分槽结算 D2）；要打账本必须显式写 scope: Team。
+			for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
+				legal.Add(new CombatTargetRef(ECombatSide.Player, i));
 		}
 
 		return legal;
 	}
 
+	/// <summary>规格 §1.3：v1 只有玩家侧有队伍账本；指向敌方队伍的 Team 目标无处结算，退化为空放。</summary>
+	private static IReadOnlyList<CombatTargetRef> ResolveTeamLedgerTarget(
+		CombatSimulation simulation,
+		bool isPlayerSide)
+	{
+		if (!isPlayerSide || simulation.PlayerTeam.IsDefeated)
+			return [];
+
+		return [CombatTargetRef.PlayerTeam];
+	}
+
+	/// <summary>
+	/// 规格 §2.4：单体在合法池中按 <see cref="ERetargetPolicy"/> 重选，池空即空放；
+	/// 多目标去掉非法目标后对剩余合法子集结算，子集为空即空放。两者都不回滚已行动。
+	/// </summary>
 	private static IReadOnlyList<CombatTargetRef> ResolveCardTargets(
 		CombatSimulation simulation,
 		QueuedCardEntry entry,
 		CardDto card)
 	{
+		// 规格 §1.3：scope: Team 的卡牌恒结算到队伍账本，标记时点选的槽位不参与。
+		if (card.TargetScope is ETargetScope.Team)
+			return ResolveTeamLedgerTarget(simulation, card.TargetSide is not ETargetSide.Enemy);
+
 		if (entry.Targets.Count == 0)
 			return [];
 
@@ -369,7 +689,7 @@ public sealed class CombatStateMachine
 		if (validTargets.Count == entry.Targets.Count)
 			return validTargets;
 		if (!IsSingleTargetCard(card))
-			return [];
+			return validTargets;
 		if (validTargets.Count > 0)
 			return [validTargets[0]];
 
@@ -445,6 +765,7 @@ public sealed class CombatStateMachine
 	private static bool IsSingleTargetCard(CardDto card) =>
 		card.TargetScope is ETargetScope.Single or ETargetScope.Self || card.TargetCount <= 1;
 
+	/// <summary>规格 §2.4：缺省与 <see cref="ERetargetPolicy.RandomLegal"/> 都走 Run RNG 在合法池均匀取一。</summary>
 	private static CombatTargetRef? TryRetargetSingleTarget(CombatSimulation simulation, CardDto card, int sourceCharacterIndex)
 	{
 		if (card.RetargetPolicy == ERetargetPolicy.Skip)
@@ -458,7 +779,7 @@ public sealed class CombatStateMachine
 		{
 			ERetargetPolicy.HighestHp => legal.MaxBy(target => GetTargetHp(simulation, target)),
 			ERetargetPolicy.LowestHp => legal.MinBy(target => GetTargetHp(simulation, target)),
-			_ => legal[0],
+			_ => legal[simulation.RetargetRng.NextInt(0, legal.Count)],
 		};
 	}
 

@@ -16,7 +16,7 @@ public sealed class TeamMaxHealthCoordinator : IDisposable
 		foreach (var character in _characters)
 			character.Asc.Attributes.AttributeChanged += OnCharacterAttributeChanged;
 
-		RecomputeAndFollowDelta();
+		RecomputeAndClamp();
 	}
 
 	public void Dispose()
@@ -33,18 +33,18 @@ public sealed class TeamMaxHealthCoordinator : IDisposable
 	{
 		if (!string.Equals(args.AttributeId, AttributeIds.MaxHealth, StringComparison.Ordinal))
 			return;
-		RecomputeAndFollowDelta();
+		RecomputeAndClamp();
 	}
 
-	private void RecomputeAndFollowDelta()
+	/// <summary>
+	/// 规格 §1.2：重算 <c>MaxSharedHp</c> 时 **不** 按比例缩放、也不按 delta 跟涨 SharedHp；
+	/// 仅在 <c>SharedHp &gt; MaxSharedHp</c> 越界时 clamp。
+	/// </summary>
+	private void RecomputeAndClamp()
 	{
-		var oldMax = _team.Asc.GetCurrentValue(AttributeIds.MaxHealth);
 		var oldHealth = _team.Asc.GetCurrentValue(AttributeIds.Health);
 		var newMax = _characters.Sum(character => character.Asc.GetCurrentValue(AttributeIds.MaxHealth));
-		var delta = newMax - oldMax;
-		var newHealth = delta > 0f
-			? oldHealth + delta
-			: MathF.Min(oldHealth, newMax);
+		var newHealth = MathF.Min(oldHealth, newMax);
 
 		_team.Asc.Attributes.SetBaseValue(AttributeIds.MaxHealth, newMax);
 		_team.Asc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, newHealth));

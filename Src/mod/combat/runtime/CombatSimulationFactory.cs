@@ -20,7 +20,8 @@ public static class CombatSimulationFactory
 		IContentEffectScriptHost? scriptHost,
 		string modId,
 		CombatRuleCatalog catalog,
-		out string? error)
+		out string? error,
+		IReadOnlyList<BattleStartSkillEntry>? battleStartSkills = null)
 	{
 		ArgumentNullException.ThrowIfNull(battle);
 		ArgumentNullException.ThrowIfNull(party);
@@ -38,6 +39,13 @@ public static class CombatSimulationFactory
 		if (battle.Waves.Count == 0)
 		{
 			error = "战斗至少需要一波敌人。";
+			return null;
+		}
+
+		// 规格 §1.3：玩家侧治疗必须打账本；配错的内容在进战斗前拒绝，而不是运行期静默软失败。
+		if (!CombatContentValidator.TryValidateHealTargeting(definitions, out var healError))
+		{
+			error = healError;
 			return null;
 		}
 
@@ -105,7 +113,8 @@ public static class CombatSimulationFactory
 			battle: battle,
 			runSeed: runSeed,
 			scriptHost: scriptHost,
-			modId: modId);
+			modId: modId,
+			battleStartSkills: battleStartSkills);
 	}
 
 	public static List<EnemyUnit>? SpawnWaveEnemies(

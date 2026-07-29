@@ -2,6 +2,7 @@ using System.Text.Json;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Combat.Runtime;
+using KemoCard.Mod.Combat.StateMachine;
 
 namespace KemoCard.Mod.Combat.Effects;
 
@@ -95,6 +96,9 @@ public sealed class SkillActionExecutor
 				break;
 			case ESkillActionKind.GainResource:
 				ApplyGainResource(simulation, source, targets, mergedParams);
+				break;
+			case ESkillActionKind.ModifyDrawCount:
+				ApplyModifyDrawCount(simulation, source, targets, ReadInt(mergedParams, "amount", 0));
 				break;
 			case ESkillActionKind.ExecuteScript:
 				ApplyExecuteScript(action, mergedParams, simulation, source, targets);
@@ -233,41 +237,107 @@ public sealed class SkillActionExecutor
 		return context;
 	}
 
+	/// <summary>规格 §4.3：禁止战斗中途即时抽牌；计诊断并无操作。</summary>
 	private static void ApplyDraw(
 		CombatSimulation simulation,
 		CombatTargetRef source,
 		IReadOnlyList<CombatTargetRef> targets,
 		int count)
 	{
-		foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
-			character.DrawCards(count);
+		_ = source;
+		_ = targets;
+		_ = count;
+		simulation.CountBlockedMidDraw();
 	}
 
+	/// <summary>规格 §4.6：按 <see cref="CombatSimulation.CurrentDiscardChannel"/> 分流弃牌。</summary>
 	private static void ApplyDiscard(
 		CombatSimulation simulation,
 		CombatTargetRef source,
 		IReadOnlyList<CombatTargetRef> targets,
 		int count)
 	{
+		if (count <= 0)
+			return;
+
 		foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
-			character.DiscardFromHand(count);
+		{
+			if (simulation.CurrentDiscardChannel == EDiscardChannel.ActiveSkill)
+				DiscardViaActiveSkillChannel(simulation, character, count);
+			else
+				character.DiscardRandomUnmarked(count, simulation.DiscardRng);
+		}
 	}
 
+	/// <summary>
+	/// ActiveSkill 通道：均匀随机可含已标记；命中标记则取消、退 <c>paid</c>、回退未确认，再进弃牌堆。
+	/// </summary>
+	private static void DiscardViaActiveSkillChannel(
+		CombatSimulation simulation,
+		CharacterBattleInstance character,
+		int count)
+	{
+		for (var i = 0; i < count; i++)
+		{
+			var slot = character.PickRandomOccupiedSlot(simulation.DiscardRng);
+			if (slot is null)
+				return;
+
+			var runtimeId = slot.RuntimeInstanceId!;
+			if (slot.IsMarked)
+			{
+				var entry = simulation.CardQueue
+					.PeekAllOrdered()
+					.FirstOrDefault(candidate =>
+						string.Equals(candidate.RuntimeInstanceId, runtimeId, StringComparison.Ordinal));
+				if (entry is not null)
+					CombatStateMachine.CancelMarkAndRefund(simulation, entry);
+				character.SetHasActed(false);
+			}
+
+			character.MoveHandCardToGraveyard(runtimeId);
+		}
+	}
+
+	/// <summary>规格 §4.3：投放抽牌数量修正，供阶段开始公式取最大 ±N。</summary>
+	private static void ApplyModifyDrawCount(
+		CombatSimulation simulation,
+		CombatTargetRef source,
+		IReadOnlyList<CombatTargetRef> targets,
+		int amount)
+	{
+		if (amount == 0)
+			return;
+
+		foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
+			character.AddDrawModifier(amount);
+	}
+
+	/// <summary>
+	/// 资源给到「当前可用能量」（规格 §3.2），或按 <c>resource: "SkillCounter"</c> 显式加技能计数器
+	/// <c>S</c>（规格 §5.3 连发）。其余资源名 v1 无操作。
+	/// </summary>
 	private static void ApplyGainResource(
 		CombatSimulation simulation,
 		CombatTargetRef source,
 		IReadOnlyList<CombatTargetRef> targets,
 		IReadOnlyDictionary<string, object> parameters)
 	{
-		if (!IsEnergyResource(parameters))
-			return;
-
 		var amount = ReadInt(parameters, "amount", 0);
 		if (amount <= 0)
 			return;
 
-		foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
-			character.GainEnergy(amount);
+		switch (ReadResourceName(parameters))
+		{
+			case "energy":
+				foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
+					character.GainAvailableEnergy(amount);
+				break;
+			case "skillcounter":
+				foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
+					character.GainSkillCounter(amount);
+				break;
+		}
 	}
 
 	private static IEnumerable<CharacterBattleInstance> ResolvePlayerCharacters(
@@ -292,12 +362,13 @@ public sealed class SkillActionExecutor
 		}
 	}
 
-	private static bool IsEnergyResource(IReadOnlyDictionary<string, object> parameters)
+	/// <summary>缺省资源为 Energy（保持既有内容不写 <c>resource</c> 时的行为）。</summary>
+	private static string ReadResourceName(IReadOnlyDictionary<string, object> parameters)
 	{
 		if (!parameters.TryGetValue("resource", out var value) || value is null)
-			return true;
+			return "energy";
 
-		return string.Equals(value.ToString(), "Energy", StringComparison.OrdinalIgnoreCase);
+		return (value.ToString() ?? string.Empty).Trim().ToLowerInvariant();
 	}
 
 	private static Dictionary<string, object>? ExtractParamsDictionary(IReadOnlyDictionary<string, object> proposed)

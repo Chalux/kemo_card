@@ -34,7 +34,26 @@ public sealed class CombatSimulation : IDisposable
 	public int RunSeed { get; }
 	public ECombatPhase Phase => _stateMachine.Phase;
 
+	/// <summary>首个玩家阶段：当前能量不 +1、不按公式抽牌（规格 §6.2）。</summary>
+	public bool IsFirstPlayerPhase { get; private set; } = true;
+
+	/// <summary>开战注入的技能序列，由调用方按规格 §6.1 排好序（被动在前、修饰在后）。</summary>
+	public IReadOnlyList<BattleStartSkillEntry> BattleStartSkills { get; }
+
+	/// <summary>规格 §4.6：当前中途弃牌通道；由状态机在进入主动技 / 执行阶段 / 其它上下文时设置。</summary>
+	public EDiscardChannel CurrentDiscardChannel { get; private set; } = EDiscardChannel.Other;
+
+	/// <summary>规格 §4.3：战斗中途即时抽牌被拒绝的次数（诊断计数器，禁止 GD.Print）。</summary>
+	public int BlockedMidDrawCount { get; private set; }
+
 	internal HostRng EnemyAiRng { get; }
+	internal HostRng DrawRng { get; }
+
+	/// <summary>执行阶段单体目标失效时的均匀重选流（规格 §2.4）。</summary>
+	internal HostRng RetargetRng { get; }
+
+	/// <summary>规格 §4.6：中途弃牌独立随机流。</summary>
+	internal HostRng DiscardRng { get; }
 
 	public CombatSimulation(
 		PlayerTeamState playerTeam,
@@ -47,7 +66,8 @@ public sealed class CombatSimulation : IDisposable
 		int currentWaveIndex = 0,
 		EnemyAiScriptInvoker? enemyAiScriptInvoker = null,
 		IContentEffectScriptHost? scriptHost = null,
-		string modId = "test.mod")
+		string modId = "test.mod",
+		IReadOnlyList<BattleStartSkillEntry>? battleStartSkills = null)
 	{
 		ArgumentNullException.ThrowIfNull(playerTeam);
 		ArgumentNullException.ThrowIfNull(enemyTeam);
@@ -63,8 +83,12 @@ public sealed class CombatSimulation : IDisposable
 		RunSeed = runSeed;
 		ScriptHost = scriptHost ?? new NullContentEffectScriptHost();
 		ModId = modId;
-		CardQueue = new CardExecutionQueue(new HostRng(runSeed, "combat.queue"));
+		BattleStartSkills = battleStartSkills ?? [];
+		CardQueue = new CardExecutionQueue();
 		EnemyAiRng = new HostRng(runSeed, "combat.ai");
+		DrawRng = new HostRng(runSeed, "combat.draw");
+		RetargetRng = new HostRng(runSeed, "combat.retarget");
+		DiscardRng = new HostRng(runSeed, "combat.discard");
 		EffectExecutor = new CombatEffectExecutor(definitions, rules);
 		DomainManager = new TeamDomainManager(this);
 		EnemyAi = new EnemyAiController(definitions, enemyAiScriptInvoker, modId, runSeed);
@@ -84,9 +108,19 @@ public sealed class CombatSimulation : IDisposable
 
 	public void AdvancePhase() => _stateMachine.Advance(this);
 
+	/// <summary>执行 BattleStart 管线（规格 §6.1），结束后停在首个玩家阶段。</summary>
+	public void RunBattleStart() => _stateMachine.RunBattleStart(this);
+
 	internal long AllocateQueueSequence() => _nextQueueSequence++;
 
+	internal void MarkFirstPlayerPhaseDone() => IsFirstPlayerPhase = false;
+
 	internal void IncrementTurnNumber() => TurnNumber++;
+
+	/// <summary>测试与状态机共用：切换当前弃牌通道。</summary>
+	public void SetDiscardChannel(EDiscardChannel channel) => CurrentDiscardChannel = channel;
+
+	internal void CountBlockedMidDraw() => BlockedMidDrawCount++;
 
 	public void CheckEndConditions()
 	{

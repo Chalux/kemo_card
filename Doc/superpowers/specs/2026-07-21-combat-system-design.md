@@ -270,15 +270,16 @@ activeSkillChain: [
 
 ## 7. 与代码现状的差异（实现须回写）
 
-以下为 2026-07-21 核实的差距，实现应以本文为准：
+**2026-07-28 对齐完成**（T1–T12）。权威行为以本文 §1–§6 为准；下列为**显式遗留项**（非未对齐缺口）：
 
-- 仅单一 `CurrentEnergy`，无「当前能量 / 可用能量」二分，无每回合当前能量 +1。
-- 无回合自动抽牌；`DrawCount` 属性未生效；空堆不洗牌；出牌模型仍偏「离手」，须改为手牌标记。
-- `CastInstantSkillCommand` 可放任意已注册技能、无限次、无计数器；需收敛为 `CastActiveSkillCommand` + `activeSkillChain`；扣费须为 `T_k` 累计阈值。
-- 伤害仍写各角色 ASC Health，同时存在 SharedHp；须改为 D2 / Team 直伤进 Shared；玩家角色去除 Health 当前值驱动。
-- 治疗缺少 Team/Shared 目标规格与校验；直伤 Team/Shared 通道未落地。
-- 队列排序仍偏小者优先且含 RNG 破平；须改为 priority **降序** + 入队序升序。
-- 确认锁定、目标丢失回滚、封印、弃牌分通道等与本文不一致处均须对齐。
+- **敌方侧 `ETargetScope.Team`**：v1 无处结算，指向敌方队伍的 Team 退化为空放；敌方队伍账本未实装。
+- **点选式主动弃牌 UI**：ActiveSkill 弃牌通道 v1 为「均匀随机含已标记」；玩家点选弃哪张后置。
+- **`costScaling` / 动态费用**：`CardCostCalculator` 目前是恒等接缝，尚未接入动态费用来源与展示。
+- **Run 层 BattleStart 接线**：模拟层已提供 `BattleStartSkills` / `RunBattleStart`；由谁按被动→修饰排序并注入，仍属 Run/编排层。
+- **链配置加载期校验**：主动链合法性目前在建战斗实例时校验；内容加载期 / 合成内容仍缺「档位 skillId 必须存在于注册表」的 frame 层校验（受 `frame` 不得依赖 `mod` 约束）。
+- **独立技能 Heal 目标校验**：独立技能的 `targetOverride.side` 无法在内容层判敌我，写错 scope 只能靠运行期软失败 + `RejectedSlotHealCount`。
+- **诊断出口**：`BlockedSharedHpWriteCount` / `RejectedSlotHealCount` / `BlockedMidDrawCount` 等仅供测试；UI/日志接入时再接 `IAppLog`。
+- **更窄 Debuff**：「仅禁出牌、仍可主动」是否需要独立标签——见 §9。
 
 ---
 
@@ -314,3 +315,4 @@ activeSkillChain: [
 - 2026-07-21（第五轮 grilling）：手牌标记入队；开局满手+首回合不公式抽；禁中途抽牌；确认锁定；目标丢失/费用取消回滚；执行期单体 RNG、多目标子集；MaxSharedHp 动态重算+越界 clamp+跨波保留；费用即时处理；排序改入队序破平；玩家侧 L1+T1+D2+B2 与 Team/Shared 治疗。
 - 2026-07-21（第六轮 grilling）：BattleStart 禁碰 SharedHp；无单角色倒地；Team/Shared 直伤通道；主动扣 `T_k` 溢出资保留；封印（清标记+已行动+禁主动，资源照跑）；弃牌分通道；玩家无 Health 当前值；Health 费预定=Shared 且 v1 拒入队；`priority` 改为越大越先。
 - 2026-07-28：开放项决议——Team/Shared 目标落点为 `ETargetScope.Team`；`CastActiveSkillCommand` 的 `targets` 按将释放档位的目标规格校验（各档可不同，UI 跟随 `S`）。对齐实施计划见 `Doc/superpowers/plans/2026-07-28-combat-spec-alignment-implementation-plan.md`。
+- 2026-07-28：§7 回写为「对齐完成 + 显式遗留项」；T1–T12 实施完毕（交接见 `Doc/superpowers/plans/2026-07-28-combat-spec-alignment-handoff.md`）。

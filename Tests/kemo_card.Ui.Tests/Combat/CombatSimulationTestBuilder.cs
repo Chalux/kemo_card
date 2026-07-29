@@ -127,6 +127,100 @@ internal static class CombatSimulationTestBuilder
 		return new CombatSimulation(player, enemyTeam, ruleEngine, registry, initialPhase: ECombatPhase.Player);
 	}
 
+	internal const string MarkableCardId = "test.markable";
+
+	/// <summary>
+	/// 玩家阶段：4 名角色，每人手上抓好 <paramref name="handSize"/> 张 <see cref="MarkableCardId"/>，
+	/// 可用能量已灌满，供「标记入队」相关测试使用。
+	/// </summary>
+	public static CombatSimulation PlayerPhaseWithHand(
+		ECostType costType = ECostType.Energy,
+		int cost = 1,
+		int energy = 5,
+		int handSize = 3,
+		int priority = 100)
+	{
+		var registry = new GameDefinitionRegistry();
+		RebuildMarkableContent(registry, costType, cost, priority);
+
+		var attrs = BuildCharacterAttributes(maxEnergy: energy, initialEnergy: energy);
+		var characters = Enumerable.Range(0, 4)
+			.Select(i => CharacterBattleInstance.CreateForTests(
+				$"c{i}",
+				attrs,
+				Enumerable.Range(0, CombatConstants.HandSlotCount)
+					.Select(slot => new CardRuntimeEntry(MarkableCardId, $"rt-c{i}-{slot}"))))
+			.ToArray();
+		foreach (var character in characters)
+		{
+			character.DrawCards(handSize);
+			character.RefillAvailableEnergy();
+		}
+
+		var player = new PlayerTeamState(characters, sharedMaxHp: 40);
+		var enemyTeam = new EnemyTeamState([new EnemyUnit("e0", "slime", maxHp: 100)]);
+		return new CombatSimulation(
+			player,
+			enemyTeam,
+			new CombatRuleEngine([]),
+			registry,
+			initialPhase: ECombatPhase.Player);
+	}
+
+	/// <summary>
+	/// 就地改写 <see cref="MarkableCardId"/> 的费用，用于模拟玩家阶段内的动态费用变化（规格 §3.3）。
+	/// </summary>
+	internal static void RepriceMarkableCard(
+		CombatSimulation simulation,
+		int newCost,
+		ECostType costType = ECostType.Energy,
+		int priority = 100)
+	{
+		ArgumentNullException.ThrowIfNull(simulation);
+		RebuildMarkableContent(simulation.Definitions, costType, newCost, priority);
+	}
+
+	private static void RebuildMarkableContent(
+		GameDefinitionRegistry registry,
+		ECostType costType,
+		int cost,
+		int priority)
+	{
+		var card = new CardDto
+		{
+			Id = MarkableCardId,
+			DisplayNameId = MarkableCardId,
+			CostType = costType,
+			Cost = cost,
+			Priority = priority,
+			TargetSide = ETargetSide.Enemy,
+			TargetScope = ETargetScope.Single,
+			TargetCount = 1,
+			RetargetPolicy = ERetargetPolicy.Default,
+			SkillRefs = [new SkillRefDto { SkillId = "skill.markable" }],
+		};
+		CombatTestHelper.RebuildInto(
+			registry,
+			cards: new Dictionary<string, CardDto> { [card.Id] = card },
+			skills: new Dictionary<string, SkillDto>
+			{
+				["skill.markable"] = new()
+				{
+					Id = "skill.markable",
+					EffectRefs = [new EffectRefDto { EffectId = "effect.markable" }],
+				},
+			},
+			effects: new Dictionary<string, EffectDto>
+			{
+				["effect.markable"] = new()
+				{
+					Id = "effect.markable",
+					Kind = EEffectKind.Damage,
+					Params = new Dictionary<string, object> { ["amount"] = 1 },
+				},
+			});
+	}
+
 	public static CombatSimulation WithQueuedCard()
 	{
 		var card = new CardDto
@@ -221,6 +315,12 @@ internal static class CombatSimulationTestBuilder
 			[
 				new EffectRefDto { EffectId = "effect.execute" },
 			],
+			TargetOverride = new TargetSpecDto
+			{
+				Side = ETargetSide.Enemy,
+				Scope = ETargetScope.Single,
+				TargetCount = 1,
+			},
 		};
 		var registry = CombatTestHelper.CreateFullRegistry(
 			cards: new Dictionary<string, CardDto> { [card.Id] = card },
@@ -247,7 +347,10 @@ internal static class CombatSimulationTestBuilder
 
 		var attrs = BuildCharacterAttributes();
 		var characters = Enumerable.Range(0, 4)
-			.Select(i => CharacterBattleInstance.CreateForTests($"c{i}", attrs))
+			.Select(i => CharacterBattleInstance.CreateForTests(
+				$"c{i}",
+				attrs,
+				activeSkillChain: [new ActiveSkillChainEntryDto { SkillId = "execute", Cooldown = 1 }]))
 			.ToArray();
 		var player = new PlayerTeamState(characters, sharedMaxHp: 40);
 		var enemyTeam = new EnemyTeamState([new EnemyUnit("e0", "slime", maxHp: 10)]);
@@ -257,6 +360,8 @@ internal static class CombatSimulationTestBuilder
 			new CombatRuleEngine([]),
 			registry,
 			initialPhase: ECombatPhase.Player);
+		foreach (var character in characters)
+			character.TickSkillCounter();
 		characters[0].SetHasActed(true);
 		simulation.CardQueue.Enqueue(new QueuedCardEntry(
 			CharacterIndex: 0,

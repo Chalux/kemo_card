@@ -20,6 +20,16 @@ public sealed class EffectRefDto
 	public Dictionary<string, object>? Params { get; init; }
 }
 
+/// <summary>主动技蓄力链的一档（战斗规格 §5.1）。<c>Cap</c> 由各档 <see cref="Cooldown"/> 之和构成。</summary>
+public sealed class ActiveSkillChainEntryDto
+{
+	[JsonPropertyName("skillId")]
+	public string SkillId { get; init; } = "";
+
+	[JsonPropertyName("cooldown")]
+	public int Cooldown { get; init; }
+}
+
 public sealed class TargetSpecDto
 {
 	[JsonPropertyName("side")]

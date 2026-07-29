@@ -10,6 +10,11 @@ public sealed class HandSlot
 	public IReadOnlyList<HandSlotEffectRef> SlotEffects => _slotEffects;
 	public bool IsEmpty => CardId is null;
 
+	/// <summary>已标记入队时为对应的队列序号；<c>null</c> 表示未标记。标记不使卡牌离手。</summary>
+	public long? MarkedSequence { get; private set; }
+
+	public bool IsMarked => MarkedSequence.HasValue;
+
 	public HandSlot(int slotIndex) => SlotIndex = slotIndex;
 
 	public void PlaceCard(string cardId, string runtimeInstanceId)
@@ -24,7 +29,12 @@ public sealed class HandSlot
 	{
 		CardId = null;
 		RuntimeInstanceId = null;
+		MarkedSequence = null;
 	}
+
+	public void Mark(long sequence) => MarkedSequence = sequence;
+
+	public void Unmark() => MarkedSequence = null;
 
 	public bool TryAddSlotEffect(string buffId, IReadOnlyDictionary<string, object>? parameters = null)
 	{

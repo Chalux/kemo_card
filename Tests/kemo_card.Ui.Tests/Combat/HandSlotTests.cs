@@ -29,4 +29,58 @@ public sealed class HandSlotTests
 		Assert.That(slot.SlotEffects, Has.Count.EqualTo(1));
 		Assert.That(slot.SlotEffects[0].BuffId, Is.EqualTo("poison"));
 	}
+
+	#region 标记态
+
+	[Test]
+	public void Newly_placed_card_is_not_marked()
+	{
+		var slot = new HandSlot(0);
+		slot.PlaceCard("strike", "rt-1");
+
+		Assert.That(slot.IsMarked, Is.False);
+		Assert.That(slot.MarkedSequence, Is.Null);
+	}
+
+	[Test]
+	public void Mark_records_sequence_and_keeps_card_in_slot()
+	{
+		var slot = new HandSlot(0);
+		slot.PlaceCard("strike", "rt-1");
+
+		slot.Mark(7);
+
+		Assert.That(slot.IsMarked, Is.True);
+		Assert.That(slot.MarkedSequence, Is.EqualTo(7));
+		Assert.That(slot.IsEmpty, Is.False, "标记不离手");
+		Assert.That(slot.CardId, Is.EqualTo("strike"));
+	}
+
+	[Test]
+	public void Unmark_clears_sequence_but_keeps_card()
+	{
+		var slot = new HandSlot(0);
+		slot.PlaceCard("strike", "rt-1");
+		slot.Mark(7);
+
+		slot.Unmark();
+
+		Assert.That(slot.IsMarked, Is.False);
+		Assert.That(slot.CardId, Is.EqualTo("strike"));
+	}
+
+	[Test]
+	public void ClearCard_also_drops_the_mark()
+	{
+		var slot = new HandSlot(0);
+		slot.PlaceCard("strike", "rt-1");
+		slot.Mark(7);
+
+		slot.ClearCard();
+
+		Assert.That(slot.IsEmpty, Is.True);
+		Assert.That(slot.IsMarked, Is.False);
+	}
+
+	#endregion
 }

@@ -42,6 +42,9 @@ public sealed class DeckPreset
 
 	public DeckValidationResult Validate(IReadOnlySet<string> buildableCardIds)
 	{
+		if (_cardIds.Count < CombatConstants.MinCardsPerDeck)
+			return DeckValidationResult.Fail([]);
+
 		if (_cardIds.Count > CombatConstants.MaxCardsPerDeck)
 			return DeckValidationResult.Fail(_cardIds.ToList());
 

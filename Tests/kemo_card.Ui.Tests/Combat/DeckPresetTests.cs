@@ -44,4 +44,39 @@ public sealed class DeckPresetTests
 		Assert.That(deck.TryAddCard("b", buildable), Is.True);
 		Assert.That(deck.TryAddCard("b", buildable), Is.False);
 	}
+
+	[Test]
+	public void Validate_rejects_empty_deck()
+	{
+		var deck = new DeckPreset("d1", null, []);
+
+		var result = deck.Validate(new HashSet<string>(StringComparer.Ordinal) { "a" });
+
+		Assert.That(result.IsValid, Is.False);
+	}
+
+	[Test]
+	public void Validate_accepts_deck_sizes_between_one_and_ten()
+	{
+		var buildable = new HashSet<string>(
+			Enumerable.Range(1, 10).Select(i => $"card_{i}"),
+			StringComparer.Ordinal);
+
+		var single = new DeckPreset("d1", null, ["card_1"]);
+		var full = new DeckPreset("d2", null, buildable.OrderBy(id => id, StringComparer.Ordinal));
+
+		Assert.That(single.Validate(buildable).IsValid, Is.True);
+		Assert.That(full.Validate(buildable).IsValid, Is.True);
+	}
+
+	[Test]
+	public void Validate_rejects_deck_over_ten_cards()
+	{
+		var buildable = new HashSet<string>(
+			Enumerable.Range(1, 11).Select(i => $"card_{i}"),
+			StringComparer.Ordinal);
+		var deck = new DeckPreset("d1", null, buildable.OrderBy(id => id, StringComparer.Ordinal));
+
+		Assert.That(deck.Validate(buildable).IsValid, Is.False);
+	}
 }

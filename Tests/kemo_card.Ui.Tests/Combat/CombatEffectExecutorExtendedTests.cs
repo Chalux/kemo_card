@@ -11,7 +11,7 @@ namespace KemoCard.Ui.Tests.Combat;
 public sealed class CombatEffectExecutorExtendedTests
 {
 	[Test]
-	public void Draw_moves_cards_from_draw_pile_to_hand_slots()
+	public void Draw_is_blocked_mid_battle_and_counts_diagnostic()
 	{
 		var drawPile = new[]
 		{
@@ -43,17 +43,17 @@ public sealed class CombatEffectExecutorExtendedTests
 
 		executor.ExecuteEffectRef(new EffectRefDto { EffectId = "draw2" }, sim, source, [source]);
 
-		Assert.That(character.DrawPile, Has.Count.EqualTo(1));
-		Assert.That(character.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(2));
-		Assert.That(character.HandSlots[0].CardId, Is.EqualTo("card_c"));
-		Assert.That(character.HandSlots[1].CardId, Is.EqualTo("card_b"));
+		Assert.That(character.DrawPile, Has.Count.EqualTo(3), "规格 §4.3：中途 Draw 无操作");
+		Assert.That(character.HandSlots.Count(slot => !slot.IsEmpty), Is.Zero);
+		Assert.That(sim.BlockedMidDrawCount, Is.EqualTo(1));
 	}
 
 	[Test]
-	public void GainResource_adds_energy_to_character()
+	public void GainResource_adds_energy_to_available_pool_only()
 	{
 		var attrs = new CharacterAttributes(10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1);
 		var character = CharacterBattleInstance.CreateForTests("c0", attrs);
+		character.RefillAvailableEnergy();
 		var registry = CombatTestHelper.CreateFullRegistry(
 			effects: new Dictionary<string, EffectDto>
 			{
@@ -80,6 +80,7 @@ public sealed class CombatEffectExecutorExtendedTests
 
 		executor.ExecuteEffectRef(new EffectRefDto { EffectId = "gain_energy" }, sim, source, [source]);
 
-		Assert.That(character.CurrentEnergy, Is.EqualTo(3));
+		Assert.That(character.AvailableEnergy, Is.EqualTo(3));
+		Assert.That(character.CurrentEnergy, Is.EqualTo(1), "效果只灌可用池，不动当前能量");
 	}
 }

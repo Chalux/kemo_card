@@ -22,6 +22,10 @@ public sealed class CharacterDto
     [JsonPropertyName("skillRefs")]
     public List<SkillRefDto> SkillRefs { get; init; } = [];
 
+    /// <summary>主动技蓄力链（战斗规格 §5.1），与扁平 <see cref="SkillRefs"/> 分离，战斗主动按钮只读本字段。</summary>
+    [JsonPropertyName("activeSkillChain")]
+    public List<ActiveSkillChainEntryDto> ActiveSkillChain { get; init; } = [];
+
     [JsonPropertyName("buffRefs")]
     public List<BuffRefDto> BuffRefs { get; init; } = [];
 

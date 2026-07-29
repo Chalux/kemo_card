@@ -62,6 +62,32 @@ internal static class CombatTestHelper
         IReadOnlyDictionary<string, GameplayTagDefDto>? gameplayTags = null,
         IReadOnlyDictionary<string, SkillActionDto>? skillActions = null)
     {
+        var registry = new GameDefinitionRegistry();
+        RebuildInto(
+            registry, cards, skills, effects, buffs, enemies, battles,
+            characters, attributes, gameplayEffects, gameplayTags, skillActions);
+        return registry;
+    }
+
+    /// <summary>
+    /// 用新的定义集重建已有 registry。<see cref="GameDefinitionRegistry.Store"/> 为同一实例且就地重建，
+    /// 因此已创建的 <c>CombatSimulation</c> 会立刻看到新定义——用于测试动态费用等场景。
+    /// </summary>
+    public static void RebuildInto(
+        GameDefinitionRegistry registry,
+        IReadOnlyDictionary<string, CardDto>? cards = null,
+        IReadOnlyDictionary<string, SkillDto>? skills = null,
+        IReadOnlyDictionary<string, EffectDto>? effects = null,
+        IReadOnlyDictionary<string, BuffDto>? buffs = null,
+        IReadOnlyDictionary<string, EnemyDto>? enemies = null,
+        IReadOnlyDictionary<string, BattleDto>? battles = null,
+        IReadOnlyDictionary<string, CharacterDto>? characters = null,
+        IReadOnlyDictionary<string, AttributeDefDto>? attributes = null,
+        IReadOnlyDictionary<string, GameplayEffectDefDto>? gameplayEffects = null,
+        IReadOnlyDictionary<string, GameplayTagDefDto>? gameplayTags = null,
+        IReadOnlyDictionary<string, SkillActionDto>? skillActions = null)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
         cards ??= new Dictionary<string, CardDto>(StringComparer.Ordinal);
         skills ??= new Dictionary<string, SkillDto>(StringComparer.Ordinal);
         effects ??= new Dictionary<string, EffectDto>(StringComparer.Ordinal);
@@ -105,8 +131,6 @@ internal static class CombatTestHelper
             SkillActions = skillActions.Keys.ToList(),
         };
 
-        var registry = new GameDefinitionRegistry();
         registry.Rebuild([bundle], out _);
-        return registry;
     }
 }
