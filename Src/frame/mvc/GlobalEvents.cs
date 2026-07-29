@@ -5,5 +5,5 @@ namespace KemoCard.Frame.Mvc;
 /// </summary>
 public static class GlobalEvents
 {
-	public static EventDispatcher Bus { get; } = new();
+    public static EventDispatcher Bus { get; } = new();
 }

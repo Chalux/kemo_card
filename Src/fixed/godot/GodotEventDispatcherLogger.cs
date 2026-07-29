@@ -5,12 +5,12 @@ namespace KemoCard.Fixed.Godot;
 
 public sealed class GodotEventDispatcherLogger : IEventDispatcherLogger
 {
-	private readonly IAppLog _log;
+    private readonly IAppLog _log;
 
-	public GodotEventDispatcherLogger(IAppLog log)
-	{
-		_log = log;
-	}
+    public GodotEventDispatcherLogger(IAppLog log)
+    {
+        _log = log;
+    }
 
-	public void LogError(string message) => _log.Error(message, "Mvc");
+    public void LogError(string message) => _log.Error(message, "Mvc");
 }

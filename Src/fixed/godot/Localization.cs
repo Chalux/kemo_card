@@ -7,5 +7,5 @@ namespace KemoCard.Fixed.Godot;
 /// </summary>
 public static class Localization
 {
-	public static string Tr(string key) => TranslationServer.Translate(key);
+    public static string Tr(string key) => TranslationServer.Translate(key);
 }

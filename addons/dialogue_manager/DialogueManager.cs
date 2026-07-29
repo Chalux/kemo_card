@@ -358,7 +358,8 @@ namespace DialogueManagerRuntime
                 }
             }
 
-            if (info == null) {
+            if (info == null)
+            {
                 EmitSignal(SignalName.Resolved, id);
                 return;
             }
@@ -646,4 +647,3 @@ namespace DialogueManagerRuntime
         }
     }
 }
-

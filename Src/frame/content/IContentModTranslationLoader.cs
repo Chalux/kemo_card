@@ -5,7 +5,7 @@ namespace KemoCard.Frame.Content;
 /// </summary>
 public interface IContentModTranslationLoader
 {
-	void ClearRegistered();
+    void ClearRegistered();
 
-	void TryLoadModTranslations(DiscoveredModEntry entry);
+    void TryLoadModTranslations(DiscoveredModEntry entry);
 }

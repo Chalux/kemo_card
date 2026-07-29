@@ -4,7 +4,7 @@ namespace KemoCard.Frame.Gas.Executions;
 
 public interface IExecutionCalculation
 {
-	string Kind { get; }
+    string Kind { get; }
 
-	void Execute(ExecutionDefDto executionDef, GameplayEffectSpec spec, AbilitySystemComponent targetAsc);
+    void Execute(ExecutionDefDto executionDef, GameplayEffectSpec spec, AbilitySystemComponent targetAsc);
 }

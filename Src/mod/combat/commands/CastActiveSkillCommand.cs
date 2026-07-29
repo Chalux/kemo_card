@@ -7,5 +7,5 @@ namespace KemoCard.Mod.Combat.Commands;
 /// 即时结算、不入卡牌队列、不扣可用能量、不占已行动。
 /// </summary>
 public sealed record CastActiveSkillCommand(
-	int CharacterIndex,
-	IReadOnlyList<CombatTargetRef> Targets) : ICombatCommand;
+    int CharacterIndex,
+    IReadOnlyList<CombatTargetRef> Targets) : ICombatCommand;

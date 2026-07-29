@@ -6,24 +6,24 @@ namespace KemoCard.Frame.Content;
 /// </summary>
 public interface IContentEffectScriptHost
 {
-	bool TryExecute(
-		string modId,
-		string scriptPath,
-		string scriptEntry,
-		IReadOnlyDictionary<string, object>? context,
-		out IReadOnlyList<Dictionary<string, object>> proposedEffects);
+    bool TryExecute(
+        string modId,
+        string scriptPath,
+        string scriptEntry,
+        IReadOnlyDictionary<string, object>? context,
+        out IReadOnlyList<Dictionary<string, object>> proposedEffects);
 }
 
 public sealed class NullContentEffectScriptHost : IContentEffectScriptHost
 {
-	public bool TryExecute(
-		string modId,
-		string scriptPath,
-		string scriptEntry,
-		IReadOnlyDictionary<string, object>? context,
-		out IReadOnlyList<Dictionary<string, object>> proposedEffects)
-	{
-		proposedEffects = Array.Empty<Dictionary<string, object>>();
-		return false;
-	}
+    public bool TryExecute(
+        string modId,
+        string scriptPath,
+        string scriptEntry,
+        IReadOnlyDictionary<string, object>? context,
+        out IReadOnlyList<Dictionary<string, object>> proposedEffects)
+    {
+        proposedEffects = Array.Empty<Dictionary<string, object>>();
+        return false;
+    }
 }

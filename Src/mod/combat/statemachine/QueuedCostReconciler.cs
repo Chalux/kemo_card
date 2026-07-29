@@ -9,53 +9,53 @@ namespace KemoCard.Mod.Combat.StateMachine;
 /// </summary>
 public static class QueuedCostReconciler
 {
-	/// <returns>因涨费不足而被自动取消标记的持有者槽位索引集合。</returns>
-	public static IReadOnlySet<int> Reconcile(CombatSimulation simulation)
-	{
-		ArgumentNullException.ThrowIfNull(simulation);
+    /// <returns>因涨费不足而被自动取消标记的持有者槽位索引集合。</returns>
+    public static IReadOnlySet<int> Reconcile(CombatSimulation simulation)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
 
-		var autoCancelledHolders = new HashSet<int>();
-		foreach (var entry in simulation.CardQueue.PeekAllOrdered().ToList())
-		{
-			if (!simulation.Definitions.Store.TryGetCard(entry.CardId, out var card))
-				continue;
-			if (card.CostType != ECostType.Energy)
-				continue;
+        var autoCancelledHolders = new HashSet<int>();
+        foreach (var entry in simulation.CardQueue.PeekAllOrdered().ToList())
+        {
+            if (!simulation.Definitions.Store.TryGetCard(entry.CardId, out var card))
+                continue;
+            if (card.CostType != ECostType.Energy)
+                continue;
 
-			var characters = simulation.PlayerTeam.Characters;
-			if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
-				continue;
+            var characters = simulation.PlayerTeam.Characters;
+            if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
+                continue;
 
-			var character = characters[entry.CharacterIndex];
-			var currentCost = CardCostCalculator.Compute(simulation, entry.CharacterIndex, card);
-			if (currentCost == entry.Paid)
-				continue;
+            var character = characters[entry.CharacterIndex];
+            var currentCost = CardCostCalculator.Compute(simulation, entry.CharacterIndex, card);
+            if (currentCost == entry.Paid)
+                continue;
 
-			if (currentCost < entry.Paid)
-			{
-				character.RefundAvailableEnergy(entry.Paid - currentCost);
-				RepriceInPlace(simulation, entry, currentCost);
-				continue;
-			}
+            if (currentCost < entry.Paid)
+            {
+                character.RefundAvailableEnergy(entry.Paid - currentCost);
+                RepriceInPlace(simulation, entry, currentCost);
+                continue;
+            }
 
-			if (character.TryConsumeAvailableEnergy(currentCost - entry.Paid))
-			{
-				RepriceInPlace(simulation, entry, currentCost);
-				continue;
-			}
+            if (character.TryConsumeAvailableEnergy(currentCost - entry.Paid))
+            {
+                RepriceInPlace(simulation, entry, currentCost);
+                continue;
+            }
 
-			CombatStateMachine.CancelMarkAndRefund(simulation, entry);
-			character.SetHasActed(false);
-			autoCancelledHolders.Add(entry.CharacterIndex);
-		}
+            CombatStateMachine.CancelMarkAndRefund(simulation, entry);
+            character.SetHasActed(false);
+            autoCancelledHolders.Add(entry.CharacterIndex);
+        }
 
-		return autoCancelledHolders;
-	}
+        return autoCancelledHolders;
+    }
 
-	/// <summary>沿用原 <see cref="QueuedCardEntry.Sequence"/> 重新入队，保证执行顺序不受对账影响。</summary>
-	private static void RepriceInPlace(CombatSimulation simulation, QueuedCardEntry entry, int newPaid)
-	{
-		simulation.CardQueue.TryRemove(candidate => candidate.Sequence == entry.Sequence, out _);
-		simulation.CardQueue.Enqueue(entry with { Paid = newPaid });
-	}
+    /// <summary>沿用原 <see cref="QueuedCardEntry.Sequence"/> 重新入队，保证执行顺序不受对账影响。</summary>
+    private static void RepriceInPlace(CombatSimulation simulation, QueuedCardEntry entry, int newPaid)
+    {
+        simulation.CardQueue.TryRemove(candidate => candidate.Sequence == entry.Sequence, out _);
+        simulation.CardQueue.Enqueue(entry with { Paid = newPaid });
+    }
 }

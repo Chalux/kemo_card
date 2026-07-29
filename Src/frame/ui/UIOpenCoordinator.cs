@@ -72,19 +72,19 @@ public sealed class UIOpenCoordinator(UIManager manager)
         {
             case EUIState.Load:
             case EUIState.PreLoad:
-            {
-                if (_currOpening.Lifecycle.LoadTime == 0) break;
-
-                long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                if (now - _currOpening.Lifecycle.LoadTime > UIConsts.UI_LOAD_TIMEOUT)
                 {
-                    _currOpening.StateMachine.TransitionTo(EUIState.Destroy,
-                        new UIStateContext(_currOpening, _manager));
-                    _currOpening = null;
-                    OpenNext();
+                    if (_currOpening.Lifecycle.LoadTime == 0) break;
+
+                    long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    if (now - _currOpening.Lifecycle.LoadTime > UIConsts.UI_LOAD_TIMEOUT)
+                    {
+                        _currOpening.StateMachine.TransitionTo(EUIState.Destroy,
+                            new UIStateContext(_currOpening, _manager));
+                        _currOpening = null;
+                        OpenNext();
+                    }
+                    break;
                 }
-                break;
-            }
         }
     }
 

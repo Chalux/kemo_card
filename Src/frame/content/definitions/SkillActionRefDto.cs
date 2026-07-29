@@ -4,9 +4,9 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public sealed class SkillActionRefDto
 {
-	[JsonPropertyName("actionId")]
-	public string ActionId { get; init; } = "";
+    [JsonPropertyName("actionId")]
+    public string ActionId { get; init; } = "";
 
-	[JsonPropertyName("params")]
-	public Dictionary<string, object>? Params { get; init; }
+    [JsonPropertyName("params")]
+    public Dictionary<string, object>? Params { get; init; }
 }

@@ -8,32 +8,32 @@ namespace KemoCard.Mod.Combat.StateMachine;
 /// </summary>
 public static class PlayerPhasePipeline
 {
-	public static void Run(CombatSimulation simulation, bool isFirstPlayerPhase)
-	{
-		ArgumentNullException.ThrowIfNull(simulation);
+    public static void Run(CombatSimulation simulation, bool isFirstPlayerPhase)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
 
-		var characters = simulation.PlayerTeam.Characters;
-		for (var characterIndex = 0; characterIndex < characters.Count; characterIndex++)
-		{
-			var character = characters[characterIndex];
-			character.ResetPhaseShuffleBudget();
+        var characters = simulation.PlayerTeam.Characters;
+        for (var characterIndex = 0; characterIndex < characters.Count; characterIndex++)
+        {
+            var character = characters[characterIndex];
+            character.ResetPhaseShuffleBudget();
 
-			if (!isFirstPlayerPhase)
-				character.RegenCurrentEnergy();
+            if (!isFirstPlayerPhase)
+                character.RegenCurrentEnergy();
 
-			character.RefillAvailableEnergy();
-			character.TickSkillCounter();
+            character.RefillAvailableEnergy();
+            character.TickSkillCounter();
 
-			if (!isFirstPlayerPhase)
-				character.DrawWithReshuffle(character.ComputeDrawCount(), simulation.DrawRng);
+            if (!isFirstPlayerPhase)
+                character.DrawWithReshuffle(character.ComputeDrawCount(), simulation.DrawRng);
 
-			// 抽牌数量修正只作用于本阶段的抽牌步骤，用完即弃。
-			character.ClearDrawModifiers();
+            // 抽牌数量修正只作用于本阶段的抽牌步骤，用完即弃。
+            character.ClearDrawModifiers();
 
-			// 规格 §6.2 步骤 5：资源管线跑完后再套用封印行动封锁。
-			CombatStateMachine.EnforceSeal(simulation, characterIndex);
-		}
+            // 规格 §6.2 步骤 5：资源管线跑完后再套用封印行动封锁。
+            CombatStateMachine.EnforceSeal(simulation, characterIndex);
+        }
 
-		simulation.MarkFirstPlayerPhaseDone();
-	}
+        simulation.MarkFirstPlayerPhaseDone();
+    }
 }

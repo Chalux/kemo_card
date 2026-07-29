@@ -9,11 +9,11 @@ namespace KemoCard.Mod.Combat;
 /// </summary>
 public static class CardCostCalculator
 {
-	public static int Compute(CombatSimulation simulation, int characterIndex, CardDto card)
-	{
-		ArgumentNullException.ThrowIfNull(simulation);
-		ArgumentNullException.ThrowIfNull(card);
+    public static int Compute(CombatSimulation simulation, int characterIndex, CardDto card)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
+        ArgumentNullException.ThrowIfNull(card);
 
-		return card.CostType == ECostType.Energy ? Math.Max(0, card.Cost) : 0;
-	}
+        return card.CostType == ECostType.Energy ? Math.Max(0, card.Cost) : 0;
+    }
 }

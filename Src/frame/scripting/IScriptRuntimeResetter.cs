@@ -2,9 +2,9 @@ namespace KemoCard.Frame.Scripting;
 
 public interface IScriptRuntimeResetter
 {
-	void BeginRebuild();
+    void BeginRebuild();
 
-	void Recreate();
+    void Recreate();
 
-	void EndRebuild();
+    void EndRebuild();
 }

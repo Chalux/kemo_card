@@ -7,48 +7,48 @@ namespace KemoCard.Ui.Tests;
 [TestFixture]
 public sealed class ModScriptLoaderTests
 {
-	[Test]
-	public void ReadFile_resolves_modId_to_folder_scripts_path()
-	{
-		var root = Path.Combine(Path.GetTempPath(), "kemo_script_tests", Guid.NewGuid().ToString("N"));
-		var modDir = ContentModTestHelper.CreateModFolder(root, "base-game", "base.game");
-		ContentModTestHelper.AddScript(
-			modDir,
-			"effects/demo.js",
-			"export function execute(ctx) { return { proposedEffects: [] }; }");
+    [Test]
+    public void ReadFile_resolves_modId_to_folder_scripts_path()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "kemo_script_tests", Guid.NewGuid().ToString("N"));
+        var modDir = ContentModTestHelper.CreateModFolder(root, "base-game", "base.game");
+        ContentModTestHelper.AddScript(
+            modDir,
+            "effects/demo.js",
+            "export function execute(ctx) { return { proposedEffects: [] }; }");
 
-		var catalog = new ModScriptCatalog();
-		catalog.Rebuild(
-		[
-			new DiscoveredModEntry(
-				modDir,
-				new ContentModManifestDto { ModId = "base.game", ContentRoot = "content" }),
-		]);
+        var catalog = new ModScriptCatalog();
+        catalog.Rebuild(
+        [
+            new DiscoveredModEntry(
+                modDir,
+                new ContentModManifestDto { ModId = "base.game", ContentRoot = "content" }),
+        ]);
 
-		var loader = new ModScriptLoader(catalog);
-		Assert.That(loader.FileExists("base.game/effects/demo.js"), Is.True);
-		var source = loader.ReadFile("base.game/effects/demo.js", out var debugPath);
-		Assert.That(source, Does.Contain("proposedEffects"));
-		Assert.That(debugPath, Does.Contain("effects"));
-	}
+        var loader = new ModScriptLoader(catalog);
+        Assert.That(loader.FileExists("base.game/effects/demo.js"), Is.True);
+        var source = loader.ReadFile("base.game/effects/demo.js", out var debugPath);
+        Assert.That(source, Does.Contain("proposedEffects"));
+        Assert.That(debugPath, Does.Contain("effects"));
+    }
 
-	[Test]
-	public void FileExists_rejects_path_traversal_outside_scripts_root()
-	{
-		var root = Path.Combine(Path.GetTempPath(), "kemo_script_tests", Guid.NewGuid().ToString("N"));
-		var modDir = ContentModTestHelper.CreateModFolder(root, "base-game", "base.game");
-		var secretPath = Path.Combine(root, "secret.txt");
-		File.WriteAllText(secretPath, "secret");
+    [Test]
+    public void FileExists_rejects_path_traversal_outside_scripts_root()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "kemo_script_tests", Guid.NewGuid().ToString("N"));
+        var modDir = ContentModTestHelper.CreateModFolder(root, "base-game", "base.game");
+        var secretPath = Path.Combine(root, "secret.txt");
+        File.WriteAllText(secretPath, "secret");
 
-		var catalog = new ModScriptCatalog();
-		catalog.Rebuild(
-		[
-			new DiscoveredModEntry(
-				modDir,
-				new ContentModManifestDto { ModId = "base.game", ContentRoot = "content" }),
-		]);
+        var catalog = new ModScriptCatalog();
+        catalog.Rebuild(
+        [
+            new DiscoveredModEntry(
+                modDir,
+                new ContentModManifestDto { ModId = "base.game", ContentRoot = "content" }),
+        ]);
 
-		var loader = new ModScriptLoader(catalog);
-		Assert.That(loader.FileExists("base.game/../../secret.txt"), Is.False);
-	}
+        var loader = new ModScriptLoader(catalog);
+        Assert.That(loader.FileExists("base.game/../../secret.txt"), Is.False);
+    }
 }
