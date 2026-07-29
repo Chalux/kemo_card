@@ -9,7 +9,7 @@
 **文档关系**：
 
 - 本文为玩法与系统边界的 **唯一总规格**。
-- 原 `2026-05-11-kemo-card-co-op-roguelike-design.md` 已归档为重定向页，内容并入本文。
+- 原 `2026-05-11-kemo-card-co-op-roguelike-design.md` 内容并入本文；正文在 `Doc/archive/superpowers/specs/`，原路径为重定向 stub。
 - Run 编排实现细节另见 `2026-06-22-run-mod-design.md`；若与本文冲突，以 **本文** 为准，并应回写 run-mod。
 
 ---
