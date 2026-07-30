@@ -1,9 +1,12 @@
 using KemoCard.Fixed.Godot;
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Keywords;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Scripting;
+using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Global;
+using KemoCard.Mod.Global.Condition;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Save;
 
@@ -69,6 +72,7 @@ public sealed class ModFactory
 
         AppRoot.Initialize(result);
         RegisterBuiltinKeywords();
+        RegisterBuiltinConditions();
         return result;
     }
 
@@ -77,6 +81,14 @@ public sealed class ModFactory
         KeywordCatalog.Shared.WarningHandler = msg => AppLog.Warning(msg, "Keyword");
         KeywordCatalog.Shared.Clear();
         BuiltinKeywords.RegisterAll(KeywordCatalog.Shared);
+    }
+
+    private static void RegisterBuiltinConditions()
+    {
+        ConditionDomains.Persistent.Clear();
+        ConditionDomains.Combat.Clear();
+        BuiltinPersistentConditions.RegisterAll(ConditionDomains.Persistent);
+        BuiltinCombatConditions.RegisterAll(ConditionDomains.Combat);
     }
 
     private static (GlobalMod Mod, GlobalModController Controller, GlobalSaveService SaveService) BootstrapGlobalMod(
