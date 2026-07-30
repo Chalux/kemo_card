@@ -63,6 +63,21 @@ public sealed class ConditionParserTests
     }
 
     [Test]
+    public void Parse_duplicate_type_in_and_object_includes_path_and_type()
+    {
+        var ok = ConditionParser.TryParse(
+            El("""{"Tag":["a"],"Tag":["b"]}"""),
+            Registry(),
+            "x.json:cond",
+            out _,
+            out var error);
+
+        Assert.That(ok, Is.False);
+        Assert.That(error, Does.Contain("x.json:cond"));
+        Assert.That(error, Does.Contain("Tag"));
+    }
+
+    [Test]
     public void Parse_or_of_and_leaves()
     {
         var json = """[{ "Tag": ["a"] }, { "Tag": ["b"] }]""";

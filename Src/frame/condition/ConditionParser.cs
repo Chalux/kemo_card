@@ -45,10 +45,18 @@ public static class ConditionParser
         out string? error)
     {
         var children = new List<ConditionNode>();
+        var seenTypeIds = new HashSet<string>(StringComparer.Ordinal);
         foreach (var prop in obj.EnumerateObject())
         {
             var typeId = prop.Name;
             var leafPath = $"{path}.{typeId}";
+            if (!seenTypeIds.Add(typeId))
+            {
+                expression = null;
+                error = $"{leafPath}: AND 对象内 CondType '{typeId}' 不可重复";
+                return false;
+            }
+
             if (!registry.TryGet(typeId, out var handler) || handler is null)
             {
                 expression = null;
