@@ -115,3 +115,11 @@ UI_RACE_GOD,神族,God
 UI_RACE_DEVIL,魔族,Devil
 UI_RACE_UNDEAD,不死,Undead
 UI_RACE_UNKNOWN,未知,Unknown
+COND_HAS_FLAG_SHORT,条件未满足,Requirement not met
+COND_HAS_FLAG_LONG,需要旗标,Requires flag
+COND_NOT_HAS_FLAG_SHORT,条件未满足,Requirement not met
+COND_NOT_HAS_FLAG_LONG,不能拥有旗标,Must not have flag
+COND_HAS_ALL_ITEMS_SHORT,物品不足,Not enough items
+COND_HAS_ALL_ITEMS_LONG,需要全部物品,Requires all items
+COND_HAS_ANY_ITEM_SHORT,物品不足,Not enough items
+COND_HAS_ANY_ITEM_LONG,需要任一物品,Requires any item
