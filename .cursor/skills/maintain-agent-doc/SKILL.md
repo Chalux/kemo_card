@@ -13,10 +13,11 @@ description: >-
 
 | 文件 | 职责 |
 |------|------|
-| [Doc/AGENT.md](../../../Doc/AGENT.md) | Agent 地图：定位、目录、约定、权威链、模块入口、不要做 |
+| [Doc/AGENT.md](../../../Doc/AGENT.md) | **项目约定唯一权威** + Agent 地图：定位、目录、硬性约定、权威链、模块入口、不要做 |
 | [Doc/INDEX.md](../../../Doc/INDEX.md) | 活规格 / 计划 / 归档清单（入口变化时同步） |
 
-不要把玩法细则抄进 AGENT；权威正文留在 `Doc/superpowers/specs/`。
+不要把玩法细则抄进 AGENT；权威正文留在 `Doc/superpowers/specs/`。  
+**新增或修改项目规则：直接改 `Doc/AGENT.md`**，不要在 `.cursor/rules/` 重复堆叠约定正文（仅保留指向 AGENT 的薄指针）。
 
 ## 何时更新（自动发现也适用）
 
@@ -25,7 +26,7 @@ description: >-
 - `Src/` 顶层或 `frame` / `mod` 主要子目录增删、重命名
 - 新的稳定模块入口（启动链、战斗/Run/内容/UI 等关键类型路径变化）
 - 权威规格新增、降级为归档、或权威链顺序变化
-- 硬性约定变更（与 `.cursor/rules` 不一致时）
+- 硬性约定 / 项目规则变更（写入 AGENT，不另开重复 rules）
 - 用户明确要求「更新 AGENT / 项目说明」
 
 **不要更新：**
@@ -84,7 +85,7 @@ Agent Doc Sync:
 
 - [ ] AGENT 内相对链接可解析
 - [ ] INDEX 与 `superpowers/specs` 实际文件一致（stub 不算活规格）
-- [ ] 未引入与 `.cursor/rules` 冲突的约定
+- [ ] 项目约定只写在 AGENT，未在 `.cursor/rules/` 另起重复正文
 - [ ] 未自动 git commit（除非用户要求）
 
 ## 显式触发示例

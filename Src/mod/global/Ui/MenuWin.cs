@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Frame.UI.Base;
+using KemoCard.Mod.Run.Ui;
 
 namespace KemoCard.Mod.Global.Ui;
 
@@ -16,6 +17,11 @@ public partial class MenuWin : BaseWin
 
     protected override void InitEvent()
     {
+        if (StartBtn != null)
+        {
+            OnClicks(StartBtn, () => _ = RunUiController.OpenStorySelectAsync());
+        }
+
         if (SettingsBtn != null)
         {
             OnClicks(SettingsBtn, () => _ = GlobalModController.OpenSettingAsync());

@@ -54,6 +54,7 @@ public sealed class ModFactory
         ArgumentNullException.ThrowIfNull(context);
 
         var global = BootstrapGlobalMod(context);
+        RegisterBuiltinConditions();
         var content = BootstrapContentMods(context, global.Mod);
 
         var result = new ModStartupResult
@@ -72,7 +73,6 @@ public sealed class ModFactory
 
         AppRoot.Initialize(result);
         RegisterBuiltinKeywords();
-        RegisterBuiltinConditions();
         return result;
     }
 

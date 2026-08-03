@@ -2,54 +2,60 @@ namespace KemoCard.Frame.Content;
 
 public sealed class ContentRegistryMerger
 {
-    public void Merge(
+    public ContentRegistryMergeResult Merge(
         IReadOnlyList<ModContentBundle> bundles,
-        Dictionary<EContentCategory, HashSet<string>> tables,
-        out ContentLoadReport report,
-        out Dictionary<(EContentCategory Category, string Id), string> ownerModIds)
+        GameDefinitionStore store)
     {
+        ArgumentNullException.ThrowIfNull(bundles);
+        ArgumentNullException.ThrowIfNull(store);
+
+        store.Clear();
         var conflicts = new List<ContentIdConflictEntry>();
         var ownerById = new Dictionary<(EContentCategory Category, string Id), string>();
 
         foreach (var bundle in bundles)
         {
-            TryAddAll(bundle.ModId, EContentCategory.Character, bundle.Characters, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Enemy, bundle.Enemies, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Battle, bundle.Battles, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Event, bundle.Events, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Card, bundle.Cards, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Item, bundle.Items, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Skill, bundle.Skills, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Buff, bundle.Buffs, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Effect, bundle.Effects, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.Attribute, bundle.Attributes, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.GameplayEffect, bundle.GameplayEffects, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.GameplayTag, bundle.GameplayTags, tables, ownerById, conflicts);
-            TryAddAll(bundle.ModId, EContentCategory.SkillAction, bundle.SkillActions, tables, ownerById, conflicts);
+            MergeBundle(bundle, store, ownerById, conflicts);
         }
 
-        report = new ContentLoadReport(Array.Empty<ModSkipEntry>(), conflicts, Array.Empty<ContentDefinitionValidationError>(), Array.Empty<ScriptLoadError>());
-        ownerModIds = ownerById;
+        return new ContentRegistryMergeResult(conflicts, ownerById);
     }
 
-    private static void TryAddAll(
-        string modId,
-        EContentCategory category,
-        IReadOnlyList<string> ids,
-        Dictionary<EContentCategory, HashSet<string>> tables,
+    private static void MergeBundle(
+        ModContentBundle bundle,
+        GameDefinitionStore store,
         Dictionary<(EContentCategory Category, string Id), string> ownerById,
         List<ContentIdConflictEntry> conflicts)
     {
-        if (!tables.TryGetValue(category, out var set))
-        {
-            set = new HashSet<string>(StringComparer.Ordinal);
-            tables[category] = set;
-        }
+        var definitions = bundle.Definitions;
+        TryAddAll(bundle.ModId, EContentCategory.Character, definitions.Characters, store.CharactersMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Enemy, definitions.Enemies, store.EnemiesMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Battle, definitions.Battles, store.BattlesMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Event, definitions.Events, store.EventsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Item, definitions.Items, store.ItemsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Card, definitions.Cards, store.CardsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Skill, definitions.Skills, store.SkillsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Buff, definitions.Buffs, store.BuffsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Effect, definitions.Effects, store.EffectsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Attribute, definitions.Attributes, store.AttributesMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.GameplayEffect, definitions.GameplayEffects, store.GameplayEffectsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.GameplayTag, definitions.GameplayTags, store.GameplayTagsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.SkillAction, definitions.SkillActions, store.SkillActionsMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.Story, definitions.Stories, store.StoriesMutable, ownerById, conflicts);
+    }
 
-        foreach (var id in ids)
+    private static void TryAddAll<T>(
+        string modId,
+        EContentCategory category,
+        IReadOnlyDictionary<string, T> source,
+        Dictionary<string, T> target,
+        Dictionary<(EContentCategory Category, string Id), string> ownerById,
+        List<ContentIdConflictEntry> conflicts)
+    {
+        foreach (var (id, dto) in source)
         {
             var key = (category, id);
-            if (set.Add(id))
+            if (target.TryAdd(id, dto))
             {
                 ownerById[key] = modId;
                 continue;

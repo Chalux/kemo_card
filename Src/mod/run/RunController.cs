@@ -25,13 +25,15 @@ public sealed class RunController : BaseController<RunMod>
 
     #region 生命周期
 
-    public RunDto CreateRun(HostRng rng, IReadOnlyList<CharacterDto> candidates, bool isMultiplayer)
+    public RunDto CreateRun(string storyId, HostRng rng, IReadOnlyList<CharacterDto> candidates, bool isMultiplayer)
     {
         ArgumentNullException.ThrowIfNull(rng);
         ArgumentNullException.ThrowIfNull(candidates);
+        ArgumentException.ThrowIfNullOrWhiteSpace(storyId);
 
+        Model.StoryId = storyId;
         Model.RunId = Guid.NewGuid().ToString("N");
-        Model.RunSeed = rng.NextInt(1, int.MaxValue);
+        Model.RunSeed = rng.RunSeed;
         Model.IsMultiplayer = isMultiplayer;
         Model.CurrentRing = 1;
         Model.SharedGold = 0;

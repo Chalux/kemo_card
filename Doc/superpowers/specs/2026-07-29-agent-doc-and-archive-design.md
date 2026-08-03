@@ -36,7 +36,7 @@ README.md                # 短入口，指向 Doc/AGENT.md 与 Doc/INDEX.md
 
 ## 4. AGENT.md 约束
 
-约 150–250 行；不复制规格正文；硬性约定与 `.cursor/rules` 对齐。
+约 150–250 行；不复制规格正文；**硬性约定以 `Doc/AGENT.md` 为唯一权威**（`.cursor/rules/` 仅保留指向 AGENT 的薄指针，不重复堆叠约定正文）。
 
 ## 5. Skill 触发
 

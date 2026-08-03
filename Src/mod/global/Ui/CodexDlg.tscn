@@ -187,10 +187,11 @@ text = "UI_SEARCH"
 metadata/_edit_use_anchors_ = true
 
 [node name="UI_CHARACTER" type="Control" parent="TabContainer" unique_id=169329728]
+visible = false
 layout_mode = 2
 metadata/_tab_index = 1
 
-[node name="ItemListConditions" type="ItemList" parent="TabContainer/UI_CHARACTER" unique_id=2150691685]
+[node name="ItemListConditions" type="ItemList" parent="TabContainer/UI_CHARACTER" unique_id=-2144275611]
 layout_mode = 0
 anchor_left = 0.02948403
 anchor_top = 0.05882353
@@ -205,7 +206,7 @@ offset_top = 337.0
 offset_right = 381.0
 offset_bottom = 369.0
 
-[node name="OBCharFieldSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=2175027382]
+[node name="OBCharFieldSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=-2119939914]
 layout_mode = 2
 size_flags_horizontal = 3
 metadata/_edit_use_anchors_ = true
@@ -277,15 +278,15 @@ theme_override_constants/v_separation = 16
 columns = 4
 metadata/_edit_use_anchors_ = true
 
-[node name="BaseCharacterItem" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2269321399 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=-2025645897 instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem2" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2827231589 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem2" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=-1467735707 instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem3" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2851331133 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem3" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=-1443636163 instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 

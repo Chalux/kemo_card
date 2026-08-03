@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Content.Definitions;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
@@ -9,57 +10,59 @@ public sealed class ContentRegistryMergerTests
     [Test]
     public void Merge_skips_later_duplicate_in_same_category()
     {
-        var tables = CreateEmptyTables();
+        var store = new GameDefinitionStore();
         var merger = new ContentRegistryMerger();
+        var strike = new CardDto { Id = "strike" };
         var bundles = new[]
         {
-            ContentModTestHelper.EmptyBundle("a") with { Cards = new[] { "strike" } },
-            ContentModTestHelper.EmptyBundle("b") with { Cards = new[] { "strike" } },
+            ContentModTestHelper.Bundle(
+                "a",
+                ModDefinitionsBundle.Empty with
+                {
+                    Cards = new Dictionary<string, CardDto>(StringComparer.Ordinal) { ["strike"] = strike },
+                }),
+            ContentModTestHelper.Bundle(
+                "b",
+                ModDefinitionsBundle.Empty with
+                {
+                    Cards = new Dictionary<string, CardDto>(StringComparer.Ordinal) { ["strike"] = strike },
+                }),
         };
 
-        merger.Merge(bundles, tables, out var report, out _);
+        var result = merger.Merge(bundles, store);
 
-        Assert.That(tables[EContentCategory.Card], Does.Contain("strike"));
-        Assert.That(report.IdConflicts, Has.Count.EqualTo(1));
-        Assert.That(report.IdConflicts[0].WinnerModId, Is.EqualTo("a"));
-        Assert.That(report.IdConflicts[0].LoserModId, Is.EqualTo("b"));
+        Assert.That(store.Contains(EContentCategory.Card, "strike"), Is.True);
+        Assert.That(result.IdConflicts, Has.Count.EqualTo(1));
+        Assert.That(result.IdConflicts[0].WinnerModId, Is.EqualTo("a"));
+        Assert.That(result.IdConflicts[0].LoserModId, Is.EqualTo("b"));
     }
 
     [Test]
     public void Merge_allows_same_id_in_different_categories()
     {
-        var tables = CreateEmptyTables();
+        var store = new GameDefinitionStore();
         var merger = new ContentRegistryMerger();
         var bundles = new[]
         {
-            ContentModTestHelper.EmptyBundle("a") with
-            {
-                Cards = new[] { "foo" },
-                Skills = new[] { "foo" },
-            },
+            ContentModTestHelper.Bundle(
+                "a",
+                ModDefinitionsBundle.Empty with
+                {
+                    Cards = new Dictionary<string, CardDto>(StringComparer.Ordinal)
+                    {
+                        ["foo"] = new() { Id = "foo" },
+                    },
+                    Skills = new Dictionary<string, SkillDto>(StringComparer.Ordinal)
+                    {
+                        ["foo"] = new() { Id = "foo" },
+                    },
+                }),
         };
 
-        merger.Merge(bundles, tables, out var report, out _);
+        var result = merger.Merge(bundles, store);
 
-        Assert.That(tables[EContentCategory.Card], Does.Contain("foo"));
-        Assert.That(tables[EContentCategory.Skill], Does.Contain("foo"));
-        Assert.That(report.IdConflicts, Is.Empty);
+        Assert.That(store.Contains(EContentCategory.Card, "foo"), Is.True);
+        Assert.That(store.Contains(EContentCategory.Skill, "foo"), Is.True);
+        Assert.That(result.IdConflicts, Is.Empty);
     }
-
-    private static Dictionary<EContentCategory, HashSet<string>> CreateEmptyTables() =>
-        new()
-        {
-            [EContentCategory.Character] = new(StringComparer.Ordinal),
-            [EContentCategory.Enemy] = new(StringComparer.Ordinal),
-            [EContentCategory.Battle] = new(StringComparer.Ordinal),
-            [EContentCategory.Event] = new(StringComparer.Ordinal),
-            [EContentCategory.Card] = new(StringComparer.Ordinal),
-            [EContentCategory.Item] = new(StringComparer.Ordinal),
-            [EContentCategory.Skill] = new(StringComparer.Ordinal),
-            [EContentCategory.Buff] = new(StringComparer.Ordinal),
-            [EContentCategory.Effect] = new(StringComparer.Ordinal),
-            [EContentCategory.Attribute] = new(StringComparer.Ordinal),
-            [EContentCategory.GameplayEffect] = new(StringComparer.Ordinal),
-            [EContentCategory.GameplayTag] = new(StringComparer.Ordinal),
-        };
 }

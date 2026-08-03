@@ -66,10 +66,9 @@ public sealed class ContentPipelineGasTests
     [Test]
     public void Validation_rejects_gameplay_effect_with_unknown_attribute_modifier()
     {
-        var bundle = ContentModTestHelper.EmptyBundle("base") with
-        {
-            GameplayEffects = ["bad_ge"],
-            Definitions = ModDefinitionsBundle.Empty with
+        var bundle = ContentModTestHelper.Bundle(
+            "base",
+            ModDefinitionsBundle.Empty with
             {
                 GameplayEffects = new Dictionary<string, GameplayEffectDefDto>
                 {
@@ -92,8 +91,7 @@ public sealed class ContentPipelineGasTests
                         ],
                     },
                 },
-            },
-        };
+            });
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild([bundle], out var report);
@@ -105,11 +103,9 @@ public sealed class ContentPipelineGasTests
     [Test]
     public void Validation_rejects_unknown_gameplay_tag_when_tag_definitions_exist()
     {
-        var bundle = ContentModTestHelper.EmptyBundle("base") with
-        {
-            GameplayEffects = ["bad_tag_ge"],
-            GameplayTags = ["debuff.poison"],
-            Definitions = ModDefinitionsBundle.Empty with
+        var bundle = ContentModTestHelper.Bundle(
+            "base",
+            ModDefinitionsBundle.Empty with
             {
                 GameplayEffects = new Dictionary<string, GameplayEffectDefDto>
                 {
@@ -127,8 +123,7 @@ public sealed class ContentPipelineGasTests
                         Id = "debuff.poison",
                     },
                 },
-            },
-        };
+            });
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild([bundle], out var report);

@@ -1,6 +1,8 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Mvc;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Combat;
+using KemoCard.Mod.Run.Ui;
 
 namespace KemoCard.Mod.Run;
 
@@ -21,6 +23,7 @@ public sealed partial class RunMod : BaseMod
     }
 
     public string RunId { get; set; } = "";
+    public string StoryId { get; set; } = "";
     public int CurrentRing { get; set; }
     public int MaxRing { get; set; }
     public ERunPhase Phase { get; set; }
@@ -111,6 +114,24 @@ public sealed partial class RunMod : BaseMod
         _battleHistory.Add(record);
     }
 
+    /// <summary>
+    /// 声明式注册 run 模块所有 UI。
+    /// </summary>
+    public static IEnumerable<UIRegistration> GetUIRegistrations()
+    {
+        yield return UIRegistration.Dialog(RunUiIds.StorySelect, "Src/mod/run/Ui");
+        yield return UIRegistration.Window(RunUiIds.RunMain, "Src/mod/run/Ui");
+    }
+
+    public static void RegisterUi(UIRuntimeRegistry registry)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
+        foreach (var reg in GetUIRegistrations())
+        {
+            registry.Register(reg.ToRuntimeEntry());
+        }
+    }
+
     public RunDto ToDto()
     {
         var characterPoolDtos = _characterPool.Select(c => new CharacterPoolEntryDto
@@ -138,6 +159,7 @@ public sealed partial class RunMod : BaseMod
         return new RunDto
         {
             RunId = RunId,
+            StoryId = StoryId,
             SchemaVersion = 1,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -161,6 +183,7 @@ public sealed partial class RunMod : BaseMod
         ArgumentNullException.ThrowIfNull(dto);
 
         RunId = dto.RunId;
+        StoryId = dto.StoryId;
         CurrentRing = dto.CurrentRing;
         MaxRing = dto.MaxRing;
         Phase = dto.Phase;

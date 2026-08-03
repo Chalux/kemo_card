@@ -15,4 +15,5 @@ public enum EContentCategory
     Attribute,
     GameplayEffect,
     GameplayTag,
+    Story,
 }

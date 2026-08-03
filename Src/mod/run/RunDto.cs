@@ -48,6 +48,7 @@ public sealed record BattleRecordDto
 public sealed record RunDto
 {
     public string RunId { get; init; } = "";
+    public string StoryId { get; init; } = "";
     public int SchemaVersion { get; init; } = 1;
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;

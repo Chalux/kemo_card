@@ -24,9 +24,8 @@ public sealed class ModScriptPrewarmerTests
                 ScriptPath = "effects/broken.js",
             },
         };
-        var bundle = new ModContentBundle(
+        var bundle = ContentModTestHelper.Bundle(
             "base.game",
-            [], [], [], [], [], [], [], [], ["fx_broken"],
             ModDefinitionsBundle.Empty with { Effects = effects });
 
         var registry = new GameDefinitionRegistry();

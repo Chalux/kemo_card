@@ -18,6 +18,7 @@ Run Mod 管理一次游戏流程（Run）中跨战斗、跨事件持续存在的
 Src/mod/run/
 ├── RunMod.cs                  # Run级数据持有（继承 BaseMod）
 ├── RunController.cs           # Run生命周期编排（继承 BaseController<RunMod>）
+├── RunRuntime.cs              # 当前 Run 会话门面（CreateNew / Abandon）
 ├── RunDto.cs                  # 可序列化的 Run 快照（存档用）
 ├── PlayerRunState.cs          # 每个槽位的玩家私有数据
 ├── PlayerRunStateDto.cs       # PlayerRunState 的可序列化快照
@@ -29,6 +30,10 @@ Src/mod/run/
 │
 ├── reward/
 │   └── RunRewardDistributor.cs # 奖励分发逻辑
+│
+├── Ui/
+│   ├── StorySelectDlg.cs/.tscn  # 选故事界面（Dialog）
+│   └── RunMainWin.cs/.tscn      # Run 主界面（Window 壳）
 │
 └── events/
     └── RunEventBus.cs          # Run级事件定义
@@ -482,7 +487,7 @@ public sealed class RunController : BaseController<RunMod>
 
 **CreateRun：**
 1. `RunId = Guid.NewGuid()`；固化 `StoryId`（未提供合法故事脚本 id → 拒绝创建）
-2. `RunSeed = rng.NextInt()`；记录定义版本摘要 `DefinitionVersions`
+2. `RunSeed = rng.RunSeed`（`HostRng` 暴露构造时传入的 seed；**手写 seed 语义**：UI 用用户输入 seed 构造 `HostRng`，`>= 0` 原样落库；`-1` 随机时由上层以随机值构造）；记录定义版本摘要 `DefinitionVersions`
 3. 单人：创建 1 个 `PlayerController`（"local", IsOwner=true），`SlotOwnership` 4 槽位全指向 "local"
 4. 多人：房主分配各槽位控制权，`SlotOwnership` 必须覆盖全部 4 个槽位
 5. 开局无预置 CharacterPool；按故事/Init 为 **每个槽位** 生成角色 **3 选 1**（硬去重；池不足降为 2/1；凑不出 4 人 Fatal；落选作废，不进池）
@@ -567,3 +572,23 @@ public sealed class RunController : BaseController<RunMod>
 | `CharacterInstance` | 角色池成员类型，已完整支持定义绑定和卡组管理 |
 | `GlobalSaveService` | RunSaveService 复用其原子写模式 |
 | `BaseMod / BaseController` | 继承项目 MVC 基础框架 |
+| `GlobalModController` / 条件引擎 | 选故事时经 `GlobalPersistentCondContext` 求值 `StoryDto.unlock`（见条件规格 §8） |
+| `UIManager` | 选故事（Dialog）与 Run 主界面（Window）经 `RunMod.GetUIRegistrations()` 注册 |
+
+---
+
+## 9. Run 界面流程（选故事 → 主界面）
+
+| 步骤 | 界面 | 行为 |
+|---|---|---|
+| 1 | 主菜单「新游戏」 | 打开选故事 Dialog（`Src/mod/run/Ui/StorySelectDlg`） |
+| 2 | 选故事 | 列表 = `GameDefinitionStore.Stories` 全量；按 `StoryDto.unlock` + Persistent 条件求值判定可玩；**未通过可选中预览详情，但确定按钮不可用**；右侧显示故事名 / 作者 / 所属 Mod（Registry owner）/ 模式（仅单人 / 可联机）/ 描述，未满足条件时显示条件提示 |
+| 3 | 选故事 · Seed | 输入默认 `-1`（随机），`>= 0` 视为手写 seed（精确成为 `RunSeed`） |
+| 4 | 确定 | `RunRuntime.CreateNew(storyId, seed, candidates)`（单人，`candidates` 暂空）→ 关闭选故事 → 打开 Run 主界面 Window（`RunMainWin`） |
+| 5 | Run 主界面（壳） | 显示故事名、阶段、环/MaxRing、Seed、金币（单人 `SharedGold`）；「放弃 Run」→ 确认 Alert → 回主菜单 |
+| 6 | 后置 | 环地图、事件 / 奖励 / 编队 / 战斗入口、开局选人：后续里程碑落地，不在本界面范围 |
+
+- `RunRuntime`（`Src/mod/run/RunRuntime.cs`）为当前 Run 会话门面：持有 `RunController` 单例，`CreateNew` 销毁旧会话并构造新 `HostRng`。
+- 运行期状态读取走 `RunRuntime.Current`，UI 不直接构造 `RunController`。
+
+---

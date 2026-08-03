@@ -8,41 +8,8 @@ internal static class CombatTestHelper
     public static GameDefinitionRegistry CreateRegistry(params CardDto[] cards)
     {
         var cardDict = cards.ToDictionary(card => card.Id, StringComparer.Ordinal);
-        var definitions = new ModDefinitionsBundle(
-            ModDefinitionsBundle.Empty.Characters,
-            ModDefinitionsBundle.Empty.Enemies,
-            ModDefinitionsBundle.Empty.Battles,
-            ModDefinitionsBundle.Empty.Events,
-            ModDefinitionsBundle.Empty.Items,
-            cardDict,
-            ModDefinitionsBundle.Empty.Skills,
-            ModDefinitionsBundle.Empty.Buffs,
-            ModDefinitionsBundle.Empty.Effects)
-        {
-            Attributes = ModDefinitionsBundle.Empty.Attributes,
-            GameplayEffects = ModDefinitionsBundle.Empty.GameplayEffects,
-            GameplayTags = ModDefinitionsBundle.Empty.GameplayTags,
-            SkillActions = ModDefinitionsBundle.Empty.SkillActions,
-        };
-
-        var bundle = new ModContentBundle(
-            ModId: "test.mod",
-            Characters: [],
-            Enemies: [],
-            Battles: [],
-            Events: [],
-            Cards: cardDict.Keys.ToList(),
-            Items: [],
-            Skills: [],
-            Buffs: [],
-            Effects: [],
-            Definitions: definitions)
-        {
-            Attributes = [],
-            GameplayEffects = [],
-            GameplayTags = [],
-            SkillActions = [],
-        };
+        var definitions = ModDefinitionsBundle.Empty with { Cards = cardDict };
+        var bundle = new ModContentBundle("test.mod", definitions);
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild([bundle], out _);
@@ -100,37 +67,21 @@ internal static class CombatTestHelper
         gameplayTags ??= new Dictionary<string, GameplayTagDefDto>(StringComparer.Ordinal);
         skillActions ??= new Dictionary<string, SkillActionDto>(StringComparer.Ordinal);
 
-        var definitions = new ModDefinitionsBundle(
-            characters, enemies, battles,
-            ModDefinitionsBundle.Empty.Events,
-            ModDefinitionsBundle.Empty.Items,
-            cards, skills, buffs, effects)
+        var definitions = ModDefinitionsBundle.Empty with
         {
+            Characters = characters,
+            Enemies = enemies,
+            Battles = battles,
+            Cards = cards,
+            Skills = skills,
+            Buffs = buffs,
+            Effects = effects,
             Attributes = attributes,
             GameplayEffects = gameplayEffects,
             GameplayTags = gameplayTags,
             SkillActions = skillActions,
         };
 
-        var bundle = new ModContentBundle(
-            ModId: "test.mod",
-            Characters: characters.Keys.ToList(),
-            Enemies: enemies.Keys.ToList(),
-            Battles: battles.Keys.ToList(),
-            Events: [],
-            Cards: cards.Keys.ToList(),
-            Items: [],
-            Skills: skills.Keys.ToList(),
-            Buffs: buffs.Keys.ToList(),
-            Effects: effects.Keys.ToList(),
-            Definitions: definitions)
-        {
-            Attributes = attributes.Keys.ToList(),
-            GameplayEffects = gameplayEffects.Keys.ToList(),
-            GameplayTags = gameplayTags.Keys.ToList(),
-            SkillActions = skillActions.Keys.ToList(),
-        };
-
-        registry.Rebuild([bundle], out _);
+        registry.Rebuild([new ModContentBundle("test.mod", definitions)], out _);
     }
 }

@@ -14,7 +14,7 @@
 
 选定方案：**`ISoundService` + `SoundManager`（Node，位于 `Src/frame/audio/`）+ 静态门面 `Sound.Configure`**，对齐 `AppLog` 的可配置门面模式；`MainRoot` 挂树并 Configure，从全局存档 Settings 恢复音量/静音。
 
-依赖约定（已写入 `.cursor/rules/project-foundations.mdc`）：`frame` **可以**引用 Godot；`frame` **不得**依赖 `mod`；通用 Godot 运行时能力优先放 `frame`，`fixed` 仅放引擎补丁。
+依赖约定（见 [Doc/AGENT.md](../../../AGENT.md)）：`frame` **可以**引用 Godot；`frame` **不得**依赖 `mod`；通用 Godot 运行时能力优先放 `frame`，`fixed` 仅放引擎补丁。
 
 ---
 

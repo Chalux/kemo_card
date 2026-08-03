@@ -17,31 +17,7 @@ public sealed class GameDefinitionStore
     private readonly Dictionary<string, GameplayEffectDefDto> _gameplayEffects = new(StringComparer.Ordinal);
     private readonly Dictionary<string, GameplayTagDefDto> _gameplayTags = new(StringComparer.Ordinal);
     private readonly Dictionary<string, SkillActionDto> _skillActions = new(StringComparer.Ordinal);
-
-    public void Rebuild(
-        IReadOnlyList<ModContentBundle> bundles,
-        IReadOnlyList<ContentIdConflictEntry> idConflicts)
-    {
-        _characters.Clear();
-        _enemies.Clear();
-        _battles.Clear();
-        _events.Clear();
-        _items.Clear();
-        _cards.Clear();
-        _skills.Clear();
-        _buffs.Clear();
-        _effects.Clear();
-        _attributes.Clear();
-        _gameplayEffects.Clear();
-        _gameplayTags.Clear();
-        _skillActions.Clear();
-
-        var loserKeys = BuildLoserKeys(idConflicts);
-        foreach (var bundle in bundles)
-        {
-            MergeDefinitions(bundle, loserKeys);
-        }
-    }
+    private readonly Dictionary<string, StoryDto> _stories = new(StringComparer.Ordinal);
 
     public bool TryGetCharacter(string id, out CharacterDto dto) => _characters.TryGetValue(id, out dto!);
 
@@ -69,6 +45,8 @@ public sealed class GameDefinitionStore
 
     public bool TryGetSkillAction(string id, out SkillActionDto dto) => _skillActions.TryGetValue(id, out dto!);
 
+    public bool TryGetStory(string id, out StoryDto dto) => _stories.TryGetValue(id, out dto!);
+
     public IReadOnlyDictionary<string, CharacterDto> Characters => _characters;
 
     public IReadOnlyDictionary<string, EnemyDto> Enemies => _enemies;
@@ -94,6 +72,45 @@ public sealed class GameDefinitionStore
     public IReadOnlyDictionary<string, GameplayTagDefDto> GameplayTags => _gameplayTags;
 
     public IReadOnlyDictionary<string, SkillActionDto> SkillActions => _skillActions;
+
+    public IReadOnlyDictionary<string, StoryDto> Stories => _stories;
+
+    public bool Contains(EContentCategory category, string id) => category switch
+    {
+        EContentCategory.Character => _characters.ContainsKey(id),
+        EContentCategory.Enemy => _enemies.ContainsKey(id),
+        EContentCategory.Battle => _battles.ContainsKey(id),
+        EContentCategory.Event => _events.ContainsKey(id),
+        EContentCategory.Item => _items.ContainsKey(id),
+        EContentCategory.Card => _cards.ContainsKey(id),
+        EContentCategory.Skill => _skills.ContainsKey(id),
+        EContentCategory.Buff => _buffs.ContainsKey(id),
+        EContentCategory.Effect => _effects.ContainsKey(id),
+        EContentCategory.Attribute => _attributes.ContainsKey(id),
+        EContentCategory.GameplayEffect => _gameplayEffects.ContainsKey(id),
+        EContentCategory.GameplayTag => _gameplayTags.ContainsKey(id),
+        EContentCategory.SkillAction => _skillActions.ContainsKey(id),
+        EContentCategory.Story => _stories.ContainsKey(id),
+        _ => false,
+    };
+
+    internal void Clear()
+    {
+        _characters.Clear();
+        _enemies.Clear();
+        _battles.Clear();
+        _events.Clear();
+        _items.Clear();
+        _cards.Clear();
+        _skills.Clear();
+        _buffs.Clear();
+        _effects.Clear();
+        _attributes.Clear();
+        _gameplayEffects.Clear();
+        _gameplayTags.Clear();
+        _skillActions.Clear();
+        _stories.Clear();
+    }
 
     internal void Remove(EContentCategory category, string id)
     {
@@ -138,55 +155,37 @@ public sealed class GameDefinitionStore
             case EContentCategory.SkillAction:
                 _skillActions.Remove(id);
                 break;
+            case EContentCategory.Story:
+                _stories.Remove(id);
+                break;
         }
     }
 
-    private static HashSet<(EContentCategory Category, string Id, string ModId)> BuildLoserKeys(
-        IReadOnlyList<ContentIdConflictEntry> conflicts)
-    {
-        var losers = new HashSet<(EContentCategory, string, string)>();
-        foreach (var conflict in conflicts)
-        {
-            losers.Add((conflict.Category, conflict.ContentId, conflict.LoserModId));
-        }
+    internal Dictionary<string, CharacterDto> CharactersMutable => _characters;
 
-        return losers;
-    }
+    internal Dictionary<string, EnemyDto> EnemiesMutable => _enemies;
 
-    private void MergeDefinitions(
-        ModContentBundle bundle,
-        HashSet<(EContentCategory Category, string Id, string ModId)> loserKeys)
-    {
-        MergeCategory(bundle.ModId, EContentCategory.Character, bundle.Definitions.Characters, _characters, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Enemy, bundle.Definitions.Enemies, _enemies, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Battle, bundle.Definitions.Battles, _battles, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Event, bundle.Definitions.Events, _events, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Item, bundle.Definitions.Items, _items, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Card, bundle.Definitions.Cards, _cards, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Skill, bundle.Definitions.Skills, _skills, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Buff, bundle.Definitions.Buffs, _buffs, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Effect, bundle.Definitions.Effects, _effects, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.Attribute, bundle.Definitions.Attributes, _attributes, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.GameplayEffect, bundle.Definitions.GameplayEffects, _gameplayEffects, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.GameplayTag, bundle.Definitions.GameplayTags, _gameplayTags, loserKeys);
-        MergeCategory(bundle.ModId, EContentCategory.SkillAction, bundle.Definitions.SkillActions, _skillActions, loserKeys);
-    }
+    internal Dictionary<string, BattleDto> BattlesMutable => _battles;
 
-    private static void MergeCategory<T>(
-        string modId,
-        EContentCategory category,
-        IReadOnlyDictionary<string, T> source,
-        Dictionary<string, T> target,
-        HashSet<(EContentCategory Category, string Id, string ModId)> loserKeys)
-    {
-        foreach (var (id, dto) in source)
-        {
-            if (loserKeys.Contains((category, id, modId)))
-            {
-                continue;
-            }
+    internal Dictionary<string, EventDto> EventsMutable => _events;
 
-            target.TryAdd(id, dto);
-        }
-    }
+    internal Dictionary<string, ItemDto> ItemsMutable => _items;
+
+    internal Dictionary<string, CardDto> CardsMutable => _cards;
+
+    internal Dictionary<string, SkillDto> SkillsMutable => _skills;
+
+    internal Dictionary<string, BuffDto> BuffsMutable => _buffs;
+
+    internal Dictionary<string, EffectDto> EffectsMutable => _effects;
+
+    internal Dictionary<string, AttributeDefDto> AttributesMutable => _attributes;
+
+    internal Dictionary<string, GameplayEffectDefDto> GameplayEffectsMutable => _gameplayEffects;
+
+    internal Dictionary<string, GameplayTagDefDto> GameplayTagsMutable => _gameplayTags;
+
+    internal Dictionary<string, SkillActionDto> SkillActionsMutable => _skillActions;
+
+    internal Dictionary<string, StoryDto> StoriesMutable => _stories;
 }

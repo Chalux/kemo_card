@@ -9,3 +9,9 @@ skill.kemo_dash_charged.name,蓄力冲刺,Charged Dash
 skill.kemo_dash_charged.desc,对单个敌人造成 12 点伤害。,Deal 12 damage to a single enemy.
 skill.strike_hit.name,打击,Strike
 skill.strike_hit.desc,造成 6 点伤害。获得 [url=kw:exhaust]消耗[/url]。,Deal 6 damage. Gain [url=kw:exhaust]Exhaust[/url].
+story.kemo_first.name,科莫的初见,Kemo's First Contact
+story.kemo_first.desc,科莫的故事由此开始。抵达森林，遭遇史莱姆。……,Kemo's story begins. Reach the forest and meet the slime. ...
+story.kemo_second.name,科莫的试炼,Kemo's Trial
+story.kemo_second.desc,通关「科莫的初见」后解锁的进阶故事。,An advanced story unlocked after clearing "Kemo's First Contact".
+story.base_rogue.name,肉鸽模式,Rogue Mode
+story.base_rogue.desc,标准的肉鸽循环：穿越环层，遭遇战斗与事件，不断收集卡牌强化构筑，直到通关或倒下。,Standard rogue-lite loop: traverse the rings, face battles and events, grow your deck, until victory or defeat.

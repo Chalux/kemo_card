@@ -1,0 +1,12 @@
+---
+description: 项目约定以 Doc/AGENT.md 为唯一权威；勿在 rules 重复堆叠
+alwaysApply: true
+---
+
+# 项目规则权威
+
+本仓库的项目级约定以 `Doc/AGENT.md` 为**唯一权威来源**。
+
+- 开始工作前阅读并遵循其中的硬性约定、目录地图与「不要做」。
+- **新增或修改项目规则：直接改 `Doc/AGENT.md`**，不要再往 `.cursor/rules/` 添加与之重复的约定正文。
+- 玩法权威仍以 `Doc/superpowers/specs/` 规格链为准（见 AGENT §4）。

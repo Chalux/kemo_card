@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Content.Definitions;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
@@ -19,18 +20,15 @@ public sealed class GameDefinitionRegistryTests
     public void Contains_returns_true_after_registering_card()
     {
         var reg = new GameDefinitionRegistry();
-        var bundle = ContentModTestHelper.EmptyBundle("base.game");
-        bundle = bundle with
-        {
-            Cards = new[] { "strike" },
-            Definitions = bundle.Definitions with
+        var bundle = ContentModTestHelper.Bundle(
+            "base.game",
+            ModDefinitionsBundle.Empty with
             {
-                Cards = new Dictionary<string, KemoCard.Frame.Content.Definitions.CardDto>
+                Cards = new Dictionary<string, CardDto>
                 {
                     ["strike"] = new() { Id = "strike", DisplayNameId = "card.strike.name" },
                 },
-            },
-        };
+            });
 
         reg.Rebuild(new[] { bundle }, out var report);
 

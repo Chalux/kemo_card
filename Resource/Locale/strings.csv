@@ -123,3 +123,31 @@ COND_HAS_ALL_ITEMS_SHORT,物品不足,Not enough items
 COND_HAS_ALL_ITEMS_LONG,需要全部物品,Requires all items
 COND_HAS_ANY_ITEM_SHORT,物品不足,Not enough items
 COND_HAS_ANY_ITEM_LONG,需要任一物品,Requires any item
+UI_RUN_STORY_SELECT_TITLE,选择故事,Select Story
+UI_STORY_LIST,故事列表,Stories
+UI_STORY_DETAILS,故事详情,Story Details
+UI_STORY_NAME,名称,Name
+UI_STORY_AUTHOR,作者,Author
+UI_STORY_MOD,所属 Mod,Mod
+UI_STORY_DESC,描述,Description
+UI_STORY_MODE,模式,Mode
+UI_STORY_MODE_SINGLE,仅单人,Single-player Only
+UI_STORY_MODE_COOP,可联机,Co-op
+UI_STORY_LOCKED,未解锁,Locked
+UI_STORY_UNLOCK_REQUIRED,未满足开启条件,Requirements not met
+UI_RUN_SEED_INPUT_LABEL,种子（-1 随机）,Seed (-1 = Random)
+UI_RUN_START,开始 Run,Start Run
+UI_RUN_ABANDON,放弃 Run,Abandon Run
+UI_RUN_PHASE_LABEL,阶段,Phase
+UI_RUN_RING_LABEL,环,Ring
+UI_RUN_SEED_VALUE,种子,Seed
+UI_RUN_GOLD_LABEL,金币,Gold
+UI_RUN_CONFIRM_ABANDON_TITLE,放弃 Run,Abandon Run
+UI_RUN_CONFIRM_ABANDON_DESC,确定要放弃本次 Run 吗？,Abandon this run?
+UI_RUN_PHASE_INIT,初始,Init
+UI_RUN_PHASE_EVENT,事件,Event
+UI_RUN_PHASE_REWARD,奖励,Reward
+UI_RUN_PHASE_BATTLE,战斗,Battle
+UI_RUN_PHASE_BATTLEEND,战斗结算,Battle End
+UI_RUN_PHASE_RINGEND,环结束,Ring End
+UI_RUN_PHASE_FINISHED,已结束,Finished

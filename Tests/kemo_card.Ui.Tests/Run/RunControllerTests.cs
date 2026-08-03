@@ -22,7 +22,7 @@ public sealed class RunControllerTests
         };
         var rng = new HostRng(1, "create");
 
-        var dto = controller.CreateRun(rng, candidates, isMultiplayer: false);
+        var dto = controller.CreateRun("story_a", rng, candidates, isMultiplayer: false);
 
         Assert.That(dto.Phase, Is.EqualTo(ERunPhase.Event));
         Assert.That(dto.CurrentRing, Is.EqualTo(1));
@@ -36,7 +36,7 @@ public sealed class RunControllerTests
         var controller = new RunController(new RunMod());
         var rng = new HostRng(2, "create");
 
-        var dto = controller.CreateRun(rng, [], isMultiplayer: false);
+        var dto = controller.CreateRun("story_a", rng, [], isMultiplayer: false);
 
         Assert.That(dto.PlayerControllers, Has.Count.EqualTo(1));
         Assert.That(dto.PlayerControllers[0].PlayerId, Is.EqualTo("local"));
@@ -44,6 +44,19 @@ public sealed class RunControllerTests
         Assert.That(dto.SlotOwnership.Count, Is.EqualTo(4));
         for (var i = 0; i < 4; i++)
             Assert.That(dto.SlotOwnership[i], Is.EqualTo("local"));
+    }
+
+    [Test]
+    public void CreateRun_fixes_story_id_and_uses_host_rng_seed()
+    {
+        var controller = new RunController(new RunMod());
+        var rng = new HostRng(42, "story_select");
+
+        var dto = controller.CreateRun("story_kemo_first", rng, [], isMultiplayer: false);
+
+        Assert.That(dto.StoryId, Is.EqualTo("story_kemo_first"));
+        Assert.That(dto.RunSeed, Is.EqualTo(42));
+        Assert.That(controller.State.StoryId, Is.EqualTo("story_kemo_first"));
     }
 
     [Test]

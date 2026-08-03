@@ -83,10 +83,9 @@ public sealed class ContentDefinitionTests
     [Test]
     public void Validation_rejects_unknown_skill_reference()
     {
-        var bundle = ContentModTestHelper.EmptyBundle("base") with
-        {
-            Cards = new[] { "bad_card" },
-            Definitions = ModDefinitionsBundle.Empty with
+        var bundle = ContentModTestHelper.Bundle(
+            "base",
+            ModDefinitionsBundle.Empty with
             {
                 Cards = new Dictionary<string, CardDto>
                 {
@@ -96,8 +95,7 @@ public sealed class ContentDefinitionTests
                         SkillRefs = [new SkillRefDto { SkillId = "missing_skill" }],
                     },
                 },
-            },
-        };
+            });
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild(new[] { bundle }, out var report);

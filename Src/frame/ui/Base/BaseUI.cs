@@ -129,7 +129,7 @@ public abstract partial class BaseUI : Control, IUIMeta
 
         _clickActions[node] = callback;
 
-        // Godot.Button（含项目 BaseButton）走 Pressed；进缓存 RemoveChild 后需在重开时再次 InitEvent 绑定
+        // Godot.Button（含项目 BaseKemoButton）走 Pressed；进缓存 RemoveChild 后需在重开时再次 InitEvent 绑定
         if (node is Button button)
         {
             button.Pressed += callback;

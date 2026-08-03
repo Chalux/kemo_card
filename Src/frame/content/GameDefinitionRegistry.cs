@@ -3,48 +3,24 @@ namespace KemoCard.Frame.Content;
 public sealed class GameDefinitionRegistry
 {
     private readonly object _gate = new();
-    private readonly Dictionary<EContentCategory, HashSet<string>> _tables = new()
-    {
-        [EContentCategory.Character] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Enemy] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Battle] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Event] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Card] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Item] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Skill] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Buff] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Effect] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.Attribute] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.GameplayEffect] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.GameplayTag] = new HashSet<string>(StringComparer.Ordinal),
-        [EContentCategory.SkillAction] = new HashSet<string>(StringComparer.Ordinal),
-    };
+    private readonly Dictionary<(EContentCategory Category, string Id), string> _ownerModIds = new();
 
     public GameDefinitionStore Store { get; } = new();
 
     public int DefinitionVersion { get; private set; }
 
-    private readonly Dictionary<(EContentCategory Category, string Id), string> _ownerModIds = new();
-
     public void Rebuild(IReadOnlyList<ModContentBundle> bundles, out ContentLoadReport report)
     {
         lock (_gate)
         {
-            foreach (var set in _tables.Values)
-            {
-                set.Clear();
-            }
+            var merger = new ContentRegistryMerger();
+            var mergeResult = merger.Merge(bundles, Store);
 
             _ownerModIds.Clear();
-
-            var merger = new ContentRegistryMerger();
-            merger.Merge(bundles, _tables, out var mergeReport, out var ownerModIds);
-            foreach (var (key, modId) in ownerModIds)
+            foreach (var (key, modId) in mergeResult.OwnerModIds)
             {
                 _ownerModIds[key] = modId;
             }
-
-            Store.Rebuild(bundles, mergeReport.IdConflicts);
 
             var validator = new ContentDefinitionValidator();
             var foundValidationErrors = validator.Validate(Store);
@@ -57,8 +33,8 @@ public sealed class GameDefinitionRegistry
 
             DefinitionVersion++;
             report = new ContentLoadReport(
-                mergeReport.SkippedMods,
-                mergeReport.IdConflicts,
+                Array.Empty<ModSkipEntry>(),
+                mergeResult.IdConflicts,
                 Array.Empty<ContentDefinitionValidationError>(),
                 Array.Empty<ScriptLoadError>(),
                 removedValidationErrors);
@@ -69,7 +45,7 @@ public sealed class GameDefinitionRegistry
     {
         lock (_gate)
         {
-            return _tables[category].Contains(id);
+            return Store.Contains(category, id);
         }
     }
 
@@ -85,7 +61,6 @@ public sealed class GameDefinitionRegistry
     {
         foreach (var error in errors)
         {
-            _tables[error.Category].Remove(error.DefinitionId);
             Store.Remove(error.Category, error.DefinitionId);
             _ownerModIds.Remove((error.Category, error.DefinitionId));
         }

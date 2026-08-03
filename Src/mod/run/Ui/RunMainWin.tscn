@@ -1,0 +1,85 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
+
+[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnAbandon")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_runmain")
+_lblStory = NodePath("Panel/VBox/StoryLabel")
+_lblPhase = NodePath("Panel/VBox/Grid/PhaseValue")
+_lblRing = NodePath("Panel/VBox/Grid/RingValue")
+_lblSeed = NodePath("Panel/VBox/Grid/SeedValue")
+_lblGold = NodePath("Panel/VBox/Grid/GoldValue")
+_btnAbandon = NodePath("Panel/VBox/BtnAbandon")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = 120.0
+offset_right = -200.0
+offset_bottom = -120.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="StoryLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+
+[node name="Grid" type="GridContainer" parent="Panel/VBox"]
+layout_mode = 2
+columns = 2
+size_flags_vertical = 3
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 10
+
+[node name="PhaseLabel" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+text = "UI_RUN_PHASE_LABEL"
+
+[node name="PhaseValue" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+
+[node name="RingLabel" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+text = "UI_RUN_RING_LABEL"
+
+[node name="RingValue" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+
+[node name="SeedLabel" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+text = "UI_RUN_SEED_VALUE"
+
+[node name="SeedValue" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+
+[node name="GoldLabel" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+text = "UI_RUN_GOLD_LABEL"
+
+[node name="GoldValue" type="Label" parent="Panel/VBox/Grid"]
+layout_mode = 2
+
+[node name="BtnAbandon" type="Button" parent="Panel/VBox"]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_RUN_ABANDON"

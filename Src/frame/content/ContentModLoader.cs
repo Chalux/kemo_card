@@ -11,53 +11,23 @@ public sealed class ContentModLoader
         var contentRoot = Path.Combine(entry.FolderPath, manifest.ContentRoot);
         try
         {
-            var characters = LoadDefinitions<CharacterDto>(contentRoot, "characters");
-            var enemies = LoadDefinitions<EnemyDto>(contentRoot, "enemies");
-            var battles = LoadDefinitions<BattleDto>(contentRoot, "battles");
-            var events = LoadDefinitions<EventDto>(contentRoot, "events");
-            var items = LoadDefinitions<ItemDto>(contentRoot, "items");
-            var cards = LoadDefinitions<CardDto>(contentRoot, "cards");
-            var skills = LoadDefinitions<SkillDto>(contentRoot, "skills");
-            var buffs = LoadDefinitions<BuffDto>(contentRoot, "buffs");
-            var effects = LoadDefinitions<EffectDto>(contentRoot, "effects");
-            var skillActions = LoadDefinitions<SkillActionDto>(contentRoot, "skill_actions");
-            var attributes = LoadDefinitions<AttributeDefDto>(contentRoot, "attributes");
-            var gameplayEffects = LoadDefinitions<GameplayEffectDefDto>(contentRoot, "gameplay_effects");
-            var gameplayTags = LoadDefinitions<GameplayTagDefDto>(contentRoot, "tags");
+            var definitions = new ModDefinitionsBundle(
+                LoadDefinitions<CharacterDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Character)),
+                LoadDefinitions<EnemyDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Enemy)),
+                LoadDefinitions<BattleDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Battle)),
+                LoadDefinitions<EventDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Event)),
+                LoadDefinitions<ItemDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Item)),
+                LoadDefinitions<CardDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Card)),
+                LoadDefinitions<SkillDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Skill)),
+                LoadDefinitions<BuffDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Buff)),
+                LoadDefinitions<EffectDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Effect)),
+                LoadDefinitions<AttributeDefDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Attribute)),
+                LoadDefinitions<GameplayEffectDefDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.GameplayEffect)),
+                LoadDefinitions<GameplayTagDefDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.GameplayTag)),
+                LoadDefinitions<SkillActionDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.SkillAction)),
+                LoadDefinitions<StoryDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Story)));
 
-            return new ModContentBundle(
-                manifest.ModId,
-                [.. characters.Keys],
-                [.. enemies.Keys],
-                [.. battles.Keys],
-                [.. events.Keys],
-                [.. cards.Keys],
-                [.. items.Keys],
-                [.. skills.Keys],
-                [.. buffs.Keys],
-                [.. effects.Keys],
-                new ModDefinitionsBundle(
-                    characters,
-                    enemies,
-                    battles,
-                    events,
-                    items,
-                    cards,
-                    skills,
-                    buffs,
-                    effects)
-                {
-                    Attributes = attributes,
-                    GameplayEffects = gameplayEffects,
-                    GameplayTags = gameplayTags,
-                    SkillActions = skillActions,
-                })
-            {
-                Attributes = [.. attributes.Keys],
-                GameplayEffects = [.. gameplayEffects.Keys],
-                GameplayTags = [.. gameplayTags.Keys],
-                SkillActions = [.. skillActions.Keys],
-            };
+            return new ModContentBundle(manifest.ModId, definitions);
         }
         catch (Exception ex)
         {

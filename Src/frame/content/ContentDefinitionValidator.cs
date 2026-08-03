@@ -1,4 +1,6 @@
+using System.Text.Json;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Gas;
 
 namespace KemoCard.Frame.Content;
@@ -40,7 +42,33 @@ public sealed class ContentDefinitionValidator
         ValidateSkillActions(store, errors);
         ValidateGameplayTags(store, errors);
         ValidateGameplayEffects(store, errors);
+        ValidateStories(store, errors);
         return errors;
+    }
+
+    private static void ValidateStories(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+    {
+        foreach (var story in store.Stories.Values)
+        {
+            if (story.Unlock is not { } unlock || unlock.ValueKind == JsonValueKind.Null)
+            {
+                continue;
+            }
+
+            var sourcePath = $"content/stories/{story.Id}.json:unlock";
+            if (!ConditionParser.TryParse<IPersistentCondContext>(
+                    unlock,
+                    ConditionDomains.Persistent,
+                    sourcePath,
+                    out _,
+                    out var error))
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.Story,
+                    story.Id,
+                    error ?? "unlock 条件解析失败。"));
+            }
+        }
     }
 
     private static void ValidateCardGroups(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)

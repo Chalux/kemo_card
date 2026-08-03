@@ -236,7 +236,7 @@ public partial class BaseKemoButton : Button
         var service = KeywordTipService.Current;
         if (service == null)
         {
-            AppLog.Warning("BaseButton: KeywordTipService.Current 为空，无法显示词条提示。", "BaseButton");
+            AppLog.Warning("BaseKemoButton: KeywordTipService.Current 为空，无法显示词条提示。", "BaseKemoButton");
             return;
         }
 

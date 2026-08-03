@@ -1,7 +1,8 @@
 # 条件判断系统（Condition）设计
 
 **日期**：2026-07-30  
-**状态**：引擎与 Persistent 四件套已实现；Combat CondType / 内容 DTO 字段未接  
+**最后修订**：2026-07-31  
+**状态**：引擎与 Persistent 四件套已实现；首个内容接入 `StoryDto.unlock`（2026-07-31）；Combat CondType / 其余内容 DTO 字段未接  
 **范围**：可扩展条件求值引擎、Persistent / Combat 双域 CondType 注册、JSON 组合语法、Explain 结构化结果与提示模板约定  
 **非范围**：扣除/支付（Cost）、具名条件包、脚本动态注册 CondType、引擎内脏标记/订阅、Combat 具体 CondType（v1 仅空表）
 
@@ -186,6 +187,12 @@ Combat 域：v1 建立空注册表与 Context 接口占位，**不注册**业务
 - 条件写在各内容定义的内联字段中（字段名由具体 DTO/规格定义，如 `unlock`）；**无**独立「条件包」内容类别。
 - 校验时机：在 CondType 已注册之后、内容合并/校验流水线中解析表达式（Bootstrap 顺序：先 Register 条件类型，再校验引用它们的定义）。
 - 缺失条件字段 = 该内容无门槛；与空 `{}`/`[]` 字面量区分见 §3.3。
+
+**首个接入（2026-07-31）**：`StoryDto.unlock`（Persistent 域，见[内容规格](./2026-05-17-content-mod-manager-design.md) §3.2）。
+
+- 校验：`ContentDefinitionValidator.ValidateStories` 解析；失败带 `content/stories/<id>.json:unlock` 来源路径，定义移除。
+- 运行期：选故事 UI 用 `ConditionEvaluator` 求值，Context 为 `GlobalPersistentCondContext`（`Src/mod/global/Condition/`）——`HasFlag` 映射到全局存档 `Unlocks`（与 `IsContentUnlocked` 同表）；`GetItemCount` 暂恒 0（商店/道具规格未落地）。
+- 加载与校验的 Bootstrap 顺序约束由 `ModFactory.Bootstrap` 保证：先 `RegisterBuiltinConditions()`，再 `ContentModPipeline.Rebuild()`。
 
 ---
 

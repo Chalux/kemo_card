@@ -179,10 +179,9 @@ public sealed class ContentDefinitionExtendedTests
     [Test]
     public void Validation_rejects_unknown_enemy_in_battle()
     {
-        var bundle = ContentModTestHelper.EmptyBundle("base") with
-        {
-            Battles = new[] { "bad_battle" },
-            Definitions = ModDefinitionsBundle.Empty with
+        var bundle = ContentModTestHelper.Bundle(
+            "base",
+            ModDefinitionsBundle.Empty with
             {
                 Battles = new Dictionary<string, BattleDto>
                 {
@@ -198,8 +197,7 @@ public sealed class ContentDefinitionExtendedTests
                         ],
                     },
                 },
-            },
-        };
+            });
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild(new[] { bundle }, out var report);
@@ -212,10 +210,9 @@ public sealed class ContentDefinitionExtendedTests
     [Test]
     public void Validation_rejects_script_event_without_script_path()
     {
-        var bundle = ContentModTestHelper.EmptyBundle("base") with
-        {
-            Events = new[] { "script_event" },
-            Definitions = ModDefinitionsBundle.Empty with
+        var bundle = ContentModTestHelper.Bundle(
+            "base",
+            ModDefinitionsBundle.Empty with
             {
                 Events = new Dictionary<string, EventDto>
                 {
@@ -225,8 +222,7 @@ public sealed class ContentDefinitionExtendedTests
                         EventKind = EEventKind.Script,
                     },
                 },
-            },
-        };
+            });
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild(new[] { bundle }, out var report);
@@ -239,17 +235,15 @@ public sealed class ContentDefinitionExtendedTests
     [Test]
     public void Validation_rejects_item_without_use_skill_refs()
     {
-        var bundle = ContentModTestHelper.EmptyBundle("base") with
-        {
-            Items = new[] { "empty_potion" },
-            Definitions = ModDefinitionsBundle.Empty with
+        var bundle = ContentModTestHelper.Bundle(
+            "base",
+            ModDefinitionsBundle.Empty with
             {
                 Items = new Dictionary<string, ItemDto>
                 {
                     ["empty_potion"] = new() { Id = "empty_potion" },
                 },
-            },
-        };
+            });
 
         var registry = new GameDefinitionRegistry();
         registry.Rebuild(new[] { bundle }, out var report);

@@ -10,6 +10,7 @@ using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Mod;
 using KemoCard.Mod.Global;
+using KemoCard.Mod.Run;
 
 namespace MainRoot;
 
@@ -62,6 +63,7 @@ public partial class MainRoot : Control
     {
         var registry = new UIRuntimeRegistry();
         GlobalMod.RegisterUi(registry);
+        RunMod.RegisterUi(registry);
 
         var uiManager = new UIManager();
         AddChild(uiManager);

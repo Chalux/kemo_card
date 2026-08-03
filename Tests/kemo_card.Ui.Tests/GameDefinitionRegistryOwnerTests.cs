@@ -15,11 +15,16 @@ public sealed class GameDefinitionRegistryOwnerTests
         {
             ["fx_a"] = new() { Id = "fx_a", Kind = EEffectKind.Damage },
         };
-        var baseBundle = new ModContentBundle(
+        var addonEffects = new Dictionary<string, EffectDto>(StringComparer.Ordinal)
+        {
+            ["fx_a"] = new() { Id = "fx_a", Kind = EEffectKind.Damage },
+        };
+        var baseBundle = ContentModTestHelper.Bundle(
             "base.game",
-            [], [], [], [], [], [], [], [], ["fx_a"],
             ModDefinitionsBundle.Empty with { Effects = baseEffects });
-        var addonBundle = ContentModTestHelper.EmptyBundle("addon.mod") with { Effects = ["fx_a"] };
+        var addonBundle = ContentModTestHelper.Bundle(
+            "addon.mod",
+            ModDefinitionsBundle.Empty with { Effects = addonEffects });
 
         registry.Rebuild(new[] { baseBundle, addonBundle }, out _);
 

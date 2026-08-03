@@ -1,0 +1,7 @@
+{
+  "displayNameId": "story.base_rogue.name",
+  "descId": "story.base_rogue.desc",
+  "author": "Chalux",
+  "scriptPath": "stories/base_rogue.js",
+  "singlePlayerOnly": true
+}

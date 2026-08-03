@@ -1,6 +1,7 @@
 namespace KemoCard.Ui.Tests;
 
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Content.Definitions;
 
 internal static class ContentModTestHelper
 {
@@ -26,6 +27,7 @@ internal static class ContentModTestHelper
         Directory.CreateDirectory(Path.Combine(dir, "content", "attributes"));
         Directory.CreateDirectory(Path.Combine(dir, "content", "gameplay_effects"));
         Directory.CreateDirectory(Path.Combine(dir, "content", "tags"));
+        Directory.CreateDirectory(Path.Combine(dir, "content", "stories"));
         var requiredJson = required is { Length: > 0 }
             ? string.Join(", ", required.Select(static r => $"\"{r}\""))
             : "";
@@ -108,6 +110,20 @@ internal static class ContentModTestHelper
         WriteJson(modDir, "tags", gameplayTagId, json);
     }
 
+    public static void AddStory(string modDir, string storyId, string json = "{}")
+    {
+        WriteJson(modDir, "stories", storyId, json);
+    }
+
+    /// <summary>从磁盘扫描并加载指定 mod 的 bundle（复用 ContentModLoader 加载路径）。</summary>
+    public static ModContentBundle CreateBundleFromFolder(string root, string modId)
+    {
+        var discovery = new ContentModDiscovery();
+        var scan = discovery.Scan(root);
+        var entry = scan.ValidMods.First(m => m.Manifest.ModId == modId);
+        return ContentModLoader.Load(entry);
+    }
+
     public static void AddScript(string modDir, string relativePath, string jsSource)
     {
         var path = Path.Combine(modDir, "scripts", relativePath);
@@ -115,18 +131,10 @@ internal static class ContentModTestHelper
         File.WriteAllText(path, jsSource);
     }
 
-    public static ModContentBundle EmptyBundle(string modId) => new(
-        modId,
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        [],
-        ModDefinitionsBundle.Empty);
+    public static ModContentBundle EmptyBundle(string modId) => new(modId, ModDefinitionsBundle.Empty);
+
+    public static ModContentBundle Bundle(string modId, ModDefinitionsBundle definitions) =>
+        new(modId, definitions);
 
     private static void WriteJson(string modDir, string folder, string id, string json)
     {

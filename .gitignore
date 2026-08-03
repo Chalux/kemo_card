@@ -12,6 +12,10 @@
 *.suo
 *.cs.uid
 
+# Beckett MCP plugin & local config (kept local, not version-controlled)
+/addons/beckett/
+/.beckett/
+
 # Git worktrees
 .worktrees/
 

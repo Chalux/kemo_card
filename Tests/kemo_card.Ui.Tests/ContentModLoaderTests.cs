@@ -15,9 +15,8 @@ public sealed class ContentModLoaderTests
 
         var discovery = new ContentModDiscovery();
         var entry = discovery.Scan(root).ValidMods[0];
-        // var loader = new ContentModLoader();
         var bundle = ContentModLoader.Load(entry);
 
-        Assert.That(bundle.Cards, Does.Contain("strike"));
+        Assert.That(bundle.Definitions.Cards.ContainsKey("strike"), Is.True);
     }
 }

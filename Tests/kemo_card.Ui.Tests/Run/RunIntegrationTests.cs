@@ -31,7 +31,7 @@ public sealed class RunIntegrationTests
                 new() { Id = "hero_d", Cards = [CombatSimulationTestBuilder.PartyHpCardId] },
             };
 
-            var dto = controller.CreateRun(rng, candidates, isMultiplayer: false);
+            var dto = controller.CreateRun("story_a", rng, candidates, isMultiplayer: false);
             Assert.That(dto.Phase, Is.EqualTo(ERunPhase.Event));
             Assert.That(dto.CurrentRing, Is.EqualTo(1));
 
@@ -85,7 +85,7 @@ public sealed class RunIntegrationTests
         var controller = new RunController(mod);
         var rng = new HostRng(99, "rollback");
 
-        controller.CreateRun(rng, [], isMultiplayer: false);
+        controller.CreateRun("story_a", rng, [], isMultiplayer: false);
         mod.Phase = ERunPhase.Reward;
 
         for (var i = 0; i < 4; i++)

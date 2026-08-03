@@ -1,0 +1,7 @@
+{
+  "displayNameId": "story.kemo_second.name",
+  "descId": "story.kemo_second.desc",
+  "author": "KemoCard Team",
+  "unlock": { "HasFlag": ["story.kemo_first.clear"] },
+  "singlePlayerOnly": true
+}
