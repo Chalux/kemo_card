@@ -22,7 +22,6 @@ buses/default_bus_layout="uid://fd5hvb3qte7v"
 [autoload]
 
 DialogueManager="*uid://c3rodes2l3gxb"
-BeckettRuntime="*uid://dspgi2nxto4e8"
 
 [beckett]
 
@@ -39,7 +38,7 @@ project/assembly_name="kemo_card"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/beckett/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
 
 [internationalization]
 
