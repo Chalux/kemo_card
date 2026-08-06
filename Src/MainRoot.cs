@@ -10,6 +10,7 @@ using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Mod;
 using KemoCard.Mod.Global;
+using KemoCard.Mod.Global.Ui.Toast;
 using KemoCard.Mod.Run;
 
 namespace MainRoot;
@@ -86,6 +87,8 @@ public partial class MainRoot : Control
                 EUILayer.Guide,
             ],
         });
+
+        ToastService.Configure(UIManager.Instance?.GetLayer(EUILayer.Notice));
     }
 
     private void EnsureKeywordTipLayer()

@@ -1,8 +1,8 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://r7p4ubexmiw1"]
 
-[ext_resource type="Script" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
+[ext_resource type="Script" uid="uid://ca4xqyua7ykia" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
 
-[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnAbandon")]
+[node name="RunMainWin" type="Control" unique_id=1633681856 node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,70 +15,94 @@ _lblPhase = NodePath("Panel/VBox/Grid/PhaseValue")
 _lblRing = NodePath("Panel/VBox/Grid/RingValue")
 _lblSeed = NodePath("Panel/VBox/Grid/SeedValue")
 _lblGold = NodePath("Panel/VBox/Grid/GoldValue")
-_btnAbandon = NodePath("Panel/VBox/BtnAbandon")
+_btnSave = NodePath("Panel/VBoxContainer/BtnSave")
+_btnSaveExit = NodePath("Panel/VBoxContainer/BtnSaveExit")
+_btnQuickLoad = NodePath("Panel/VBoxContainer/BtnQuickLoad")
+_btnAbandon = NodePath("Panel/VBoxContainer/BtnAbandon")
 
-[node name="Panel" type="Panel" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 200.0
-offset_top = 120.0
-offset_right = -200.0
-offset_bottom = -120.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Panel" type="Panel" parent="." unique_id=82280747]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=1664087261]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 86.0
+grow_horizontal = 2
 theme_override_constants/separation = 16
 
-[node name="StoryLabel" type="Label" parent="Panel/VBox"]
+[node name="StoryLabel" type="Label" parent="Panel/VBox" unique_id=1349907440]
 layout_mode = 2
 theme_override_font_sizes/font_size = 34
 horizontal_alignment = 1
 
-[node name="Grid" type="GridContainer" parent="Panel/VBox"]
+[node name="Grid" type="HBoxContainer" parent="Panel/VBox" unique_id=1436859155]
 layout_mode = 2
-columns = 2
-size_flags_vertical = 3
-theme_override_constants/h_separation = 16
-theme_override_constants/v_separation = 10
 
-[node name="PhaseLabel" type="Label" parent="Panel/VBox/Grid"]
+[node name="PhaseLabel" type="Label" parent="Panel/VBox/Grid" unique_id=438760409]
 layout_mode = 2
 text = "UI_RUN_PHASE_LABEL"
 
-[node name="PhaseValue" type="Label" parent="Panel/VBox/Grid"]
+[node name="PhaseValue" type="Label" parent="Panel/VBox/Grid" unique_id=755905985]
 layout_mode = 2
 
-[node name="RingLabel" type="Label" parent="Panel/VBox/Grid"]
+[node name="RingLabel" type="Label" parent="Panel/VBox/Grid" unique_id=719179815]
 layout_mode = 2
 text = "UI_RUN_RING_LABEL"
 
-[node name="RingValue" type="Label" parent="Panel/VBox/Grid"]
+[node name="RingValue" type="Label" parent="Panel/VBox/Grid" unique_id=1624697043]
 layout_mode = 2
 
-[node name="SeedLabel" type="Label" parent="Panel/VBox/Grid"]
+[node name="SeedLabel" type="Label" parent="Panel/VBox/Grid" unique_id=746437569]
 layout_mode = 2
 text = "UI_RUN_SEED_VALUE"
 
-[node name="SeedValue" type="Label" parent="Panel/VBox/Grid"]
+[node name="SeedValue" type="Label" parent="Panel/VBox/Grid" unique_id=1667591417]
 layout_mode = 2
 
-[node name="GoldLabel" type="Label" parent="Panel/VBox/Grid"]
+[node name="GoldLabel" type="Label" parent="Panel/VBox/Grid" unique_id=88291391]
 layout_mode = 2
 text = "UI_RUN_GOLD_LABEL"
 
-[node name="GoldValue" type="Label" parent="Panel/VBox/Grid"]
+[node name="GoldValue" type="Label" parent="Panel/VBox/Grid" unique_id=1079842043]
 layout_mode = 2
 
-[node name="BtnAbandon" type="Button" parent="Panel/VBox"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel" unique_id=408731610]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -180.0
+offset_top = -48.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="BtnSave" type="Button" parent="Panel/VBoxContainer" unique_id=191993574]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_RUN_SAVE"
+
+[node name="BtnSaveExit" type="Button" parent="Panel/VBoxContainer" unique_id=191993575]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_RUN_SAVE_AND_EXIT"
+
+[node name="BtnQuickLoad" type="Button" parent="Panel/VBoxContainer" unique_id=191993576]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_RUN_QUICK_LOAD"
+
+[node name="BtnAbandon" type="Button" parent="Panel/VBoxContainer" unique_id=191993573]
 custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
 size_flags_horizontal = 4

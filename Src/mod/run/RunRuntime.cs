@@ -1,25 +1,54 @@
+using Godot;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Scripting;
+using KemoCard.Mod.Run.Save;
 
 namespace KemoCard.Mod.Run;
 
 /// <summary>
 /// Run 会话门面：持有当前 RunController，供选故事 / Run 主界面读取与操作。
 /// seed &lt; 0 视为随机；&gt;= 0 视为手写 seed（精确成为 RunSeed）。
+/// 存档为单槽：user://saves/run/，覆盖式写入。
 /// </summary>
 public static class RunRuntime
 {
     private static RunController? _current;
+    private static RunSaveService? _saveService;
 
     public static RunController? Current => _current;
+
+    /// <summary>
+    /// 单槽存档门面（懒加载；目录 user://saves/run）。
+    /// </summary>
+    public static RunSaveService SaveService
+    {
+        get
+        {
+            if (_saveService != null)
+            {
+                return _saveService;
+            }
+
+            var dir = ProjectSettings.GlobalizePath("user://saves/run");
+            _saveService = new RunSaveService(dir);
+            return _saveService;
+        }
+    }
+
+    /// <summary>
+    /// 是否存在可继续的存档。
+    /// </summary>
+    public static bool HasSave => SaveService.Exists;
 
     public static RunController CreateNew(string storyId, int seed, IReadOnlyList<CharacterDto> candidates)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(storyId);
         ArgumentNullException.ThrowIfNull(candidates);
 
+        SaveService.Delete();
         _current?.Dispose();
         var controller = new RunController(new RunMod());
+        controller.EnableAutoSave(SaveService);
         var hostRng = seed >= 0
             ? new HostRng(seed, "story_select")
             : new HostRng(Random.Shared.Next(1, int.MaxValue), "story_select");
@@ -28,9 +57,40 @@ public static class RunRuntime
         return controller;
     }
 
+    /// <summary>
+    /// 手动 / 退出前保存当前会话。
+    /// </summary>
+    public static void SaveCurrent()
+    {
+        _current?.Save(SaveService);
+    }
+
+    /// <summary>
+    /// 从最近存档恢复会话；失败（无档）返回 false。
+    /// </summary>
+    public static bool TryLoadLatest()
+    {
+        var loaded = SaveService.LoadOrDefault();
+        if (string.IsNullOrEmpty(loaded.RunId))
+        {
+            return false;
+        }
+
+        _current?.Dispose();
+        var controller = new RunController(new RunMod());
+        controller.EnableAutoSave(SaveService);
+        controller.LoadRun(loaded);
+        _current = controller;
+        return true;
+    }
+
+    /// <summary>
+    /// 放弃当前 Run：销毁会话并删除存档（「继续游戏」不再指向已放弃的档）。
+    /// </summary>
     public static void Abandon()
     {
         _current?.Dispose();
         _current = null;
+        SaveService.Delete();
     }
 }

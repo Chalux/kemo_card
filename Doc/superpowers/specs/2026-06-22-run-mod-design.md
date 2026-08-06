@@ -172,6 +172,7 @@ bool AllSlotsAssigned();
 IReadOnlyList<int> GetSlotsForPlayer(string playerId);
 
 // 持久化
+void EnableAutoSave(RunSaveService saveService);   // 注入自动保存（实现修订 2026-08-04）
 void Save(RunSaveService saveService);
 bool TryLoad(RunSaveService saveService, out RunDto dto);
 ```
@@ -352,15 +353,23 @@ public sealed class RunSaveService
 ### 文件布局
 
 ```
-user_data/runs/
+user_data/saves/run/          # 运行时接线目录（RunRuntime 静态持有）
 ├── <run_id>.json         # 运行中的存档
 ├── <run_id>.bak.json     # 备份（原子替换保留）
 └── <run_id>.tmp.json     # 临时文件
 ```
 
+> 实现修订（2026-08-04）：目录为 `user://saves/run`（`RunRuntime` 懒加载 `SaveService`），与全局存档 `user://saves` 分离。
+
 ### 原子写策略
 
 与 `GlobalSaveService` 一致：`临时文件写入 → File.Replace() 原子替换 → 旧文件变备份`。JSON 损坏时降级到备份文件。
+
+### 单槽存档语义
+
+- `RunRuntime.SaveService`：单槽覆盖写，同一时刻只有最近一局有效。
+- 新 Run（`RunRuntime.CreateNew`）先删旧档再建新 run，避免旧 RunId 文件残留。
+- `RunRuntime.Abandon()` 连带删档，「继续游戏」不再指向已放弃的档。
 
 ### 快照与回滚
 
@@ -368,6 +377,13 @@ user_data/runs/
 - `RunMod.RestoreFrom(RunDto)` — 从快照恢复
 - 战斗前快照为内存中的 `RunDto` 对象，不写磁盘
 - 存档仅通过 `RunController.Save()` 触发，在关键阶段切换间隙自动调用
+
+### 自动保存（grilling 决议 2026-08-04）
+
+- `RunController.EnableAutoSave(RunSaveService)` 注入自动保存服务。
+- 阶段切换点（`CreateRun` / `NextRing` / `EndBattle` 胜利分支）调用 `AutoSaveIfSettled()`；**战斗中（Battle/BattleEnd）不落盘；战斗失败不做自动保存**（存档保持战前状态）。
+- 静默：自动保存不弹 Toast。
+- 退出前：`RunMainWin.OnClose()` 中若非战斗且非 Finished 再存一次；放弃走删档。
 
 ---
 
@@ -585,10 +601,11 @@ public sealed class RunController : BaseController<RunMod>
 | 2 | 选故事 | 列表 = `GameDefinitionStore.Stories` 全量；按 `StoryDto.unlock` + Persistent 条件求值判定可玩；**未通过可选中预览详情，但确定按钮不可用**；右侧显示故事名 / 作者 / 所属 Mod（Registry owner）/ 模式（仅单人 / 可联机）/ 描述，未满足条件时显示条件提示 |
 | 3 | 选故事 · Seed | 输入默认 `-1`（随机），`>= 0` 视为手写 seed（精确成为 `RunSeed`） |
 | 4 | 确定 | `RunRuntime.CreateNew(storyId, seed, candidates)`（单人，`candidates` 暂空）→ 关闭选故事 → 打开 Run 主界面 Window（`RunMainWin`） |
-| 5 | Run 主界面（壳） | 显示故事名、阶段、环/MaxRing、Seed、金币（单人 `SharedGold`）；「放弃 Run」→ 确认 Alert → 回主菜单 |
+| 5 | Run 主界面（壳） | 显示故事名、阶段、环/MaxRing、Seed、金币（单人 `SharedGold`）；右下角「保存 / 保存并返回主菜单 / 快速读取存档 / 放弃 Run」（实现修订 2026-08-04）；战斗中（Battle/BattleEnd）保存系按钮禁用；放弃 → 确认 Alert → `RunRuntime.Abandon()`（删档）→ 回主菜单 |
 | 6 | 后置 | 环地图、事件 / 奖励 / 编队 / 战斗入口、开局选人：后续里程碑落地，不在本界面范围 |
 
 - `RunRuntime`（`Src/mod/run/RunRuntime.cs`）为当前 Run 会话门面：持有 `RunController` 单例，`CreateNew` 销毁旧会话并构造新 `HostRng`。
 - 运行期状态读取走 `RunRuntime.Current`，UI 不直接构造 `RunController`。
+- **存档门面（实现修订 2026-08-04）**：`RunRuntime.SaveService` / `HasSave` / `SaveCurrent()` / `TryLoadLatest()` / `ClearSave()`；`CreateNew` 前删旧档并 `EnableAutoSave`；`Abandon` 删档。主菜单「继续游戏」（`MenuWin.LoadBtn`）经 `HasSave` 置灰、`TryLoadLatest` 恢复。
 
 ---

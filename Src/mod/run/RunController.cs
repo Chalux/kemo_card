@@ -16,6 +16,7 @@ public sealed class RunController : BaseController<RunMod>
     private readonly RunRewardDistributor _rewardDistributor = new();
     private RunDto? _battleSnapshot;
     private CombatSimulation? _simulation;
+    private RunSaveService? _autoSaveService;
 
     public RunController(RunMod model) : base(model)
     {
@@ -53,6 +54,7 @@ public sealed class RunController : BaseController<RunMod>
         }
 
         Model.Phase = ERunPhase.Event;
+        AutoSaveIfSettled();
         return Model.ToDto();
     }
 
@@ -208,6 +210,7 @@ public sealed class RunController : BaseController<RunMod>
             return;
         Model.CurrentRing++;
         Model.Phase = ERunPhase.Event;
+        AutoSaveIfSettled();
     }
 
     public bool HasNextRing()
@@ -371,6 +374,7 @@ public sealed class RunController : BaseController<RunMod>
             });
 
             Model.Phase = ERunPhase.RingEnd;
+            AutoSaveIfSettled();
         }
         else
         {
@@ -389,6 +393,30 @@ public sealed class RunController : BaseController<RunMod>
     #endregion
 
     #region 持久化
+
+    public void EnableAutoSave(RunSaveService saveService)
+    {
+        ArgumentNullException.ThrowIfNull(saveService);
+        _autoSaveService = saveService;
+    }
+
+    /// <summary>
+    /// 阶段切换后的自动保存；战斗中（Battle/BattleEnd）不落盘。
+    /// </summary>
+    private void AutoSaveIfSettled()
+    {
+        if (_autoSaveService == null)
+        {
+            return;
+        }
+
+        if (Model.Phase == ERunPhase.Battle || Model.Phase == ERunPhase.BattleEnd)
+        {
+            return;
+        }
+
+        Save(_autoSaveService);
+    }
 
     public void Save(RunSaveService saveService)
     {

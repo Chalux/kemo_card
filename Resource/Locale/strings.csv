@@ -136,14 +136,14 @@ UI_STORY_MODE_COOP,可联机,Co-op
 UI_STORY_LOCKED,未解锁,Locked
 UI_STORY_UNLOCK_REQUIRED,未满足开启条件,Requirements not met
 UI_RUN_SEED_INPUT_LABEL,种子（-1 随机）,Seed (-1 = Random)
-UI_RUN_START,开始 Run,Start Run
-UI_RUN_ABANDON,放弃 Run,Abandon Run
+UI_RUN_START,开始一局新游戏,Start Run
+UI_RUN_ABANDON,放弃本局,Abandon Run
 UI_RUN_PHASE_LABEL,阶段,Phase
 UI_RUN_RING_LABEL,环,Ring
 UI_RUN_SEED_VALUE,种子,Seed
 UI_RUN_GOLD_LABEL,金币,Gold
 UI_RUN_CONFIRM_ABANDON_TITLE,放弃 Run,Abandon Run
-UI_RUN_CONFIRM_ABANDON_DESC,确定要放弃本次 Run 吗？,Abandon this run?
+UI_RUN_CONFIRM_ABANDON_DESC,确定要放弃本局游戏吗？,Abandon this run?
 UI_RUN_PHASE_INIT,初始,Init
 UI_RUN_PHASE_EVENT,事件,Event
 UI_RUN_PHASE_REWARD,奖励,Reward
@@ -151,3 +151,8 @@ UI_RUN_PHASE_BATTLE,战斗,Battle
 UI_RUN_PHASE_BATTLEEND,战斗结算,Battle End
 UI_RUN_PHASE_RINGEND,环结束,Ring End
 UI_RUN_PHASE_FINISHED,已结束,Finished
+UI_RUN_SAVE,保存,Save
+UI_RUN_SAVE_AND_EXIT,保存并返回主菜单,Save & Return to Menu
+UI_RUN_QUICK_LOAD,快速读取存档,Quick Load
+UI_RUN_SAVED,已保存,Saved
+UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load

@@ -2,7 +2,7 @@
 
 > Agent 请先读 [AGENT.md](AGENT.md)。本文列出活规格、归档入口与本轮维护约定。
 
-**最后修订**：2026-07-31
+**最后修订**：2026-08-04
 
 ---
 
@@ -22,6 +22,9 @@
 | [2026-07-07-event-dispatcher-design.md](superpowers/specs/2026-07-07-event-dispatcher-design.md) | 事件分发器 |
 | [2026-07-29-agent-doc-and-archive-design.md](superpowers/specs/2026-07-29-agent-doc-and-archive-design.md) | 本文档体系（AGENT / 归档）设计 |
 | [2026-07-30-condition-system-design.md](superpowers/specs/2026-07-30-condition-system-design.md) | 条件判断系统（双域 CondType / JSON 组合 / Explain） |
+| [2026-08-04-run-save-continue-design.md](superpowers/specs/2026-08-04-run-save-continue-design.md) | Run 存档闭环（保存 / 继续 / 自动保存，单槽） |
+| [2026-08-04-toast-component-design.md](superpowers/specs/2026-08-04-toast-component-design.md) | Toast 通用组件（对象池 / 堆叠 / 动画） |
+| [2026-08-04-multiplayer-save-impact.md](superpowers/specs/2026-08-04-multiplayer-save-impact.md) | 联机存档影响评估（开放项，不阻塞单人线） |
 
 ## 进行中计划（`Doc/superpowers/plans/`）
 
@@ -29,6 +32,7 @@
 |------|------|
 | [2026-07-30-condition-system-implementation-plan.md](superpowers/plans/2026-07-30-condition-system-implementation-plan.md) | 条件判断系统实现（引擎 + Persistent 四件套） |
 | [2026-07-31-story-selection-and-run-shell-implementation-plan.md](superpowers/plans/2026-07-31-story-selection-and-run-shell-implementation-plan.md) | 故事选择与 Run 基础壳实现（Story 内容接入 + 选故事 UI + Run 主界面） |
+| [2026-08-04-run-save-continue-implementation-plan.md](superpowers/plans/2026-08-04-run-save-continue-implementation-plan.md) | Run 存档闭环 + Toast 组件实现（保存 / 继续 / 自动保存） |
 
 新计划放此目录；完成后 `git mv` 至归档并在原路径留 stub。
 

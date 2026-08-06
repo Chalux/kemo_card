@@ -43,7 +43,9 @@ public static class RedDotService
         if (tree.Root != null)
         {
             _updateNode = new RedDotUpdateNode();
-            tree.Root.AddChild(_updateNode);
+            // _Ready 期间根节点仍在装载场景子节点，同步 AddChild 会失败，
+            // 延迟到帧末再挂载。CallDeferred 不依赖节点已在场景树中，_FlushAll 照常可被排队。
+            tree.Root.CallDeferred(Node.MethodName.AddChild, _updateNode);
         }
     }
 
