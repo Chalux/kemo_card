@@ -71,6 +71,11 @@ public sealed class ModScriptRuntime : IScriptRuntimeResetter, IDisposable
         }
     }
 
+    /// <summary>
+    /// 仅 import 指定模块（不执行入口），供预热在 Rebuild 窗口内调用。
+    /// 预热是 Rebuild 内部步骤（Recreate 之后、EndRebuild 之前）执行，因此不做 _rebuildGate 拦截；
+    /// 并发访问由 _runtimeLock 读锁保护，与 Invoke 共用同一把锁。
+    /// </summary>
     public bool TryLoadModule(string modId, string scriptPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
@@ -81,12 +86,6 @@ public sealed class ModScriptRuntime : IScriptRuntimeResetter, IDisposable
             _runtimeLock.EnterReadLock();
             try
             {
-                if (_rebuildGate)
-                {
-                    _logger.Log($"TryLoadModule skipped during rebuild: {modId}/{scriptPath}");
-                    return false;
-                }
-
                 EnsureEnv();
                 _env!.ExecuteModule(BuildSpecifier(modId, scriptPath));
             }

@@ -118,8 +118,8 @@ PuerTS 3.0 无法在 JS 全局彻底移除 `CS.*`。工程级隔离策略：仅�
 
 ## 8. 构建链
 
-- 源 TS：`Src/typescript/src/mods/<mod-folder>/`
-- esbuild 输出：`Config/mods/<mod-folder>/scripts/`
+- 源 TS：`Config/mods/<mod-folder>/scripts-src/`（**mod 脚本源归属 mod 自己，不放 `Src/typescript/`**）
+- esbuild 输出：`Config/mods/<mod-folder>/scripts/`（构建工具在 `Src/typescript/esbuild.mjs`，`npm run build`）
 - `ContentModBootstrap.EnsureDefaultModsCopied` 复制到 `user://mods/`
 
 ---

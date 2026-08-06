@@ -1,7 +1,7 @@
 var __defProp = Object.defineProperty;
 var __name = (target, value) => __defProp(target, "name", { value, configurable: true });
 
-// src/mods/base-game/effects/script_demo.mts
+// ../../Config/mods/base-game/scripts-src/effects/script_demo.mts
 function execute(ctx) {
   const amount = ctx.nextInt(4, 8);
   return {

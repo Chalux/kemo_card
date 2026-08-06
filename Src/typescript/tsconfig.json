@@ -3,7 +3,7 @@
     "target": "esnext",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "rootDir": "src",
+    "rootDir": "../..",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -13,6 +13,11 @@
     "noEmit": true,
     "typeRoots": ["./typings"]
   },
-  "include": ["src/**/*.mts", "src/**/*.d.ts", "typings/**/*.d.ts"],
+  "include": [
+    "src/**/*.mts",
+    "src/**/*.d.ts",
+    "typings/**/*.d.ts",
+    "../../Config/mods/**/scripts-src/**/*.mts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

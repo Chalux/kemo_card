@@ -29,4 +29,39 @@ public sealed class ContentModPipelineTests
         Assert.That(registry.Contains(EContentCategory.Card, "strike"), Is.True);
         Assert.That(report.IdConflicts, Has.Count.EqualTo(1));
     }
+
+    [Test]
+    public void Rebuild_prewarms_valid_script_inside_rebuild_window()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "kemo_mod_tests", Guid.NewGuid().ToString("N"));
+        var baseDir = ContentModTestHelper.CreateModFolder(root, "base-game", "base.game");
+        ContentModTestHelper.AddEffect(
+            baseDir,
+            "fx_demo",
+            """{ "kind": "ExecuteScript", "scriptPath": "effects/demo.js", "scriptEntry": "execute" }""");
+        ContentModTestHelper.AddScript(
+            baseDir,
+            "effects/demo.js",
+            "export function execute(ctx) { return { proposedEffects: [] }; }");
+
+        var registry = new GameDefinitionRegistry();
+        var catalog = new ModScriptCatalog();
+        using var runtime = new ModScriptRuntime(catalog, registry, new NullModScriptLogger());
+        var pipeline = new ContentModPipeline(
+            root,
+            registry,
+            new NullContentModLogger(),
+            new NullContentModUserNotifier(),
+            runtime,
+            catalog,
+            null,
+            new ModScriptPrewarmer(runtime, registry));
+
+        var report = pipeline.Rebuild(new[] { "base.game" });
+
+        Assert.That(
+            report.ScriptLoadErrors,
+            Is.Empty,
+            () => string.Join(", ", report.ScriptLoadErrors.Select(e => $"{e.ModId}/{e.ScriptPath}")));
+    }
 }
