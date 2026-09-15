@@ -156,3 +156,4 @@ UI_RUN_SAVE_AND_EXIT,保存并返回主菜单,Save & Return to Menu
 UI_RUN_QUICK_LOAD,快速读取存档,Quick Load
 UI_RUN_SAVED,已保存,Saved
 UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
+UI_REWARD_GOLD_NAME,金币 x{0},Gold x{0}

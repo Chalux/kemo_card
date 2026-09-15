@@ -1,6 +1,9 @@
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Combat;
+using KemoCard.Mod.Combat.Condition;
+using KemoCard.Mod.Global.Condition;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests.Combat;
@@ -107,5 +110,62 @@ public sealed class BaseGameActiveSkillChainContentTests
             kemo.ActiveSkillChain.Select(tier => tier.Cooldown),
             Is.All.GreaterThanOrEqualTo(1),
             "每档 cooldown 必须 ≥ 1,否则累计阈值不单调递增");
+    }
+
+    /// <summary>
+    /// 出货内容必须整体通过内容校验,不允许任何定义被剔除。
+    /// 新增校验规则（例如链式引用环检测）若对真实内容误报,会在这里立刻暴露。
+    /// </summary>
+    [Test]
+    public void Shipped_content_passes_validation_without_removals()
+    {
+        RegisterBuiltinConditions();
+
+        var definitions = LoadBaseGame();
+        var registry = new GameDefinitionRegistry();
+
+        registry.Rebuild([new ModContentBundle("base.game", definitions)], out var report);
+
+        Assert.That(
+            report.RemovedValidationErrors,
+            Is.Empty,
+            "出货内容不应有任何定义被校验剔除:"
+                + string.Join(
+                    "; ",
+                    report.RemovedValidationErrors.Select(e => $"{e.Category}/{e.DefinitionId}: {e.Message}")));
+    }
+
+    /// <summary>
+    /// 出货内容里的技能定义（含 ChainActions）必须全部保留，防止环检测误伤真实链路。
+    /// </summary>
+    [Test]
+    public void Shipped_content_keeps_all_skill_actions()
+    {
+        RegisterBuiltinConditions();
+
+        var definitions = LoadBaseGame();
+        var registry = new GameDefinitionRegistry();
+
+        registry.Rebuild([new ModContentBundle("base.game", definitions)], out _);
+
+        foreach (var actionId in definitions.SkillActions.Keys)
+        {
+            Assert.That(
+                registry.Store.SkillActions.ContainsKey(actionId),
+                Is.True,
+                $"技能动作 {actionId} 被校验剔除");
+        }
+    }
+
+    /// <summary>
+    /// 复刻 <c>ModFactory.Bootstrap</c> 的注册顺序：条件域必须在内容 Rebuild 之前填好，
+    /// 否则 <c>Story.unlock</c> 的 CondType 校验会因注册表为空而误报未知名。
+    /// </summary>
+    private static void RegisterBuiltinConditions()
+    {
+        ConditionDomains.Persistent.Clear();
+        ConditionDomains.Combat.Clear();
+        BuiltinPersistentConditions.RegisterAll(ConditionDomains.Persistent);
+        BuiltinCombatConditions.RegisterAll(ConditionDomains.Combat);
     }
 }

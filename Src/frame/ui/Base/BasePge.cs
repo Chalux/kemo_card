@@ -8,10 +8,4 @@ namespace KemoCard.Frame.UI.Base;
 public abstract partial class BasePge : BaseWin
 {
     public override EUIType UIType => EUIType.Pge;
-
-    public override UIOpenOpt? BaseOpenOpt => new()
-    {
-        Align = EUIAlign.Full,
-        HideBelow = false,
-    };
 }

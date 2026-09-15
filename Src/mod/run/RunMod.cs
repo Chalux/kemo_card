@@ -160,7 +160,7 @@ public sealed partial class RunMod : BaseMod
         {
             RunId = RunId,
             StoryId = StoryId,
-            SchemaVersion = 1,
+            SchemaVersion = RunDto.CurrentSchemaVersion,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             CurrentRing = CurrentRing,

@@ -17,6 +17,19 @@ public partial class RedDotCmp : Node2D
     }
 
     /// <summary>
+    /// 离开场景树时必须反订阅：<see cref="RedDotService.OnStateChanged"/> 是静态强引用事件，
+    /// 不解绑会把已 <c>QueueFree</c> 的节点永久留在委托链上，并在节点释放后继续被回调 <c>Visible</c>。
+    /// </summary>
+    public override void _ExitTree()
+    {
+        if (_watchedId != null)
+        {
+            RedDotService.OnStateChanged -= OnRedStateChanged;
+            _watchedId = null;
+        }
+    }
+
+    /// <summary>
     /// 订阅指定红点节点。切换 id 时自动取消旧订阅并同步新状态。
     /// 传入 null 取消订阅并隐藏。
     /// </summary>

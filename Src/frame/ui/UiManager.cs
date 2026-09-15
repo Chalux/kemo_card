@@ -145,6 +145,10 @@ public partial class UIManager : Node, IUIManager
 
         UIVo vo = VoRegistry.GetOrCreate(id, entry.Type, payload);
 
+        // 必须写回：状态处理器（层级挂载 / 遮罩 / 动画 / 缓存 / 回调）统一读 vo.OpenOpt，
+        // 不写回会让 MergeOpenOpt 的结果被丢弃，整个 UIOpenOpt 参数体系失效，且 await OpenAsync 永不返回。
+        vo.OpenOpt = finalOpt;
+
         // 重用已有 VO：优雅结束上一轮未完成的打开任务
         vo.OpenTaskSource?.TrySetResult(vo);
         vo.OpenTaskSource = null;
@@ -217,7 +221,8 @@ public partial class UIManager : Node, IUIManager
             string? grand = _registry.GetParentId(curParent);
             if (grand == null)
             {
-                UIOpenOpt finalOpt = curMeta?.ParentOpenOpt?.Clone() ?? DefaultUIOpenOpt.Value;
+                // 必须 Clone：DefaultUIOpenOpt.Value 是静态共享实例，直接当 MergeInto 的 target 会跨次打开污染全局默认值。
+                UIOpenOpt finalOpt = curMeta?.ParentOpenOpt?.Clone() ?? DefaultUIOpenOpt.Value.Clone();
                 MergeInto(finalOpt, optForRoot);
                 return OpenAsync(curParent, voForCur, finalOpt);
             }
@@ -251,18 +256,20 @@ public partial class UIManager : Node, IUIManager
 
     public void CloseAllPop()
     {
-        foreach (var vo in VoRegistry.Map.Values)
+        // 快照：Close → Destroy 会同步从 VoRegistry 删除条目，直接枚举 Map.Values 会抛
+        // InvalidOperationException: Collection was modified。
+        foreach (var vo in SnapshotOpenVos())
         {
-            if (vo.IsOpen && vo.Type == EUIType.Pop)
+            if (vo.Type == EUIType.Pop)
                 Close(vo.Id);
         }
     }
 
     public void CloseAllByType(EUIType type)
     {
-        foreach (var vo in VoRegistry.Map.Values)
+        foreach (var vo in SnapshotOpenVos())
         {
-            if (vo.IsOpen && vo.Type == type)
+            if (vo.Type == type)
                 Close(vo.Id);
         }
     }
@@ -270,12 +277,28 @@ public partial class UIManager : Node, IUIManager
     public void CloseAllExclude(IReadOnlyList<string>? excludeIds = null)
     {
         excludeIds ??= [];
-        foreach (var vo in VoRegistry.Map.Values)
+        foreach (var vo in SnapshotOpenVos())
         {
-            if (!vo.IsOpen || vo.Runtime.Layer?.IsTop == true) continue;
+            if (vo.Runtime.Layer?.IsTop == true) continue;
             if (excludeIds.Contains(vo.Id)) continue;
             Close(vo.Id);
         }
+    }
+
+    /// <summary>
+    /// 取出当前已打开界面的快照，供批量关闭使用（关闭过程中注册表会被修改）。
+    /// </summary>
+    private List<UIVo> SnapshotOpenVos()
+    {
+        List<UIVo> result = [];
+        foreach (var vo in VoRegistry.Map.Values)
+        {
+            if (vo.IsOpen)
+            {
+                result.Add(vo);
+            }
+        }
+        return result;
     }
 
     public async Task<UIVo?> BackAsync()

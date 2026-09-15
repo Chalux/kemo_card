@@ -27,6 +27,17 @@ public static class RedDotService
     /// </summary>
     public static void Configure()
     {
+        // 先对已登记节点执行反订阅，再清空字典：只 Clear 会让旧事件订阅继续存活
+        // （静态事件是强引用），在重启 / 测试之间持续泄漏并触发已失效的回调。
+        foreach (var node in _nodes.Values)
+        {
+            foreach (var unsub in node.EventSubscriptions)
+            {
+                unsub();
+            }
+            node.EventSubscriptions.Clear();
+        }
+
         _nodes.Clear();
         _dirtyIds.Clear();
         _pendingParents.Clear();
@@ -93,9 +104,11 @@ public static class RedDotService
             Configure();
         }
 
-        // 重复注册：清理旧的 EventSubscriptions
+        // 重复注册：先解除旧的 EventSubscriptions，并保留旧的父子关系（见下）。
+        RedDotNode? previous = null;
         if (_nodes.TryGetValue(id, out var existing))
         {
+            previous = existing;
             foreach (var unsub in existing.EventSubscriptions)
             {
                 unsub();
@@ -104,6 +117,37 @@ public static class RedDotService
         }
 
         var node = new RedDotNode(id, checkFunc, @override);
+
+        // 重注册必须继承旧的父子关系：否则旧子节点仍指向被丢弃的旧节点、旧父节点的 Children
+        // 里也留着旧节点，向上聚合从此断裂（重注册后红点不再冒泡）。
+        if (previous is not null)
+        {
+            if (previous.Parent is not null)
+            {
+                var siblings = previous.Parent.Children;
+                var index = siblings.IndexOf(previous);
+                if (index >= 0)
+                {
+                    siblings[index] = node;
+                }
+                else
+                {
+                    siblings.Add(node);
+                }
+
+                node.Parent = previous.Parent;
+            }
+
+            foreach (var child in previous.Children)
+            {
+                child.Parent = node;
+                node.Children.Add(child);
+            }
+
+            previous.Children.Clear();
+            previous.Parent = null;
+        }
+
         _nodes[id] = node;
 
         // 注册事件触发器
@@ -120,8 +164,17 @@ public static class RedDotService
             {
                 if (_nodes.TryGetValue(parentId, out var parentNode))
                 {
+                    // 继承来的父节点若与新父节点不同，必须先从旧父节点摘掉，避免两个父节点同时持有本节点。
+                    if (node.Parent is not null && !ReferenceEquals(node.Parent, parentNode))
+                    {
+                        node.Parent.Children.Remove(node);
+                    }
+
                     node.Parent = parentNode;
-                    parentNode.Children.Add(node);
+                    if (!parentNode.Children.Contains(node))
+                    {
+                        parentNode.Children.Add(node);
+                    }
                 }
             }
             _pendingParents.Remove(id);
@@ -132,10 +185,15 @@ public static class RedDotService
         {
             node.Active = @override == RedDotOverride.ForceActive;
         }
-        else if (checkFunc != null)
+        else
         {
-            node.LastEvaluated = checkFunc();
-            node.Active = node.LastEvaluated || node.Children.Any(c => c.Active);
+            if (checkFunc != null)
+            {
+                node.LastEvaluated = checkFunc();
+            }
+
+            // 纯聚合节点（checkFunc == null）也必须首评：否则继承来的已激活子节点不会体现出来。
+            EvaluateActive(node);
         }
 
         // 首评后若有 Parent → 触发父节点重新聚合

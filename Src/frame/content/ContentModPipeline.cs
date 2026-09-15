@@ -45,19 +45,78 @@ public sealed class ContentModPipeline
 
     public ModScriptCatalog ScriptCatalog => _scriptCatalog;
 
+    /// <summary>
+    /// 重建准入守卫：内容 Mod 规格 §5 要求「Run 进行中不提供 Mod 开关；若误调用 <see cref="Rebuild"/>，
+    /// 拒绝并记日志」。Run 状态属于 mod 层，frame 层不得依赖它，因此这里只留可注入的谓词，
+    /// 由组合根（<c>ModFactory</c>）把「无进行中的 Run」接进来；<c>null</c>（默认）表示始终允许重建，
+    /// 既有调用方与测试无需改动。
+    /// </summary>
+    public Func<bool>? CanRebuild { get; set; }
+
+    /// <summary>
+    /// 最近一次 <see cref="Rebuild"/> 的结果报告（被拒绝时也写入拒绝原因），
+    /// 供组合根 / 后续主菜单 Mod UI 读取（内容 Mod 规格 §6.2 的 notifier 首版为空实现）。
+    /// </summary>
+    public ContentLoadReport LatestReport { get; private set; } = ContentLoadReport.Empty;
+
+    /// <summary>重建被拒（Run 进行中误调用）时写进报告的占位 mod id：仅在启用集为空、无法逐个列出时使用。</summary>
+    private const string RebuildRejectedPlaceholderModId = "*";
+
+    private const string RebuildRejectedDetail =
+        "Rebuild rejected: a Run is in progress; content mods cannot be changed during a Run.";
+
     public ContentLoadReport Rebuild(IReadOnlyList<string> enabledModIds)
     {
         ArgumentNullException.ThrowIfNull(enabledModIds);
 
+        if (CanRebuild is { } canRebuild && !canRebuild())
+        {
+            return RecordRejectedRebuild(enabledModIds);
+        }
+
         _scriptRuntimeResetter.BeginRebuild();
         try
         {
-            return RebuildCore(enabledModIds);
+            LatestReport = RebuildCore(enabledModIds);
+            return LatestReport;
         }
         finally
         {
             _scriptRuntimeResetter.EndRebuild();
         }
+    }
+
+    /// <summary>
+    /// 拒绝本次重建：不扫描、不合并、不动注册表与脚本运行时（保持进行中 Run 的现场），
+    /// 只把拒绝原因写成跳过条目 + 日志 + 报告，并更新 <see cref="LatestReport"/>。
+    /// </summary>
+    private ContentLoadReport RecordRejectedRebuild(IReadOnlyList<string> enabledModIds)
+    {
+        var skipped = new List<ModSkipEntry>();
+        if (enabledModIds.Count == 0)
+        {
+            skipped.Add(new ModSkipEntry(
+                RebuildRejectedPlaceholderModId,
+                ModSkipReason.RebuildRejected,
+                RebuildRejectedDetail));
+        }
+        else
+        {
+            foreach (var modId in enabledModIds)
+            {
+                skipped.Add(new ModSkipEntry(modId, ModSkipReason.RebuildRejected, RebuildRejectedDetail));
+            }
+        }
+
+        foreach (var skip in skipped)
+        {
+            _logger.LogSkipped(skip);
+        }
+
+        var report = ContentLoadReport.Empty.WithSkippedMods(skipped);
+        _notifier.OnModLoadCompleted(report);
+        LatestReport = report;
+        return report;
     }
 
     private ContentLoadReport RebuildCore(IReadOnlyList<string> enabledModIds)

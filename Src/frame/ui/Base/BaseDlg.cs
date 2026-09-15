@@ -8,11 +8,4 @@ namespace KemoCard.Frame.UI.Base;
 public abstract partial class BaseDlg : BaseWin
 {
     public override EUIType UIType => EUIType.Dlg;
-
-    public override UIOpenOpt? BaseOpenOpt => new()
-    {
-        Layer = EUILayer.Dlg,
-        Align = EUIAlign.Center,
-        HideBelow = false,
-    };
 }

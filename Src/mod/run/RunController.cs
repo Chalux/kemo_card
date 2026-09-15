@@ -1,11 +1,11 @@
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.Rules;
-using KemoCard.Mod.Combat.StateMachine;
 using KemoCard.Mod.Run.Reward;
 using KemoCard.Mod.Run.Save;
 
@@ -14,12 +14,21 @@ namespace KemoCard.Mod.Run;
 public sealed class RunController : BaseController<RunMod>
 {
     private readonly RunRewardDistributor _rewardDistributor = new();
+    private readonly IContentEffectScriptHost _scriptHost;
+    private readonly CombatRuleCatalog _ruleCatalog;
     private RunDto? _battleSnapshot;
     private CombatSimulation? _simulation;
     private RunSaveService? _autoSaveService;
 
-    public RunController(RunMod model) : base(model)
+    /// <param name="scriptHost">效果脚本宿主（会话级依赖，由组合根注入；缺省为 Null 实现）。</param>
+    /// <param name="ruleCatalog">战斗规则目录；缺省为内置规则集。</param>
+    public RunController(
+        RunMod model,
+        IContentEffectScriptHost? scriptHost = null,
+        CombatRuleCatalog? ruleCatalog = null) : base(model)
     {
+        _scriptHost = scriptHost ?? new NullContentEffectScriptHost();
+        _ruleCatalog = ruleCatalog ?? CombatRuleCatalog.CreateDefault();
     }
 
     public RunMod State => Model;
@@ -302,7 +311,8 @@ public sealed class RunController : BaseController<RunMod>
     public CombatSimulation StartBattle(
         GameDefinitionRegistry definitions,
         HostRng rng,
-        int runSeed)
+        int runSeed,
+        string? battleId = null)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         ArgumentNullException.ThrowIfNull(rng);
@@ -314,44 +324,84 @@ public sealed class RunController : BaseController<RunMod>
         if (!ValidateParty())
             throw new InvalidOperationException("所有槽位必须上阵角色才能进入战斗。");
 
+        var battle = ResolveBattle(definitions, battleId);
+        var modId = ResolveOwnerModId(definitions, battle);
+
+        // 快照必须在任何状态变更（含工厂内的角色战斗实例化）之前取。
         _battleSnapshot = Model.ToDto();
 
-        var activeParty = Model.ActiveParty;
-        var battleCharacters = new List<CharacterBattleInstance>();
-        for (var i = 0; i < activeParty.Length; i++)
-        {
-            var source = activeParty[i];
-            if (source == null)
-                continue;
+        var simulation = CombatSimulationFactory.TryCreate(
+            battle,
+            BuildParty(),
+            definitions,
+            rng,
+            runSeed,
+            runRuleIds: null,
+            _scriptHost,
+            modId,
+            _ruleCatalog,
+            out var error);
+        if (simulation is null)
+            throw new InvalidOperationException(error ?? $"战斗 '{battle.Id}' 创建失败。");
 
-            var battleInstance = CharacterBattleInstance.TryCreate(source, definitions, rng, out var error);
-            if (battleInstance == null)
-                throw new InvalidOperationException(error ?? "角色战斗实例创建失败。");
-            battleCharacters.Add(battleInstance);
+        // 规格 §6.1：必须走 BattleStart 管线（注入技能 → 冻结补满 SharedHp → 每人开局抽满手牌）。
+        // 不能以 initialPhase: Player 直接起手，否则被动/修饰技能、补满与开局抽牌全部失效。
+        simulation.RunBattleStart();
+
+        _simulation?.Dispose();
+        _simulation = simulation;
+        Model.Phase = ERunPhase.Battle;
+        return simulation;
+    }
+
+    /// <summary>
+    /// 解析本环要打的战斗定义。环→战斗的映射尚未落地（run-mod-design §5 的环内容后置），
+    /// 因此只有在内容里恰好存在一场战斗时才可无歧义推导；否则必须由调用方显式指定，
+    /// 绝不退回硬编码的占位敌人。
+    /// </summary>
+    private static BattleDto ResolveBattle(GameDefinitionRegistry definitions, string? battleId)
+    {
+        if (!string.IsNullOrWhiteSpace(battleId))
+        {
+            if (!definitions.Store.TryGetBattle(battleId, out var named))
+                throw new InvalidOperationException($"战斗定义 '{battleId}' 不存在。");
+            return named;
         }
 
-        if (battleCharacters.Count != RunConstants.SlotCount)
-            throw new InvalidOperationException("队伍必须包含 4 名角色。");
+        var battles = definitions.Store.Battles;
+        if (battles.Count == 1)
+            return battles.Values.First();
 
-        var sharedMaxHp = battleCharacters.Sum(c => c.Asc.GetCurrentValue(Frame.Gas.AttributeIds.MaxHealth));
-        var playerTeam = new PlayerTeamState(battleCharacters, (int)MathF.Round(sharedMaxHp));
-        var enemy = new EnemyUnit("enemy-default", "slime", new Dictionary<string, float>(StringComparer.Ordinal)
+        throw new InvalidOperationException(
+            battles.Count == 0
+                ? "内容中没有战斗定义，无法进入战斗。"
+                : $"内容包含 {battles.Count} 场战斗，无法推导本环应进入哪一场；请显式传入 battleId。");
+    }
+
+    /// <summary>效果脚本按 mod 隔离，modId 取自战斗定义的归属 mod。</summary>
+    private static string ResolveOwnerModId(GameDefinitionRegistry definitions, BattleDto battle)
+    {
+        if (definitions.TryGetOwnerModId(EContentCategory.Battle, battle.Id, out var modId) &&
+            !string.IsNullOrWhiteSpace(modId))
         {
-            [Frame.Gas.AttributeIds.MaxHealth] = 10f,
-        });
-        var enemyTeam = new EnemyTeamState([enemy]);
-        var ruleEngine = new CombatRuleEngine([]);
+            return modId;
+        }
 
-        _simulation = new CombatSimulation(
-            playerTeam,
-            enemyTeam,
-            ruleEngine,
-            definitions,
-            initialPhase: ECombatPhase.Player,
-            runSeed: runSeed);
+        throw new InvalidOperationException($"无法确定战斗 '{battle.Id}' 的归属 mod，脚本效果无法解析。");
+    }
 
-        Model.Phase = ERunPhase.Battle;
-        return _simulation;
+    private IReadOnlyList<CharacterInstance> BuildParty()
+    {
+        var activeParty = Model.ActiveParty;
+        var party = new List<CharacterInstance>(activeParty.Length);
+        foreach (var character in activeParty)
+        {
+            if (character is null)
+                throw new InvalidOperationException("存在未上阵的槽位，无法进入战斗。");
+            party.Add(character);
+        }
+
+        return party;
     }
 
     public void EndBattle(bool won)
@@ -418,10 +468,20 @@ public sealed class RunController : BaseController<RunMod>
         Save(_autoSaveService);
     }
 
-    public void Save(RunSaveService saveService)
+    /// <summary>
+    /// 落盘当前 Run。
+    /// </summary>
+    /// <returns><c>false</c> 表示写盘失败（磁盘满 / 文件被占用等），调用方应提示用户。</returns>
+    public bool Save(RunSaveService saveService)
     {
         ArgumentNullException.ThrowIfNull(saveService);
-        saveService.Save(Model.ToDto());
+        var saved = saveService.Save(Model.ToDto());
+        if (!saved)
+        {
+            AppLog.Warning($"Run '{Model.RunId}' 存档写入失败。", "RunSave");
+        }
+
+        return saved;
     }
 
     public bool TryLoad(RunSaveService saveService, out RunDto dto)

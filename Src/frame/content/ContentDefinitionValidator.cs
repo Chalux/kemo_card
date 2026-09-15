@@ -40,6 +40,7 @@ public sealed class ContentDefinitionValidator
         ValidateBuffs(store, errors);
         ValidateEffects(store, errors);
         ValidateSkillActions(store, errors);
+        ValidateReferenceCycles(store, errors);
         ValidateGameplayTags(store, errors);
         ValidateGameplayEffects(store, errors);
         ValidateStories(store, errors);
@@ -478,6 +479,16 @@ public sealed class ContentDefinitionValidator
                 }
             }
 
+            // Hooks 里的 actionId 此前完全没有校验：悬空引用会静默入库，直到运行期才无声失效。
+            ValidateActionRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.Hooks.OnApply, store, errors);
+            ValidateActionRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.Hooks.OnTurnStart, store, errors);
+            ValidateActionRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.Hooks.OnTurnEnd, store, errors);
+            ValidateActionRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.Hooks.OnStackChanged, store, errors);
+            ValidateActionRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.Hooks.OnRemove, store, errors);
+
+            // 注意：GameplayTags.Count > 0 这个守卫是「出货内容尚未提供 tags 定义」的临时兼容，
+            // 不是正确语义（tag 表为空时任何 tag 引用必然非法）。补齐 tags 内容后才可去掉，
+            // 否则会立刻把现有带 grantedTags 的定义全部判非法并剔除。
             if (store.GameplayTags.Count > 0)
             {
                 ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.GrantedTags, store, errors);
@@ -569,6 +580,117 @@ public sealed class ContentDefinitionValidator
                     $"Unknown effectId '{effectRef.EffectId}'."));
             }
         }
+    }
+
+    /// <summary>
+    /// 链式引用环检测：<c>ChainEffects</c> / <c>ChainActions</c> 在执行侧是直接递归
+    /// （mod 层的 <c>CombatEffectExecutor</c> / <c>SkillActionExecutor</c>），且没有深度守卫，
+    /// a↔b 互引会让游戏进程 StackOverflow（.NET 不可捕获）。
+    /// 必须在内容准入阶段拒绝：这里报出的 id 会被 <c>GameDefinitionRegistry.RemoveInvalidDefinitions</c> 剔除。
+    /// </summary>
+    private static void ValidateReferenceCycles(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+    {
+        foreach (var effect in store.Effects.Values)
+        {
+            if (effect.Kind != EEffectKind.ChainEffects)
+            {
+                continue;
+            }
+
+            var path = new List<string>();
+            if (FindEffectCycle(effect.Id, store, [], path))
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.Effect,
+                    effect.Id,
+                    $"ChainEffects contains a reference cycle: {string.Join(" -> ", path)}."));
+            }
+        }
+
+        foreach (var action in store.SkillActions.Values)
+        {
+            if (action.Kind != ESkillActionKind.ChainActions)
+            {
+                continue;
+            }
+
+            var path = new List<string>();
+            if (FindActionCycle(action.Id, store, [], path))
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.SkillAction,
+                    action.Id,
+                    $"ChainActions contains a reference cycle: {string.Join(" -> ", path)}."));
+            }
+        }
+    }
+
+    private static bool FindEffectCycle(
+        string effectId,
+        GameDefinitionStore store,
+        HashSet<string> visiting,
+        List<string> path)
+    {
+        path.Add(effectId);
+        if (!visiting.Add(effectId))
+        {
+            return true;
+        }
+
+        var hasCycle = false;
+        if (store.TryGetEffect(effectId, out var effect) && effect.Kind == EEffectKind.ChainEffects)
+        {
+            foreach (var child in effect.EffectRefs)
+            {
+                if (FindEffectCycle(child.EffectId, store, visiting, path))
+                {
+                    hasCycle = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasCycle)
+        {
+            visiting.Remove(effectId);
+            path.RemoveAt(path.Count - 1);
+        }
+
+        return hasCycle;
+    }
+
+    private static bool FindActionCycle(
+        string actionId,
+        GameDefinitionStore store,
+        HashSet<string> visiting,
+        List<string> path)
+    {
+        path.Add(actionId);
+        if (!visiting.Add(actionId))
+        {
+            return true;
+        }
+
+        var hasCycle = false;
+        if (store.TryGetSkillAction(actionId, out var action) && action.Kind == ESkillActionKind.ChainActions)
+        {
+            foreach (var child in action.ActionRefs)
+            {
+                if (FindActionCycle(child.ActionId, store, visiting, path))
+                {
+                    hasCycle = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasCycle)
+        {
+            visiting.Remove(actionId);
+            path.RemoveAt(path.Count - 1);
+        }
+
+        return hasCycle;
     }
 
     private static void ValidateActionRefs(

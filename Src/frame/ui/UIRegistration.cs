@@ -15,16 +15,40 @@ public sealed record UIRegistration
     public UIRouteMeta? Parent { get; init; }
 
     public static UIRegistration Page(string id, string dir)
-        => new() { Id = id, Dir = dir, Type = EUIType.Pge };
+        => new()
+        {
+            Id = id,
+            Dir = dir,
+            Type = EUIType.Pge,
+            BaseOpenOpt = DefaultUIOpenOpt.ForType(EUIType.Pge),
+        };
 
     public static UIRegistration Dialog(string id, string dir)
-        => new() { Id = id, Dir = dir, Type = EUIType.Dlg };
+        => new()
+        {
+            Id = id,
+            Dir = dir,
+            Type = EUIType.Dlg,
+            BaseOpenOpt = DefaultUIOpenOpt.ForType(EUIType.Dlg),
+        };
 
     public static UIRegistration Window(string id, string dir)
-        => new() { Id = id, Dir = dir, Type = EUIType.Win };
+        => new()
+        {
+            Id = id,
+            Dir = dir,
+            Type = EUIType.Win,
+            BaseOpenOpt = DefaultUIOpenOpt.ForType(EUIType.Win),
+        };
 
     public static UIRegistration Popup(string id, string dir)
-        => new() { Id = id, Dir = dir, Type = EUIType.Pop };
+        => new()
+        {
+            Id = id,
+            Dir = dir,
+            Type = EUIType.Pop,
+            BaseOpenOpt = DefaultUIOpenOpt.ForType(EUIType.Pop),
+        };
 
     public UIRegistration WithParent(string parentId, UIOpenOpt? parentOpenOpt = null,
         object? parentOpenPayload = null)

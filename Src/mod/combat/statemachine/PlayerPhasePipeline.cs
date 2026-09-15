@@ -35,5 +35,8 @@ public static class PlayerPhasePipeline
         }
 
         simulation.MarkFirstPlayerPhaseDone();
+
+        // 全员开局即被封印时不会有任何玩家指令到达，必须在这里推进阶段，否则停在 Player 死锁。
+        CombatStateMachine.AdvanceToCardExecutionIfAllActed(simulation);
     }
 }

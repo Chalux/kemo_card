@@ -136,15 +136,16 @@ public sealed class CombatSimulation : IDisposable
             return;
         }
 
-        if (decision.Kind == EEndDecisionKind.Victory)
-        {
-            TransitionTo(ECombatPhase.Victory);
-            return;
-        }
-
+        // 玩家账本归零优先于胜利：同归于尽必须判负，不能让规则提供的 Victory 覆盖掉。
         if (PlayerTeam.IsDefeated)
         {
             TransitionTo(ECombatPhase.Defeat);
+            return;
+        }
+
+        if (decision.Kind == EEndDecisionKind.Victory)
+        {
+            TransitionTo(ECombatPhase.Victory);
             return;
         }
 

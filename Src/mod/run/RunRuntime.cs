@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Run.Save;
 
@@ -30,7 +31,9 @@ public static class RunRuntime
             }
 
             var dir = ProjectSettings.GlobalizePath("user://saves/run");
-            _saveService = new RunSaveService(dir);
+            // 必须接日志：损坏存档归档、写盘失败、删档失败都只走 logWarning，
+            // 不接就等于整条异常路径静默无输出。
+            _saveService = new RunSaveService(dir, message => AppLog.Warning(message, "RunSave"));
             return _saveService;
         }
     }
@@ -47,7 +50,7 @@ public static class RunRuntime
 
         SaveService.Delete();
         _current?.Dispose();
-        var controller = new RunController(new RunMod());
+        var controller = CreateController();
         controller.EnableAutoSave(SaveService);
         var hostRng = seed >= 0
             ? new HostRng(seed, "story_select")
@@ -56,6 +59,13 @@ public static class RunRuntime
         _current = controller;
         return controller;
     }
+
+    /// <summary>
+    /// 组合根装配：Run 只从菜单进入，此时 <c>MainRoot</c> 已执行 <c>ModFactory.Bootstrap</c>，
+    /// 因此可安全取到真实的脚本宿主（缺省会退化为 Null 实现，导致内容脚本效果静默失效）。
+    /// </summary>
+    private static RunController CreateController() =>
+        new(new RunMod(), AppRoot.Services.ContentEffectScriptHost);
 
     /// <summary>
     /// 手动 / 退出前保存当前会话。
@@ -77,7 +87,7 @@ public static class RunRuntime
         }
 
         _current?.Dispose();
-        var controller = new RunController(new RunMod());
+        var controller = CreateController();
         controller.EnableAutoSave(SaveService);
         controller.LoadRun(loaded);
         _current = controller;

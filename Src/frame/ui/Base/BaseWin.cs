@@ -29,12 +29,11 @@ public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
     /// </summary>
     protected void SetTypedPayload<TPayload>(TPayload value) => Payload = value;
 
-    public override UIOpenOpt? BaseOpenOpt => new()
-    {
-        Layer = EUILayer.Win,
-        Align = EUIAlign.Full,
-        HideBelow = true,
-    };
+    /// <summary>
+    /// 基类默认打开参数，按 <see cref="UIType"/> 从 <see cref="DefaultUIOpenOpt.ForType"/> 取得。
+    /// 与 <c>UIRegistration</c> 工厂共用同一份定义，避免两处各写一份而漂移。
+    /// </summary>
+    public override UIOpenOpt? BaseOpenOpt => DefaultUIOpenOpt.ForType(UIType);
 
     #region 生命周期（子类 override）
     protected virtual void OnPreLoad(Action done, Action fail) => done();

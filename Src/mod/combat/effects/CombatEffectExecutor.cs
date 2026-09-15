@@ -10,6 +10,12 @@ namespace KemoCard.Mod.Combat.Effects;
 
 public sealed class CombatEffectExecutor
 {
+    /// <summary>
+    /// 链式引用最大展开深度。内容准入（<c>ContentDefinitionValidator.ValidateReferenceCycles</c>）
+    /// 已拒绝环，这里是兜底绕过校验的内容，避免无限递归导致 StackOverflow。
+    /// </summary>
+    private const int MaxChainDepth = 32;
+
     private readonly GameDefinitionRegistry _registry;
     private readonly CombatRuleEngine _rules;
     private readonly GameplayEffectApplicator _gameplayEffectApplicator;
@@ -22,7 +28,11 @@ public sealed class CombatEffectExecutor
         _registry = registry;
         _rules = rules;
         _gameplayEffectApplicator = new GameplayEffectApplicator(registry);
-        _skillActionExecutor = new SkillActionExecutor(registry, _gameplayEffectApplicator, ExecuteEffectRef);
+        _skillActionExecutor = new SkillActionExecutor(
+            registry,
+            _gameplayEffectApplicator,
+            (effectRef, simulation, source, targets, depth) =>
+                ExecuteEffectRefCore(effectRef, simulation, source, targets, depth));
     }
 
     public void ExecuteEffectRef(
@@ -31,15 +41,28 @@ public sealed class CombatEffectExecutor
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets)
     {
+        ExecuteEffectRefCore(effectRef, simulation, source, targets, depth: 0);
+    }
+
+    private void ExecuteEffectRefCore(
+        EffectRefDto effectRef,
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        int depth)
+    {
         ArgumentNullException.ThrowIfNull(effectRef);
         ArgumentNullException.ThrowIfNull(simulation);
         ArgumentNullException.ThrowIfNull(targets);
+
+        if (depth > MaxChainDepth)
+            return;
 
         if (!_registry.Store.TryGetEffect(effectRef.EffectId, out var effect))
             return;
 
         var mergedParams = MergeParams(effect.Params, effectRef.Params);
-        ExecuteKind(effect.Kind, mergedParams, effect, simulation, source, targets);
+        ExecuteKind(effect.Kind, mergedParams, effect, simulation, source, targets, depth);
     }
 
     public void ExecuteSkillActionRef(
@@ -57,7 +80,8 @@ public sealed class CombatEffectExecutor
         EffectDto effect,
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        int depth)
     {
         switch (kind)
         {
@@ -72,7 +96,7 @@ public sealed class CombatEffectExecutor
             case EEffectKind.GainResource:
             case EEffectKind.ExecuteScript:
             case EEffectKind.ChainEffects:
-                _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets);
+                _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets, depth);
                 break;
             case EEffectKind.ApplyBuff:
             case EEffectKind.RemoveBuff:

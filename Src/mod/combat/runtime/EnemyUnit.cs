@@ -12,7 +12,15 @@ public sealed class EnemyUnit
     public int CurrentHp => (int)MathF.Round(Asc.GetCurrentValue(AttributeIds.Health));
     public int MaxHp => (int)MathF.Round(Asc.GetCurrentValue(AttributeIds.MaxHealth));
     public string? IntentSkillId { get; set; }
-    public bool IsAlive => CurrentHp > 0;
+
+    /// <summary>未取整血量，供结算保留 GAS 公式算出的小数（分槽/减伤可能产出小数伤害）。</summary>
+    internal float CurrentHpExact => Asc.GetCurrentValue(AttributeIds.Health);
+
+    /// <summary>
+    /// 存活判定必须用未取整血量：<see cref="CurrentHp"/> 走 <c>MathF.Round</c>（银行家舍入），
+    /// 剩 0.5 血时会被舍入为 0，敌人会被提前判定为已阵亡。
+    /// </summary>
+    public bool IsAlive => CurrentHpExact > 0f;
 
     public EnemyUnit(string runtimeId, string definitionId, int maxHp)
         : this(

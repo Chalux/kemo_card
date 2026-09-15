@@ -27,7 +27,7 @@ public sealed class EnemyTeamState
         _enemies.Clear();
         _enemies.AddRange(enemies);
         var maxHealth = ComputeTotalMaxHealth();
-        Asc.Attributes.SetBaseValue(AttributeIds.MaxHealth, maxHealth);
+        Asc.SetBaseValue(AttributeIds.MaxHealth, maxHealth);
         Asc.Attributes.SetCurrentValue(AttributeIds.Health, maxHealth);
     }
 

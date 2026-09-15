@@ -3,7 +3,7 @@ using KemoCard.Frame.Gas;
 
 namespace KemoCard.Mod.Combat.Runtime;
 
-public sealed class TeamDomainManager
+public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
 {
     private readonly CombatSimulation _sim;
 
@@ -11,7 +11,58 @@ public sealed class TeamDomainManager
     {
         ArgumentNullException.ThrowIfNull(simulation);
         _sim = simulation;
+
+        // 域 GE 挂在队伍 ASC 上，其 Hooks 需要能执行技能动作。生产环境此前从未给任何 ASC
+        // 设置 HookDispatcher，导致内容里声明的 hooks.turnStart / turnEnd / onRemove 静默失效。
+        // 说明：目前只有队伍 ASC 会被 FireTurnStartHooks / FireTurnEndHooks 驱动；
+        // 角色与敌人 ASC 的 GameplayEffect 回合管线尚未接入，属未完成功能，不在本处覆盖范围。
+        _sim.PlayerTeam.Asc.HookDispatcher = this;
+        _sim.EnemyTeam.Asc.HookDispatcher = this;
     }
+
+    #region IGameplayEffectHookDispatcher
+
+    public void DispatchTurnStart(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions) =>
+        DispatchHooks(effect, actions);
+
+    public void DispatchTurnEnd(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions) =>
+        DispatchHooks(effect, actions);
+
+    public void DispatchRemove(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions) =>
+        DispatchHooks(effect, actions);
+
+    /// <summary>
+    /// 执行 GE 声明的技能动作链，目标固定为队伍账本。
+    /// </summary>
+    /// <remarks>
+    /// 规格 §1.3：v1 只有玩家侧存在队伍账本目标（<see cref="CombatTargetRef.PlayerTeam"/>），
+    /// 敌方队伍账本尚未实装，因此敌方域 GE 的钩子退化为空放（与 <c>ResolveTeamLedgerTarget</c> 的既有语义一致）。
+    /// </remarks>
+    private void DispatchHooks(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions)
+    {
+        ArgumentNullException.ThrowIfNull(effect);
+        ArgumentNullException.ThrowIfNull(actions);
+        if (actions.Count == 0)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(effect.Spec.TargetAsc, _sim.PlayerTeam.Asc))
+        {
+            return;
+        }
+
+        foreach (var actionRef in actions)
+        {
+            _sim.EffectExecutor.ExecuteSkillActionRef(
+                actionRef,
+                _sim,
+                CombatTargetRef.PlayerTeam,
+                [CombatTargetRef.PlayerTeam]);
+        }
+    }
+
+    #endregion
 
     public bool TrySetPlayerDomain(string gameplayEffectId, IReadOnlyDictionary<string, object>? parameters = null)
         => TrySetDomain(_sim.PlayerTeam, gameplayEffectId, parameters);

@@ -62,7 +62,7 @@ public sealed class CombatAscFactory
             asc.Attributes.InitAttribute(id, def.DefaultBase);
 
         foreach (var (id, value) in contributions)
-            asc.Attributes.SetBaseValue(id, asc.GetBaseValue(id) + value);
+            asc.SetBaseValue(id, asc.GetBaseValue(id) + value);
 
         return asc;
     }

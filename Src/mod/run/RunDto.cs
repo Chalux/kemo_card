@@ -47,9 +47,15 @@ public sealed record BattleRecordDto
 
 public sealed record RunDto
 {
+    /// <summary>
+    /// 当前 Run 存档 schema 版本。读档时高于此版本的存档会被拒绝并归档：
+    /// 若照默认值反序列化，会得到一个「看似合法但错」的 Run（字段静默变成默认值）。
+    /// </summary>
+    public const int CurrentSchemaVersion = 1;
+
     public string RunId { get; init; } = "";
     public string StoryId { get; init; } = "";
-    public int SchemaVersion { get; init; } = 1;
+    public int SchemaVersion { get; init; } = CurrentSchemaVersion;
     public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; init; } = DateTime.UtcNow;
 
@@ -68,4 +74,10 @@ public sealed record RunDto
 
     public List<PlayerRunStateDto> PlayerStates { get; init; } = [];
     public List<BattleRecordDto> BattleHistory { get; init; } = [];
+
+    /// <summary>
+    /// 把已知的旧版本存档提升到当前 schema。v1 之前没有需要迁移的字段，
+    /// 后续新增版本时在此按版本补默认值 / 迁移语义。
+    /// </summary>
+    public RunDto Normalize() => this with { SchemaVersion = CurrentSchemaVersion };
 }

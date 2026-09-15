@@ -37,6 +37,15 @@ public sealed class UIStack
         _stack.Clear();
     }
 
+    /// <summary>
+    /// 移除指定界面的全部记录。关闭界面时调用（幂等：界面不在栈上时无操作，
+    /// 因此 <see cref="Back"/> 已经弹过的 id 再被关闭不会误删下层界面）。
+    /// </summary>
+    public bool Remove(string uiId)
+    {
+        return _stack.RemoveAll(id => string.Equals(id, uiId, StringComparison.Ordinal)) > 0;
+    }
+
     public bool Contains(string uiId)
     {
         return _stack.Contains(uiId);

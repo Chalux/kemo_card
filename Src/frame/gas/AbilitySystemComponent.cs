@@ -25,6 +25,20 @@ public sealed class AbilitySystemComponent
 
     public float GetBaseValue(string attributeId) => Attributes.GetBaseValue(attributeId);
 
+    /// <summary>
+    /// 修改属性基础值，并按当前修饰符重算当前值。
+    /// </summary>
+    /// <remarks>
+    /// 持有 ASC 的调用方必须走这里，不要直接调用 <see cref="AttributeSet.SetBaseValue"/>：
+    /// 后者会把 <c>CurrentValue</c> 直接写成 baseValue，等于抹掉聚合进来的修饰符贡献
+    /// （例如队伍 ASC 上域 GameplayEffect 提供的 MaxHealth 修饰），且不会触发重算。
+    /// </remarks>
+    public void SetBaseValue(string attributeId, float baseValue)
+    {
+        Attributes.SetBaseValue(attributeId, baseValue);
+        Aggregator.Recalculate(attributeId);
+    }
+
     public IReadOnlyList<ActiveGameplayEffect> ActiveEffects => _activeEffects;
 
     public IGameplayEffectHookDispatcher? HookDispatcher { get; set; }
@@ -253,7 +267,7 @@ public sealed class AbilitySystemComponent
             EAttributeModifierOp.Override => magnitude,
             _ => baseValue,
         };
-        Attributes.SetBaseValue(attributeId, updated);
+        SetBaseValue(attributeId, updated);
     }
 
     private bool CanApplyGameplayEffect(GameplayEffectSpec spec)

@@ -8,11 +8,4 @@ namespace KemoCard.Frame.UI.Base;
 public abstract partial class BasePop : BaseWin
 {
     public override EUIType UIType => EUIType.Pop;
-
-    public override UIOpenOpt? BaseOpenOpt => new()
-    {
-        Layer = EUILayer.Pop,
-        Align = EUIAlign.None,
-        HideBelow = false,
-    };
 }

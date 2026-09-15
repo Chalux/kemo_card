@@ -19,6 +19,15 @@ public sealed class AttributeSet
     public float GetCurrentValue(string attributeId) =>
         _values.TryGetValue(attributeId, out var v) ? v.CurrentValue : 0f;
 
+    /// <summary>
+    /// 直接写入基础值，并把 <c>CurrentValue</c> 同步为基础值。
+    /// </summary>
+    /// <remarks>
+    /// 这是「无修饰符」语义：它会覆盖掉聚合结果。挂在 <see cref="AbilitySystemComponent"/> 上的属性
+    /// 应当改用 <c>AbilitySystemComponent.SetBaseValue</c>（写入后按修饰符重算）；
+    /// 只有需要临时搭建「干净工作值」的场景（例如 SharedHp 分槽结算）才直接调用本方法，
+    /// 且必须自行恢复 <c>CurrentValue</c>。
+    /// </remarks>
     public void SetBaseValue(string attributeId, float baseValue)
     {
         if (!_values.TryGetValue(attributeId, out var value))

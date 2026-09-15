@@ -9,6 +9,7 @@ using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Condition;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Save;
+using KemoCard.Mod.Run;
 
 namespace KemoCard.Mod;
 
@@ -57,6 +58,11 @@ public sealed class ModFactory
         RegisterBuiltinConditions();
         var content = BootstrapContentMods(context, global.Mod);
 
+        // 内容 Mod 规格 §5：内容指纹与注册表版本联动，写进全局存档以便 Run 存档判断内容是否被改动。
+        // 冷启动的 Rebuild 在 BootstrapContentMods 内完成；之后新增的 Rebuild 调用点（如未来的主菜单 Mod 设置）
+        // 同样需要回写指纹。
+        global.Controller.UpdateContentVersionHash(content.Pipeline.Registry.ContentVersionHash);
+
         var result = new ModStartupResult
         {
             GlobalMod = global.Mod,
@@ -103,6 +109,26 @@ public sealed class ModFactory
         return (mod, controller, saveService);
     }
 
+    /// <summary>
+    /// 内容加载报告有异常（跳过 / 冲突 / 校验剔除 / 脚本错误）时汇总一条告警日志；
+    /// 明细由 <see cref="GodotContentModLogger"/> 逐条输出，这里只给一行可读摘要。
+    /// </summary>
+    private static void LogContentReportIssues(IAppLog appLog, ContentLoadReport report)
+    {
+        if (!report.HasIssues)
+        {
+            return;
+        }
+
+        appLog.Warning(
+            $"Content load report has issues: skippedMods={report.SkippedMods.Count}, "
+            + $"idConflicts={report.IdConflicts.Count}, "
+            + $"removedDefinitions={report.RemovedValidationErrors.Count}, "
+            + $"validationErrors={report.ValidationErrors.Count}, "
+            + $"scriptLoadErrors={report.ScriptLoadErrors.Count}",
+            "ContentMod");
+    }
+
     private static (
         ContentModPipeline Pipeline,
         ModScriptRuntime ScriptRuntime,
@@ -134,7 +160,17 @@ public sealed class ModFactory
             prewarmer);
 
         var enabledModIds = globalMod.Current.EnabledModIds ?? GlobalSaveDto.CreateDefault().EnabledModIds!;
+
+        // 内容 Mod 规格 §5：Run 进行中误调用 Rebuild 必须被拒绝。frame 层不依赖 Run 状态，
+        // 因此由组合根（本处）把「当前没有进行中的 Run」接到管线守卫上；未接线时守卫默认放行。
+        pipeline.CanRebuild = static () => RunRuntime.Current is null;
+
         pipeline.Rebuild(enabledModIds);
+
+        // 报告默认只落日志（Notifier 首版为空实现），LatestReport 保留最近一次结果供组合根 / 后续主菜单 Mod UI 读取。
+        // 注意：内容 Mod 规格 §7 的 Fatal 分级（Mod 根目录不可读、合并后无有效基础内容 ⇒ 阻止开新 Run、主菜单强提示）
+        // 暂未实现，这里只告警不阻断；是否阻断属于产品决策，落地前不在这里补。
+        LogContentReportIssues(appLog, pipeline.LatestReport);
 
         return (
             pipeline,

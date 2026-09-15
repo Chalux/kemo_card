@@ -5,6 +5,17 @@ namespace KemoCard.Frame.Content;
 
 public sealed class ContentModLoader
 {
+    /// <summary>
+    /// 预解析（重写注入 id）阶段使用的宽松选项，必须与 <see cref="ContentDefinitionJson.Options"/> 保持一致：
+    /// <see cref="JsonDocument.Parse(string)"/> 不继承 <c>JsonSerializerOptions</c>，
+    /// 不显式传入会让允许尾逗号 / 跳过注释的配置形同虚设。
+    /// </summary>
+    private static readonly JsonDocumentOptions DocumentOptions = new()
+    {
+        AllowTrailingCommas = true,
+        CommentHandling = JsonCommentHandling.Skip,
+    };
+
     public static ModContentBundle Load(DiscoveredModEntry entry)
     {
         var manifest = entry.Manifest;
@@ -52,17 +63,32 @@ public sealed class ContentModLoader
                 continue;
             }
 
-            var json = File.ReadAllText(filePath);
-            var dto = DeserializeWithId<T>(json, id);
-            result[id] = dto;
+            result[id] = LoadFile<T>(filePath, id);
         }
 
         return result;
     }
 
+    private static T LoadFile<T>(string filePath, string id)
+    {
+        try
+        {
+            var json = File.ReadAllText(filePath);
+            return DeserializeWithId<T>(json, id);
+        }
+        catch (Exception ex) when (ex is not ContentModLoadException)
+        {
+            // 带上文件路径：JsonException 默认只报行列号，多文件 mod 下无法定位是哪个定义写错。
+            throw new ContentModLoadException(
+                id,
+                $"definition file '{filePath}' is invalid: {ex.Message}",
+                ex);
+        }
+    }
+
     private static T DeserializeWithId<T>(string json, string id)
     {
-        using var document = JsonDocument.Parse(json);
+        using var document = JsonDocument.Parse(json, DocumentOptions);
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream))
         {
@@ -70,7 +96,7 @@ public sealed class ContentModLoader
             writer.WriteString("id", id);
             foreach (var property in document.RootElement.EnumerateObject())
             {
-                if (property.NameEquals("id"))
+                if (IsIdProperty(property))
                 {
                     continue;
                 }
@@ -84,4 +110,13 @@ public sealed class ContentModLoader
         return JsonSerializer.Deserialize<T>(stream.ToArray(), ContentDefinitionJson.Options)
             ?? throw new JsonException($"Failed to deserialize definition '{id}'.");
     }
+
+    /// <summary>
+    /// 内容定义 id 一律由文件名推导（content-mod-manager 规格 §4.3）。
+    /// 这里必须大小写无关地跳过：反序列化使用 <c>PropertyNameCaseInsensitive</c>，
+    /// 若只跳过小写 <c>id</c>，文件中写成 <c>"Id"</c> 就会覆盖文件名推导出的 id，
+    /// 同一字段出现两种大小写两种行为。
+    /// </summary>
+    private static bool IsIdProperty(JsonProperty property) =>
+        string.Equals(property.Name, "id", StringComparison.OrdinalIgnoreCase);
 }

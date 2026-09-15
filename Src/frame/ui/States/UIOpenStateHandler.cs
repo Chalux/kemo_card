@@ -28,6 +28,13 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
 
         vo.Lifecycle.OpenTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
+        // 规格 ui-manager §HideBelow：全屏界面（HideBelow = true）打开时自动压入导航栈，
+        // 供 BackAsync 关闭当前并恢复上一层。此前 NavStack.Push 全仓无调用者，BackAsync 恒返回 null。
+        if (vo.OpenOpt.HideBelow && !manager.NavStack.Contains(vo.Id))
+        {
+            manager.NavStack.Push(vo.Id);
+        }
+
         if (data != null)
         {
             vo.Runtime.AddToNode();

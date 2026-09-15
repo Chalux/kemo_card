@@ -14,7 +14,12 @@ public sealed class PlayerTeamState
     public int MaxHp => (int)MathF.Round(Asc.GetCurrentValue(AttributeIds.MaxHealth));
     public CombatDomain? ActiveDomain { get; set; }
     public IReadOnlyList<CharacterBattleInstance> Characters => _characters;
-    public bool IsDefeated => SharedHp <= 0;
+
+    /// <summary>
+    /// 存活判定必须用未取整的账本值：<see cref="SharedHp"/> 走 <c>MathF.Round</c>（银行家舍入），
+    /// 账本剩 0.5 时会被舍入为 0，导致队伍在还有血量时被判负。
+    /// </summary>
+    public bool IsDefeated => SharedHpExact <= 0f;
 
     /// <summary>
     /// BattleStart 通道约束（规格 §1.2）：被动/修饰技能禁止读写 SharedHp。

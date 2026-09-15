@@ -1,5 +1,6 @@
 using KemoCard.Mod.Combat.Commands;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Runtime;
@@ -125,9 +126,34 @@ public sealed class CombatStateMachine
         {
             QueuedCostReconciler.Reconcile(simulation);
             EnforceSealsOnAllCharacters(simulation);
+            AdvanceToCardExecutionIfAllActed(simulation);
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// 规格 §2.1 / §2.5：全员「已行动或封印」即进入结算阶段。
+    /// </summary>
+    /// <remarks>
+    /// 判定必须覆盖<b>所有</b>成功指令与阶段起点，不能只挂在 Confirm 指令上：封印角色的
+    /// <c>HasActed</c> 由 <see cref="EnforceSeal"/> 置位，若宿主对封印角色禁用确认按钮，
+    /// 就永远不会有那条 Confirm 指令，战斗会永久停在 Player 阶段（硬软锁）。
+    /// 非满编队伍维持原语义不自动推进（由 <c>CombatSimulationFactory</c> 拒绝）。
+    /// </remarks>
+    internal static void AdvanceToCardExecutionIfAllActed(CombatSimulation simulation)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
+        if (simulation.Phase != ECombatPhase.Player)
+            return;
+
+        var characters = simulation.PlayerTeam.Characters;
+        if (characters.Count != CombatConstants.SlotCount)
+            return;
+        if (!characters.All(character => character.HasActed || character.IsSealed))
+            return;
+
+        simulation.TransitionTo(ECombatPhase.CardExecution);
     }
 
     /// <summary>
@@ -379,9 +405,6 @@ public sealed class CombatStateMachine
             return new CombatApplyResult(false, "角色索引无效。");
 
         characters[index].SetHasActed(true);
-        // 规格 §2.1 / §2.5：封印视作已行动。
-        if (characters.Count == 4 && characters.All(c => c.HasActed || c.IsSealed))
-            simulation.TransitionTo(ECombatPhase.CardExecution);
         return new CombatApplyResult(true);
     }
 
@@ -610,11 +633,37 @@ public sealed class CombatStateMachine
         return spec.Scope switch
         {
             ETargetScope.All => legal,
-            ETargetScope.RandomN => legal.Take(Math.Max(1, spec.TargetCount)).ToList(),
+            ETargetScope.RandomN => PickRandomTargets(legal, Math.Max(1, spec.TargetCount), simulation.RetargetRng),
             _ => legal.Count <= spec.TargetCount || spec.TargetCount <= 0
                 ? [legal[0]]
                 : legal.Take(spec.TargetCount).ToList(),
         };
+    }
+
+    /// <summary>
+    /// 规格 §6.3：<c>scope: RandomN</c> 从合法目标中<b>无放回随机</b>抽取 N 个。
+    /// </summary>
+    /// <remarks>
+    /// 不能退化成 <c>legal.Take(N)</c>：那样「随机」会变成固定取前 N 个（敌方技能永远打 0 号槽），
+    /// 枚举名与规格承诺都与行为不符。
+    /// </remarks>
+    internal static List<CombatTargetRef> PickRandomTargets(
+        List<CombatTargetRef> legal,
+        int count,
+        HostRng rng)
+    {
+        if (count >= legal.Count)
+            return [.. legal];
+
+        // 部分 Fisher-Yates：只需洗出前 count 个，避免整表全量打乱。
+        var pool = legal.ToArray();
+        for (var i = 0; i < count; i++)
+        {
+            var j = rng.NextInt(i, pool.Length);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+
+        return [.. pool[..count]];
     }
 
     private static List<CombatTargetRef> CollectLegalTargetsForEnemy(
