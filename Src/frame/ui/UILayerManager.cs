@@ -57,7 +57,7 @@ public sealed class UILayerManager
                 vo.Runtime.HideBool.Set(hideKey, hide);
                 if (!hide)
                 {
-                    hide = vo.OpenOpt.HideBelow;
+                    hide = vo.OpenOpt.EffectiveHideBelow;
                 }
             }
         }

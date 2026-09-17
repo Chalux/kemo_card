@@ -19,6 +19,8 @@ public sealed class UIRouteMeta
 /// </summary>
 public sealed class UIRuntimeEntry
 {
+    /// <summary>归属功能 Mod 的 id（必填，见 ui-mod-binding 规格 §5.2）。</summary>
+    public required string OwnerModId { get; init; }
     public required string Id { get; init; }
     public required string Dir { get; init; }
     public required EUIType Type { get; init; }
@@ -39,8 +41,29 @@ public sealed class UIRuntimeRegistry
     private readonly Dictionary<string, string> _parentMap = [];
     private Dictionary<string, List<string>>? _childrenMap;
 
+    /// <summary>
+    /// 上次 <see cref="Validate"/> 是否发现致命问题（owner 缺失 / 跨 owner 抢注同名界面 / owner 未登记）。
+    /// 启动期应据此断言，避免"注册漏了归属"拖到运行期才暴露。
+    /// </summary>
+    public bool HasErrors { get; private set; }
+
+    /// <summary>已登记的归属 Mod id 集合（由注册项带下来，供批量关闭与门面解析校验）。</summary>
+    public IReadOnlyCollection<string> OwnerModIds =>
+        _map.Values.Select(entry => entry.OwnerModId).Distinct(StringComparer.Ordinal).ToList();
+
     public void Register(UIRuntimeEntry entry)
     {
+        // 同一界面 id 被不同功能抢占属于装配错误：后者会静默覆盖前者，双方的生命周期管理都会错乱。
+        if (_map.TryGetValue(entry.Id, out var existing) &&
+            !string.Equals(existing.OwnerModId, entry.OwnerModId, StringComparison.Ordinal))
+        {
+            AppLog.Error(
+                $"UIRoute: 界面 id {entry.Id} 已被归属 {existing.OwnerModId} 注册，"
+                + $"又被 {entry.OwnerModId} 覆盖；同一 id 只能属于一个功能 Mod",
+                "UI");
+            HasErrors = true;
+        }
+
         _map[entry.Id] = entry;
 
         var route = entry.RouteMeta;
@@ -49,6 +72,13 @@ public sealed class UIRuntimeRegistry
             _parentMap[entry.Id] = route.ParentId;
             _childrenMap = null;
         }
+    }
+
+    /// <summary>取某功能 Mod 名下的全部注册项。</summary>
+    public IReadOnlyList<UIRuntimeEntry> GetByOwner(string ownerModId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
+        return [.. _map.Values.Where(entry => string.Equals(entry.OwnerModId, ownerModId, StringComparison.Ordinal))];
     }
 
     public void RegisterRange(IEnumerable<UIRuntimeEntry> entries)
@@ -86,14 +116,33 @@ public sealed class UIRuntimeRegistry
     }
 
     /// <summary>
-    /// 校验所有路由：检查循环引用、注册一致性。
+    /// 校验全部注册项：归属合法性（ui-mod-binding 规格 §5.3 三条硬校验）+ 路由循环引用与注册一致性。
     /// </summary>
-    public void Validate()
+    /// <param name="knownOwnerModIds">
+    /// 组合根已装配的功能 Mod id 清单（<c>FeatureModCatalog</c>）。传 null 表示跳过该项校验。
+    /// </param>
+    /// <returns>是否发现致命问题（同时见 <see cref="HasErrors"/>）。</returns>
+    public bool Validate(IReadOnlyCollection<string>? knownOwnerModIds = null)
     {
         HashSet<string> registeredIds = [.. _map.Keys];
 
         foreach (var (id, entry) in _map)
         {
+            // ① 归属必须声明
+            if (string.IsNullOrWhiteSpace(entry.OwnerModId))
+            {
+                AppLog.Error($"UIRoute: 界面 {id} 未声明归属 Mod（OwnerModId），无法按功能管理其生命周期", "UI");
+                HasErrors = true;
+            }
+            // ② 归属必须是已装配的功能 Mod（防拼写错误）
+            else if (knownOwnerModIds is not null && !knownOwnerModIds.Contains(entry.OwnerModId))
+            {
+                AppLog.Error(
+                    $"UIRoute: 界面 {id} 声明的归属 Mod {entry.OwnerModId} 未在 FeatureModCatalog 登记",
+                    "UI");
+                HasErrors = true;
+            }
+
             var route = entry.RouteMeta;
             if (route == null) continue;
 
@@ -117,6 +166,8 @@ public sealed class UIRuntimeRegistry
                 cur = GetParentId(cur);
             }
         }
+
+        return HasErrors;
     }
 
     private void EnsureChildrenMap()

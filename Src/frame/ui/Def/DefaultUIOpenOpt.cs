@@ -2,11 +2,17 @@ namespace KemoCard.Frame.UI.Def;
 
 public static class DefaultUIOpenOpt
 {
+    /// <summary>
+    /// 合并基线：字段<b>全部显式指定</b>，保证任何合并结果都是具体值。
+    /// <see cref="UIOpenOpt.MergeFrom"/> 只覆盖显式设置的字段，因此基线必须完整。
+    /// </summary>
     public static readonly UIOpenOpt Value = new()
     {
         Layer = EUILayer.Dlg,
-        CacheTime = 30000,
+        CacheTime = UIOpenOpt.DefaultCacheTime,
         AnimType = EAnimType.SkipReOpen,
+        HideBelow = false,
+        NoCover = false,
         Align = EUIAlign.Center,
     };
 
@@ -16,9 +22,8 @@ public static class DefaultUIOpenOpt
     /// 每次调用返回新实例，调用方可安全修改。
     /// </summary>
     /// <remarks>
-    /// 未显式设置的字段保持 <see cref="UIOpenOpt"/> 的默认值（CacheTime=30000、AnimType=SkipReOpen、
-    /// NoCover=false），因为 <c>MergeInto</c> 对这些字段是无条件覆盖的：只有与
-    /// <see cref="Value"/> 同值，合并才是幂等的。
+    /// 只设置与基线<b>不同</b>的字段：未设置的字段保持 <c>null</c>（「未指定」），
+    /// 合并时不会覆盖下层来源（例如调用点显式传入的值）。
     /// </remarks>
     public static UIOpenOpt ForType(EUIType type) => type switch
     {
@@ -31,19 +36,16 @@ public static class DefaultUIOpenOpt
         EUIType.Dlg => new UIOpenOpt
         {
             Layer = EUILayer.Dlg,
-            Align = EUIAlign.Center,
-            HideBelow = false,
         },
         EUIType.Pge => new UIOpenOpt
         {
+            // 页面靠 Parent 挂载，不固定层级。
             Align = EUIAlign.Full,
-            HideBelow = false,
         },
         EUIType.Pop => new UIOpenOpt
         {
             Layer = EUILayer.Pop,
             Align = EUIAlign.None,
-            HideBelow = false,
         },
         _ => new UIOpenOpt(),
     };

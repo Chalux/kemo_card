@@ -1,3 +1,4 @@
+using KemoCard.Frame.UI;
 namespace KemoCard.Mod.Global.Ui;
 
 using Godot;
@@ -76,6 +77,9 @@ public partial class VirtualList : Control
 
     #endregion
 
+    /// <summary>订阅登记簿：任何订阅都必须经此登记，离场统一解绑（见 ui-mod-binding 规格 §4.3）。</summary>
+    private readonly BindingScope _binder = new();
+
     #region 生命周期
 
     public override void _Ready()
@@ -83,15 +87,24 @@ public partial class VirtualList : Control
         EnsureInitialized();
     }
 
-    public override void _ExitTree()
+    /// <summary>框架唯一离场入口。sealed：子类不得 override —— 请改 override OnExitTree。</summary>
+    public sealed override void _ExitTree()
     {
-        if (_scrollBar != null)
-        {
-            _scrollBar.ValueChanged -= OnScrollValueChanged;
-            _scrollBar = null;
-        }
-        ClearAllItems();
+        OnExitTree();
+        _binder.UnbindAll();
         base._ExitTree();
+    }
+
+    /// <summary>框架级离场生命周期：只做非订阅类清理。</summary>
+    protected virtual void OnExitTree()
+    {
+        _scrollBar = null;
+        ClearAllItems();
+        // 复位初始化状态，让本节点重入树后能重新取滚动条并重新登记订阅。
+        // 注意：Godot 的 _Ready 每个节点只调用一次（界面进缓存走 RemoveChild，重开 AddChild
+        // 不会再触发 _Ready），因此重入树后是 SetData / Refresh 等公开方法再次驱动
+        // EnsureInitialized()，而不是 _Ready。
+        _initialized = false;
     }
 
     private void EnsureInitialized()
@@ -105,17 +118,22 @@ public partial class VirtualList : Control
             return;
         }
 
-        _itemContainer = new Control
+        // 复用仍然有效的容器：离场只是 RemoveChild，容器节点并未释放；
+        // 每次重入树都新建会导致 ScrollArea 下堆积多个 ItemContainer，滚动范围翻倍。
+        if (_itemContainer == null || !GodotObject.IsInstanceValid(_itemContainer))
         {
-            Name = "ItemContainer",
-            MouseFilter = MouseFilterEnum.Pass
-        };
-        ScrollArea.AddChild(_itemContainer);
+            _itemContainer = new Control
+            {
+                Name = "ItemContainer",
+                MouseFilter = MouseFilterEnum.Pass
+            };
+            ScrollArea.AddChild(_itemContainer);
+        }
 
         _scrollBar = IsVertical ? ScrollArea.GetVScrollBar() : ScrollArea.GetHScrollBar();
         if (_scrollBar != null)
         {
-            _scrollBar.ValueChanged += OnScrollValueChanged;
+            _binder.OnValueChanged(_scrollBar, OnScrollValueChanged);
         }
     }
 

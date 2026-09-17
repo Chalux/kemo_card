@@ -3,6 +3,7 @@ using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content.Keywords;
 using KemoCard.Frame.Logging;
 
+using KemoCard.Frame.UI;
 namespace KemoCard.Mod.Global.Ui.Tip;
 
 /// <summary>
@@ -22,6 +23,9 @@ public partial class KeywordTipService : CanvasLayer
     [Export] private PackedScene? _panelScene;
 
     private Control? _currentAnchor;
+
+    /// <summary>按锚点动态订阅的独立账本：换锚点时只拆这一条，不影响其它订阅（见 ui-mod-binding 规格 §4.3）。</summary>
+    private readonly BindingScope _anchorBinder = new();
     private TipSide _pendingPreferSide = TipSide.Right;
 
     public override void _EnterTree()
@@ -32,15 +36,21 @@ public partial class KeywordTipService : CanvasLayer
         EnsurePanelScene();
     }
 
-    public override void _ExitTree()
+    /// <summary>框架唯一离场入口。sealed：子类不得 override —— 请改 override OnExitTree。</summary>
+    public sealed override void _ExitTree()
+    {
+        OnExitTree();
+        base._ExitTree();
+    }
+
+    /// <summary>框架级离场生命周期：订阅由 _anchorBinder 负责，这里只做非订阅类清理。</summary>
+    protected virtual void OnExitTree()
     {
         DetachAnchorWatcher();
         if (Current == this)
         {
             Current = null;
         }
-
-        base._ExitTree();
     }
 
     public void ShowTips(Control anchor, IReadOnlyList<KeywordTipRequest> tips, TipSide preferSide = TipSide.Right)
@@ -126,7 +136,9 @@ public partial class KeywordTipService : CanvasLayer
 
         DetachAnchorWatcher();
         _currentAnchor = anchor;
-        _currentAnchor.TreeExited += OnAnchorTreeExited;
+        _anchorBinder.Bind(
+            () => { if (GodotObject.IsInstanceValid(anchor)) anchor.TreeExited += OnAnchorTreeExited; },
+            () => { if (GodotObject.IsInstanceValid(anchor)) anchor.TreeExited -= OnAnchorTreeExited; });
 
         ClearPanels();
 
@@ -261,11 +273,7 @@ public partial class KeywordTipService : CanvasLayer
 
     private void DetachAnchorWatcher()
     {
-        if (_currentAnchor != null && GodotObject.IsInstanceValid(_currentAnchor))
-        {
-            _currentAnchor.TreeExited -= OnAnchorTreeExited;
-        }
-
+        _anchorBinder.UnbindAll();
         _currentAnchor = null;
     }
 

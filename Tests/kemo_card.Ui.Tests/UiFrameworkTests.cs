@@ -164,12 +164,14 @@ public sealed class UiFrameworkTests
         var reg = new UIRuntimeRegistry();
         reg.Register(new UIRuntimeEntry
         {
+            OwnerModId = "test.mod",
             Id = "page",
             Dir = "ui",
             Type = EUIType.Pge,
         });
         reg.Register(new UIRuntimeEntry
         {
+            OwnerModId = "test.mod",
             Id = "page.child",
             Dir = "ui",
             Type = EUIType.Pge,
@@ -187,12 +189,14 @@ public sealed class UiFrameworkTests
         var reg = new UIRuntimeRegistry();
         reg.Register(new UIRuntimeEntry
         {
+            OwnerModId = "test.mod",
             Id = "parent",
             Dir = "ui",
             Type = EUIType.Pge,
         });
         reg.Register(new UIRuntimeEntry
         {
+            OwnerModId = "test.mod",
             Id = "child",
             Dir = "ui",
             Type = EUIType.Pge,
@@ -208,6 +212,7 @@ public sealed class UiFrameworkTests
         var reg = new UIRuntimeRegistry();
         reg.Register(new UIRuntimeEntry
         {
+            OwnerModId = "test.mod",
             Id = "orphan",
             Dir = "ui",
             Type = EUIType.Pge,
@@ -246,7 +251,7 @@ public sealed class UiFrameworkTests
     [Test]
     public void UiRegistration_converts_to_runtime_entry()
     {
-        var reg = UIRegistration.Dialog("testDlg", "ui/test");
+        var reg = UIRegistration.Dialog("test.mod", "testDlg", "ui/test");
         var entry = reg.ToRuntimeEntry();
 
         Assert.That(entry.Id, Is.EqualTo("testDlg"));
@@ -258,7 +263,7 @@ public sealed class UiFrameworkTests
     [Test]
     public void UiRegistration_with_parent_sets_route_meta()
     {
-        var reg = UIRegistration.Page("child", "ui").WithParent("parent");
+        var reg = UIRegistration.Page("test.mod", "child", "ui").WithParent("parent");
 
         Assert.That(reg.Parent, Is.Not.Null);
         Assert.That(reg.Parent!.ParentId, Is.EqualTo("parent"));

@@ -14,6 +14,10 @@ public sealed class UIVo : IUIStateContext, IUIVoHandle
     public readonly StateMachine<EUIState, IUIStateContext> StateMachine = new();
 
     public string Id { get; }
+
+    /// <summary>归属功能 Mod 的 id：界面只允许通过它取自己功能的门面（见 ui-mod-binding 规格 §5.4）。</summary>
+    public string OwnerModId { get; }
+
     public EUIType Type { get; }
     public object? Payload { get; set; }
     public UIOpenOpt OpenOpt { get; set; }
@@ -46,10 +50,12 @@ public sealed class UIVo : IUIStateContext, IUIVoHandle
     public bool IsOpen => StateMachine.CurrentState is >= EUIState.Create and <= EUIState.Open;
     public bool IsClose => StateMachine.CurrentState >= EUIState.Close;
 
-    public UIVo(string id, EUIType type, object? payload, UIManager manager,
+    public UIVo(string id, EUIType type, string ownerModId, object? payload, UIManager manager,
         IEnumerable<IStateHandler<EUIState, IUIStateContext>> handlers, UIOpenOpt? openOpt = null)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
         Id = id;
+        OwnerModId = ownerModId;
         Type = type;
         Payload = payload;
         Manager = manager;

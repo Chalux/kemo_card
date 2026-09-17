@@ -62,9 +62,19 @@ public partial class MainRoot : Control
 
     private void InitUIManager()
     {
+        // 功能 Mod 的界面由各自声明、在 FeatureModCatalog 统一登记；此处只负责迭代装配，
+        // 不再点名具体 Mod（新增功能 Mod 只需改 FeatureModCatalog 一处）。
+        var services = AppRoot.Services;
+        var features = services.Features;
+
         var registry = new UIRuntimeRegistry();
-        GlobalMod.RegisterUi(registry);
-        RunMod.RegisterUi(registry);
+        foreach (var feature in features)
+        {
+            foreach (var registration in feature.Declare())
+            {
+                registry.Register(registration.ToRuntimeEntry());
+            }
+        }
 
         var uiManager = new UIManager();
         AddChild(uiManager);
@@ -73,6 +83,8 @@ public partial class MainRoot : Control
         {
             Registry = registry,
             StageRoot = this,
+            FacadeProvider = services,
+            KnownOwnerModIds = [.. features.Select(feature => feature.ModId)],
             Layers =
             [
                 EUILayer.Win,

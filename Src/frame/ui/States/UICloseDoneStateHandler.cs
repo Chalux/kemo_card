@@ -40,14 +40,14 @@ public sealed class UICloseDoneStateHandler : IStateHandler<EUIState, IUIStateCo
         layer?.RemoveUI(vo.Id);
         vo.Runtime.UI!.GetParent()?.RemoveChild(vo.Runtime.UI);
 
-        if (vo.OpenOpt.CacheTime == -1)
+        if (vo.OpenOpt.EffectiveCacheTime == -1)
         {
             vo.Lifecycle.DestroyTime = -1;
             vo.StateMachine.TransitionTo(EUIState.Cache, context);
         }
-        else if (vo.OpenOpt.CacheTime > 0)
+        else if (vo.OpenOpt.EffectiveCacheTime > 0)
         {
-            vo.Lifecycle.DestroyTime = vo.Lifecycle.CloseTime + vo.OpenOpt.CacheTime;
+            vo.Lifecycle.DestroyTime = vo.Lifecycle.CloseTime + vo.OpenOpt.EffectiveCacheTime;
             vo.StateMachine.TransitionTo(EUIState.Cache, context);
         }
         else

@@ -42,6 +42,12 @@ public partial class UIManager : Node, IUIManager
 {
     public static UIManager? Instance { get; private set; }
 
+    /// <summary>
+    /// 归属门面提供者：界面通过它取「自己功能」的门面（见 ui-mod-binding 规格 §5.4）。
+    /// 由组合根注入；未注入时 <see cref="UIVo.OwnerModId"/> 相关取数会明确失败而非静默返回 null。
+    /// </summary>
+    public IUiFacadeProvider? FacadeProvider { get; private set; }
+
     public EventDispatcher EventDispatcher { get; } = new();
     public UIStack NavStack { get; } = new();
 
@@ -90,6 +96,7 @@ public partial class UIManager : Node, IUIManager
 
         _registry = opt.Registry;
         _layers = [.. opt.Layers];
+        FacadeProvider = opt.FacadeProvider;
 
         var handlers = opt.StateHandlers ?? CreateDefaultStateHandlers();
         VoRegistry = new UIVoRegistry(this, handlers);
@@ -103,7 +110,8 @@ public partial class UIManager : Node, IUIManager
 
         LayerManager.Init(uiRoot, uiTopRoot, [.. opt.Layers], [.. opt.TopLayers], opt.LayerOpenOpts);
 
-        _registry.Validate();
+        // 归属校验需要组合根的已装配功能 Mod 清单（见 ui-mod-binding 规格 §5.3）。
+        _registry.Validate(opt.KnownOwnerModIds);
     }
 
     #region 打开/关闭
@@ -143,7 +151,7 @@ public partial class UIManager : Node, IUIManager
             return tcs.Task;
         }
 
-        UIVo vo = VoRegistry.GetOrCreate(id, entry.Type, payload);
+        UIVo vo = VoRegistry.GetOrCreate(id, entry.Type, entry.OwnerModId, payload);
 
         // 必须写回：状态处理器（层级挂载 / 遮罩 / 动画 / 缓存 / 回调）统一读 vo.OpenOpt，
         // 不写回会让 MergeOpenOpt 的结果被丢弃，整个 UIOpenOpt 参数体系失效，且 await OpenAsync 永不返回。
@@ -221,9 +229,9 @@ public partial class UIManager : Node, IUIManager
             string? grand = _registry.GetParentId(curParent);
             if (grand == null)
             {
-                // 必须 Clone：DefaultUIOpenOpt.Value 是静态共享实例，直接当 MergeInto 的 target 会跨次打开污染全局默认值。
+                // 必须 Clone：DefaultUIOpenOpt.Value 是静态共享实例，直接当合并 target 会跨次打开污染全局默认值。
                 UIOpenOpt finalOpt = curMeta?.ParentOpenOpt?.Clone() ?? DefaultUIOpenOpt.Value.Clone();
-                MergeInto(finalOpt, optForRoot);
+                finalOpt.MergeFrom(optForRoot);
                 return OpenAsync(curParent, voForCur, finalOpt);
             }
 
@@ -301,6 +309,75 @@ public partial class UIManager : Node, IUIManager
         return result;
     }
 
+    /// <summary>
+    /// 取出某功能 Mod 名下全部界面（含已关闭仍在缓存的），供批量关闭 / 注销使用。
+    /// </summary>
+    private List<UIVo> SnapshotVosByOwner(string ownerModId)
+    {
+        List<UIVo> result = [];
+        foreach (var vo in VoRegistry.Map.Values)
+        {
+            if (string.Equals(vo.OwnerModId, ownerModId, StringComparison.Ordinal))
+            {
+                result.Add(vo);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 关闭某功能 Mod 的全部界面（见 ui-mod-binding 规格 §6.1）。
+    /// </summary>
+    /// <param name="ownerModId">功能 Mod id。</param>
+    /// <param name="destroy">
+    /// <c>true</c> 表示关闭即销毁、不留缓存（决策 1：Run 结束时销毁其界面）；
+    /// <c>false</c> 走常规缓存语义。
+    /// </param>
+    public void CloseByOwner(string ownerModId, bool destroy = false)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
+
+        foreach (var vo in SnapshotOpenVos())
+        {
+            if (!string.Equals(vo.OwnerModId, ownerModId, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (destroy)
+            {
+                // OpenOpt 是每个 UIVo 自己的克隆（见 OpenAsync 的写回），改它不会污染注册表默认值。
+                vo.OpenOpt.CacheTime = 0;
+            }
+
+            Close(vo.Id);
+        }
+    }
+
+    /// <summary>
+    /// 注销某功能 Mod 的全部界面（连 <see cref="UIVo"/> 一并移除），防止 Mod 卸载后残留缓存实例。
+    /// 解绑订阅由各节点离场时的 <c>BindingScope</c> 负责，此处无需额外清理。
+    /// </summary>
+    public void UnregisterOwner(string ownerModId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
+
+        foreach (var vo in SnapshotVosByOwner(ownerModId))
+        {
+            if (vo.IsOpen)
+            {
+                vo.OpenOpt.CacheTime = 0;
+                Close(vo.Id);
+                continue;
+            }
+
+            if (vo.StateMachine.CurrentState != EUIState.Destroy)
+            {
+                vo.StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(vo, this));
+            }
+        }
+    }
+
     public async Task<UIVo?> BackAsync()
     {
         if (NavStack.Count < 2) return null;
@@ -346,11 +423,11 @@ public partial class UIManager : Node, IUIManager
         for (int i = layerIdx + 1; i < _layers.Length; i++)
         {
             UILayer? layer = LayerManager.GetLayer(_layers[i]);
-            if (layer != null && layer.UISort.Any(ui => ui.UIVo?.OpenOpt.NoCover != true))
+            if (layer != null && layer.UISort.Any(ui => ui.UIVo?.OpenOpt.EffectiveNoCover != true))
                 return false;
         }
 
-        IReadOnlyList<BaseWin> layerUIs = [.. vo.Runtime.Layer.UISort.Where(ui => ui.UIVo?.OpenOpt.NoCover != true)];
+        IReadOnlyList<BaseWin> layerUIs = [.. vo.Runtime.Layer.UISort.Where(ui => ui.UIVo?.OpenOpt.EffectiveNoCover != true)];
         return layerUIs.Count > 0 && layerUIs[^1].UIId == Id;
     }
 
@@ -412,32 +489,13 @@ public partial class UIManager : Node, IUIManager
 
     private static UIOpenOpt MergeOpenOpt(UIRuntimeEntry entry, UILayer? layer, UIOpenOpt? openOpt)
     {
-        UIOpenOpt result = DefaultUIOpenOpt.Value.Clone();
-        MergeInto(result, entry.BaseOpenOpt);
-        MergeInto(result, layer?.OpenOpt);
-        MergeInto(result, entry.OpenOpt);
-        MergeInto(result, openOpt);
+        var result = DefaultUIOpenOpt.Value.Clone();
+        result.MergeFrom(entry.BaseOpenOpt);
+        result.MergeFrom(layer?.OpenOpt);
+        result.MergeFrom(entry.OpenOpt);
+        result.MergeFrom(openOpt);
         if (layer != null) result.Layer = layer.Type;
         return result;
-    }
-
-    private static void MergeInto(UIOpenOpt target, UIOpenOpt? source)
-    {
-        if (source == null) return;
-        if (source.Layer != null) target.Layer = source.Layer;
-        if (source.Parent != null) target.Parent = source.Parent;
-        target.CacheTime = source.CacheTime;
-        target.AnimType = source.AnimType;
-        target.HideBelow = source.HideBelow;
-        target.NoCover = source.NoCover;
-        target.Align = source.Align;
-        if (source.Mask != null) target.Mask = source.Mask;
-        if (source.Pop != null) target.Pop = source.Pop;
-        if (source.SkipOpenCheck != null) target.SkipOpenCheck = source.SkipOpenCheck;
-        if (source.OnOpenBefore != null) target.OnOpenBefore = source.OnOpenBefore;
-        if (source.OnOpen != null) target.OnOpen = source.OnOpen;
-        if (source.OnFail != null) target.OnFail = source.OnFail;
-        if (source.PreLoadResList != null) target.PreLoadResList = source.PreLoadResList;
     }
 
     private static Control CreateFullScreenRoot(string name)
@@ -464,6 +522,12 @@ public sealed class UIManagerInitOpt
     public required IEnumerable<EUILayer> TopLayers { get; init; }
     public Dictionary<EUILayer, UIOpenOpt>? LayerOpenOpts { get; init; }
     public IEnumerable<IStateHandler<EUIState, IUIStateContext>>? StateHandlers { get; init; }
+
+    /// <summary>归属门面提供者（组合根注入；见 ui-mod-binding 规格 §5.4）。</summary>
+    public IUiFacadeProvider? FacadeProvider { get; init; }
+
+    /// <summary>组合根已装配的功能 Mod id 清单，用于归属校验（见规格 §5.3 ②）。传 null 跳过该项校验。</summary>
+    public IReadOnlyCollection<string>? KnownOwnerModIds { get; init; }
 }
 
 public sealed class UIStateContext(UIVo vo, UIManager manager) : IUIStateContext

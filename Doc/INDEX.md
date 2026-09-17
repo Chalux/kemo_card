@@ -2,7 +2,7 @@
 
 > Agent 请先读 [AGENT.md](AGENT.md)。本文列出活规格、归档入口与本轮维护约定。
 
-**最后修订**：2026-08-04
+**最后修订**：2026-09-15
 
 ---
 
@@ -25,6 +25,7 @@
 | [2026-08-04-run-save-continue-design.md](superpowers/specs/2026-08-04-run-save-continue-design.md) | Run 存档闭环（保存 / 继续 / 自动保存，单槽） |
 | [2026-08-04-toast-component-design.md](superpowers/specs/2026-08-04-toast-component-design.md) | Toast 通用组件（对象池 / 堆叠 / 动画） |
 | [2026-08-04-multiplayer-save-impact.md](superpowers/specs/2026-08-04-multiplayer-save-impact.md) | 联机存档影响评估（开放项，不阻塞单人线） |
+| [2026-09-15-ui-mod-binding-design.md](superpowers/specs/2026-09-15-ui-mod-binding-design.md) | 界面归属功能 Mod + BindingScope 统一订阅生命周期 |
 
 ## 进行中计划（`Doc/superpowers/plans/`）
 

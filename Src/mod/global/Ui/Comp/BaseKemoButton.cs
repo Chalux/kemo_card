@@ -3,6 +3,7 @@ using KemoCard.Frame.Content.Keywords;
 using KemoCard.Mod.Global.Ui.Tip;
 using KemoCard.Frame.Logging;
 
+using KemoCard.Frame.UI;
 namespace KemoCard.Mod.Global.Ui.Comp;
 
 public partial class BaseKemoButton : Button
@@ -23,23 +24,46 @@ public partial class BaseKemoButton : Button
     private bool _hoveredOrFocused;
     private bool _pressedVisual;
     private IReadOnlyList<KeywordTipRequest> _keywordTips = Array.Empty<KeywordTipRequest>();
-    private bool _bound;
+    /// <summary>订阅登记簿：任何订阅都必须经此登记，离场统一解绑（见 ui-mod-binding 规格 §4.3）。</summary>
+    private readonly BindingScope _binder = new();
+
+    /// <summary>
+    /// 订阅登记挂在 <c>_EnterTree</c>：Godot 的 <c>_Ready</c> 每个节点只调用一次，
+    /// 界面进缓存走 <c>RemoveChild</c>，重开时 <c>AddChild</c> 不会再触发 <c>_Ready</c>，
+    /// 挂在 <c>_Ready</c> 上会让悬停/词条在缓存重开后永久失效。
+    /// </summary>
+    public override void _EnterTree()
+    {
+        base._EnterTree();
+
+        _binder.OnResized(this, OnResized);
+        _binder.OnMouseEnterExit(this, OnMouseEntered, OnMouseExited);
+        _binder.Bind(() => FocusEntered += OnFocusEntered, () => FocusEntered -= OnFocusEntered);
+        _binder.Bind(() => FocusExited += OnFocusExited, () => FocusExited -= OnFocusExited);
+        _binder.Bind(() => ButtonDown += OnButtonDown, () => ButtonDown -= OnButtonDown);
+        _binder.Bind(() => ButtonUp += OnButtonUp, () => ButtonUp -= OnButtonUp);
+    }
 
     public override void _Ready()
     {
         base._Ready();
         PivotOffset = Size / 2f;
-        Resized += OnResized;
-        EnsureBound();
         SyncKeywordTipsFromIds();
     }
 
-    public override void _ExitTree()
+    /// <summary>框架唯一离场入口。sealed：子类不得 override —— 请改 override OnExitTree。</summary>
+    public sealed override void _ExitTree()
     {
-        Unbind();
+        OnExitTree();
+        _binder.UnbindAll();
+        base._ExitTree();
+    }
+
+    /// <summary>框架级离场生命周期：只做非订阅类清理。</summary>
+    protected virtual void OnExitTree()
+    {
         CancelTipDelay();
         KeywordTipService.Current?.HideTips(this);
-        base._ExitTree();
     }
 
     /// <summary>以完整请求列表设置词条（含命名参数）。</summary>
@@ -47,43 +71,6 @@ public partial class BaseKemoButton : Button
     {
         _keywordTips = tips ?? Array.Empty<KeywordTipRequest>();
     }
-
-    #region 绑定
-
-    private void EnsureBound()
-    {
-        if (_bound)
-        {
-            return;
-        }
-
-        _bound = true;
-        MouseEntered += OnMouseEntered;
-        MouseExited += OnMouseExited;
-        FocusEntered += OnFocusEntered;
-        FocusExited += OnFocusExited;
-        ButtonDown += OnButtonDown;
-        ButtonUp += OnButtonUp;
-    }
-
-    private void Unbind()
-    {
-        if (!_bound)
-        {
-            return;
-        }
-
-        _bound = false;
-        MouseEntered -= OnMouseEntered;
-        MouseExited -= OnMouseExited;
-        FocusEntered -= OnFocusEntered;
-        FocusExited -= OnFocusExited;
-        ButtonDown -= OnButtonDown;
-        ButtonUp -= OnButtonUp;
-        Resized -= OnResized;
-    }
-
-    #endregion
 
     #region 交互
 

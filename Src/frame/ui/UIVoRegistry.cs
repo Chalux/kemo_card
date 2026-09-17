@@ -17,7 +17,7 @@ public sealed class UIVoRegistry(UIManager manager, IEnumerable<IStateHandler<EU
 
     public IReadOnlyDictionary<string, UIVo> Map => _map;
 
-    public UIVo GetOrCreate(string id, EUIType type, object? payload)
+    public UIVo GetOrCreate(string id, EUIType type, string ownerModId, object? payload)
     {
         if (_map.TryGetValue(id, out UIVo? vo))
         {
@@ -25,7 +25,7 @@ public sealed class UIVoRegistry(UIManager manager, IEnumerable<IStateHandler<EU
             return vo;
         }
 
-        vo = new UIVo(id, type, payload, _manager, _handlers);
+        vo = new UIVo(id, type, ownerModId, payload, _manager, _handlers);
         _map[id] = vo;
         return vo;
     }

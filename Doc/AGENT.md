@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-08-04（mod 脚本源迁至 mod 目录 `scripts-src/`）
+**最后修订**：2026-09-15（新增界面归属与统一订阅生命周期规格）
 
 ---
 
@@ -39,6 +39,10 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 
 - **语言**：游戏本体只写 **C#**，不写 GDScript。布局用 Godot 场景编辑器，代码只写逻辑。
 - **组合优先于继承**：持有并委托（节点组合、小服务/接口），避免深继承。
+- **界面订阅一律经 `BindingScope`**：Godot 信号 / 事件总线 / 静态门面事件都必须用 `Binder.OnXxx(...)` 或 `Binder.Bind(...)` 登记，**不得裸写 `+=`**，也不得自写 `_eventsBound` 之类守卫。框架在离场时统一解绑（见 ui-mod-binding 规格 §4）。
+- **UI 节点不得 override `_ExitTree`**：`BaseUI` / `BaseMask` 已把它收敛为 `sealed`，请改 override 框架级生命周期 `OnExitTree()`；无法继承 `BaseUI` 的节点（`Button` / `CanvasLayer` 等）按 ui-mod-binding 规格 §4.3 的 6 行模式组合 `BindingScope`。
+- **订阅登记写在 `_EnterTree`，不要写在 `_Ready`**：Godot 的 `_Ready` **每个节点只调用一次**，界面进缓存走 `RemoveChild`、重开走 `AddChild`，**不会**再触发 `_Ready`（除非显式 `RequestReady()`）。写在 `_Ready` 的订阅会在第一次离场时被 `Binder` 解绑后永不再登记（`BaseCmp` 走框架级 `InitEvent()`，已挂在 `_EnterTree`）。`_Ready` 只放一次性初始化（尺寸、样式、外部数据同步）。
+- **界面必须声明归属 Mod 且只取自家门面**：`UIRegistration` 的 `OwnerModId` 必填、在 `Src/mod/FeatureModCatalog.cs` 登记；界面取数用 `Facade<T>()`，不得跨功能直接访问 `AppRoot.Services`。
 - **本地化**：面向用户的文案必须用翻译键；场景 `text` 填键；C# 用 `Localization.Tr`。新增键写入 `Resource/Locale/strings.csv`（及 mod CSV）。日志 / `GD.Print` 等可用明文。
 - **不创建 `.uid` 文件**（引擎自动生成）。
 - **Mod 脚本归属**：mod 脚本源（TS，`scripts-src/`）必须放在 mod 自己的文件夹 `Config/mods/<mod>/scripts-src/`，**不放 `Src/typescript/`**；esbuild 编译到同 mod `scripts/`，产物随仓库提交。`Src/typescript/` 只保留 agent builtins 与构建工具。
@@ -62,7 +66,8 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 4. **内容** — [content-mod-manager](superpowers/specs/2026-05-17-content-mod-manager-design.md) + [卡牌/技能/Buff DTO](superpowers/specs/2026-06-16-content-definition-dto-design.md) + [角色/战斗/事件/道具 DTO](superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md)
 5. **脚本** — [jsenv-mod-scripting](superpowers/specs/2026-06-17-jsenv-mod-scripting-design.md)（PuerTS ScriptEnv）
 6. **角色实例** — [character-instance](superpowers/specs/2026-06-18-character-instance-design.md)
-7. **UI 框架** — [ui-manager](superpowers/specs/2026-05-15-ui-manager-design.md) + [event-dispatcher](superpowers/specs/2026-07-07-event-dispatcher-design.md)
+7. **UI 框架** — [ui-manager](superpowers/specs/2026-05-15-ui-manager-design.md) + [event-dispatcher](superpowers/specs/2026-07-07-event-dispatcher-design.md) + [ui-mod-binding](superpowers/specs/2026-09-15-ui-mod-binding-design.md)  
+   ui-mod-binding 补充**界面归属功能 Mod**与**统一订阅生命周期**（`BindingScope` / 框架级 `OnExitTree`）两条规则，不改层级/状态机/遮罩语义。
 8. **条件判断** — [condition-system](superpowers/specs/2026-07-30-condition-system-design.md)  
    共享求值引擎、Persistent/Combat 双域 CondType、内联 JSON 组合、Explain 结果；已接 `StoryDto.unlock`（Combat 域 v1 空表）
 
@@ -83,6 +88,8 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 | GAS | `Src/frame/gas/` + `Src/mod/combat/gas/` | 属性、GE、战斗桥接 |
 | UI 框架 | `Src/frame/ui/` | `UiManager`、Base*、生命周期状态机 |
 | 事件 | `Src/frame/mvc/` | `EventDispatcher`、源生成器 |
+| UI 订阅生命周期 | `Src/frame/ui/BindingScope.cs`，`BindingScopeSignals.cs` | 订阅登记簿 + 信号糖；框架级 `OnExitTree` 统一解绑 |
+| 界面归属 | `Src/mod/FeatureModCatalog.cs`，`Src/frame/ui/IUiFacadeProvider.cs` | 功能 Mod 界面声明与门面解析（唯一登记处） |
 | 音频 | `Src/frame/audio/` | `Sound` 门面 + `SoundManager` |
 | 日志 | `Src/frame/logging/` + `Src/fixed/godot/GodotAppLog.cs` | `AppLog` 门面 |
 | 红点 | `Src/frame/notification/` | |

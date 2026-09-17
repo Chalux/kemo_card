@@ -19,6 +19,7 @@ public sealed class UiRegistryTryGetTests
         var reg = new UIRuntimeRegistry();
         reg.Register(new UIRuntimeEntry
         {
+            OwnerModId = "test.mod",
             Id = "testUI",
             Dir = "ui/test",
             Type = KemoCard.Frame.UI.Def.EUIType.Dlg

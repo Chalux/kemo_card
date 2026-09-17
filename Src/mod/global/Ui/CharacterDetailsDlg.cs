@@ -3,6 +3,7 @@ using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Logging;
+using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui.Comp;
@@ -24,7 +25,6 @@ public partial class CharacterDetailsDlg : BaseDlg
     [Export] private Label? _lblAnim;
     [Export] private OptionButton? _optAnim;
 
-    private bool _eventsBound;
     private bool _animSelectSuppress;
     private string _defaultAnim = "idle";
 
@@ -33,13 +33,6 @@ public partial class CharacterDetailsDlg : BaseDlg
 
     protected override void InitEvent()
     {
-        if (_eventsBound)
-        {
-            return;
-        }
-
-        _eventsBound = true;
-
         if (_characterItem != null)
         {
             _characterItem.ClickAction = ECharacterClickAction.None;
@@ -47,7 +40,7 @@ public partial class CharacterDetailsDlg : BaseDlg
 
         if (_optAnim != null)
         {
-            _optAnim.ItemSelected += OnAnimItemSelected;
+            Binder.OnItemSelected(_optAnim, OnAnimItemSelected);
         }
     }
 

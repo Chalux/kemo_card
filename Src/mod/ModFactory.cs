@@ -4,6 +4,7 @@ using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Keywords;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Scripting;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Condition;
@@ -22,8 +23,11 @@ public sealed class ModStartupContext
     public required string BundledContentModsDirectory { get; init; }
 }
 
-public sealed class ModStartupResult
+public sealed class ModStartupResult : IUiFacadeProvider
 {
+    /// <summary>拥有界面的功能 Mod 声明，供启动期迭代注册（不再由 <c>MainRoot</c> 硬编码）。</summary>
+    public IReadOnlyList<FeatureUiDeclaration> Features { get; init; } = FeatureModCatalog.Features;
+
     public required GlobalMod GlobalMod { get; init; }
 
     public required GlobalModController GlobalController { get; init; }
@@ -43,6 +47,21 @@ public sealed class ModStartupResult
     public required BattleScriptInvoker BattleScriptInvoker { get; init; }
 
     public required EnemyAiScriptInvoker EnemyAiScriptInvoker { get; init; }
+
+    /// <summary>
+    /// 按归属解析界面门面（ui-mod-binding 规格 §5.4）。界面只允许取「自己功能」的门面，
+    /// 取代此前直接访问 <c>AppRoot.Services</c> 的跨功能取数。
+    /// </summary>
+    /// <remarks>
+    /// Run 的门面取的是 <c>RunRuntime.Current</c> 而<b>不是</b>启动期实例——因为 Run 是会话级对象，
+    /// 每次 Run 都会换一个新的 <c>RunController</c>。
+    /// </remarks>
+    public object? ResolveUiFacade(string ownerModId) => ownerModId switch
+    {
+        GlobalMod.FeatureId => GlobalController,
+        RunMod.FeatureId => RunRuntime.Current,
+        _ => null,
+    };
 }
 
 /// <summary>

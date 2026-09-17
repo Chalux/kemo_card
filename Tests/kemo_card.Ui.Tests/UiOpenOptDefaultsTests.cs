@@ -5,13 +5,15 @@ using NUnit.Framework;
 namespace KemoCard.Ui.Tests;
 
 /// <summary>
-/// UI 打开参数默认值：<see cref="DefaultUIOpenOpt.ForType"/> 是 Base* 基类与 <see cref="UIRegistration"/>
-/// 工厂的唯一来源。此前 <c>UIRegistration</c> 从不填 <c>BaseOpenOpt</c>，导致
-/// <c>UIManager.ResolveLayer</c> 对 Window 也退回 Dlg 层，整条类型默认值链失效。
+/// UI 打开参数默认值与合并语义。
+/// <see cref="DefaultUIOpenOpt.ForType"/> 是 Base* 基类与 <see cref="UIRegistration"/> 工厂的唯一来源；
+/// <see cref="UIOpenOpt.MergeFrom"/> 只覆盖显式指定的字段。
 /// </summary>
 [TestFixture]
 public sealed class UiOpenOptDefaultsTests
 {
+    #region ForType
+
     [Test]
     public void ForType_returns_fresh_instance_each_call()
     {
@@ -34,8 +36,8 @@ public sealed class UiOpenOptDefaultsTests
         var opt = DefaultUIOpenOpt.ForType(type);
 
         Assert.That(opt.Layer, Is.EqualTo(expectedLayer));
-        Assert.That(opt.Align, Is.EqualTo(expectedAlign));
-        Assert.That(opt.HideBelow, Is.EqualTo(expectedHideBelow));
+        Assert.That(opt.EffectiveAlign, Is.EqualTo(expectedAlign));
+        Assert.That(opt.EffectiveHideBelow, Is.EqualTo(expectedHideBelow));
     }
 
     [Test]
@@ -44,26 +46,114 @@ public sealed class UiOpenOptDefaultsTests
         var opt = DefaultUIOpenOpt.ForType(EUIType.Pge);
 
         Assert.That(opt.Layer, Is.Null, "页面靠 Parent 挂载，不应固定层级");
-        Assert.That(opt.Align, Is.EqualTo(EUIAlign.Full));
-        Assert.That(opt.HideBelow, Is.False);
+        Assert.That(opt.EffectiveAlign, Is.EqualTo(EUIAlign.Full));
+        Assert.That(opt.EffectiveHideBelow, Is.False);
     }
+
+    /// <summary>合并基线必须字段完整，否则「未指定」会漏进合并结果。</summary>
+    [Test]
+    public void Value_baseline_specifies_every_scalar_field()
+    {
+        var value = DefaultUIOpenOpt.Value;
+
+        Assert.That(value.Layer, Is.Not.Null);
+        Assert.That(value.CacheTime, Is.Not.Null);
+        Assert.That(value.AnimType, Is.Not.Null);
+        Assert.That(value.HideBelow, Is.Not.Null);
+        Assert.That(value.NoCover, Is.Not.Null);
+        Assert.That(value.Align, Is.Not.Null);
+    }
+
+    #endregion
+
+    #region 合并语义（D5 回归）
 
     /// <summary>
-    /// <c>MergeInto</c> 对 CacheTime / AnimType / NoCover 是无条件覆盖，
-    /// 因此类型默认值必须与 <see cref="DefaultUIOpenOpt.Value"/> 同值，合并才是幂等的。
+    /// 核心回归：只覆写 <c>CacheTime</c> 的调用，<b>不得</b>把 <c>BaseOpenOpt</c> 提供的
+    /// <c>HideBelow</c> / <c>Align</c> 一并静默改掉（此前 MergeInto 对这 5 个字段是无条件覆盖）。
     /// </summary>
-    [TestCase(EUIType.Win)]
-    [TestCase(EUIType.Dlg)]
-    [TestCase(EUIType.Pge)]
-    [TestCase(EUIType.Pop)]
-    public void ForType_keeps_merge_idempotent_for_unconditionally_overwritten_fields(EUIType type)
+    [Test]
+    public void MergeFrom_does_not_clobber_fields_the_source_leaves_unspecified()
     {
-        var opt = DefaultUIOpenOpt.ForType(type);
+        var result = DefaultUIOpenOpt.Value.Clone();
+        result.MergeFrom(DefaultUIOpenOpt.ForType(EUIType.Win));
+        Assert.That(result.EffectiveHideBelow, Is.True);
+        Assert.That(result.EffectiveAlign, Is.EqualTo(EUIAlign.Full));
 
-        Assert.That(opt.CacheTime, Is.EqualTo(DefaultUIOpenOpt.Value.CacheTime));
-        Assert.That(opt.AnimType, Is.EqualTo(DefaultUIOpenOpt.Value.AnimType));
-        Assert.That(opt.NoCover, Is.EqualTo(DefaultUIOpenOpt.Value.NoCover));
+        // 模拟「注册项只想关掉缓存」——这是 Run 结束销毁界面所需的写法
+        result.MergeFrom(new UIOpenOpt { CacheTime = 0 });
+
+        Assert.That(result.EffectiveCacheTime, Is.EqualTo(0));
+        Assert.That(result.Layer, Is.EqualTo(EUILayer.Win), "未指定 Layer 时不得覆盖");
+        Assert.That(result.EffectiveHideBelow, Is.True, "未指定 HideBelow 时不得覆盖");
+        Assert.That(result.EffectiveAlign, Is.EqualTo(EUIAlign.Full), "未指定 Align 时不得覆盖");
+        Assert.That(result.EffectiveAnimType, Is.EqualTo(EAnimType.SkipReOpen), "未指定 AnimType 时保持基线");
     }
+
+    [Test]
+    public void MergeFrom_overrides_when_the_source_specifies_fields()
+    {
+        var result = DefaultUIOpenOpt.Value.Clone();
+        result.MergeFrom(DefaultUIOpenOpt.ForType(EUIType.Win));
+
+        result.MergeFrom(new UIOpenOpt
+        {
+            Layer = EUILayer.Notice,
+            HideBelow = false,
+            AnimType = EAnimType.Always,
+            NoCover = true,
+            Align = EUIAlign.Center,
+            CacheTime = -1,
+        });
+
+        Assert.That(result.Layer, Is.EqualTo(EUILayer.Notice));
+        Assert.That(result.EffectiveHideBelow, Is.False);
+        Assert.That(result.EffectiveAnimType, Is.EqualTo(EAnimType.Always));
+        Assert.That(result.EffectiveNoCover, Is.True);
+        Assert.That(result.EffectiveAlign, Is.EqualTo(EUIAlign.Center));
+        Assert.That(result.EffectiveCacheTime, Is.EqualTo(-1));
+    }
+
+    [Test]
+    public void MergeFrom_null_source_is_noop()
+    {
+        var result = DefaultUIOpenOpt.Value.Clone();
+
+        Assert.DoesNotThrow(() => result.MergeFrom(null));
+
+        Assert.That(result.EffectiveCacheTime, Is.EqualTo(UIOpenOpt.DefaultCacheTime));
+    }
+
+    [Test]
+    public void MergeFrom_ignores_unspecified_callbacks_but_takes_specified_ones()
+    {
+        var first = new UIOpenOpt { OnFail = () => { } };
+        var second = new UIOpenOpt { OnOpen = _ => { } };
+
+        var result = DefaultUIOpenOpt.Value.Clone();
+        result.MergeFrom(first);
+        result.MergeFrom(second);
+
+        Assert.That(result.OnFail, Is.SameAs(first.OnFail), "先指定的回调必须保留");
+        Assert.That(result.OnOpen, Is.SameAs(second.OnOpen));
+    }
+
+    [Test]
+    public void MergeFrom_later_source_wins_for_callbacks()
+    {
+        var first = new UIOpenOpt { OnFail = () => { } };
+        var second = new UIOpenOpt { OnFail = () => { } };
+
+        var result = DefaultUIOpenOpt.Value.Clone();
+        result.MergeFrom(first);
+        result.MergeFrom(second);
+
+        Assert.That(result.OnFail, Is.SameAs(second.OnFail), "后者覆盖前者");
+    }
+
+    #endregion
+
+    #region 其它
 
     [TestCase(EUIType.Win, EUILayer.Win)]
     [TestCase(EUIType.Dlg, EUILayer.Dlg)]
@@ -72,10 +162,10 @@ public sealed class UiOpenOptDefaultsTests
     {
         UIRegistration registration = type switch
         {
-            EUIType.Win => UIRegistration.Window("ui.test", "Src/mod/test"),
-            EUIType.Dlg => UIRegistration.Dialog("ui.test", "Src/mod/test"),
-            EUIType.Pop => UIRegistration.Popup("ui.test", "Src/mod/test"),
-            _ => UIRegistration.Page("ui.test", "Src/mod/test"),
+            EUIType.Win => UIRegistration.Window("test.mod", "ui.test", "Src/mod/test"),
+            EUIType.Dlg => UIRegistration.Dialog("test.mod", "ui.test", "Src/mod/test"),
+            EUIType.Pop => UIRegistration.Popup("test.mod", "ui.test", "Src/mod/test"),
+            _ => UIRegistration.Page("test.mod", "ui.test", "Src/mod/test"),
         };
 
         var entry = registration.ToRuntimeEntry();
@@ -87,7 +177,7 @@ public sealed class UiOpenOptDefaultsTests
     [Test]
     public void Registration_page_has_base_open_opt_without_layer()
     {
-        var entry = UIRegistration.Page("ui.test", "Src/mod/test").ToRuntimeEntry();
+        var entry = UIRegistration.Page("test.mod", "ui.test", "Src/mod/test").ToRuntimeEntry();
 
         Assert.That(entry.BaseOpenOpt, Is.Not.Null);
         Assert.That(entry.BaseOpenOpt!.Layer, Is.Null);
@@ -104,7 +194,19 @@ public sealed class UiOpenOptDefaultsTests
         clone.HideBelow = false;
 
         Assert.That(source.Layer, Is.EqualTo(EUILayer.Win));
-        Assert.That(source.CacheTime, Is.Not.EqualTo(0));
-        Assert.That(source.HideBelow, Is.True);
+        Assert.That(source.EffectiveCacheTime, Is.Not.EqualTo(0));
+        Assert.That(source.EffectiveHideBelow, Is.True);
     }
+
+    [Test]
+    public void Clone_preserves_unspecified_fields_as_unspecified()
+    {
+        var clone = new UIOpenOpt { CacheTime = 5 }.Clone();
+
+        Assert.That(clone.CacheTime, Is.EqualTo(5));
+        Assert.That(clone.HideBelow, Is.Null, "Clone 不得把「未指定」变成具体值");
+        Assert.That(clone.Layer, Is.Null);
+    }
+
+    #endregion
 }

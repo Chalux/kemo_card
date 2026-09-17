@@ -11,6 +11,44 @@ public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
     public override EUIType UIType => EUIType.Win;
 
     /// <summary>
+    /// 取「本界面所属功能」的门面（通常是该功能的 Controller）。
+    /// </summary>
+    /// <remarks>
+    /// 界面必须通过这里取数，不得直接访问 <c>AppRoot.Services</c> 跨功能取数
+    /// （见 ui-mod-binding 规格 §5.4）。类型不符时明确抛错，而不是静默拿到别的功能的对象。
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">未绑定 UIVo / 组合根未注入提供者 / 功能无门面 / 类型不匹配。</exception>
+    protected TFacade Facade<TFacade>() where TFacade : class
+    {
+        if (UIVo is null || string.IsNullOrEmpty(UIVo.OwnerModId))
+        {
+            throw new InvalidOperationException($"界面<{UIId}> 尚未绑定 UIVo，无法解析归属门面。");
+        }
+
+        var provider = UIVo.Manager.FacadeProvider;
+        if (provider is null)
+        {
+            throw new InvalidOperationException($"界面<{UIId}> 取门面失败：组合根未注入 IUiFacadeProvider。");
+        }
+
+        var facade = provider.ResolveUiFacade(UIVo.OwnerModId);
+        if (facade is null)
+        {
+            throw new InvalidOperationException(
+                $"界面<{UIId}> 取门面失败：功能 '{UIVo.OwnerModId}' 未提供门面。");
+        }
+
+        if (facade is not TFacade typed)
+        {
+            throw new InvalidOperationException(
+                $"界面<{UIId}> 取门面类型不匹配：功能 '{UIVo.OwnerModId}' 提供的是 "
+                + $"{facade.GetType().Name}，期望 {typeof(TFacade).Name}；界面只能访问自己归属功能的门面。");
+        }
+
+        return typed;
+    }
+
+    /// <summary>
     /// 以强类型读取 Payload。不使用泛型 Godot 子类，避免 ScriptManagerBridge 热重载重复注册。
     /// </summary>
     protected TPayload GetTypedPayload<TPayload>()

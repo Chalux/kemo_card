@@ -30,7 +30,7 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
 
         // 规格 ui-manager §HideBelow：全屏界面（HideBelow = true）打开时自动压入导航栈，
         // 供 BackAsync 关闭当前并恢复上一层。此前 NavStack.Push 全仓无调用者，BackAsync 恒返回 null。
-        if (vo.OpenOpt.HideBelow && !manager.NavStack.Contains(vo.Id))
+        if (vo.OpenOpt.EffectiveHideBelow && !manager.NavStack.Contains(vo.Id))
         {
             manager.NavStack.Push(vo.Id);
         }
@@ -69,7 +69,7 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
         }
 
         OpenTransitionData transitionData = data as OpenTransitionData? ?? default;
-        vo.Anim.StartOpenAnim(vo.OpenOpt.AnimType, transitionData, win,
+        vo.Anim.StartOpenAnim(vo.OpenOpt.EffectiveAnimType, transitionData, win,
             () => manager.LayerManager.UpdateLayers());
 
         manager.EventDispatcher.Send(UIEvent.Open, new(vo));

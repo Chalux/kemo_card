@@ -36,7 +36,7 @@ public sealed class UICloseStateHandler : IStateHandler<EUIState, IUIStateContex
             vo.Anim.StartMaskCloseAnim(vo.Runtime.Mask, () => { });
         }
 
-        vo.Anim.StartCloseAnim(vo.OpenOpt.AnimType, vo.Runtime.UI,
+        vo.Anim.StartCloseAnim(vo.OpenOpt.EffectiveAnimType, vo.Runtime.UI,
             () =>
             {
                 if (vo.StateMachine.CurrentState != EUIState.Close) return;

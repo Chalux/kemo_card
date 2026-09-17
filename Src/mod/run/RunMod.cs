@@ -1,6 +1,7 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
+using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Run.Ui;
 
@@ -8,13 +9,18 @@ namespace KemoCard.Mod.Run;
 
 public sealed partial class RunMod : BaseMod
 {
+    /// <summary>
+    /// 本功能 Mod 的 id。静态的界面声明需要它，故提为常量并传给 <see cref="BaseMod.ModId"/>，避免两处漂移。
+    /// </summary>
+    public const string FeatureId = "run";
+
     private readonly List<CharacterInstance> _characterPool = [];
     private readonly HashSet<string> _cardCollection = new(StringComparer.Ordinal);
     private readonly List<PlayerController> _playerControllers = [];
     private readonly Dictionary<int, string> _slotOwnership = new();
     private readonly List<BattleRecordDto> _battleHistory = [];
 
-    public RunMod() : base("run")
+    public RunMod() : base(FeatureId)
     {
         RunId = Guid.NewGuid().ToString("N");
         Phase = ERunPhase.Event;
@@ -117,19 +123,16 @@ public sealed partial class RunMod : BaseMod
     /// <summary>
     /// 声明式注册 run 模块所有 UI。
     /// </summary>
+    /// <remarks>
+    /// 决策 1：<c>RunMain</c> 生命周期与 Run 会话一致（<c>CacheTime = 0</c>，关闭即销毁），
+    /// 避免 Run 结束后残留旧会话的界面实例；<c>StorySelect</c> 是从菜单反复进出的短生命周期弹窗，保留缓存。
+    /// </remarks>
     public static IEnumerable<UIRegistration> GetUIRegistrations()
     {
-        yield return UIRegistration.Dialog(RunUiIds.StorySelect, "Src/mod/run/Ui");
-        yield return UIRegistration.Window(RunUiIds.RunMain, "Src/mod/run/Ui");
-    }
-
-    public static void RegisterUi(UIRuntimeRegistry registry)
-    {
-        ArgumentNullException.ThrowIfNull(registry);
-        foreach (var reg in GetUIRegistrations())
-        {
-            registry.Register(reg.ToRuntimeEntry());
-        }
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.StorySelect, "Src/mod/run/Ui");
+        yield return UIRegistration.Window(FeatureId, RunUiIds.RunMain, "Src/mod/run/Ui")
+            with
+        { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
     }
 
     public RunDto ToDto()

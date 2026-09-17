@@ -25,6 +25,9 @@ public partial class BaseCharacterItem : Control
     private Tween? _tipDelayTween;
     private bool _hoverTipActive;
 
+    /// <summary>订阅登记簿：任何订阅都必须经此登记，离场统一解绑（见 ui-mod-binding 规格 §4.3）。</summary>
+    private readonly BindingScope _binder = new();
+
     #region 点击交互
 
     public override void _Ready()
@@ -32,17 +35,32 @@ public partial class BaseCharacterItem : Control
         base._Ready();
         MouseFilter = MouseFilterEnum.Stop;
         IgnoreMouseOnDescendants(this);
-        MouseEntered += OnHoverTipEntered;
-        MouseExited += OnHoverTipExited;
     }
 
-    public override void _ExitTree()
+    /// <summary>
+    /// 订阅登记挂在 <c>_EnterTree</c>：Godot 的 <c>_Ready</c> 每个节点只调用一次，
+    /// 界面进缓存走 <c>RemoveChild</c>，重开时 <c>AddChild</c> 不会再触发 <c>_Ready</c>，
+    /// 挂在 <c>_Ready</c> 上会让悬停词条在缓存重开后永久失效。
+    /// </summary>
+    public override void _EnterTree()
+    {
+        base._EnterTree();
+        _binder.OnMouseEnterExit(this, OnHoverTipEntered, OnHoverTipExited);
+    }
+
+    /// <summary>框架唯一离场入口。sealed：子类不得 override —— 请改 override OnExitTree。</summary>
+    public sealed override void _ExitTree()
+    {
+        OnExitTree();
+        _binder.UnbindAll();
+        base._ExitTree();
+    }
+
+    /// <summary>框架级离场生命周期：只做非订阅类清理。</summary>
+    protected virtual void OnExitTree()
     {
         CancelHoverTipDelay();
         KeywordTipService.Current?.HideTips(this);
-        MouseEntered -= OnHoverTipEntered;
-        MouseExited -= OnHoverTipExited;
-        base._ExitTree();
     }
 
     private static void IgnoreMouseOnDescendants(Node node)

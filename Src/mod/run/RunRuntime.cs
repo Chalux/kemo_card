@@ -2,6 +2,7 @@ using Godot;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Scripting;
+using KemoCard.Frame.UI;
 using KemoCard.Mod.Run.Save;
 
 namespace KemoCard.Mod.Run;
@@ -49,6 +50,7 @@ public static class RunRuntime
         ArgumentNullException.ThrowIfNull(candidates);
 
         SaveService.Delete();
+        CloseRunUi();
         _current?.Dispose();
         var controller = CreateController();
         controller.EnableAutoSave(SaveService);
@@ -59,6 +61,15 @@ public static class RunRuntime
         _current = controller;
         return controller;
     }
+
+    /// <summary>
+    /// 关闭并销毁本功能的全部界面（决策 1：<c>RunMain</c> 生命周期与 Run 会话一致，不留缓存）。
+    /// </summary>
+    /// <remarks>
+    /// 解绑订阅由各节点离场时的 <c>BindingScope</c> 负责；这里只负责"界面随会话一起消失"。
+    /// </remarks>
+    private static void CloseRunUi() =>
+        UIManager.Instance?.CloseByOwner(RunMod.FeatureId, destroy: true);
 
     /// <summary>
     /// 组合根装配：Run 只从菜单进入，此时 <c>MainRoot</c> 已执行 <c>ModFactory.Bootstrap</c>，
@@ -99,6 +110,7 @@ public static class RunRuntime
     /// </summary>
     public static void Abandon()
     {
+        CloseRunUi();
         _current?.Dispose();
         _current = null;
         SaveService.Delete();

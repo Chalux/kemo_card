@@ -1,22 +1,22 @@
 using Godot;
+using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI.Def;
 
 namespace KemoCard.Frame.UI.Base;
 
 /// <summary>
-/// 基础 UI 类，所有 UI 都应该继承自此类
+/// 基础 UI 类：所有界面都应继承自此类（无法继承的节点类型见 ui-mod-binding 规格 §4.3 的 6 行模式）。
 /// </summary>
+/// <remarks>
+/// 订阅生命周期由框架统一负责：子类把订阅登记进 <see cref="Binder"/>，框架在离场时一次解绑。
+/// 子类<b>不得</b> override 引擎的 <c>_ExitTree</c>，请改 override <see cref="OnExitTree"/>。
+/// </remarks>
 public abstract partial class BaseUI : Control, IUIMeta
 {
     /// <summary>
-    /// 点击事件的回调函数
+    /// 订阅登记簿。**任何**订阅（Godot 信号、事件总线、静态门面事件）都必须经此登记。
     /// </summary>
-    private readonly Dictionary<Node, Action> _clickActions = [];
-    /// <summary>
-    /// Control 节点的 GuiInput 事件处理器映射，用于反订阅
-    /// </summary>
-    private readonly Dictionary<Node, Control.GuiInputEventHandler> _guiInputHandlers = [];
-    private readonly List<Action> _unbindActions = [];
+    protected BindingScope Binder { get; } = new();
 
     /// <summary>
     /// UI 的 ID
@@ -52,9 +52,14 @@ public abstract partial class BaseUI : Control, IUIMeta
         OnReady();
     }
 
-    public override void _ExitTree()
+    /// <summary>
+    /// 框架唯一的离场入口。<b>sealed：子类不得 override</b> — 请改 override <see cref="OnExitTree"/>。
+    /// </summary>
+    public sealed override void _ExitTree()
     {
-        ClearLifeCycle();
+        OnExitTree();                       // 1. 子类补充清理（此时订阅仍有效）
+        Binder.UnbindAll();                 // 2. 框架保证解绑（子类忘了也解）
+        GlobalEvents.Bus.OffCaller(this);   // 3. 跨功能总线按 caller 清理
         base._ExitTree();
     }
 
@@ -62,44 +67,20 @@ public abstract partial class BaseUI : Control, IUIMeta
     {
     }
 
-    #region 生命周期
-    protected void ClearLifeCycle()
+    /// <summary>
+    /// 框架级离场生命周期：子类只做<b>非订阅类</b>清理。
+    /// 订阅一律走 <see cref="Binder"/>，否则会漏出框架之外（ui-mod-binding 规格 §2.2 缺陷的成因）。
+    /// </summary>
+    protected virtual void OnExitTree()
     {
-        foreach (var (node, action) in _clickActions)
-        {
-            if (IsInstanceValid(node))
-            {
-                if (node is Button btn)
-                {
-                    btn.Pressed -= action;
-                }
-                else if (node is Control ctrl)
-                {
-                    if (_guiInputHandlers.TryGetValue(node, out var guiHandler))
-                    {
-                        ctrl.GuiInput -= guiHandler;
-                    }
-                }
-            }
-        }
-        _clickActions.Clear();
-        _guiInputHandlers.Clear();
-        for (var i = _unbindActions.Count - 1; i >= 0; i--)
-        {
-            try { _unbindActions[i](); }
-            catch { /* 离开树时忽略反订阅异常 */ }
-        }
-        _unbindActions.Clear();
     }
 
-    protected void Bind(Action subscribe, Action unsubscribe)
-    {
-        ArgumentNullException.ThrowIfNull(subscribe);
-        ArgumentNullException.ThrowIfNull(unsubscribe);
-        subscribe();
-        _unbindActions.Add(unsubscribe);
-    }
+    #region 订阅登记（转发到 Binder）
 
+    /// <summary>登记并立即订阅；离场时自动解绑。</summary>
+    protected void Bind(Action subscribe, Action unsubscribe) => Binder.Bind(subscribe, unsubscribe);
+
+    /// <summary>批量登记点击回调。</summary>
     protected void OnClicks(params (Node node, Action action)[] clicks)
     {
         foreach (var (node, action) in clicks)
@@ -108,44 +89,27 @@ public abstract partial class BaseUI : Control, IUIMeta
         }
     }
 
+    /// <summary>
+    /// 登记「左键点击」回调：<see cref="BaseButton"/> 走 <c>Pressed</c>，其余 <see cref="Control"/> 走
+    /// <c>GuiInput</c> 左键判定。
+    /// </summary>
+    /// <remarks>
+    /// 与旧实现的行为差异：同一节点重复登记会<b>累加</b>监听（旧实现是替换）。
+    /// 现有调用点都在 <c>InitEvent</c> 内各登记一次，且离场会整体解绑，因此不会累积。
+    /// </remarks>
     protected void OnClicks(Node node, Action callback)
     {
-        if (_clickActions.TryGetValue(node, out Action? existingAction))
+        if (node is BaseButton button)
         {
-            if (node is Button oldBtn)
-            {
-                oldBtn.Pressed -= existingAction;
-            }
-            else if (node is Control oldCtrl)
-            {
-                if (_guiInputHandlers.TryGetValue(node, out var oldGuiHandler))
-                {
-                    oldCtrl.GuiInput -= oldGuiHandler;
-                }
-            }
-            _clickActions.Remove(node);
-            _guiInputHandlers.Remove(node);
+            Binder.OnPressed(button, callback);
+            return;
         }
 
-        _clickActions[node] = callback;
-
-        // Godot.Button（含项目 BaseKemoButton）走 Pressed；进缓存 RemoveChild 后需在重开时再次 InitEvent 绑定
-        if (node is Button button)
+        if (node is Control control)
         {
-            button.Pressed += callback;
-        }
-        else if (node is Control ctrl)
-        {
-            void GuiHandler(InputEvent @event)
-            {
-                if (@event is InputEventMouseButton mouseBtn && mouseBtn.ButtonIndex == MouseButton.Left && mouseBtn.Pressed)
-                {
-                    callback();
-                }
-            }
-            ctrl.GuiInput += GuiHandler;
-            _guiInputHandlers[node] = GuiHandler;
+            Binder.OnGuiInputLeftClick(control, callback);
         }
     }
+
     #endregion
 }

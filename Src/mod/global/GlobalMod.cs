@@ -27,36 +27,28 @@ public static partial class GlobalModEventTable
 /// </summary>
 public sealed partial class GlobalMod : BaseMod
 {
-    public GlobalMod() : base("global")
+    /// <summary>
+    /// 本功能 Mod 的 id。静态的界面声明需要它，故提为常量并传给 <see cref="BaseMod.ModId"/>，避免两处漂移。
+    /// </summary>
+    public const string FeatureId = "global";
+
+    public GlobalMod() : base(FeatureId)
     {
     }
 
     public GlobalSaveDto Current { get; internal set; } = GlobalSaveDto.CreateDefault();
 
     /// <summary>
-    /// 声明式注册当前模块所有 UI。
+    /// 声明式注册当前模块所有 UI。归属 id 用于启动期校验与按功能批量关闭/销毁。
     /// </summary>
     public static IEnumerable<UIRegistration> GetUIRegistrations()
     {
-        yield return UIRegistration.Window(GlobalUiIds.Menu, "Src/mod/global/Ui");
+        yield return UIRegistration.Window(FeatureId, GlobalUiIds.Menu, "Src/mod/global/Ui");
 
-        yield return UIRegistration.Dialog(GlobalUiIds.Codex, "Src/mod/global/Ui");
-        yield return UIRegistration.Dialog(GlobalUiIds.CardDetails, "Src/mod/global/Ui");
-        yield return UIRegistration.Dialog(GlobalUiIds.CharacterDetails, "Src/mod/global/Ui");
-        yield return UIRegistration.Dialog(GlobalUiIds.Setting, "Src/mod/global/Ui");
-        yield return UIRegistration.Dialog(GlobalUiIds.Alert, "Src/mod/global/Ui");
-    }
-
-    /// <summary>
-    /// 将此模块的 UI 注册到运行时注册表。
-    /// </summary>
-    public static void RegisterUi(UIRuntimeRegistry registry)
-    {
-        ArgumentNullException.ThrowIfNull(registry);
-
-        foreach (var reg in GetUIRegistrations())
-        {
-            registry.Register(reg.ToRuntimeEntry());
-        }
+        yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.Codex, "Src/mod/global/Ui");
+        yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.CardDetails, "Src/mod/global/Ui");
+        yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.CharacterDetails, "Src/mod/global/Ui");
+        yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.Setting, "Src/mod/global/Ui");
+        yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.Alert, "Src/mod/global/Ui");
     }
 }

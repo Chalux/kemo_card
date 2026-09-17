@@ -73,7 +73,7 @@ public partial class SettingToggleRow : BaseCmp
         }
     }
 
-    protected override void OnUnbind()
+    protected override void OnExitTree()
     {
         _tween?.Kill();
         _tween = null;

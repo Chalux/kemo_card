@@ -3,6 +3,7 @@ using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Condition;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Global.Condition;
 using System.Text.Json;
@@ -23,7 +24,6 @@ public partial class StorySelectDlg : BaseDlg
     [Export] private Button? _btnCancel;
 
     private readonly List<StoryEntry> _entries = [];
-    private bool _eventsBound;
     private int _selectedIndex = -1;
     private GlobalPersistentCondContext? _condContext;
 
@@ -32,16 +32,9 @@ public partial class StorySelectDlg : BaseDlg
 
     protected override void InitEvent()
     {
-        if (_eventsBound)
-        {
-            return;
-        }
-
-        _eventsBound = true;
-
         if (_storyList != null)
         {
-            _storyList.ItemSelected += OnStorySelected;
+            Binder.OnItemSelected(_storyList, OnStorySelected);
         }
 
         if (_btnConfirm != null)
@@ -57,6 +50,10 @@ public partial class StorySelectDlg : BaseDlg
 
     protected override void OnOpen()
     {
+        // 已知跨功能读：run 的界面需要 global 的解锁账本来判断故事是否已解锁。
+        // 这是纯读且语义上属于「全局进度」，但严格说违反了 ui-mod-binding 规格 §5.4
+        // 「界面只取自家门面」。干净解法是引入 frame 级的 IPersistentCondContext 提供者，
+        // 尚未落地（见规格 §5.4 与 §12 待办）；在此之前保留此处的直接取用并显式标注。
         _condContext = new GlobalPersistentCondContext(AppRoot.Services.GlobalController);
         RebuildList();
     }
