@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.chalux_path.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 4,
+  "baseValue": 12,
+  "skillRefs": [{ "skillId": "chalux_resplendent_path" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Warrior",
+  "priority": 9,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "All",
+  "targetCount": 4,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "aoe", "exclusive"],
+  "rarity": "Epic",
+  "isExclusive": true
+}

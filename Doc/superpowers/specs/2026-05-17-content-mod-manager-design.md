@@ -220,6 +220,12 @@ ContentModPipeline.Rebuild(enabledModIds)
 | Run 中 | 不提供 Mod 开关；若误调用 `Rebuild`，拒绝并记日志 |
 | 冷启动 | Bootstrap 之后执行一次 `Rebuild()` |
 
+**随包 Mod 的暂存（`ContentModBootstrap.EnsureDefaultModsCopied`）**：
+
+- 启动时把 `res://Config/mods/*` 拷贝到 `user://content_mods/*`（经 `.staging` 目录原子替换，不留残目录），游戏实际加载的是用户目录那份。
+- **版本号相同即跳过**（发布语义：不必每次启动都重拷）。因此**改动随包内容必须抬 `mod.json` 的 `version`**，否则游戏里看不到——2026-09-20 就踩过一次（新增角色 chalux / 充能球 / 四张专属卡全部未生效）。
+- **调试构建强制刷新**：`MainRoot` 用 `OS.IsDebugBuild()` 填充 `ModStartupContext.ForceContentModRefresh`，为 true 时忽略版本号每次启动重新拷贝，开发期改内容无需抬版本号。该开关由调用方注入，`ContentModBootstrap` 本身不读引擎标记（保持逻辑层可被 NUnit 直接覆盖）。
+
 `GlobalSaveDto` 字段：
 
 ```csharp

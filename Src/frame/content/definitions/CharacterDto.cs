@@ -29,6 +29,10 @@ public sealed class CharacterDto
     [JsonPropertyName("buffRefs")]
     public List<BuffRefDto> BuffRefs { get; init; } = [];
 
+    /// <summary>潜能门闩被动：解锁后开战挂对应 buff（见 <see cref="PassiveRefDto"/>）。</summary>
+    [JsonPropertyName("passives")]
+    public List<PassiveRefDto> Passives { get; init; } = [];
+
     [JsonPropertyName("cards")]
     public List<string> Cards { get; init; } = [];
 

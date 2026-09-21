@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.chalux_orca.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 12,
+  "skillRefs": [{ "skillId": "chalux_orca_ice_rush" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalAttack": 3
+    }
+  },
+  "role": "Warrior",
+  "priority": 4,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "exclusive"],
+  "rarity": "Epic",
+  "isExclusive": true
+}

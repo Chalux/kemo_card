@@ -1,0 +1,4 @@
+{
+  "kind": "Damage",
+  "params": { "amount": 12, "damageGameplayEffectId": "chalux_charge_damage" }
+}

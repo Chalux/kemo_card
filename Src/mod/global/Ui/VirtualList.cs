@@ -25,8 +25,14 @@ public partial class VirtualList : Control
     [Export] public PackedScene? ItemTemplate { get; set; }
 
     /// <summary>
-    /// 列表项在滚动方向上的固定尺寸
+    /// 列表项在滚动方向上的**步长**（相邻两项的间距基准），而不是条目自身的尺寸。
     /// </summary>
+    /// <remarks>
+    /// 条目尺寸一律由预制体（<see cref="ItemTemplate"/>）决定，列表不会拉伸它：
+    /// 占位卡片类预制体宽度固定，若按列表宽度拉伸会导致立绘/卡面变形。
+    /// 因此本值应 ≥ 预制体在滚动方向上的高度（垂直列表）/宽度（水平列表），
+    /// 差值即为两项之间的留白（叠加 <see cref="Spacing"/>）。
+    /// </remarks>
     [Export] public float ItemSize { get; set; } = 48f;
 
     /// <summary>
@@ -38,6 +44,15 @@ public partial class VirtualList : Control
     /// 是否垂直滚动（false 为水平滚动）
     /// </summary>
     [Export] public bool IsVertical { get; set; } = true;
+
+    /// <summary>
+    /// 是否把条目拉伸到列表横轴尺寸（默认 <c>false</c>）。
+    /// </summary>
+    /// <remarks>
+    /// 仅在"整行文本条"这类本来就该铺满宽度的条目上打开；
+    /// 固定尺寸的立绘/卡面必须保持关闭，否则会被拉变形。
+    /// </remarks>
+    [Export] public bool StretchItemAcrossAxis { get; set; }
 
     #endregion
 
@@ -135,6 +150,20 @@ public partial class VirtualList : Control
         {
             _binder.OnValueChanged(_scrollBar, OnScrollValueChanged);
         }
+
+        // 界面通常在"刚入树、布局尚未跑完"的同帧调用 SetData（宿主 OnOpen），此时可视区尺寸为 0，
+        // 只能算出一个可见项；布局完成后必须重算，否则列表会长期只显示第 1 项。
+        _binder.OnResized(this, OnViewportResized);
+        _binder.OnResized(ScrollArea, OnViewportResized);
+    }
+
+    /// <summary>可视区尺寸变化后重算可见范围（尺寸未变时 <see cref="Refresh"/> 内部会自行收敛）。</summary>
+    private void OnViewportResized()
+    {
+        if (_initialized && _itemCount > 0)
+        {
+            Refresh();
+        }
     }
 
     #endregion
@@ -153,6 +182,10 @@ public partial class VirtualList : Control
         _itemCount = Math.Max(0, count);
         UpdateContentSize();
         ResetScrollPosition();
+        // 必须强制重渲染：UpdateVisibleRange 在「首索引 + 可见数」都没变时会提前 return
+        // （既不清缓存也不回调渲染），只靠它刷新会让列表项保留旧内容——徽标 / 标记 / 可点性
+        // 这类"数量不变但数据已变"的刷新会静默失效。
+        ResetVisibleItems();
         UpdateVisibleRange();
     }
 
@@ -386,22 +419,47 @@ public partial class VirtualList : Control
         }
     }
 
+    /// <summary>
+    /// 把条目摆到第 <paramref name="index"/> 个格子上。
+    /// </summary>
+    /// <remarks>
+    /// **只设位置、不改尺寸**：条目尺寸由预制体决定（见 <see cref="ItemSize"/> 的说明）。
+    /// 早期实现按"格子尺寸"给条目 set_size，会因容器/可视区尺寸而把固定尺寸的卡面拉变形，
+    /// 且在容器尚未布局时（宽度为 0）会把条目宽度算成 0。
+    /// 需要铺满横轴的整行条目请打开 <see cref="StretchItemAcrossAxis"/>。
+    /// </remarks>
     private void PositionItem(Control item, int index, float cellStep)
     {
         float pos = index * cellStep;
-        float containerWidth = _itemContainer?.Size.X ?? Size.X;
-        float containerHeight = _itemContainer?.Size.Y ?? Size.Y;
 
         if (IsVertical)
         {
             item.Position = new Vector2(0, pos);
-            item.Size = new Vector2(containerWidth, ItemSize);
+            if (StretchItemAcrossAxis)
+            {
+                item.Size = new Vector2(GetAcrossSize(), item.Size.Y);
+            }
         }
         else
         {
             item.Position = new Vector2(pos, 0);
-            item.Size = new Vector2(ItemSize, containerHeight);
+            if (StretchItemAcrossAxis)
+            {
+                item.Size = new Vector2(item.Size.X, GetAcrossSize());
+            }
         }
+    }
+
+    /// <summary>横轴可用尺寸（垂直列表为宽度，水平列表为高度），优先取滚动区。</summary>
+    private float GetAcrossSize()
+    {
+        var scrollSize = ScrollArea?.Size ?? Vector2.Zero;
+        if (scrollSize.X > 0 && scrollSize.Y > 0)
+        {
+            return IsVertical ? scrollSize.X : scrollSize.Y;
+        }
+
+        return IsVertical ? Size.X : Size.Y;
     }
 
     private float GetViewportSize()

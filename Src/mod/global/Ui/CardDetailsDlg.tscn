@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b6q632yjwjopr"]
 
-[ext_resource type="Script" uid="uid://dp1x2epf01bvb" path="res://Src/mod/global/Ui/CardDetailsDlg.cs" id="1_adodo"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/CardDetailsDlg.cs" id="1_adodo"]
 [ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="1_iai23"]
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="2_xn1gd"]
 

@@ -1,6 +1,7 @@
 using System.Text.Json;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.StateMachine;
 
@@ -136,6 +137,18 @@ public sealed class SkillActionExecutor
             case ESkillActionKind.RemoveGameplayEffect:
                 RemoveGameplayEffect(simulation, targets, mergedParams);
                 break;
+            case ESkillActionKind.ApplyBuff:
+                ApplyBuff(simulation, source, targets, mergedParams);
+                break;
+            case ESkillActionKind.RemoveBuff:
+                RemoveBuff(simulation, targets, mergedParams);
+                break;
+            case ESkillActionKind.AttachSlotBuff:
+                AttachSlotBuff(simulation, source, mergedParams);
+                break;
+            case ESkillActionKind.GainOrb:
+                GainOrb(simulation, source, mergedParams);
+                break;
         }
     }
 
@@ -241,6 +254,73 @@ public sealed class SkillActionExecutor
             return;
 
         _gameplayEffectApplicator.RemoveFromTargets(simulation, targets, gameplayEffectId);
+    }
+
+    /// <summary>
+    /// 对每个目标挂 buff：params.buffId 必填，其余参数进入实例参数。
+    /// 带 <c>hookTargets</c> / <c>targetFilter</c> 时按目标选择器重解析（"伤害敌方全体 + 增益自身"这类卡用）。
+    /// </summary>
+    private static void ApplyBuff(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (!BuffActionParams.TryGetBuffId(parameters, out var buffId))
+            return;
+
+        var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
+            ? CombatTargetSelector.Resolve(simulation, source, parameters)
+            : targets;
+        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId");
+        foreach (var target in resolvedTargets)
+            simulation.Buffs.Apply(simulation, target, buffId, instanceParams);
+    }
+
+    /// <summary>授予充能球：params.orbTypeId 必填、params.count 可选（默认 1）；产球者 = 来源角色。</summary>
+    private static void GainOrb(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (!BuffActionParams.TryGetString(parameters, "orbTypeId", out var orbTypeId))
+            return;
+
+        var count = BuffActionParams.ReadInt(parameters, "count", 1);
+        simulation.Orbs.Grant(simulation, orbTypeId, BuffActionParams.ResolveProducerIndex(source), count);
+    }
+
+    /// <summary>驱散目标 buff（params.buffId 或 params.withTags）；不可驱散 tag 自动跳过。</summary>
+    private static void RemoveBuff(
+        CombatSimulation simulation,
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        BuffActionParams.TryGetBuffId(parameters, out var buffId);
+        var withTags = BuffActionParams.TryGetTagList(parameters, "withTags");
+        if (string.IsNullOrWhiteSpace(buffId) && withTags is null)
+            return;
+
+        foreach (var target in targets)
+            simulation.Buffs.Dispel(simulation, target, buffId, withTags);
+    }
+
+    /// <summary>给来源角色的手牌槽位挂 buff：params.buffId + params.slotIndex（0 起）。</summary>
+    private static void AttachSlotBuff(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (source.Side != ECombatSide.Player ||
+            source.Index < 0 || source.Index >= simulation.PlayerTeam.Characters.Count)
+            return;
+
+        if (!BuffActionParams.TryGetBuffId(parameters, out var buffId))
+            return;
+
+        var slotIndex = ReadInt(parameters, "slotIndex", -1);
+        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId", "slotIndex");
+        simulation.Buffs.ApplyToSlot(simulation, source.Index, slotIndex, buffId, instanceParams);
     }
 
     private static Dictionary<string, object>? BuildScriptContext(

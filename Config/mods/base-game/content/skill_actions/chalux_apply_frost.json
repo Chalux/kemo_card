@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "chalux_active_frost" }
+}

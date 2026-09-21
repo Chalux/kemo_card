@@ -1,0 +1,662 @@
+using KemoCard.Frame.Content;
+using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
+using KemoCard.Frame.Gas.Executions;
+using KemoCard.Mod.Combat;
+using KemoCard.Mod.Combat.Buffs;
+using KemoCard.Mod.Combat.Rules;
+using KemoCard.Mod.Combat.Runtime;
+using KemoCard.Mod.Combat.StateMachine;
+using NUnit.Framework;
+
+namespace KemoCard.Ui.Tests.Combat;
+
+/// <summary>
+/// BuffInstance 运行时：叠层、修正聚合、条件休眠、驱散 tag 规则、时长 tick、
+/// 槽位 buff（伤害/充能）与连携批量定档的端到端行为。
+/// </summary>
+[TestFixture]
+public sealed class BuffRuntimeTests
+{
+    private static readonly Dictionary<string, float> BaseAttrs = new(StringComparer.Ordinal)
+    {
+        [AttributeIds.MaxHealth] = 50,
+        [AttributeIds.PhysicalAttack] = 10,
+    };
+
+    #region 构造辅助
+
+    private static CombatSimulation BuildSim(
+        Action<GameDefinitionRegistry>? extend = null,
+        CharacterBattleInstance[]? characters = null,
+        int enemyHp = 100)
+    {
+        var registry = new GameDefinitionRegistry();
+        extend?.Invoke(registry);
+        var team = new PlayerTeamState(
+            characters ?? [CharacterBattleInstance.CreateForTests("c0", BaseAttrs)],
+            sharedMaxHp: 200);
+        var enemyTeam = new EnemyTeamState([new EnemyUnit("e0", "slime", maxHp: enemyHp)]);
+        return new CombatSimulation(team, enemyTeam, new CombatRuleEngine([]), registry);
+    }
+
+    private static BuffDto StatBuff(string id = "buff.stat", int addAttack = 6, int maxStacks = 1) => new()
+    {
+        Id = id,
+        MaxStacks = maxStacks,
+        StackRule = EBuffStackRule.Add,
+        DurationType = EBuffDurationType.Permanent,
+        Modifiers =
+        [
+            new AttributeModifierDefDto
+            {
+                AttributeId = AttributeIds.PhysicalAttack,
+                Operation = EAttributeModifierOp.Add,
+                Magnitude = new MagnitudeDefDto { Kind = EMagnitudeKind.Scalar, Scalar = addAttack },
+            },
+        ],
+    };
+
+    #endregion
+
+    #region 投放与叠层
+
+    [Test]
+    public void Apply_with_unknown_buff_definition_fails_softly_without_mounting()
+    {
+        using var sim = BuildSim();
+        var buff = StatBuff();
+
+        // registry 里没有该 buff 定义 → 投放失败（软失败），容器保持为空；
+        // 正路径（注册定义后挂载改属性）见 Apply_with_registered_definition_modifies_attribute。
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.All, Is.Empty);
+    }
+
+    [Test]
+    public void Apply_with_registered_definition_modifies_attribute()
+    {
+        var buff = StatBuff();
+        using var sim = BuildSim(registry => CombatTestHelper.RebuildInto(
+            registry,
+            buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }));
+        var before = sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
+
+        var result = sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(
+            sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack),
+            Is.EqualTo(before + 6));
+    }
+
+    [Test]
+    public void Add_stack_multiplies_modifier_and_caps_at_max()
+    {
+        var buff = StatBuff(maxStacks: 3);
+        using var sim = BuildSim(registry => CombatTestHelper.RebuildInto(
+            registry,
+            buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }));
+        var target = new CombatTargetRef(ECombatSide.Player, 0);
+        var before = sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
+
+        sim.Buffs.Apply(sim, target, buff.Id);
+        sim.Buffs.Apply(sim, target, buff.Id);
+        sim.Buffs.Apply(sim, target, buff.Id);
+        sim.Buffs.Apply(sim, target, buff.Id);
+
+        var instance = sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id);
+        Assert.That(instance!.Stacks, Is.EqualTo(3), "Add 叠层封顶 MaxStacks");
+        Assert.That(
+            sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack),
+            Is.EqualTo(before + 18),
+            "修正幅度随层数翻倍");
+    }
+
+    [Test]
+    public void AllAllies_scope_expands_to_every_character()
+    {
+        var teamBuff = new BuffDto
+        {
+            Id = "buff.team",
+            DurationType = EBuffDurationType.Permanent,
+            ApplyScope = EBuffApplyScope.AllAllies,
+            Modifiers = StatBuff().Modifiers,
+        };
+        var characters = Enumerable.Range(0, 4)
+            .Select(i => CharacterBattleInstance.CreateForTests($"c{i}", BaseAttrs))
+            .ToArray();
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [teamBuff.Id] = teamBuff }),
+            characters);
+
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), teamBuff.Id);
+
+        foreach (var character in sim.PlayerTeam.Characters)
+        {
+            Assert.That(character.Buffs.Find(teamBuff.Id), Is.Not.Null, "团队 buff 展开到每个队友");
+        }
+    }
+
+    #endregion
+
+    #region 条件休眠
+
+    [Test]
+    public void Condition_unmet_buff_is_dormant_and_contributes_nothing()
+    {
+        var buff = new BuffDto
+        {
+            Id = "buff.conditional",
+            DurationType = EBuffDurationType.Permanent,
+            ApplyScope = EBuffApplyScope.AllAllies,
+            Condition = new BuffConditionDto
+            {
+                ElementAny = [EElement.Blue],
+                RaceAny = [ERace.Canine],
+            },
+            Modifiers = StatBuff().Modifiers,
+        };
+        var blueHuman = CharacterBattleInstance.CreateForTests("blue", BaseAttrs, element: EElement.Blue);
+        var redHuman = CharacterBattleInstance.CreateForTests("red", BaseAttrs, element: EElement.Red);
+        var characters = new[] { blueHuman, redHuman };
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }),
+            characters);
+
+        var attackBeforeBlue = blueHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
+        var attackBeforeRed = redHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id)!.IsDormant, Is.False, "蓝属性命中条件 → 激活");
+        Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(buff.Id)!.IsDormant, Is.True, "红属性不命中 → 休眠");
+        Assert.That(blueHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack), Is.EqualTo(attackBeforeBlue + 6));
+        Assert.That(redHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack), Is.EqualTo(attackBeforeRed), "休眠 buff 不参与聚合");
+    }
+
+    #endregion
+
+    #region 驱散 tag 规则
+
+    [Test]
+    public void Dispel_skips_undispellable_tag_and_removes_others()
+    {
+        var plain = StatBuff(id: "buff.plain");
+        var locked = new BuffDto
+        {
+            Id = "buff.locked",
+            DurationType = EBuffDurationType.Permanent,
+            Tags = [BuiltinBuffTags.Undispellable],
+        };
+        using var sim = BuildSim(registry => CombatTestHelper.RebuildInto(
+            registry,
+            buffs: new Dictionary<string, BuffDto>
+            {
+                [plain.Id] = plain,
+                [locked.Id] = locked,
+            }));
+        var target = new CombatTargetRef(ECombatSide.Player, 0);
+        sim.Buffs.Apply(sim, target, plain.Id);
+        sim.Buffs.Apply(sim, target, locked.Id);
+
+        var removedPlain = sim.Buffs.Dispel(sim, target, buffId: plain.Id);
+        var removedLocked = sim.Buffs.Dispel(sim, target, buffId: locked.Id);
+
+        Assert.That(removedPlain, Is.EqualTo(1), "无不可驱散 tag 的 buff 可被驱散");
+        Assert.That(removedLocked, Is.EqualTo(0), "带不可驱散 tag 的 buff 被跳过");
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(locked.Id), Is.Not.Null);
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(plain.Id), Is.Null);
+    }
+
+    [Test]
+    public void Legacy_dispellable_false_normalizes_to_undispellable_tag()
+    {
+        var dto = new BuffDto { Id = "b", LegacyDispellable = false };
+        Assert.That(dto.EffectiveTags, Does.Contain(BuiltinBuffTags.Undispellable));
+
+        var fresh = new BuffDto { Id = "b", LegacyDispellable = true };
+        Assert.That(fresh.EffectiveTags, Does.Not.Contain(BuiltinBuffTags.Undispellable));
+    }
+
+    #endregion
+
+    #region 时长 tick
+
+    [Test]
+    public void Turns_buff_expires_after_n_turn_ends()
+    {
+        var buff = new BuffDto
+        {
+            Id = "buff.timed",
+            DurationType = EBuffDurationType.Turns,
+            Duration = 2,
+            Modifiers = StatBuff().Modifiers,
+        };
+        using var sim = BuildSim(registry => CombatTestHelper.RebuildInto(
+            registry,
+            buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }));
+        var target = new CombatTargetRef(ECombatSide.Player, 0);
+        sim.Buffs.Apply(sim, target, buff.Id);
+        var before = sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
+
+        sim.Buffs.FireTurnEnd(sim);
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id), Is.Not.Null, "第 1 回合结束仍在");
+        Assert.That(sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack), Is.EqualTo(before));
+
+        sim.Buffs.FireTurnEnd(sim);
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id), Is.Null, "第 2 回合结束到期移除");
+        Assert.That(
+            sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack),
+            Is.EqualTo(before - 6),
+            "移除后修正撤销");
+    }
+
+    /// <summary>
+    /// P0 回归（2026-09-19）：onTurnStart 钩子往<b>同一容器</b>追加 buff。
+    /// 分发必须走快照——活列表枚举中修改会抛 InvalidOperationException（.NET 不允许）。
+    /// </summary>
+    [Test]
+    public void TurnStart_hook_appending_to_same_container_completes_without_throwing()
+    {
+        var grow = new EffectDto
+        {
+            Id = "effect.grow",
+            Kind = EEffectKind.ApplyBuff,
+            Params = new Dictionary<string, object> { ["buffId"] = "buff.seed" },
+        };
+        var spawner = new BuffDto
+        {
+            Id = "buff.spawner",
+            DurationType = EBuffDurationType.Permanent,
+            Hooks = new BuffEffectHooksDto
+            {
+                OnTurnStart = [new EffectRefDto { EffectId = grow.Id }],
+            },
+        };
+        var seed = StatBuff("buff.seed");
+        using var sim = BuildSim(registry => CombatTestHelper.RebuildInto(
+            registry,
+            buffs: new Dictionary<string, BuffDto> { [spawner.Id] = spawner, [seed.Id] = seed },
+            effects: new Dictionary<string, EffectDto> { [grow.Id] = grow }));
+        var target = new CombatTargetRef(ECombatSide.Player, 0);
+        sim.Buffs.Apply(sim, target, spawner.Id);
+
+        Assert.DoesNotThrow(() => sim.Buffs.FireTurnStart(sim));
+
+        var container = sim.PlayerTeam.Characters[0].Buffs;
+        Assert.That(container.Find(spawner.Id), Is.Not.Null, "钩子触发后源 buff 仍在");
+        Assert.That(container.Find(seed.Id), Is.Not.Null, "钩子挂载的新 buff 已就位");
+    }
+
+    /// <summary>
+    /// P0 回归（2026-09-19）：同回合到期的两个 buff，前者的 onRemove 驱散了后者。
+    /// 后者在到期补发时已不在容器：必须跳过（否则 onRemove 双触发）；
+    /// 用 onRemove 挂载计数 marker buff 观察触发次数。
+    /// </summary>
+    [Test]
+    public void TurnEnd_expiry_skips_instance_already_dispersed_by_earlier_onRemove()
+    {
+        var cleanse = new EffectDto
+        {
+            Id = "effect.cleanse",
+            Kind = EEffectKind.RemoveBuff,
+            Params = new Dictionary<string, object> { ["withTags"] = new List<string> { "test.dispel" } },
+        };
+        var mark = new EffectDto
+        {
+            Id = "effect.mark",
+            Kind = EEffectKind.ApplyBuff,
+            Params = new Dictionary<string, object> { ["buffId"] = "buff.echo" },
+        };
+        var doomed = new BuffDto
+        {
+            Id = "buff.doomed",
+            DurationType = EBuffDurationType.Turns,
+            Duration = 1,
+            Hooks = new BuffEffectHooksDto
+            {
+                OnRemove = [new EffectRefDto { EffectId = cleanse.Id }],
+            },
+        };
+        var bleed = new BuffDto
+        {
+            Id = "buff.bleed",
+            DurationType = EBuffDurationType.Turns,
+            Duration = 1,
+            Tags = ["test.dispel"],
+            Hooks = new BuffEffectHooksDto
+            {
+                OnRemove = [new EffectRefDto { EffectId = mark.Id }],
+            },
+        };
+        var echo = StatBuff("buff.echo", maxStacks: 5);
+        using var sim = BuildSim(registry => CombatTestHelper.RebuildInto(
+            registry,
+            buffs: new Dictionary<string, BuffDto> { [doomed.Id] = doomed, [bleed.Id] = bleed, [echo.Id] = echo },
+            effects: new Dictionary<string, EffectDto> { [cleanse.Id] = cleanse, [mark.Id] = mark }));
+        var target = new CombatTargetRef(ECombatSide.Player, 0);
+        sim.Buffs.Apply(sim, target, doomed.Id);
+        sim.Buffs.Apply(sim, target, bleed.Id);
+
+        Assert.DoesNotThrow(() => sim.Buffs.FireTurnEnd(sim));
+
+        var container = sim.PlayerTeam.Characters[0].Buffs;
+        Assert.That(container.Find(doomed.Id), Is.Null, "doomed 到期移除");
+        Assert.That(container.Find(bleed.Id), Is.Null, "bleed 被 onRemove 驱散（先于到期补发）");
+        var marker = container.Find(echo.Id);
+        Assert.That(marker, Is.Not.Null, "bleed 的 onRemove 至少触发一次（marker 已挂载）");
+        Assert.That(marker!.Stacks, Is.EqualTo(1), "onRemove 不得双触发：已驱散的实例跳过到期补发");
+    }
+
+    #endregion
+
+    #region 槽位 buff：伤害与免疫
+
+    private static GameDefinitionRegistry BuildSlotDamageRegistry()
+    {
+        var slotDamage = new BuffDto
+        {
+            Id = "buff.slot_damage",
+            DurationType = EBuffDurationType.Permanent,
+            Tags = [BuiltinBuffTags.SlotDamage],
+            Hooks = new BuffEffectHooksDto
+            {
+                OnSlotCardPlayed =
+                [
+                    new EffectRefDto
+                    {
+                        EffectId = "effect.slot_damage",
+                    },
+                ],
+            },
+        };
+        var immunity = new BuffDto
+        {
+            Id = "buff.immunity",
+            DurationType = EBuffDurationType.Permanent,
+            Tags = [BuiltinBuffTags.TraitImmuneSlotDamage],
+        };
+        return CombatTestHelper.CreateFullRegistry(
+            buffs: new Dictionary<string, BuffDto>
+            {
+                [slotDamage.Id] = slotDamage,
+                [immunity.Id] = immunity,
+            },
+            effects: new Dictionary<string, EffectDto>
+            {
+                ["effect.slot_damage"] = new()
+                {
+                    Id = "effect.slot_damage",
+                    Kind = EEffectKind.Damage,
+                    Params = new Dictionary<string, object> { ["amount"] = 5 },
+                },
+            });
+    }
+
+    [Test]
+    public void Slot_damage_buff_deals_shared_hp_damage_on_play()
+    {
+        var registry = BuildSlotDamageRegistry();
+        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            buffs: registry.Store.Buffs.ToDictionary(pair => pair.Key, pair => pair.Value),
+            effects: new Dictionary<string, EffectDto>
+            {
+                ["effect.slot_damage"] = new()
+                {
+                    Id = "effect.slot_damage",
+                    Kind = EEffectKind.Damage,
+                    Params = new Dictionary<string, object> { ["amount"] = 5 },
+                },
+            });
+
+        var hpBefore = sim.PlayerTeam.SharedHp;
+        sim.Buffs.ApplyToSlot(sim, 0, 0, "buff.slot_damage");
+
+        sim.Buffs.FireSlotCardPlayed(sim, 0, sim.PlayerTeam.Characters[0].HandSlots[0]);
+
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hpBefore - 5), "槽位伤害结算到共享血量");
+    }
+
+    [Test]
+    public void Slot_damage_is_immune_when_holder_has_trait_tag()
+    {
+        var registry = BuildSlotDamageRegistry();
+        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            buffs: registry.Store.Buffs.ToDictionary(pair => pair.Key, pair => pair.Value),
+            effects: new Dictionary<string, EffectDto>
+            {
+                ["effect.slot_damage"] = new()
+                {
+                    Id = "effect.slot_damage",
+                    Kind = EEffectKind.Damage,
+                    Params = new Dictionary<string, object> { ["amount"] = 5 },
+                },
+            });
+
+        var hpBefore = sim.PlayerTeam.SharedHp;
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), "buff.immunity");
+        sim.Buffs.ApplyToSlot(sim, 0, 0, "buff.slot_damage");
+
+        sim.Buffs.FireSlotCardPlayed(sim, 0, sim.PlayerTeam.Characters[0].HandSlots[0]);
+
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hpBefore), "持有免疫特征 tag 的角色不受槽位伤害");
+    }
+
+    #endregion
+
+    #region 槽位 buff：充能
+
+    [Test]
+    public void Charge_buff_fires_payload_on_threshold_and_expires_after_duration()
+    {
+        var charge = new BuffDto
+        {
+            Id = "buff.charge",
+            DurationType = EBuffDurationType.Turns,
+            Duration = 3,
+            Tags = [BuiltinBuffTags.SlotCharge],
+            Hooks = new BuffEffectHooksDto
+            {
+                OnSlotCardPlayed =
+                [
+                    new EffectRefDto
+                    {
+                        EffectId = "effect.charge_burst",
+                        Params = new Dictionary<string, object> { ["hookTargets"] = "randomEnemy" },
+                    },
+                ],
+            },
+        };
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [charge.Id] = charge },
+                effects: new Dictionary<string, EffectDto>
+                {
+                    ["effect.charge_burst"] = new()
+                    {
+                        Id = "effect.charge_burst",
+                        Kind = EEffectKind.Damage,
+                        Params = new Dictionary<string, object> { ["amount"] = 12 },
+                    },
+                }),
+            enemyHp: 100);
+
+        sim.Buffs.ApplyToSlot(sim, 0, 1, charge.Id);
+        var slot = sim.PlayerTeam.Characters[0].HandSlots[1];
+        var enemyHpBefore = sim.EnemyTeam.Enemies[0].CurrentHp;
+
+        // 充能 I：打出一张即触发并重置。
+        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
+        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(enemyHpBefore - 12), "充能 I 触发载荷");
+
+        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
+        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(enemyHpBefore - 24), "触发后重置，可再次触发");
+
+        // 3 回合到期移除，之后不再触发。
+        sim.Buffs.FireTurnEnd(sim);
+        sim.Buffs.FireTurnEnd(sim);
+        sim.Buffs.FireTurnEnd(sim);
+        Assert.That(slot.Buffs.Find(charge.Id), Is.Null, "3 回合后到期移除");
+
+        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
+        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(enemyHpBefore - 24), "移除后不再触发");
+    }
+
+    #endregion
+
+    #region 连携批量定档
+
+    private static CardDto ElementCard(string id, EElement element, ECardType type = ECardType.Physics) => new()
+    {
+        Id = id,
+        DisplayNameId = id,
+        Element = (int)element,
+        CardType = type,
+        TargetSide = ETargetSide.Enemy,
+        TargetScope = ETargetScope.Single,
+        TargetCount = 1,
+        Priority = 1,
+    };
+
+    [Test]
+    public void Chain_counts_distinct_characters_per_element()
+    {
+        var blue = ElementCard("card.blue", EElement.Blue);
+        var red = ElementCard("card.red", EElement.Red);
+        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            cards: new Dictionary<string, CardDto> { [blue.Id] = blue, [red.Id] = red });
+
+        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blue.Id, "rt1", 1, [], sim.AllocateQueueSequence()));
+        sim.CardQueue.Enqueue(new QueuedCardEntry(1, blue.Id, "rt2", 1, [], sim.AllocateQueueSequence()));
+        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blue.Id, "rt3", 1, [], sim.AllocateQueueSequence()));
+        sim.CardQueue.Enqueue(new QueuedCardEntry(2, red.Id, "rt4", 1, [], sim.AllocateQueueSequence()));
+
+        var counts = ChainCalculator.CountDistinctCharacters(sim);
+
+        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(2), "同一角色多张只计 1 人");
+        Assert.That(counts.GetValueOrDefault(EElement.Red), Is.EqualTo(1));
+
+        // 档位数值是可调平衡参数，断言对比常量而不是写死百分比；本用例只钉结构（1 人无增益 / ≥4 封顶 / 单调递增）。
+        Assert.That(ChainCalculator.TierScale(0), Is.Zero);
+        Assert.That(ChainCalculator.TierScale(1), Is.Zero, "1 人无增益");
+        Assert.That(ChainCalculator.TierScale(2), Is.EqualTo(ChainCalculator.TwoChainScale));
+        Assert.That(ChainCalculator.TierScale(3), Is.EqualTo(ChainCalculator.ThreeChainScale));
+        Assert.That(ChainCalculator.TierScale(4), Is.EqualTo(ChainCalculator.FourChainScale));
+        Assert.That(ChainCalculator.TierScale(9), Is.EqualTo(ChainCalculator.FourChainScale), "≥4 人封顶");
+        Assert.That(ChainCalculator.TwoChainScale, Is.LessThan(ChainCalculator.ThreeChainScale));
+        Assert.That(ChainCalculator.ThreeChainScale, Is.LessThan(ChainCalculator.FourChainScale));
+    }
+
+    [Test]
+    public void Chain_inject_red_tag_adds_red_counting_for_holder_cards()
+    {
+        var blueCard = ElementCard("card.blue2", EElement.Blue);
+        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            cards: new Dictionary<string, CardDto> { [blueCard.Id] = blueCard });
+
+        // 手工把 StandardPlayerPhase 的角色换成带 tag 的版本不可行（team 不可变），
+        // 改用注入 tag 的 buff 走正式 Apply 通道。
+        var inject = new BuffDto
+        {
+            Id = "buff.inject",
+            DurationType = EBuffDurationType.Permanent,
+            Tags = [BuiltinBuffTags.TraitChainInjectRed],
+        };
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            cards: new Dictionary<string, CardDto> { [blueCard.Id] = blueCard },
+            buffs: new Dictionary<string, BuffDto> { [inject.Id] = inject });
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 1), inject.Id);
+
+        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blueCard.Id, "rt-a", 1, [], sim.AllocateQueueSequence()));
+        sim.CardQueue.Enqueue(new QueuedCardEntry(1, blueCard.Id, "rt-b", 1, [], sim.AllocateQueueSequence()));
+
+        var counts = ChainCalculator.CountDistinctCharacters(sim);
+
+        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(2));
+        Assert.That(counts.GetValueOrDefault(EElement.Red), Is.EqualTo(1), "被动2：持有者的蓝卡计入红属性统计（暂 1 人）");
+
+        var bonusForHolder = ChainCalculator.BonusForCard(counts, blueCard, sim.PlayerTeam.Characters[1]);
+        Assert.That(bonusForHolder, Is.EqualTo(ChainCalculator.TwoChainScale), "持有者的蓝卡取蓝/红中的最高档（蓝 2 人 = 二连档）");
+    }
+
+    [Test]
+    public void Chain_does_not_apply_to_non_damage_heal_card_types()
+    {
+        var curseCard = ElementCard("card.curse", EElement.Blue, ECardType.Curse);
+        Assert.That(ChainCalculator.AppliesToCard(curseCard), Is.False);
+
+        var healCard = ElementCard("card.heal", EElement.Blue, ECardType.Healing);
+        Assert.That(ChainCalculator.AppliesToCard(healCard), Is.True);
+    }
+
+    /// <summary>
+    /// 非 output 卡（控制/诅咒）不把人头数堆进连携档位：统计侧与加成侧同规则。
+    /// </summary>
+    [Test]
+    public void Chain_counting_ignores_non_output_cards_in_queue()
+    {
+        var blue = ElementCard("card.blue3", EElement.Blue);
+        var curse = ElementCard("card.curse3", EElement.Blue, ECardType.Curse);
+        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            cards: new Dictionary<string, CardDto> { [blue.Id] = blue, [curse.Id] = curse });
+
+        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blue.Id, "rt-n0", 1, [], sim.AllocateQueueSequence()));
+        sim.CardQueue.Enqueue(new QueuedCardEntry(1, curse.Id, "rt-n1", 1, [], sim.AllocateQueueSequence()));
+
+        var counts = ChainCalculator.CountDistinctCharacters(sim);
+
+        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(1),
+            "角色 1 的诅咒卡不得把自己计入蓝属性人头（否则 2 人即触发二连档）");
+    }
+
+    #endregion
+
+    #region 伤害公式（DamageDealtScale + 连携加算）
+
+    [Test]
+    public void Damage_execution_multiplies_dealt_scale_and_chain_additively()
+    {
+        var source = new AbilitySystemComponent();
+        source.SetBaseValue(AttributeIds.PhysicalAttack, 10f);
+        source.SetBaseValue(AttributeIds.DamageDealtScale, 0.25f);
+        var target = new AbilitySystemComponent();
+        target.SetBaseValue(AttributeIds.MaxHealth, 100f);
+        target.SetBaseValue(AttributeIds.Health, 100f);
+        target.SetBaseValue(AttributeIds.PhysicalDefense, 2f);
+        target.SetBaseValue(AttributeIds.DamageTakenScale, 0.5f);
+
+        var spec = new GameplayEffectSpec(
+            new GameplayEffectDefDto { Id = "ge.test", DurationPolicy = EDurationPolicy.Instant },
+            sourceAsc: source,
+            targetAsc: target,
+            setByCaller: new Dictionary<string, float>
+            {
+                ["Amount"] = 12f,
+                [DamageExecution.SetByCallerChainBonusScale] = 0.5f,
+            });
+
+        new DamageExecution().Execute(new ExecutionDefDto(), spec, target);
+
+        // base = 12 + 10(物攻) - 2(物防) = 20；×(1 + 0.25 + 0.5 连携加算) = 35；×(1 + 0.5 受伤) = 52.5
+        Assert.That(target.GetCurrentValue(AttributeIds.Health), Is.EqualTo(100f - 52.5f).Within(0.001f));
+    }
+
+    #endregion
+}

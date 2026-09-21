@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.chalux_frost.name",
+  "descId": "buff.chalux_frost.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ],
+  "tags": ["buff.active"]
+}

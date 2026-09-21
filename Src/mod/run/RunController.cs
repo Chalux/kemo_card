@@ -6,6 +6,8 @@ using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.Rules;
+using KemoCard.Mod.Run.Events;
+using KemoCard.Mod.Run.Potential;
 using KemoCard.Mod.Run.Reward;
 using KemoCard.Mod.Run.Save;
 
@@ -16,22 +18,38 @@ public sealed class RunController : BaseController<RunMod>
     private readonly RunRewardDistributor _rewardDistributor = new();
     private readonly IContentEffectScriptHost _scriptHost;
     private readonly CombatRuleCatalog _ruleCatalog;
+    private readonly Func<string, CharacterDto?>? _characterDefinitionResolver;
     private RunDto? _battleSnapshot;
     private CombatSimulation? _simulation;
     private RunSaveService? _autoSaveService;
 
+    /// <summary>团体潜能：池 / 槽位账本 / 解锁与返还的统一入口。</summary>
+    public PotentialService Potential { get; }
+
     /// <param name="scriptHost">效果脚本宿主（会话级依赖，由组合根注入；缺省为 Null 实现）。</param>
     /// <param name="ruleCatalog">战斗规则目录；缺省为内置规则集。</param>
+    /// <param name="potentialPolicyProvider">潜能消费策略读取（组合根从全局联机设置读取；缺省自由消费）。</param>
+    /// <param name="characterDefinitionResolver">
+    /// 角色定义解析（读档时按 definitionId 取回完整定义；缺省退回存档内的最小快照）。
+    /// 由组合根提供，Run 层不直接访问内容注册表。
+    /// </param>
     public RunController(
         RunMod model,
         IContentEffectScriptHost? scriptHost = null,
-        CombatRuleCatalog? ruleCatalog = null) : base(model)
+        CombatRuleCatalog? ruleCatalog = null,
+        Func<PotentialPolicySettings>? potentialPolicyProvider = null,
+        Func<string, CharacterDto?>? characterDefinitionResolver = null) : base(model)
     {
         _scriptHost = scriptHost ?? new NullContentEffectScriptHost();
         _ruleCatalog = ruleCatalog ?? CombatRuleCatalog.CreateDefault();
+        _characterDefinitionResolver = characterDefinitionResolver;
+        Potential = new PotentialService(model, potentialPolicyProvider);
     }
 
     public RunMod State => Model;
+
+    /// <summary>当前战斗模拟器（未开战为 null）；调试检查器只读使用。</summary>
+    public CombatSimulation? Simulation => _simulation;
 
     #region 生命周期
 
@@ -70,7 +88,7 @@ public sealed class RunController : BaseController<RunMod>
     public RunDto LoadRun(RunDto dto)
     {
         ArgumentNullException.ThrowIfNull(dto);
-        Model.RestoreFrom(dto);
+        Model.RestoreFrom(dto, definitionResolver: _characterDefinitionResolver);
         return Model.ToDto();
     }
 
@@ -90,16 +108,56 @@ public sealed class RunController : BaseController<RunMod>
 
     #region 队伍管理
 
-    public bool AddToCharacterPool(CharacterInstance character)
+    /// <summary>
+    /// 把角色加入角色池。角色定义唯一（总规格 §4.5.1）：重复获得同一<b>定义</b>时不入第二实例，
+    /// 转化为潜能奖励（潜能规格 §4.2）——重复的是 <paramref name="sourceSlotIndex"/> 槽位自己已有的角色
+    /// → 直充该槽位；否则入团队池。
+    /// </summary>
+    /// <returns>已入池 → <c>true</c>；重复获得已转化为潜能 → <c>false</c>。</returns>
+    public bool AddToCharacterPool(CharacterInstance character, int? sourceSlotIndex = null)
     {
         ArgumentNullException.ThrowIfNull(character);
+
+        if (Model.CharacterPool.Any(existing =>
+                string.Equals(existing.DefinitionId, character.DefinitionId, StringComparison.Ordinal)))
+        {
+            ConvertDuplicateToPotential(character.DefinitionId, sourceSlotIndex);
+            return false;
+        }
+
         Model.AddToCharacterPool(character);
         return true;
+    }
+
+    private void ConvertDuplicateToPotential(string definitionId, int? sourceSlotIndex)
+    {
+        if (sourceSlotIndex is >= 0 and < RunConstants.SlotCount)
+        {
+            var active = Model.PlayerStates[sourceSlotIndex.Value].ActiveCharacter;
+            if (active is not null &&
+                string.Equals(active.DefinitionId, definitionId, StringComparison.Ordinal))
+            {
+                Potential.GrantDuplicateReward(sourceSlotIndex);
+                return;
+            }
+        }
+
+        Potential.GrantDuplicateReward();
     }
 
     public bool RemoveFromCharacterPool(string instanceId)
     {
         return Model.RemoveFromCharacterPool(instanceId);
+    }
+
+    /// <summary>
+    /// 战斗期间锁定/解锁全部角色卡组（总规格 §4.5.5 换人门闩的卡组侧）：
+    /// 战斗内不允许改卡组，避免"战斗中临时换构筑"绕过开战快照。
+    /// </summary>
+    private void SetDecksLocked(bool locked)
+    {
+        foreach (var character in Model.CharacterPool)
+            character.SetDeckLocked(locked);
     }
 
     public bool SetActiveCharacter(int slotIndex, int poolIndex)
@@ -109,7 +167,10 @@ public sealed class RunController : BaseController<RunMod>
         if (poolIndex < 0 || poolIndex >= Model.CharacterPool.Count)
             return false;
 
-        Model.PlayerStates[slotIndex].SetActiveCharacter(Model.CharacterPool[poolIndex]);
+        var previous = Model.PlayerStates[slotIndex].ActiveCharacter?.InstanceId;
+        var character = Model.CharacterPool[poolIndex];
+        Model.PlayerStates[slotIndex].SetActiveCharacter(character);
+        NotifyCharacterAssigned(slotIndex, previous, character.InstanceId);
         return true;
     }
 
@@ -118,9 +179,33 @@ public sealed class RunController : BaseController<RunMod>
         if (slotIndex < 0 || slotIndex >= RunConstants.SlotCount)
             return false;
 
+        var previous = Model.PlayerStates[slotIndex].ActiveCharacter?.InstanceId;
         Model.PlayerStates[slotIndex].SetActiveCharacter(null);
+        NotifyCharacterAssigned(slotIndex, previous, currentInstanceId: null);
         return true;
     }
+
+    /// <summary>
+    /// 广播「某角色的卡组发生变更」。
+    /// </summary>
+    /// <remarks>
+    /// 卡组编辑入口不在本类（<c>CharacterInstance.TryEditDeck</c> 等由队伍编辑与调试面板直接调用），
+    /// 因此由写入方在写入成功后显式广播，保证各视图只依赖总线、不互相引用。
+    /// </remarks>
+    public void NotifyDeckChanged(string? instanceId, int deckIndex) =>
+        Model.NotifyRunDeckChanged(new RunDeckChangedPayload
+        {
+            InstanceId = instanceId,
+            DeckIndex = deckIndex,
+        });
+
+    private void NotifyCharacterAssigned(int slotIndex, string? previousInstanceId, string? currentInstanceId) =>
+        Model.NotifyRunCharacterAssigned(new RunCharacterAssignedPayload
+        {
+            SlotIndex = slotIndex,
+            PreviousInstanceId = previousInstanceId,
+            CurrentInstanceId = currentInstanceId,
+        });
 
     public bool ValidateParty()
     {
@@ -219,6 +304,7 @@ public sealed class RunController : BaseController<RunMod>
             return;
         Model.CurrentRing++;
         Model.Phase = ERunPhase.Event;
+        Potential.ResetRingProposalCounters();
         AutoSaveIfSettled();
     }
 
@@ -340,7 +426,8 @@ public sealed class RunController : BaseController<RunMod>
             _scriptHost,
             modId,
             _ruleCatalog,
-            out var error);
+            out var error,
+            initialBuffs: BuildUnlockedPassiveBuffs());
         if (simulation is null)
             throw new InvalidOperationException(error ?? $"战斗 '{battle.Id}' 创建失败。");
 
@@ -351,6 +438,7 @@ public sealed class RunController : BaseController<RunMod>
         _simulation?.Dispose();
         _simulation = simulation;
         Model.Phase = ERunPhase.Battle;
+        SetDecksLocked(true);
         return simulation;
     }
 
@@ -404,10 +492,38 @@ public sealed class RunController : BaseController<RunMod>
         return party;
     }
 
+    /// <summary>
+    /// 按槽序 + 潜能档低→高构造已解锁被动的开战注入条目（规格 §6.1 被动顺序约定）。
+    /// </summary>
+    private List<BattleStartBuffEntry> BuildUnlockedPassiveBuffs()
+    {
+        var entries = new List<BattleStartBuffEntry>();
+        var party = Model.ActiveParty;
+        for (var i = 0; i < party.Length; i++)
+        {
+            var character = party[i];
+            if (character?.Definition is null)
+                continue;
+
+            foreach (var passive in character.Definition.Passives.OrderBy(p => p.RequiredPotential))
+            {
+                if (!PotentialService.IsPassiveUnlocked(Model, character, passive))
+                    continue;
+
+                entries.Add(new BattleStartBuffEntry(i, passive.BuffId, passive.Params));
+            }
+        }
+
+        return entries;
+    }
+
     public void EndBattle(bool won)
     {
         if (Model.Phase != ERunPhase.Battle && Model.Phase != ERunPhase.BattleEnd)
             throw new InvalidOperationException("当前不在战斗中。");
+
+        // 战斗结束解除卡组锁（战斗内不允许改卡组，规格 §4.5.5 的换人门闩同理）。
+        SetDecksLocked(false);
 
         if (_simulation != null)
         {
@@ -432,7 +548,7 @@ public sealed class RunController : BaseController<RunMod>
             {
                 var instanceLookup = Model.CharacterPool
                     .ToDictionary(c => c.InstanceId, c => c, StringComparer.Ordinal);
-                Model.RestoreFrom(_battleSnapshot, instanceLookup);
+                Model.RestoreFrom(_battleSnapshot, instanceLookup, _characterDefinitionResolver);
                 _battleSnapshot = null;
             }
 
@@ -495,7 +611,7 @@ public sealed class RunController : BaseController<RunMod>
         }
 
         dto = loaded;
-        Model.RestoreFrom(dto);
+        Model.RestoreFrom(dto, definitionResolver: _characterDefinitionResolver);
         return true;
     }
 

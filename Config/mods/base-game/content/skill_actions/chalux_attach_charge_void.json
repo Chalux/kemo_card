@@ -1,0 +1,4 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": { "buffId": "chalux_charge_void", "slotIndex": 1, "charge": 2 }
+}

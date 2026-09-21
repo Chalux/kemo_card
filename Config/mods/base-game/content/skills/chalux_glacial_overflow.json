@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.chalux_glacial.name",
+  "descId": "skill.chalux_glacial.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "chalux_apply_frost" },
+    { "actionId": "chalux_attach_charge" }
+  ],
+  "tags": ["active"]
+}

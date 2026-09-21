@@ -7,6 +7,8 @@ using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui.Comp;
+using KemoCard.Mod.Run;
+using KemoCard.Mod.Run.Potential;
 
 namespace KemoCard.Mod.Global.Ui;
 
@@ -22,6 +24,7 @@ public partial class CharacterDetailsDlg : BaseDlg
     [Export] private Label? _txtTitle;
     [Export] private Label? _txtCharName;
     [Export] private RichTextLabel? _rtCharDesc;
+    [Export] private RichTextLabel? _rtPassives;
     [Export] private Label? _lblAnim;
     [Export] private OptionButton? _optAnim;
 
@@ -109,7 +112,59 @@ public partial class CharacterDetailsDlg : BaseDlg
                 : Localization.Tr(character.DescId);
         }
 
+        BindPassives(character);
         BindAnimOptions();
+    }
+
+    /// <summary>
+    /// 被动列表：名称（潜能门槛）+ 描述；进行中的 Run 内持有该角色实例时附加解锁状态。
+    /// 词条标记（[url=kw:*]）由 RichTextLabel 的词条提示管线处理。
+    /// </summary>
+    private void BindPassives(CharacterDto character)
+    {
+        if (_rtPassives == null)
+        {
+            return;
+        }
+
+        if (character.Passives.Count == 0)
+        {
+            _rtPassives.Text = "";
+            return;
+        }
+
+        var store = AppRoot.Services.ContentModPipeline.Registry.Store;
+        var runInstance = RunRuntime.Current?.State.CharacterPool.FirstOrDefault(instance =>
+            string.Equals(instance.DefinitionId, character.Id, StringComparison.Ordinal));
+
+        var builder = new System.Text.StringBuilder();
+        builder.Append($"[b]{Localization.Tr("UI_CHARACTER_PASSIVES_TITLE")}[/b]\n");
+        var passiveIndex = 0;
+        foreach (var passive in character.Passives)
+        {
+            passiveIndex++;
+            var thresholdText = passive.RequiredPotential > 0
+                ? string.Format(Localization.Tr("UI_CHARACTER_PASSIVE_THRESHOLD"), passive.RequiredPotential)
+                : Localization.Tr("UI_CHARACTER_PASSIVE_THRESHOLD_ZERO");
+            var unlocked = runInstance is not null &&
+                PotentialService.IsPassiveUnlocked(RunRuntime.Current!.State, runInstance, passive);
+            var stateText = runInstance is null
+                ? ""
+                : unlocked
+                    ? Localization.Tr("UI_CHARACTER_PASSIVE_UNLOCKED")
+                    : Localization.Tr("UI_CHARACTER_PASSIVE_LOCKED");
+
+            // 被动没有独立技能名：一律按序号显示「被动技能N」（2026-09-19 约定），描述取 buff 的 descId。
+            var name = string.Format(Localization.Tr("UI_CHARACTER_PASSIVE_NAME"), passiveIndex);
+            var desc = store.TryGetBuff(passive.BuffId, out var buff) &&
+                !string.IsNullOrWhiteSpace(buff.DescId)
+                    ? Localization.Tr(buff.DescId)
+                    : "";
+
+            builder.Append($"[b]{name}[/b]（{thresholdText}）{stateText}\n{desc}\n");
+        }
+
+        _rtPassives.Text = builder.ToString().TrimEnd();
     }
 
     private void BindAnimOptions()

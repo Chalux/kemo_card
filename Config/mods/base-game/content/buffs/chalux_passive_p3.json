@@ -1,0 +1,18 @@
+{
+  "descId": "buff.chalux_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onWaveStart": [
+      { "effectId": "chalux_p3_boost_self", "params": { "targetFilter": { "self": true } } },
+      { "effectId": "chalux_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] } } },
+      { "effectId": "chalux_p3_boost_canine", "params": { "targetFilter": { "raceAny": ["Canine"] } } }
+    ],
+    "onTurnStart": [
+      { "effectId": "chalux_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 8 } },
+      { "effectId": "chalux_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] }, "turnInterval": 8 } },
+      { "effectId": "chalux_p3_boost_canine", "params": { "targetFilter": { "raceAny": ["Canine"] }, "turnInterval": 8 } }
+    ]
+  }
+}

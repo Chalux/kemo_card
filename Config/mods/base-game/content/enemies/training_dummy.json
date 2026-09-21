@@ -1,0 +1,14 @@
+{
+  "displayNameId": "enemy.training_dummy.name",
+  "descId": "enemy.training_dummy.desc",
+  "maxHp": 10000,
+  "element": "None",
+  "role": "Guard",
+  "skillRefs": [],
+  "buffRefs": [{ "buffId": "training_dummy_regeneration" }],
+  "baseAttributes": {
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "tags": ["training", "dummy"]
+}

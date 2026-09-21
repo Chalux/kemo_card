@@ -21,7 +21,8 @@ public static class CombatSimulationFactory
         string modId,
         CombatRuleCatalog catalog,
         out string? error,
-        IReadOnlyList<BattleStartSkillEntry>? battleStartSkills = null)
+        IReadOnlyList<BattleStartSkillEntry>? battleStartSkills = null,
+        IReadOnlyList<BattleStartBuffEntry>? initialBuffs = null)
     {
         ArgumentNullException.ThrowIfNull(battle);
         ArgumentNullException.ThrowIfNull(party);
@@ -114,7 +115,8 @@ public static class CombatSimulationFactory
             runSeed: runSeed,
             scriptHost: scriptHost,
             modId: modId,
-            battleStartSkills: battleStartSkills);
+            battleStartSkills: battleStartSkills,
+            initialBuffs: initialBuffs);
     }
 
     public static List<EnemyUnit>? SpawnWaveEnemies(

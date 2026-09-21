@@ -27,6 +27,13 @@ public sealed class CombatRuleEngine
             rule.OnBeforeDamage(ctx, ref packet);
     }
 
+    /// <summary>伤害写入完成后广播（<paramref name="packet"/> 为只读的最终数额，供观测/记日志类规则使用）。</summary>
+    public void DispatchAfterDamage(CombatContext ctx, in DamagePacket packet)
+    {
+        foreach (var rule in _rules)
+            rule.OnAfterDamage(ctx, in packet);
+    }
+
     public void DispatchTurnEnd(CombatContext ctx)
     {
         foreach (var rule in _rules)

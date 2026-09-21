@@ -32,13 +32,24 @@ dock_revealed=true
 
 runtime/advanced/uses_dotnet=true
 
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
 [dotnet]
 
 project/assembly_name="kemo_card"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_mcp/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg")
+
+[gui]
+
+theme/custom="res://Resource/Asset/Theme/kemo_theme.tres"
 
 [internationalization]
 
@@ -52,3 +63,4 @@ locale/fallback="zh_CN"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
+environment/defaults/default_clear_color=Color(0.055, 0.075, 0.133, 1)

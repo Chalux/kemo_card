@@ -27,12 +27,13 @@ internal static class CombatTestHelper
         IReadOnlyDictionary<string, AttributeDefDto>? attributes = null,
         IReadOnlyDictionary<string, GameplayEffectDefDto>? gameplayEffects = null,
         IReadOnlyDictionary<string, GameplayTagDefDto>? gameplayTags = null,
-        IReadOnlyDictionary<string, SkillActionDto>? skillActions = null)
+        IReadOnlyDictionary<string, SkillActionDto>? skillActions = null,
+        IReadOnlyDictionary<string, OrbTypeDto>? orbs = null)
     {
         var registry = new GameDefinitionRegistry();
         RebuildInto(
             registry, cards, skills, effects, buffs, enemies, battles,
-            characters, attributes, gameplayEffects, gameplayTags, skillActions);
+            characters, attributes, gameplayEffects, gameplayTags, skillActions, orbs);
         return registry;
     }
 
@@ -52,7 +53,8 @@ internal static class CombatTestHelper
         IReadOnlyDictionary<string, AttributeDefDto>? attributes = null,
         IReadOnlyDictionary<string, GameplayEffectDefDto>? gameplayEffects = null,
         IReadOnlyDictionary<string, GameplayTagDefDto>? gameplayTags = null,
-        IReadOnlyDictionary<string, SkillActionDto>? skillActions = null)
+        IReadOnlyDictionary<string, SkillActionDto>? skillActions = null,
+        IReadOnlyDictionary<string, OrbTypeDto>? orbs = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
         cards ??= new Dictionary<string, CardDto>(StringComparer.Ordinal);
@@ -66,6 +68,7 @@ internal static class CombatTestHelper
         gameplayEffects ??= new Dictionary<string, GameplayEffectDefDto>(StringComparer.Ordinal);
         gameplayTags ??= new Dictionary<string, GameplayTagDefDto>(StringComparer.Ordinal);
         skillActions ??= new Dictionary<string, SkillActionDto>(StringComparer.Ordinal);
+        orbs ??= new Dictionary<string, OrbTypeDto>(StringComparer.Ordinal);
 
         var definitions = ModDefinitionsBundle.Empty with
         {
@@ -80,6 +83,7 @@ internal static class CombatTestHelper
             GameplayEffects = gameplayEffects,
             GameplayTags = gameplayTags,
             SkillActions = skillActions,
+            OrbTypes = orbs,
         };
 
         registry.Rebuild([new ModContentBundle("test.mod", definitions)], out _);

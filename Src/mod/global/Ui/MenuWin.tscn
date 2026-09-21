@@ -1,9 +1,7 @@
 [gd_scene format=3 uid="uid://d14v6lq503siq"]
 
-[ext_resource type="Script" uid="uid://bhtaowgpv7ept" path="res://Src/mod/global/Ui/MenuWin.cs" id="1_menu"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu"]
-bg_color = Color(0.15, 0.15, 0.2, 0.95)
+[ext_resource type="Script" uid="uid://b6hr46gwht4x7" path="res://Src/mod/global/Ui/MenuWin.cs" id="1_menu"]
+[ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
 [node name="MenuDlg" type="Control" unique_id=1218940125 node_paths=PackedStringArray("StartBtn", "LoadBtn", "SettingsBtn", "CodexBtn", "QuitBtn")]
 layout_mode = 3
@@ -26,43 +24,68 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -150.0
-offset_top = -200.0
-offset_right = 150.0
-offset_bottom = 200.0
+offset_left = -190.0
+offset_top = -250.0
+offset_right = 190.0
+offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_menu")
 
 [node name="VBox" type="VBoxContainer" parent="Panel" unique_id=779539337]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 28.0
+offset_top = 28.0
+offset_right = -28.0
+offset_bottom = -28.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="Panel/VBox" unique_id=293406181]
 layout_mode = 2
+theme_override_font_sizes/font_size = 34
 text = "UI_MENU_TITLE"
 horizontal_alignment = 1
 
-[node name="StartBtn" type="Button" parent="Panel/VBox" unique_id=866888484]
+[node name="TitleSpacer" type="Control" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
+
+[node name="StartBtn" type="Button" parent="Panel/VBox" unique_id=866888484]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 19
 text = "UI_MENU_NEW_GAME"
+script = ExtResource("2_kbtn")
+Primary = true
 
 [node name="LoadBtn" type="Button" parent="Panel/VBox" unique_id=1535473950]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 19
 text = "UI_MENU_CONTINUE"
+script = ExtResource("2_kbtn")
 
 [node name="SettingsBtn" type="Button" parent="Panel/VBox" unique_id=1101588564]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 19
 text = "UI_MENU_SETTINGS"
+script = ExtResource("2_kbtn")
 
 [node name="CodexBtn" type="Button" parent="Panel/VBox" unique_id=1128775345]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 19
 text = "UI_CODEX_TITLE"
+script = ExtResource("2_kbtn")
 
 [node name="QuitBtn" type="Button" parent="Panel/VBox" unique_id=522458133]
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
+theme_override_font_sizes/font_size = 19
 text = "UI_MENU_QUIT"
+script = ExtResource("2_kbtn")

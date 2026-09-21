@@ -10,10 +10,6 @@ public static class ColorDefinitions
     public static readonly Color BlueElement = new("#3099f2");
     public static readonly Color GreenElement = new("#28ff00");
     public static readonly Color YellowElement = new("#ffc800");
-    /// <summary>阴</summary>
-    public static readonly Color YinElement = new("#000000");
-    /// <summary>阳</summary>
-    public static readonly Color YangElement = new("#ffffff");
 }
 
 public static class CardUiDefinitions
@@ -46,8 +42,6 @@ public static class CardUiDefinitions
         EElement.Blue,
         EElement.Green,
         EElement.Yellow,
-        EElement.Yin,
-        EElement.Yang,
     ];
 
     public static bool TryGetCardTypeLocaleKey(ECardType type, out string key) =>
@@ -71,12 +65,6 @@ public static class CardUiDefinitions
                 return true;
             case EElement.Yellow:
                 color = ColorDefinitions.YellowElement;
-                return true;
-            case EElement.Yin:
-                color = ColorDefinitions.YinElement;
-                return true;
-            case EElement.Yang:
-                color = ColorDefinitions.YangElement;
                 return true;
             default:
                 color = default;

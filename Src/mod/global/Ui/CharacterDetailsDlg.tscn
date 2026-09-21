@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_dlg"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.tscn" id="3_presenter"]
 
-[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_rtCharDesc", "_lblAnim", "_optAnim")]
+[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_rtCharDesc", "_rtPassives", "_lblAnim", "_optAnim")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,6 +16,7 @@ _presenter = NodePath("BaseDlgComp/CharacterPresenter")
 _txtTitle = NodePath("BaseDlgComp/TxtTitle")
 _txtCharName = NodePath("BaseDlgComp/TxtCharName")
 _rtCharDesc = NodePath("BaseDlgComp/RTCharDesc")
+_rtPassives = NodePath("BaseDlgComp/RTPassives")
 _lblAnim = NodePath("BaseDlgComp/LblAnim")
 _optAnim = NodePath("BaseDlgComp/OptAnim")
 
@@ -80,8 +81,21 @@ anchors_preset = -1
 anchor_left = 0.4
 anchor_top = 0.38
 anchor_right = 0.92
+anchor_bottom = 0.6
+theme_override_font_sizes/normal_font_size = 24
+bbcode_enabled = true
+text = ""
+fit_content = false
+scroll_active = true
+
+[node name="RTPassives" type="RichTextLabel" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.4
+anchor_top = 0.62
+anchor_right = 0.92
 anchor_bottom = 0.88
-theme_override_font_sizes/normal_font_size = 28
+theme_override_font_sizes/normal_font_size = 18
 bbcode_enabled = true
 text = ""
 fit_content = false

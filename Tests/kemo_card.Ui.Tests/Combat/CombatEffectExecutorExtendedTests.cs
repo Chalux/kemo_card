@@ -38,7 +38,7 @@ public sealed class CombatEffectExecutorExtendedTests
             new EnemyTeamState([enemy]),
             new CombatRuleEngine([]),
             registry);
-        var executor = new CombatEffectExecutor(registry, sim.Rules);
+        var executor = new CombatEffectExecutor(registry);
         var source = new CombatTargetRef(ECombatSide.Player, 0);
 
         executor.ExecuteEffectRef(new EffectRefDto { EffectId = "draw2" }, sim, source, [source]);
@@ -75,7 +75,7 @@ public sealed class CombatEffectExecutorExtendedTests
             new EnemyTeamState([enemy]),
             new CombatRuleEngine([]),
             registry);
-        var executor = new CombatEffectExecutor(registry, sim.Rules);
+        var executor = new CombatEffectExecutor(registry);
         var source = new CombatTargetRef(ECombatSide.Player, 0);
 
         executor.ExecuteEffectRef(new EffectRefDto { EffectId = "gain_energy" }, sim, source, [source]);

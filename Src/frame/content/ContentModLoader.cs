@@ -36,7 +36,8 @@ public sealed class ContentModLoader
                 LoadDefinitions<GameplayEffectDefDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.GameplayEffect)),
                 LoadDefinitions<GameplayTagDefDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.GameplayTag)),
                 LoadDefinitions<SkillActionDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.SkillAction)),
-                LoadDefinitions<StoryDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Story)));
+                LoadDefinitions<StoryDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.Story)),
+                LoadDefinitions<OrbTypeDto>(contentRoot, ContentCategoryPaths.Folder(EContentCategory.OrbType)));
 
             return new ModContentBundle(manifest.ModId, definitions);
         }

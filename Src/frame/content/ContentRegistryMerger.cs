@@ -42,6 +42,7 @@ public sealed class ContentRegistryMerger
         TryAddAll(bundle.ModId, EContentCategory.GameplayTag, definitions.GameplayTags, store.GameplayTagsMutable, ownerById, conflicts);
         TryAddAll(bundle.ModId, EContentCategory.SkillAction, definitions.SkillActions, store.SkillActionsMutable, ownerById, conflicts);
         TryAddAll(bundle.ModId, EContentCategory.Story, definitions.Stories, store.StoriesMutable, ownerById, conflicts);
+        TryAddAll(bundle.ModId, EContentCategory.OrbType, definitions.OrbTypes, store.OrbTypesMutable, ownerById, conflicts);
     }
 
     private static void TryAddAll<T>(

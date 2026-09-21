@@ -15,33 +15,7 @@ namespace KemoCard.Ui.Tests.Combat;
 [TestFixture]
 public sealed class BaseGameActiveSkillChainContentTests
 {
-    private static ModDefinitionsBundle LoadBaseGame()
-    {
-        var modFolder = LocateBaseGameFolder();
-        var manifestPath = Path.Combine(modFolder, "mod.json");
-        Assert.That(File.Exists(manifestPath), Is.True, $"找不到 base-game 清单:{manifestPath}");
-
-        var manifest = System.Text.Json.JsonSerializer.Deserialize<ContentModManifestDto>(
-            File.ReadAllText(manifestPath),
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-        Assert.That(manifest, Is.Not.Null);
-
-        return ContentModLoader.Load(new DiscoveredModEntry(modFolder, manifest!)).Definitions;
-    }
-
-    private static string LocateBaseGameFolder()
-    {
-        var dir = new DirectoryInfo(AppContext.BaseDirectory);
-        while (dir is not null)
-        {
-            var candidate = Path.Combine(dir.FullName, "Config", "mods", "base-game");
-            if (Directory.Exists(candidate))
-                return candidate;
-            dir = dir.Parent;
-        }
-
-        throw new DirectoryNotFoundException("从测试输出目录向上找不到 Config/mods/base-game。");
-    }
+    private static ModDefinitionsBundle LoadBaseGame() => BaseGameContent.Load();
 
     [Test]
     public void Every_shipped_character_has_a_valid_active_skill_chain()
@@ -161,11 +135,5 @@ public sealed class BaseGameActiveSkillChainContentTests
     /// 复刻 <c>ModFactory.Bootstrap</c> 的注册顺序：条件域必须在内容 Rebuild 之前填好，
     /// 否则 <c>Story.unlock</c> 的 CondType 校验会因注册表为空而误报未知名。
     /// </summary>
-    private static void RegisterBuiltinConditions()
-    {
-        ConditionDomains.Persistent.Clear();
-        ConditionDomains.Combat.Clear();
-        BuiltinPersistentConditions.RegisterAll(ConditionDomains.Persistent);
-        BuiltinCombatConditions.RegisterAll(ConditionDomains.Combat);
-    }
+    private static void RegisterBuiltinConditions() => BaseGameContent.RegisterBuiltinConditions();
 }

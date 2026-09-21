@@ -1,0 +1,8 @@
+{
+  "displayNameId": "orb.magic.name",
+  "dealsDamage": true,
+  "damageKind": "Magical",
+  "perOrbAmount": 6,
+  "attackBonusScale": 1,
+  "attackSource": "Magic"
+}

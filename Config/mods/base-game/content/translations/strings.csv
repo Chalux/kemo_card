@@ -15,3 +15,89 @@ story.kemo_second.name,科莫的试炼,Kemo's Trial
 story.kemo_second.desc,通关「科莫的初见」后解锁的进阶故事。,An advanced story unlocked after clearing "Kemo's First Contact".
 story.base_rogue.name,肉鸽模式,Rogue Mode
 story.base_rogue.desc,标准的肉鸽循环：穿越环层，遭遇战斗与事件，不断收集卡牌强化构筑，直到通关或倒下。,Standard rogue-lite loop: traverse the rings, face battles and events, grow your deck, until victory or defeat.
+char.chalux.name,克鲁克斯,Chalux
+char.chalux.desc,蓝属性的犬族战士。潜能解放后，寒气将追随他的每一次挥击。,A blue-element canine warrior. As his potential awakens, the cold follows every strike.
+buff.chalux_p1.desc,自身打出卡牌时不受[url=kw:hand_slot_damage]手牌槽伤害[/url]效果影响。,Immune to [url=kw:hand_slot_damage]hand slot damage[/url] effects when playing cards.
+card.chalux_orca.name,逆戟冰冲,Orca Ice Rush
+card.chalux_path.name,璨华长路,Resplendent Path
+card.chalux_sword.name,才煌的绝剑,Brilliant Absolute Sword
+card.chalux_resolve.name,绝念,Absolute Resolve
+skill.chalux_orca.name,逆戟冰冲,Orca Ice Rush
+skill.chalux_orca.desc,对单个敌人造成 12 点物理伤害。,Deal 12 physical damage to a single enemy.
+skill.chalux_path.name,璨华长路,Resplendent Path
+skill.chalux_path.desc,对敌方全体造成 12 点物理伤害；赋予自身【2 回合 / 物理攻击 +6】。,Deal 12 physical damage to all enemies; grant self +6 P.Atk for 2 turns.
+skill.chalux_sword.name,才煌的绝剑,Brilliant Absolute Sword
+skill.chalux_sword.desc,赋予自身【2 回合 / 物理攻击 +9】；获得 2 个蓝属性球。,Grant self +9 P.Atk for 2 turns; gain 2 Blue Orbs.
+skill.chalux_resolve.name,绝念,Absolute Resolve
+skill.chalux_resolve.desc,赋予 2 号手牌槽【5 回合 / 充能II】；充能触发时赋予自身【3 回合 / 物理攻击 +6】。,Grant hand slot 2 Charge II for 5 turns; when it triggers grant self +6 P.Atk for 3 turns.
+buff.chalux_path_frost.name,长路余韵,Roads Echo
+buff.chalux_path_frost.desc,物理攻击 +6，持续 2 回合。,Physical Attack +6 for 2 turns.
+buff.chalux_sword_frost.name,绝剑锋锐,Blade Edge
+buff.chalux_sword_frost.desc,物理攻击 +9，持续 2 回合。,Physical Attack +9 for 2 turns.
+buff.chalux_charge_void.name,充能·绝念,Charge: Resolve
+buff.chalux_charge_void.desc,该槽位每打出 2 张牌，赋予自身【3 回合 / 物理攻击 +6】，持续 5 回合。,Every 2 cards played from this slot grants self +6 P.Atk for 3 turns. Lasts 5 turns.
+ge.blue_damage.name,蓝属性伤害,Blue Damage
+orb.red.name,红属性球,Red Orb
+orb.blue.name,蓝属性球,Blue Orb
+orb.green.name,绿属性球,Green Orb
+orb.yellow.name,黄属性球,Yellow Orb
+orb.physical.name,物理球,Physical Orb
+orb.magic.name,魔法球,Magic Orb
+buff.chalux_p2.desc,自身打出的蓝属性卡牌同时计入红属性[url=kw:chain]连携[/url]统计（多属性卡各属性均计入）。,Blue cards he plays also count toward the Red [url=kw:chain]chain[/url] (multi-element cards count for each element).
+buff.chalux_p3.desc,每个阶层开始时与阶层内每 8 回合开始时：自身技能进度 +4，蓝属性角色 +2，犬族角色 +2（可叠加）。,At each wave start and every 8th turn within a wave: his skill progress +4, Blue characters +2, Canine characters +2 (stacks additively).
+buff.chalux_p4.desc,蓝属性或犬族的队友（含自身）物理攻击、魔法攻击、治疗量 +6。,Allies with Blue element or Canine race gain +6 Physical/Magic Attack and Heal Power.
+buff.chalux_p5.desc,蓝属性或犬族的队友（含自身）全伤害增加 25%。,Allies with Blue element or Canine race deal +25% all damage.
+buff.chalux_p6.desc,自身释放主动技时：敌方全体物理防御与魔法防御变为 0（1 回合），自身立即获得 3 点可用能量。,When he casts his active skill: all enemies' defenses become 0 for 1 turn, and he immediately gains 3 available energy.
+buff.chalux_frost.name,超限增幅,Overlimit Amp
+buff.chalux_frost.desc,物理攻击 +6，持续 3 回合。,Physical Attack +6 for 3 turns.
+buff.chalux_charge.name,充能·极寒,Charge: Glacial
+buff.chalux_charge.desc,该槽位每打出一张牌，对随机 1 名敌人造成 12+100% 物理攻击的蓝属性伤害，持续 3 回合。,Each card played from this slot deals 12 + 100% P.Atk blue damage to a random enemy. Lasts 3 turns.
+buff.chalux_def_break.name,零度侵蚀,Zero Erosion
+buff.chalux_def_break.desc,物理防御与魔法防御变为 0，持续 1 回合。,Physical and Magic Defense become 0 for 1 turn.
+skill.chalux_glacial.name,超限极寒,Overlimit Glacial
+skill.chalux_glacial.desc,自身 3 回合物理攻击 +6；自身 3 号位手牌槽 3 回合附加[url=kw:charge]充能I[/url]。,P.Atk +6 for 3 turns; attach [url=kw:charge]Charge I[/url] to hand slot 3 for 3 turns.
+ge.chalux_charge_damage.name,极寒充能伤害,Glacial Charge Damage
+enemy.training_dummy.name,木桩,Training Dummy
+enemy.training_dummy.desc,不会行动的训练木桩，用来观察输出与机制。,A motionless dummy for damage testing.
+buff.training_dummy_regen.name,木桩再生,Dummy Regeneration
+buff.training_dummy_regen.desc,每回合开始时恢复 10000 点生命。,Restore 10000 health at the start of each turn.
+battle.training_dummy.name,木桩练习,Dummy Practice
+battle.training_dummy.desc,单波两个木桩：血厚且每回合回血，用来观察伤害与机制。,One wave of two dummies that heal each turn.
+char.kemo.name,科莫,Kemo
+char.kemo.desc,红属性的人类与犬族战士，擅长冲刺连击。,A red-element warrior of human and canine blood who excels at dashing strikes.
+buff.kemo_talent.name,天赋,Talent
+buff.kemo_talent.desc,科莫的天赋（永久）。,Kemo's talent (permanent).
+enemy.slime.name,史莱姆,Slime
+enemy.slime.desc,森林里最常见的软体魔物。,The most common soft monster in the forest.
+enemy.slime_elite.name,精英史莱姆,Elite Slime
+enemy.slime_elite.desc,体型更大也更耐打的史莱姆头目。,A bigger and tougher slime leader.
+skill.slime_tackle.name,撞击,Tackle
+skill.slime_tackle.desc,对目标造成 5 点伤害。,Deal 5 damage to the target.
+skill.potion_use.name,使用治疗药水,Use Health Potion
+skill.potion_use.desc,恢复 20 点队伍共享生命。,Restore 20 shared team health.
+battle.forest_ambush.name,森林伏击,Forest Ambush
+battle.forest_ambush.desc,两波史莱姆伏击：先是一群小史莱姆，随后精英登场。,A two-wave slime ambush: a swarm first and then the elite.
+event.shrine.name,古老神龛,Ancient Shrine
+event.shrine.desc,你在林间发现一座古老的神龛。,You find an ancient shrine in the woods.
+event.shrine.page1,神龛静静矗立，似乎在等待什么。,The shrine stands silent as if waiting for something.
+event.shrine.option.gold,取走金币,Take the Gold
+event.shrine.option.gold.desc,拿走供品中的金币。,Take the coins from the offerings.
+ge.potion_heal.name,治疗药水生效,Potion Heal
+ge.slime_damage.name,史莱姆撞击伤害,Slime Tackle Damage
+ge.strike_damage.name,打击伤害,Strike Damage
+ge.weak.name,虚弱,Weak
+item.health_potion.name,治疗药水,Health Potion
+item.health_potion.desc,恢复队伍共享生命，使用次数可叠加。,Restores shared team health and stacks in uses.
+attr.health.name,生命,Health
+attr.max_health.name,生命上限,Max Health
+attr.physical_attack.name,物理攻击,Physical Attack
+attr.magic_attack.name,魔法攻击,Magic Attack
+attr.physical_defense.name,物理防御,Physical Defense
+attr.magic_defense.name,魔法防御,Magic Defense
+attr.heal_power.name,治疗强度,Heal Power
+attr.healing.name,治疗量,Healing
+attr.damage.name,伤害,Damage
+attr.damage_dealt_scale.name,全伤害增加,Damage Dealt Scale
+attr.damage_taken_scale.name,受伤倍率,Damage Taken Scale
+attr.max_energy.name,能量上限,Max Energy
+attr.initial_energy.name,初始能量,Initial Energy

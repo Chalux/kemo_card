@@ -44,7 +44,56 @@ public sealed class ContentDefinitionValidator
         ValidateGameplayTags(store, errors);
         ValidateGameplayEffects(store, errors);
         ValidateStories(store, errors);
+        ValidateOrbTypes(store, errors);
         return errors;
+    }
+
+    /// <summary>
+    /// 充能球类型：悬空效果引用会静默失效（触发时无收益），伤害与元素声明必须自洽
+    /// （元素球必须有元素、纯效果球必须有触发效果），因此与其它引用类定义同标准校验。
+    /// </summary>
+    private static void ValidateOrbTypes(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+    {
+        foreach (var orb in store.OrbTypes.Values)
+        {
+            ValidateEffectRefs(EContentCategory.OrbType, orb.Id, orb.TriggerEffects, store, errors);
+
+            if (orb.PerOrbAmount < 0f)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.OrbType,
+                    orb.Id,
+                    "perOrbAmount must not be negative."));
+            }
+
+            if (orb.AttackBonusScale < 0f)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.OrbType,
+                    orb.Id,
+                    "attackBonusScale must not be negative."));
+            }
+
+            // 纯效果球（dealsDamage: false）只跑 triggerEffects：两者皆空等于"空球"，必然是配置失误；
+            // 元素球必须声明元素，否则伤害无可归属的属性（物理/魔法球不需要元素）。
+            if (!orb.DealsDamage && orb.TriggerEffects.Count == 0)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.OrbType,
+                    orb.Id,
+                    "Orb type must deal damage or declare at least one triggerEffect."));
+            }
+
+            if (orb.DealsDamage &&
+                orb.DamageKind == EDamageKind.Elemental &&
+                orb.Element == EElement.None)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.OrbType,
+                    orb.Id,
+                    "Elemental orb kind requires a non-empty element."));
+            }
+        }
     }
 
     private static void ValidateStories(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
@@ -103,6 +152,7 @@ public sealed class ContentDefinitionValidator
         {
             ValidateSkillRefs(EContentCategory.Character, character.Id, character.SkillRefs, store, errors);
             ValidateBuffRefs(EContentCategory.Character, character.Id, character.BuffRefs, store, errors);
+            ValidatePassives(character, store, errors);
             foreach (var cardId in character.Cards)
             {
                 if (!store.TryGetCard(cardId, out _))
@@ -112,6 +162,31 @@ public sealed class ContentDefinitionValidator
                         character.Id,
                         $"Unknown cardId '{cardId}'."));
                 }
+            }
+        }
+    }
+
+    private static void ValidatePassives(
+        CharacterDto character,
+        GameDefinitionStore store,
+        List<ContentDefinitionValidationError> errors)
+    {
+        foreach (var passive in character.Passives)
+        {
+            if (!store.TryGetBuff(passive.BuffId, out _))
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.Character,
+                    character.Id,
+                    $"Unknown passive buffId '{passive.BuffId}'."));
+            }
+
+            if (passive.RequiredPotential < 0)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.Character,
+                    character.Id,
+                    $"Passive '{passive.BuffId}' requires non-negative requiredPotential."));
             }
         }
     }
@@ -374,6 +449,11 @@ public sealed class ContentDefinitionValidator
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnTurnEnd, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnStackChanged, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnRemove, store, errors);
+            // 2026-09-19 buff 运行时新增的三条钩子（chalux 被动全靠它们接线）：
+            // 悬空 effectId 会静默失效，必须与旧钩子同标准校验。
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnWaveStart, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnActiveSkillCast, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnSlotCardPlayed, store, errors);
         }
     }
 
@@ -397,6 +477,16 @@ public sealed class ContentDefinitionValidator
             if (effect.Kind == EEffectKind.ApplyBuff)
             {
                 ValidateBuffIdInParams(effect, store, errors);
+            }
+
+            if (effect.Kind == EEffectKind.RemoveBuff)
+            {
+                ValidateBuffRemovalParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
+            }
+
+            if (effect.Kind == EEffectKind.GainOrb)
+            {
+                ValidateOrbTypeIdInParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
             }
         }
     }
@@ -429,6 +519,105 @@ public sealed class ContentDefinitionValidator
                         $"{action.Kind} requires params.gameplayEffectId."));
                 }
             }
+
+            // buff 类技能动作（2026-09-19 buff 运行时启用）：buffId 悬空 / 槽位索引非法
+            // 在运行期都是静默失败，必须在内容准入阶段拒绝。
+            if (action.Kind is ESkillActionKind.ApplyBuff or ESkillActionKind.AttachSlotBuff)
+            {
+                var buffId = GetStringParam(action.Params, "buffId");
+                if (string.IsNullOrWhiteSpace(buffId))
+                {
+                    errors.Add(new ContentDefinitionValidationError(
+                        EContentCategory.SkillAction,
+                        action.Id,
+                        $"{action.Kind} requires params.buffId."));
+                }
+                else if (!store.TryGetBuff(buffId, out _))
+                {
+                    errors.Add(new ContentDefinitionValidationError(
+                        EContentCategory.SkillAction,
+                        action.Id,
+                        $"Unknown buffId '{buffId}'."));
+                }
+            }
+
+            if (action.Kind == ESkillActionKind.RemoveBuff)
+            {
+                ValidateBuffRemovalParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
+            }
+
+            if (action.Kind == ESkillActionKind.AttachSlotBuff)
+            {
+                var slotIndex = GetIntParam(action.Params, "slotIndex");
+                if (slotIndex is null || slotIndex < 0)
+                {
+                    errors.Add(new ContentDefinitionValidationError(
+                        EContentCategory.SkillAction,
+                        action.Id,
+                        "AttachSlotBuff requires a non-negative params.slotIndex."));
+                }
+            }
+
+            if (action.Kind == ESkillActionKind.GainOrb)
+            {
+                ValidateOrbTypeIdInParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
+            }
+        }
+    }
+
+    /// <summary>充能球授予（效果 / 技能动作）：<c>orbTypeId</c> 必填且必须存在，否则静默不发球。</summary>
+    private static void ValidateOrbTypeIdInParams(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object>? parameters,
+        GameDefinitionStore store,
+        List<ContentDefinitionValidationError> errors)
+    {
+        var orbTypeId = GetStringParam(parameters, "orbTypeId");
+        if (string.IsNullOrWhiteSpace(orbTypeId))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "GainOrb requires params.orbTypeId."));
+            return;
+        }
+
+        if (!store.TryGetOrbType(orbTypeId, out _))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                $"Unknown orbTypeId '{orbTypeId}'."));
+        }
+    }
+
+    /// <summary>驱散类参数校验：<c>buffId</c> 或非空 <c>withTags</c> 至少其一，且 buffId 必须存在。</summary>
+    private static void ValidateBuffRemovalParams(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object>? parameters,
+        GameDefinitionStore store,
+        List<ContentDefinitionValidationError> errors)
+    {
+        var buffId = GetStringParam(parameters, "buffId");
+        var hasTags = GetStringListParam(parameters, "withTags") is { Count: > 0 };
+
+        if (string.IsNullOrWhiteSpace(buffId) && !hasTags)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "RemoveBuff requires params.buffId or a non-empty params.withTags."));
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(buffId) && !store.TryGetBuff(buffId, out _))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                $"Unknown buffId '{buffId}'."));
         }
     }
 
@@ -790,6 +979,23 @@ public sealed class ContentDefinitionValidator
         return value.ToString();
     }
 
+    private static int? GetIntParam(Dictionary<string, object>? parameters, string key)
+    {
+        if (parameters is null || !parameters.TryGetValue(key, out var value))
+        {
+            return null;
+        }
+
+        return value switch
+        {
+            int i => i,
+            long l => l is >= int.MinValue and <= int.MaxValue ? (int)l : null,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Number } element
+                when element.TryGetInt32(out var parsed) => parsed,
+            _ => int.TryParse(value.ToString(), out var parsed) ? parsed : null,
+        };
+    }
+
     private static IReadOnlyList<string>? GetStringListParam(Dictionary<string, object>? parameters, string key)
     {
         if (parameters is null || !parameters.TryGetValue(key, out var value))
@@ -813,6 +1019,16 @@ public sealed class ContentDefinitionValidator
             }
 
             return result;
+        }
+
+        // 程序化构造的 store（测试 / 工具）传内存列表，与 JSON 反序列化路径同语义。
+        if (value is IEnumerable<object> list)
+        {
+            var result = list
+                .Select(item => item.ToString() ?? string.Empty)
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .ToList();
+            return result.Count > 0 ? result : null;
         }
 
         return null;

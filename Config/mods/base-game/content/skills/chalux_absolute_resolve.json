@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.chalux_resolve.name",
+  "descId": "skill.chalux_resolve.desc",
+  "actionRefs": [
+    { "actionId": "chalux_attach_charge_void" }
+  ],
+  "tags": ["charge"]
+}

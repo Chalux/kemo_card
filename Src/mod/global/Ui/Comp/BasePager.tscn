@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://c6tqm743fyjtl"]
 
-[ext_resource type="Script" uid="uid://dppxblowa7203" path="res://Src/mod/global/Ui/Comp/BasePager.cs" id="1_ehxjf"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BasePager.cs" id="1_ehxjf"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
 [node name="BasePager" type="Control" unique_id=525618807 node_paths=PackedStringArray("_btnFirst", "_btnPrevious", "_txtCurrent", "_btnNext", "_btnFinal", "_iptPage", "_btnGoto")]
 layout_mode = 3
@@ -29,10 +30,12 @@ grow_vertical = 2
 [node name="BtnFirst" type="Button" parent="HBoxContainer" unique_id=909475644]
 layout_mode = 2
 text = "<<"
+script = ExtResource("2_kbtn")
 
 [node name="BtnPrevious" type="Button" parent="HBoxContainer" unique_id=607789457]
 layout_mode = 2
 text = "<"
+script = ExtResource("2_kbtn")
 
 [node name="TxtCurrent" type="Label" parent="HBoxContainer" unique_id=1102103656]
 layout_mode = 2
@@ -41,10 +44,12 @@ text = "99/99"
 [node name="BtnNext" type="Button" parent="HBoxContainer" unique_id=1945438959]
 layout_mode = 2
 text = ">"
+script = ExtResource("2_kbtn")
 
 [node name="BtnFinal" type="Button" parent="HBoxContainer" unique_id=1407433099]
 layout_mode = 2
 text = ">>"
+script = ExtResource("2_kbtn")
 
 [node name="IptPage" type="LineEdit" parent="HBoxContainer" unique_id=1567504866]
 custom_minimum_size = Vector2(80, 0)
@@ -55,3 +60,4 @@ placeholder_text = "UI_PAGER_INPUT_PAGE"
 [node name="BtnGoto" type="Button" parent="HBoxContainer" unique_id=613965600]
 layout_mode = 2
 text = "UI_PAGER_GOTO"
+script = ExtResource("2_kbtn")

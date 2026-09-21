@@ -118,7 +118,7 @@ Wait → Load → PreLoad → Create → Open → Close → CloseDone → Cache 
               └──────────────── Cache（命中缓存直接跳入 Open）─────┘
 ```
 
-- **Load**：异步加载场景资源（`ResourceLoader.LoadThreadedRequest`）+ 遮罩资源。
+- **Load**：加载场景资源 + 遮罩资源。**必须在主线程同步加载**（`ResourceLoader.Load<PackedScene>`，见下）。
 - **PreLoad**：调用 `OnPreLoad(done, fail)`，业务可在此进行数据准备。
 - **Create**：首次打开，初始化界面和遮罩，挂入场景。
 - **Open**：播放打开动画，派发 `UIEvent.Open` 事件。
@@ -128,6 +128,19 @@ Wait → Load → PreLoad → Create → Open → Close → CloseDone → Cache 
 - **Destroy**：清理资源、`QueueFree`、从 `UIVoRegistry` 移除。
 
 每个 `UIVo` 持有一个 `StateMachine<EUIState, IUIStateContext>`，通过注入的 `IStateHandler` 列表驱动流转。
+
+> **界面加载必须主线程同步（2026-09-19 修复）**：此前 `UIResourceLoader` 用
+> `ResourceLoader.LoadThreadedRequest` + 轮询 + `await Task.Delay` 异步加载，而**后台线程无法创建 C# 脚本**，
+> 含 `script = ExtResource(...)` 的场景会在脚本赋值那一行报 `Parse Error: Failed.`——
+> 所有经管理器打开的界面（主菜单 / 设置 / 图鉴 / 卡牌详情 / Run 系列）都加载失败。
+> 现在 `UIResourceLoader.LoadSceneAsync` 在主线程同步 `ResourceLoader.Load<PackedScene>`，
+> 保留 `Task` 签名与取消令牌，状态机与调用方无需改动。若要恢复真正的异步加载，
+> 必须先解决"场景内的 C# 脚本无法在线程中实例化"这一前提。
+>
+> 同一批修复的约定：**场景的脚本 `ext_resource` 只写 `path`、不写 `uid`**——
+> `.cs.uid` 是 Godot 机器生成且不进版本库（`.gitignore`），把 UID 写死进提交的场景会在别的机器上
+> 变成失效引用（"invalid UID, using text path instead" 警告）。编辑器下次保存会自动补回 UID，
+> 届时按本约定手工去掉即可。
 
 ### 5.3 载荷（强类型）
 
@@ -333,7 +346,7 @@ Src/frame/ui/
 
 | 处理器 | 状态 | 核心职责 |
 |---|---|---|
-| `UILoadStateHandler` | `Load` | 异步加载场景 + 遮罩资源，命中缓存直接跳到 PreLoad |
+| `UILoadStateHandler` | `Load` | 主线程同步加载场景 + 遮罩资源（见 §5.2 注），命中缓存直接跳到 PreLoad |
 | `UIPreLoadStateHandler` | `PreLoad` | 调用 `OnPreLoad(done, fail)`，重开时跳过 Create 直接进 Open |
 | `UICreateStateHandler` | `Create` | 首次打开初始化、挂入场景树 |
 | `UIOpenStateHandler` | `Open` | 播放打开动画、InitEvent、派发 `UIEvent.Open` |
@@ -372,3 +385,41 @@ Src/frame/ui/
 
 - **自动化**：`Tests/kemo_card.Ui.Tests/UiFrameworkTests.cs` 覆盖 `UIRuntimeRegistry.TryGet` 等无 Godot 节点实例化的逻辑。
 - **Godot 树与输入**：层级叠放、遮罩点击关闭、动画流程等以编辑器运行 + 手测为主。
+- **场景布局约定**：`Tests/kemo_card.Ui.Tests/UiSceneLayoutTests.cs` 扫描 `Src/**/*.tscn`，强制 §13.1 的折行 Label 约定。
+
+### 13. 场景编写约定（评审中踩过的坑）
+
+#### 13.1 容器内的自动换行 Label 必须给最小宽度
+
+```gdscript
+[node name="LblDesc" type="Label" parent="Panel/VBox"]
+custom_minimum_size = Vector2(400, 0)   # ← 必填：宽度非零
+autowrap_mode = 3
+```
+
+自动换行的 Label 自身最小宽度几乎为 0（"能折行"意味着它可以任意窄），于是：
+
+- 容器的可用宽度被兄弟节点挤压时，Label 会被压成**竖排单字**甚至 0 宽不可见；
+- 容器若是"按内容撑开"的（`PanelContainer` / 提示气泡），整个面板会塌成一条。
+
+显式给出最小宽度（取该列的预期宽度）才能让折行发生在预期列宽上。约定范围是**容器**
+（类型名以 `Container` 结尾）的 Label 子节点；锚定在普通 `Control` 上的 Label 由锚点决定宽度，
+折行本来就正常（例如 `AlertDlg.LblDesc`），不受此约束。
+
+#### 13.2 节点类型的导出属性必须写进 `node_paths`
+
+```gdscript
+[node name="PoolList" type="Control" parent="Panel/VBox/Body/Center" node_paths=PackedStringArray("ScrollArea")]
+script = ExtResource("3_vlist")
+ScrollArea = NodePath("Scroll")     # ← 相对**该节点自身**，不是场景根
+```
+
+`.tscn` 里给节点类型导出赋值时，所属节点必须同时声明 `node_paths=PackedStringArray(...)`，
+且路径相对该节点自身。缺任一项都会被**静默忽略**，运行期读到 null（`VirtualList` 曾因此一个列表项都不建）。
+手写场景后务必用探针核实一遍这些引用是否真的解析成功。
+
+#### 13.3 列表/虚拟列表不得按"格子尺寸"拉伸条目
+
+固定尺寸的立绘/卡面预制体（子节点多为 full-rect 锚点）被按容器宽度 `set_size` 会整体变形。
+`VirtualList` 的契约是：**条目尺寸由 `ItemTemplate` 决定，`ItemSize` 只是滚动方向的步长**；
+只有"整行文本条"才打开 `StretchItemAcrossAxis`。

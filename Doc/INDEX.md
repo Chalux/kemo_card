@@ -2,7 +2,7 @@
 
 > Agent 请先读 [AGENT.md](AGENT.md)。本文列出活规格、归档入口与本轮维护约定。
 
-**最后修订**：2026-09-15
+**最后修订**：2026-09-20
 
 ---
 
@@ -13,7 +13,7 @@
 | [2026-05-11-kemo-card-design.md](superpowers/specs/2026-05-11-kemo-card-design.md) | 权威总规格 |
 | [2026-07-21-combat-system-design.md](superpowers/specs/2026-07-21-combat-system-design.md) | 战斗系统权威 |
 | [2026-06-22-run-mod-design.md](superpowers/specs/2026-06-22-run-mod-design.md) | Run 模块（服从总规格） |
-| [2026-05-17-content-mod-manager-design.md](superpowers/specs/2026-05-17-content-mod-manager-design.md) | 内容 Mod 管道（含 2026-07-30 单轨合并修订 + 2026-07-31 Story 类别） |
+| [2026-05-17-content-mod-manager-design.md](superpowers/specs/2026-05-17-content-mod-manager-design.md) | 内容 Mod 管道（含 2026-07-30 单轨合并修订 + 2026-07-31 Story 类别 + 2026-09-20 随包内容暂存/调试强制刷新） |
 | [2026-06-16-content-definition-dto-design.md](superpowers/specs/2026-06-16-content-definition-dto-design.md) | 卡牌 / 技能 / Buff / 效果 DTO |
 | [2026-06-16-character-battle-event-item-dto-design.md](superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md) | 角色 / 敌人 / 战斗 / 事件 / 道具 DTO |
 | [2026-06-17-jsenv-mod-scripting-design.md](superpowers/specs/2026-06-17-jsenv-mod-scripting-design.md) | Mod 脚本运行时（PuerTS） |
@@ -26,6 +26,11 @@
 | [2026-08-04-toast-component-design.md](superpowers/specs/2026-08-04-toast-component-design.md) | Toast 通用组件（对象池 / 堆叠 / 动画） |
 | [2026-08-04-multiplayer-save-impact.md](superpowers/specs/2026-08-04-multiplayer-save-impact.md) | 联机存档影响评估（开放项，不阻塞单人线） |
 | [2026-09-15-ui-mod-binding-design.md](superpowers/specs/2026-09-15-ui-mod-binding-design.md) | 界面归属功能 Mod + BindingScope 统一订阅生命周期 |
+| [2026-09-19-buff-potential-chain-system-design.md](superpowers/specs/2026-09-19-buff-potential-chain-system-design.md) | Buff 运行时 + 团体潜能（替代总规格 §4.5.2–4.5.3）+ 连携 + 槽位效果（chalux） |
+| [2026-09-19-ui-theme-and-debug-panel.md](superpowers/specs/2026-09-19-ui-theme-and-debug-panel.md) | UI 主题统一（KemoPalette/KemoTheme/BaseKemoButton）+ Run 调试面板 + 本地化守卫 |
+| [2026-09-19-charge-orb-system-design.md](superpowers/specs/2026-09-19-charge-orb-system-design.md) | 充能球（元素球）系统 + chalux 四张专属卡 |
+| [2026-09-20-normal-attack-design.md](superpowers/specs/2026-09-20-normal-attack-design.md) | 普通攻击（每回合槽位轮转、敌方全体、物/魔取较高者减对应防御） |
+| [2026-09-21-run-team-editor-design.md](superpowers/specs/2026-09-21-run-team-editor-design.md) | Run 队伍编辑界面（4 槽位选项卡 + 角色池 + 详情预览 + 卡组二级界面） |
 
 ## 进行中计划（`Doc/superpowers/plans/`）
 

@@ -1,8 +1,9 @@
 [gd_scene format=3 uid="uid://r7p4ubexmiw1"]
 
-[ext_resource type="Script" uid="uid://ca4xqyua7ykia" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
+[ext_resource type="Script" uid="uid://crv6nx7yteksb" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
+[ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunMainWin" type="Control" unique_id=1633681856 node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon")]
+[node name="RunMainWin" type="Control" unique_id=1633681856 node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam", "_orbPanel", "_lblOrbs", "_lblOrbHint", "_btnTriggerOrbs")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,6 +20,12 @@ _btnSave = NodePath("Panel/VBoxContainer/BtnSave")
 _btnSaveExit = NodePath("Panel/VBoxContainer/BtnSaveExit")
 _btnQuickLoad = NodePath("Panel/VBoxContainer/BtnQuickLoad")
 _btnAbandon = NodePath("Panel/VBoxContainer/BtnAbandon")
+_btnDebug = NodePath("Panel/VBoxContainer/BtnDebug")
+_btnTeam = NodePath("Panel/VBoxContainer/BtnTeam")
+_orbPanel = NodePath("Panel/OrbPanel")
+_lblOrbs = NodePath("Panel/OrbPanel/OrbVBox/OrbList")
+_lblOrbHint = NodePath("Panel/OrbPanel/OrbVBox/OrbHint")
+_btnTriggerOrbs = NodePath("Panel/OrbPanel/OrbVBox/BtnTriggerOrbs")
 
 [node name="Panel" type="Panel" parent="." unique_id=82280747]
 layout_mode = 1
@@ -32,7 +39,7 @@ grow_vertical = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 86.0
+offset_bottom = 120.0
 grow_horizontal = 2
 theme_override_constants/separation = 16
 
@@ -79,31 +86,89 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -180.0
-offset_top = -48.0
+offset_left = -204.0
+offset_top = -280.0
 grow_horizontal = 0
 grow_vertical = 0
+theme_override_constants/separation = 4
 
 [node name="BtnSave" type="Button" parent="Panel/VBoxContainer" unique_id=191993574]
 custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "UI_RUN_SAVE"
+script = ExtResource("2_kbtn")
+Primary = true
 
 [node name="BtnSaveExit" type="Button" parent="Panel/VBoxContainer" unique_id=191993575]
 custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "UI_RUN_SAVE_AND_EXIT"
+script = ExtResource("2_kbtn")
 
 [node name="BtnQuickLoad" type="Button" parent="Panel/VBoxContainer" unique_id=191993576]
 custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "UI_RUN_QUICK_LOAD"
+script = ExtResource("2_kbtn")
 
 [node name="BtnAbandon" type="Button" parent="Panel/VBoxContainer" unique_id=191993573]
 custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "UI_RUN_ABANDON"
+script = ExtResource("2_kbtn")
+
+[node name="BtnDebug" type="Button" parent="Panel/VBoxContainer" unique_id=191993577]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_DEBUG_OPEN"
+script = ExtResource("2_kbtn")
+
+[node name="BtnTeam" type="Button" parent="Panel/VBoxContainer" unique_id=191993584]
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_RUN_TEAM_EDIT"
+script = ExtResource("2_kbtn")
+
+[node name="OrbPanel" type="PanelContainer" parent="Panel" unique_id=191993578]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -268.0
+offset_top = 16.0
+offset_right = -16.0
+grow_horizontal = 0
+
+[node name="OrbVBox" type="VBoxContainer" parent="Panel/OrbPanel" unique_id=191993579]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="OrbTitle" type="Label" parent="Panel/OrbPanel/OrbVBox" unique_id=191993580]
+layout_mode = 2
+text = "UI_ORB_PANEL_TITLE"
+horizontal_alignment = 1
+
+[node name="OrbList" type="Label" parent="Panel/OrbPanel/OrbVBox" unique_id=191993581]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="OrbHint" type="Label" parent="Panel/OrbPanel/OrbVBox" unique_id=191993582]
+custom_minimum_size = Vector2(220, 23)
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="BtnTriggerOrbs" type="Button" parent="Panel/OrbPanel/OrbVBox" unique_id=191993583]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "UI_ORB_TRIGGER"
+script = ExtResource("2_kbtn")
+Primary = true

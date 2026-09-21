@@ -1,0 +1,8 @@
+{
+  "displayNameId": "orb.physical.name",
+  "dealsDamage": true,
+  "damageKind": "Physical",
+  "perOrbAmount": 6,
+  "attackBonusScale": 1,
+  "attackSource": "Physical"
+}

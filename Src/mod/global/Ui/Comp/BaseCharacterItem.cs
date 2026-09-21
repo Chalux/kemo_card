@@ -24,6 +24,19 @@ public partial class BaseCharacterItem : Control
     private CharacterDto? _character;
     private Tween? _tipDelayTween;
     private bool _hoverTipActive;
+    private string? _badge;
+
+    /// <summary>
+    /// 悬停进入/离开回调（宿主界面用来刷新自己的详情预览区；<c>null</c> 时无行为）。
+    /// 与 <see cref="EnableHoverTip"/> 的浮动摘要互不影响。
+    /// </summary>
+    public Action<BaseCharacterItem, CharacterDto?>? Hovered { get; set; }
+
+    /// <summary>
+    /// 单击回调：仅在 <see cref="ClickAction"/> 为 <see cref="ECharacterClickAction.Emit"/> 时触发
+    /// （默认的 OpenDetails 行为保持不变）。
+    /// </summary>
+    public Action<BaseCharacterItem, CharacterDto>? Clicked { get; set; }
 
     /// <summary>订阅登记簿：任何订阅都必须经此登记，离场统一解绑（见 ui-mod-binding 规格 §4.3）。</summary>
     private readonly BindingScope _binder = new();
@@ -78,7 +91,7 @@ public partial class BaseCharacterItem : Control
 
     public override void _GuiInput(InputEvent @event)
     {
-        if (ClickAction != ECharacterClickAction.OpenDetails || _character == null)
+        if (_character == null)
         {
             return;
         }
@@ -86,8 +99,17 @@ public partial class BaseCharacterItem : Control
         if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false } mb
             && !mb.IsEcho())
         {
-            TryOpenDetails();
-            AcceptEvent();
+            switch (ClickAction)
+            {
+                case ECharacterClickAction.OpenDetails:
+                    TryOpenDetails();
+                    AcceptEvent();
+                    break;
+                case ECharacterClickAction.Emit:
+                    Clicked?.Invoke(this, _character);
+                    AcceptEvent();
+                    break;
+            }
         }
     }
 
@@ -133,15 +155,40 @@ public partial class BaseCharacterItem : Control
             _presenter.Bind(character);
         }
 
-        if (_txtName != null)
-        {
-            _txtName.Text = string.IsNullOrWhiteSpace(character.DisplayNameId)
-                ? ""
-                : Localization.Tr(character.DisplayNameId);
-            _txtName.Visible = true;
-        }
+        RefreshNameLabel();
 
         SetElement((int)character.Element);
+    }
+
+    /// <summary>
+    /// 名称后缀标记（如"已在槽位 2"）：<c>null</c> 时只显示名字。
+    /// 列表项复用同一节点时会重新 <see cref="SetData"/>，因此标记需要独立设置。
+    /// </summary>
+    public void SetBadge(string? badge)
+    {
+        _badge = badge;
+        RefreshNameLabel();
+    }
+
+    private void RefreshNameLabel()
+    {
+        if (_txtName == null)
+        {
+            return;
+        }
+
+        if (_character is null)
+        {
+            _txtName.Text = "";
+            _txtName.Visible = false;
+            return;
+        }
+
+        var name = string.IsNullOrWhiteSpace(_character.DisplayNameId)
+            ? ""
+            : Localization.Tr(_character.DisplayNameId);
+        _txtName.Text = string.IsNullOrWhiteSpace(_badge) ? name : $"{name} · {_badge}";
+        _txtName.Visible = true;
     }
 
     #endregion
@@ -150,6 +197,8 @@ public partial class BaseCharacterItem : Control
 
     private void OnHoverTipEntered()
     {
+        Hovered?.Invoke(this, _character);
+
         if (!EnableHoverTip || _character == null)
         {
             return;
@@ -161,6 +210,8 @@ public partial class BaseCharacterItem : Control
 
     private void OnHoverTipExited()
     {
+        Hovered?.Invoke(this, null);
+
         _hoverTipActive = false;
         CancelHoverTipDelay();
         KeywordTipService.Current?.HideTips(this);

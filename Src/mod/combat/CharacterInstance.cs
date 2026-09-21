@@ -133,7 +133,22 @@ public sealed class CharacterInstance
             }
         }
 
+        // 角色定义级的能量保底：加算在卡组贡献之上，卡组未成型时也能保证面板能量。
+        if (Definition is not null)
+        {
+            MergeCharacterEnergy(totals, AttributeIds.MaxEnergy, Definition.MaxEnergy);
+            MergeCharacterEnergy(totals, AttributeIds.InitialEnergy, Definition.InitialEnergy);
+        }
+
         return totals;
+    }
+
+    private static void MergeCharacterEnergy(Dictionary<string, float> totals, string attributeId, int value)
+    {
+        if (value <= 0)
+            return;
+        totals.TryGetValue(attributeId, out var current);
+        totals[attributeId] = current + value;
     }
 
     public CharacterAttributes ComputeAttributes(GameDefinitionRegistry definitions) =>

@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.chalux_path_frost.name",
+  "descId": "buff.chalux_path_frost.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Replace",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ]
+}

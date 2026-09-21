@@ -55,6 +55,9 @@ public partial class MainRoot : Control
             SaveDirectory = ProjectSettings.GlobalizePath("user://saves"),
             ContentModRootDirectory = ProjectSettings.GlobalizePath("user://content_mods"),
             BundledContentModsDirectory = ProjectSettings.GlobalizePath("res://Config/mods"),
+            // 调试构建：忽略 mod.json 版本号，每次启动都把随包内容重新暂存到用户目录。
+            // 否则开发期新增的角色/卡牌/翻译会因为版本号没变而永远不出现在游戏里。
+            ForceContentModRefresh = OS.IsDebugBuild(),
         };
 
         ModFactory.Bootstrap(context);

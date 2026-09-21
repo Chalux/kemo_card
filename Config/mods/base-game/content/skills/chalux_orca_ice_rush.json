@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.chalux_orca.name",
+  "descId": "skill.chalux_orca.desc",
+  "actionRefs": [
+    { "actionId": "chalux_blue_damage_hit", "params": { "Amount": 12 } }
+  ],
+  "tags": ["attack"]
+}

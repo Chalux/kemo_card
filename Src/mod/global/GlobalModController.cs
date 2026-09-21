@@ -103,4 +103,21 @@ public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveS
         ArgumentNullException.ThrowIfNull(payload);
         return await (UIManager.Instance?.OpenAsync(new UiId<AlertDlgPayload>(GlobalUiIds.Alert), payload) ?? Task.FromResult<UIVo?>(null));
     }
+
+    /// <summary>
+    /// 打开卡牌详情。组件（<c>BaseCardItem</c>）与队伍编辑的二级界面共用这一入口，
+    /// 避免各自拼 <c>UiId</c> + 载荷。
+    /// </summary>
+    public static async Task<UIVo?> OpenCardDetailsAsync(string cardId, int? displayValue = null)
+    {
+        if (string.IsNullOrWhiteSpace(cardId))
+        {
+            return null;
+        }
+
+        return await (UIManager.Instance?.OpenAsync(
+                new UiId<CardDetailsDlgPayload>(GlobalUiIds.CardDetails),
+                new CardDetailsDlgPayload { CardId = cardId, DisplayValue = displayValue })
+            ?? Task.FromResult<UIVo?>(null));
+    }
 }

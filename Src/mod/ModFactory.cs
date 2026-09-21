@@ -21,6 +21,12 @@ public sealed class ModStartupContext
     public required string ContentModRootDirectory { get; init; }
 
     public required string BundledContentModsDirectory { get; init; }
+
+    /// <summary>
+    /// 调试构建置 true：忽略版本号，每次启动都把随包 Mod 重新拷贝到用户目录。
+    /// 开发期新增内容不抬版本号也能在游戏里看到。
+    /// </summary>
+    public bool ForceContentModRefresh { get; init; }
 }
 
 public sealed class ModStartupResult : IUiFacadeProvider
@@ -161,7 +167,8 @@ public sealed class ModFactory
     {
         ContentModBootstrap.EnsureDefaultModsCopied(
             context.ContentModRootDirectory,
-            context.BundledContentModsDirectory);
+            context.BundledContentModsDirectory,
+            context.ForceContentModRefresh);
 
         var appLog = new StaticAppLogBridge();
         var registry = new GameDefinitionRegistry();

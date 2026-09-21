@@ -1,0 +1,4 @@
+{
+  "kind": "GainResource",
+  "params": { "resource": "energy", "amount": 3 }
+}

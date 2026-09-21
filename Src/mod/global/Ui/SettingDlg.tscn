@@ -1,12 +1,12 @@
 [gd_scene format=3 uid="uid://35esqhm5l1i1"]
 
-[ext_resource type="Script" uid="uid://b06kkqlx0vq6u" path="res://Src/mod/global/Ui/SettingDlg.cs" id="1_olhfn"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/SettingDlg.cs" id="1_olhfn"]
 [ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="1_rixra"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/SettingDropdownRow.tscn" id="2_dropdown"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/SettingToggleRow.tscn" id="3_toggle"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/SettingSliderRow.tscn" id="4_slider"]
 
-[node name="SettingDlg" type="Control" unique_id=1987764950 node_paths=PackedStringArray("WindowModeRow", "ResolutionRow", "VSyncRow", "MaxFpsRow", "MasterMuteRow", "MasterVolumeRow", "MusicMuteRow", "MusicVolumeRow", "SfxMuteRow", "SfxVolumeRow", "LanguageRow")]
+[node name="SettingDlg" type="Control" unique_id=1987764950 node_paths=PackedStringArray("WindowModeRow", "ResolutionRow", "VSyncRow", "MaxFpsRow", "MasterMuteRow", "MasterVolumeRow", "MusicMuteRow", "MusicVolumeRow", "SfxMuteRow", "SfxVolumeRow", "LanguageRow", "PotentialConsumeModeRow", "PotentialProposalsRow", "PotentialUnlimitedRow")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -25,6 +25,9 @@ MusicVolumeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollC
 SfxMuteRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/SfxMuteRow")
 SfxVolumeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/SfxVolumeRow")
 LanguageRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/LanguageRow")
+PotentialConsumeModeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer/PotentialConsumeModeRow")
+PotentialProposalsRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer/PotentialProposalsRow")
+PotentialUnlimitedRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer/PotentialUnlimitedRow")
 
 [node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("1_rixra")]
 layout_mode = 1
@@ -83,3 +86,27 @@ size_flags_horizontal = 3
 [node name="SfxVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2144398692 instance=ExtResource("4_slider")]
 
 [node name="LanguageRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1701606078 instance=ExtResource("2_dropdown")]
+
+[node name="UI_MENU_MP_SETTING" type="MarginContainer" parent="BaseDlgComp/TabContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+metadata/_tab_index = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SettingVBoxContainer" type="VBoxContainer" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="PotentialConsumeModeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+
+[node name="PotentialProposalsRow" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+
+[node name="PotentialUnlimitedRow" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("3_toggle")]

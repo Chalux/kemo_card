@@ -1,0 +1,193 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/RunTeamEditDlg.cs" id="1_dlg"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.tscn" id="4_presenter"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="6_carditem"]
+
+[node name="RunTeamEditDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_lblDeckCaption", "_deckStrip", "_lblStatus")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dlg")
+_lblTitle = NodePath("Panel/VBox/Header/LblTitle")
+_btnClose = NodePath("Panel/VBox/Header/BtnClose")
+_slotTabs = NodePath("Panel/VBox/SlotTabs")
+_lblCurrentCaption = NodePath("Panel/VBox/Body/Left/LblCurrentCaption")
+_currentHolder = NodePath("Panel/VBox/Body/Left/CurrentHolder")
+_currentCharacter = NodePath("Panel/VBox/Body/Left/CurrentHolder/CurrentCharacter")
+_btnUnassign = NodePath("Panel/VBox/Body/Left/BtnUnassign")
+_lblPoolCaption = NodePath("Panel/VBox/Body/Center/LblPoolCaption")
+_poolList = NodePath("Panel/VBox/Body/Center/PoolList")
+_presenter = NodePath("Panel/VBox/Body/Right/Preview/Presenter")
+_lblName = NodePath("Panel/VBox/Body/Right/Preview/LblName")
+_lblInfo = NodePath("Panel/VBox/Body/Right/Preview/LblInfo")
+_lblAttrs = NodePath("Panel/VBox/Body/Right/Preview/LblAttrs")
+_lblDeckCaption = NodePath("Panel/VBox/Body/Right/LblDeckCaption")
+_deckStrip = NodePath("Panel/VBox/Body/Right/DeckStrip")
+_lblStatus = NodePath("Panel/VBox/LblStatus")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = 30.0
+offset_right = -60.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LblTitle" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+
+[node name="BtnClose" type="Button" parent="Panel/VBox/Header"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "UI_TEAM_CLOSE"
+script = ExtResource("2_kbtn")
+
+[node name="SlotTabs" type="TabBar" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Left" type="VBoxContainer" parent="Panel/VBox/Body"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LblCurrentCaption" type="Label" parent="Panel/VBox/Body/Left"]
+layout_mode = 2
+
+[node name="CurrentHolder" type="Control" parent="Panel/VBox/Body/Left"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CurrentCharacter" parent="Panel/VBox/Body/Left/CurrentHolder" instance=ExtResource("5_charitem")]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_right = 80.0
+offset_bottom = 208.0
+grow_horizontal = 2
+
+[node name="BtnUnassign" type="Button" parent="Panel/VBox/Body/Left"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_TEAM_UNASSIGN"
+script = ExtResource("2_kbtn")
+
+[node name="Center" type="VBoxContainer" parent="Panel/VBox/Body"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LblPoolCaption" type="Label" parent="Panel/VBox/Body/Center"]
+layout_mode = 2
+
+[node name="PoolList" type="Control" parent="Panel/VBox/Body/Center" node_paths=PackedStringArray("ScrollArea")]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_vlist")
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("5_charitem")
+ItemSize = 208.0
+Spacing = 2.0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Center/PoolList"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Right" type="VBoxContainer" parent="Panel/VBox/Body"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Preview" type="VBoxContainer" parent="Panel/VBox/Body/Right"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="Presenter" parent="Panel/VBox/Body/Right/Preview" instance=ExtResource("4_presenter")]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+
+[node name="LblName" type="Label" parent="Panel/VBox/Body/Right/Preview"]
+layout_mode = 2
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+
+[node name="LblInfo" type="Label" parent="Panel/VBox/Body/Right/Preview"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="LblAttrs" type="Label" parent="Panel/VBox/Body/Right/Preview"]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+size_flags_vertical = 3
+autowrap_mode = 3
+
+[node name="LblDeckCaption" type="Label" parent="Panel/VBox/Body/Right"]
+layout_mode = 2
+
+[node name="DeckStrip" type="Control" parent="Panel/VBox/Body/Right" node_paths=PackedStringArray("ScrollArea")]
+custom_minimum_size = Vector2(0, 212)
+layout_mode = 2
+script = ExtResource("3_vlist")
+IsVertical = false
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("6_carditem")
+ItemSize = 160.0
+Spacing = 2.0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Right/DeckStrip"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LblStatus" type="Label" parent="Panel/VBox"]
+custom_minimum_size = Vector2(600, 0)
+layout_mode = 2
+autowrap_mode = 3

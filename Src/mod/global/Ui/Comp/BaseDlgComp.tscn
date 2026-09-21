@@ -1,7 +1,20 @@
 [gd_scene format=3 uid="uid://dnod4h20yq5su"]
 
-[ext_resource type="Script" uid="uid://bhaivy831p83n" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.cs" id="1_gvkcd"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.cs" id="1_gvkcd"]
 [ext_resource type="Texture2D" uid="uid://c81usfhfj7cxw" path="res://Resource/Asset/Icon/cancel.svg" id="2_gvkcd"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dlg_backdrop"]
+bg_color = Color(0.086, 0.11, 0.18, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.165, 0.204, 0.314, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
 
 [node name="BaseDlgComp" type="Control" unique_id=1648768781 node_paths=PackedStringArray("_btnClose")]
 layout_mode = 3
@@ -22,7 +35,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="BgColorRect" type="ColorRect" parent="DlgBg" unique_id=1319711502]
+[node name="MaskPanel" type="Panel" parent="DlgBg" unique_id=1319711502]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,15 +43,20 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.07510843, 0.1482965, 0.28160223, 0.7647059)
+theme_override_styles/panel = SubResource("StyleBoxFlat_dlg_backdrop")
 
 [node name="CloseBtn" type="Button" parent="DlgBg" unique_id=1861420465]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.9444444
+anchors_preset = 1
+anchor_left = 1.0
 anchor_right = 1.0
-anchor_bottom = 0.09876543
+offset_left = -52.0
+offset_top = 8.0
+offset_right = -12.0
+offset_bottom = 48.0
 grow_horizontal = 0
 icon = ExtResource("2_gvkcd")
 expand_icon = true
+flat = true
+script = ExtResource("3_kbtn")
 metadata/_edit_use_anchors_ = true

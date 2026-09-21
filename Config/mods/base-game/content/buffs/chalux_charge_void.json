@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.chalux_charge_void.name",
+  "descId": "buff.chalux_charge_void.desc",
+  "durationType": "Turns",
+  "duration": 5,
+  "stackRule": "Replace",
+  "tags": ["buff.active", "slot.charge"],
+  "hooks": {
+    "onSlotCardPlayed": [
+      { "effectId": "chalux_charge_void_load" }
+    ]
+  }
+}

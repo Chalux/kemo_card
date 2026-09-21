@@ -1,0 +1,11 @@
+{
+  "descId": "buff.chalux_p5.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "condition": { "elementAny": ["Blue"], "raceAny": ["Canine"] },
+  "modifiers": [
+    { "attributeId": "DamageDealtScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 0.25 } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"]
+}

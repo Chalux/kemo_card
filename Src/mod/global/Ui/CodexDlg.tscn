@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://dco70o6yus7fk"]
 
-[ext_resource type="Script" uid="uid://bisjbii3b2qwu" path="res://Src/mod/global/Ui/CodexDlg.cs" id="1_x5fxm"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/CodexDlg.cs" id="1_x5fxm"]
 [ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_ii0j4"]
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="3_tnh6y"]
 [ext_resource type="PackedScene" uid="uid://c6tqm743fyjtl" path="res://Src/mod/global/Ui/Comp/BasePager.tscn" id="4_egqms"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="6_kbtn"]
 
 [node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_tabContainer", "_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager", "_obCharField", "_obCharOp", "_obCharVal", "_itemListCharConditions", "_btnCharAdd", "_btnCharSearch", "_iptCharTxtFilter", "_gridCharList", "_charPager")]
 layout_mode = 3
@@ -102,6 +103,7 @@ anchor_top = 0.8870588
 anchor_right = 0.14742015
 anchor_bottom = 0.96
 text = "UI_OP_ADD"
+script = ExtResource("6_kbtn")
 metadata/_edit_use_anchors_ = true
 
 [node name="Control" type="Control" parent="TabContainer/UI_CARD" unique_id=642701578]
@@ -184,6 +186,7 @@ anchor_top = 0.8870588
 anchor_right = 0.46805897
 anchor_bottom = 0.96
 text = "UI_SEARCH"
+script = ExtResource("6_kbtn")
 metadata/_edit_use_anchors_ = true
 
 [node name="UI_CHARACTER" type="Control" parent="TabContainer" unique_id=169329728]
@@ -237,6 +240,7 @@ anchor_top = 0.8870588
 anchor_right = 0.14742015
 anchor_bottom = 0.96
 text = "UI_OP_ADD"
+script = ExtResource("6_kbtn")
 metadata/_edit_use_anchors_ = true
 
 [node name="Control" type="Control" parent="TabContainer/UI_CHARACTER" unique_id=1642701578]
@@ -327,4 +331,5 @@ anchor_top = 0.8870588
 anchor_right = 0.46805897
 anchor_bottom = 0.96
 text = "UI_SEARCH"
+script = ExtResource("6_kbtn")
 metadata/_edit_use_anchors_ = true

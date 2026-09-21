@@ -2,6 +2,7 @@ using KemoCard.Mod.Combat.Commands;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
+using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Runtime;
 
@@ -50,6 +51,14 @@ public sealed class CombatStateMachine
         {
             foreach (var entry in simulation.BattleStartSkills)
                 ExecuteBattleStartSkill(simulation, entry);
+
+            // 已解锁被动在技能注入后、冻结补满前挂载（若被动改 MaxHealth 可正确影响共享血量冻结值）。
+            foreach (var entry in simulation.InitialBuffs)
+                simulation.Buffs.Apply(
+                    simulation,
+                    new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex),
+                    entry.BuffId,
+                    entry.Params);
         }
         finally
         {
@@ -61,8 +70,17 @@ public sealed class CombatStateMachine
         foreach (var character in team.Characters)
             character.DrawWithReshuffle(CombatConstants.HandSlotCount, simulation.DrawRng);
 
+        // 敌人开战 buff：内容在 EnemyDto.buffRefs 声明（木桩的"每回合回血"等）。
+        // 必须在 onWaveStart / 首个 onTurnStart 之前挂载，否则第一次钩子会漏。
+        // （换波路径同样要挂：见 CombatSimulation.AdvanceToNextWave。）
+        simulation.ApplyEnemyInitialBuffs();
+
+        // 阶层（波次）1 开始：开战被动已由 BattleStartSkills 挂载，onWaveStart 在此补发一次。
+        simulation.Buffs.FireWaveStart(simulation);
+
         TransitionTo(ECombatPhase.Player);
         simulation.DomainManager.FireTurnStartHooks();
+        simulation.Buffs.FireTurnStart(simulation);
         PlayerPhasePipeline.Run(simulation, isFirstPlayerPhase: true);
     }
 
@@ -118,6 +136,7 @@ public sealed class CombatStateMachine
             ConfirmCharacterCommand confirm => ApplyConfirmCharacter(simulation, confirm),
             UnconfirmCharacterCommand unconfirm => ApplyUnconfirmCharacter(simulation, unconfirm),
             CancelQueuedCardCommand cancel => ApplyCancelQueuedCard(simulation, cancel),
+            TriggerOrbsCommand => ApplyTriggerOrbs(simulation),
             _ => new CombatApplyResult(false, "玩家阶段尚未实现该指令。"),
         };
 
@@ -130,6 +149,17 @@ public sealed class CombatStateMachine
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// 主动触发充能球：不占"已行动"、不消耗能量，因此不会推动阶段推进（出牌阶段内可重复触发）。
+    /// </summary>
+    private static CombatApplyResult ApplyTriggerOrbs(CombatSimulation simulation)
+    {
+        var result = simulation.Orbs.TriggerManual(simulation);
+        return result.Triggered
+            ? new CombatApplyResult(true)
+            : new CombatApplyResult(false, result.Error ?? "充能球触发失败。");
     }
 
     /// <summary>
@@ -269,6 +299,9 @@ public sealed class CombatStateMachine
         {
             simulation.SetDiscardChannel(previousChannel);
         }
+
+        // 被动钩子：持有者释放主动技后触发（如 chalux 被动6）。
+        simulation.Buffs.FireActiveSkillCast(simulation, command.CharacterIndex);
 
         HandleTargetLoss(simulation, aliveEnemiesBefore);
         return new CombatApplyResult(true);
@@ -477,43 +510,91 @@ public sealed class CombatStateMachine
     private static void ExecuteCardExecutionPhase(CombatSimulation simulation)
     {
         simulation.SetDiscardChannel(EDiscardChannel.CardExecution);
+        // 连携按完整出牌队列一次性定档：结算循环会逐张出队，统计必须在出队前完成。
+        var chainCounts = ChainCalculator.CountDistinctCharacters(simulation);
         try
         {
             while (simulation.CardQueue.TryDequeue(out var dequeued) && dequeued is not null)
             {
-                SettleQueuedCard(simulation, dequeued);
+                SettleQueuedCard(simulation, dequeued, chainCounts);
                 DiscardSettledCard(simulation, dequeued);
             }
         }
         finally
         {
+            simulation.SetChainBonus(0f);
             simulation.SetDiscardChannel(EDiscardChannel.Other);
         }
+
+        // 普通攻击：本回合卡牌全部结算（含弃牌、连携清零）后自动执行一次，归属槽位 = (回合-1) % 队伍人数。
+        // 必须在 CheckEndConditions 之前：普攻打死最后一名敌人时本回合敌人不再行动。
+        simulation.NormalAttacks.Execute(simulation);
 
         simulation.CheckEndConditions();
         if (simulation.Phase is ECombatPhase.Victory or ECombatPhase.Defeat or ECombatPhase.Player)
             return;
 
-        simulation.DomainManager.FireTurnStartHooks();
+        // 进入敌方阶段不再补发"回合开始"（2026-09-20 修正）：回合开始只在回合数 +1 之后发生一次，
+        // 否则 onTurnStart 钩子每回合触发两次（木桩回血、被动分档都会被翻倍）。
         simulation.TransitionTo(ECombatPhase.Enemy);
     }
 
     /// <summary>结算一张已标记牌；目标解析后为空集即空放（规格 §2.4），不做任何回滚。</summary>
-    private static void SettleQueuedCard(CombatSimulation simulation, QueuedCardEntry entry)
+    private static void SettleQueuedCard(
+        CombatSimulation simulation,
+        QueuedCardEntry entry,
+        IReadOnlyDictionary<EElement, int> chainCounts)
     {
         if (!simulation.Definitions.Store.TryGetCard(entry.CardId, out var card))
             return;
 
-        var resolvedTargets = ResolveCardTargets(simulation, entry, card);
-        if (resolvedTargets.Count == 0)
+        // 充能球回合结束统计口径：牌一旦进入结算就算"本回合打出"（含随后的空放）。
+        simulation.RecordPlayedCard(entry.CardId, entry.CharacterIndex);
+
+        // 槽位 buff（槽位伤害 / 充能）在此手牌结算前触发（打出即触发，含后续空放）。
+        FireSlotBuffsForEntry(simulation, entry);
+
+        // 连携定档需要一个角色实例（读 trait.chain_inject_red）。槽位非法时按"无加成"处理，
+        // 既不回落到 0 号角色（口径与实际来源不一致），也不索引越界。
+        var characters = simulation.PlayerTeam.Characters;
+        var sourceIndexValid = entry.CharacterIndex >= 0 && entry.CharacterIndex < characters.Count;
+        simulation.SetChainBonus(sourceIndexValid
+            ? ChainCalculator.BonusForCard(chainCounts, card, characters[entry.CharacterIndex])
+            : 0f);
+        try
+        {
+            var resolvedTargets = ResolveCardTargets(simulation, entry, card);
+            if (resolvedTargets.Count == 0)
+                return;
+
+            var sourceRef = new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex);
+            foreach (var skillRef in card.SkillRefs)
+            {
+                if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
+                    continue;
+                ExecuteSkillPayload(simulation, skill, sourceRef, resolvedTargets, skillRef?.Params);
+            }
+        }
+        finally
+        {
+            simulation.SetChainBonus(0f);
+        }
+    }
+
+    /// <summary>按 RuntimeInstanceId 找到打出卡牌所在的槽位并触发其槽位 buff 钩子。</summary>
+    private static void FireSlotBuffsForEntry(CombatSimulation simulation, QueuedCardEntry entry)
+    {
+        if (entry.CharacterIndex < 0 || entry.CharacterIndex >= simulation.PlayerTeam.Characters.Count)
             return;
 
-        var source = new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex);
-        foreach (var skillRef in card.SkillRefs)
+        var character = simulation.PlayerTeam.Characters[entry.CharacterIndex];
+        foreach (var slot in character.HandSlots)
         {
-            if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
-                continue;
-            ExecuteSkillPayload(simulation, skill, source, resolvedTargets, skillRef?.Params);
+            if (string.Equals(slot.RuntimeInstanceId, entry.RuntimeInstanceId, StringComparison.Ordinal))
+            {
+                simulation.Buffs.FireSlotCardPlayed(simulation, entry.CharacterIndex, slot);
+                return;
+            }
         }
     }
 
@@ -546,6 +627,11 @@ public sealed class CombatStateMachine
 
         simulation.Rules.DispatchTurnEnd(simulation.CreateContext());
         simulation.DomainManager.FireTurnEndHooks();
+        // buff 时长统一在回合结束 tick（角色/敌人/槽位容器全部走这里，含到期 onRemove）。
+        simulation.Buffs.FireTurnEnd(simulation);
+        // 充能球回合结束产出（固定 1 个四属性球 + 1 个物理/魔法球）：满员时会即时自动触发，
+        // 因此必须排在结束判定之前——触发伤害可能直接结束战斗。
+        simulation.Orbs.GrantTurnEndOrbs(simulation, simulation.TakePlayedThisTurn());
         foreach (var character in simulation.PlayerTeam.Characters)
             character.SetHasActed(false);
 
@@ -554,7 +640,9 @@ public sealed class CombatStateMachine
             return;
 
         simulation.IncrementTurnNumber();
+        simulation.IncrementTurnsIntoWave();
         simulation.DomainManager.FireTurnStartHooks();
+        simulation.Buffs.FireTurnStart(simulation);
         simulation.TransitionTo(ECombatPhase.Player);
         PlayerPhasePipeline.Run(simulation, simulation.IsFirstPlayerPhase);
     }

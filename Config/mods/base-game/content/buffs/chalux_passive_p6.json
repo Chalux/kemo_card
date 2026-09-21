@@ -1,0 +1,12 @@
+{
+  "descId": "buff.chalux_p6.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onActiveSkillCast": [
+      { "effectId": "chalux_p6_defbreak", "params": { "hookTargets": "allEnemies" } },
+      { "effectId": "chalux_p6_energy" }
+    ]
+  }
+}

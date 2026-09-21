@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.chalux_charge.name",
+  "descId": "buff.chalux_charge.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Replace",
+  "tags": ["buff.active", "slot.charge"],
+  "hooks": {
+    "onSlotCardPlayed": [
+      { "effectId": "chalux_charge_burst", "params": { "hookTargets": "randomEnemy" } }
+    ]
+  }
+}

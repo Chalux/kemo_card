@@ -25,6 +25,25 @@ public partial class BaseCardItem : Control
     [Export] public float TipDelaySec { get; set; } = 0.15f;
     [Export] public TipSide PreferTipSide { get; set; } = TipSide.Right;
 
+    /// <summary>是否启用长按（默认关闭，避免影响既有界面）；长按触发 <see cref="CardLongPressed"/>。</summary>
+    [Export] public bool EnableLongPress { get; set; }
+
+    /// <summary>长按判定阈值（秒）。</summary>
+    [Export] public float LongPressSec { get; set; } = 0.45f;
+
+    /// <summary>悬停进入/离开回调（宿主界面用来刷新详情预览；<c>null</c> 时无行为）。</summary>
+    public Action<BaseCardItem, CardDto?>? Hovered { get; set; }
+
+    /// <summary>单击回调：仅在 <see cref="ClickAction"/> 为 <see cref="ECardClickAction.Emit"/> 时触发。</summary>
+    public Action<BaseCardItem, CardDto>? Clicked { get; set; }
+
+    /// <summary>长按回调（<see cref="EnableLongPress"/> 为 true 时生效）；长按后不再触发单击。</summary>
+    public Action<BaseCardItem, CardDto>? LongPressed { get; set; }
+
+    private Tween? _longPressTween;
+    private bool _pressed;
+    private bool _longPressFired;
+
     private CardDto? _card;
     private int _baseValue;
     private int? _displayOverride;
@@ -67,6 +86,9 @@ public partial class BaseCardItem : Control
     protected virtual void OnExitTree()
     {
         CancelHoverTipDelay();
+        CancelLongPressDelay();
+        _pressed = false;
+        _longPressFired = false;
         KeywordTipService.Current?.HideTips(this);
     }
 
@@ -85,17 +107,80 @@ public partial class BaseCardItem : Control
 
     public override void _GuiInput(InputEvent @event)
     {
-        if (ClickAction != ECardClickAction.OpenDetails || _card == null)
+        if (_card == null)
         {
             return;
         }
 
-        if (@event is InputEventMouseButton { ButtonIndex: MouseButton.Left, Pressed: false } mb
-            && !mb.IsEcho())
+        if (@event is not InputEventMouseButton { ButtonIndex: MouseButton.Left } mb || mb.IsEcho())
         {
-            TryOpenDetails();
-            AcceptEvent();
+            return;
         }
+
+        if (mb.Pressed)
+        {
+            _pressed = true;
+            _longPressFired = false;
+            if (EnableLongPress)
+                ScheduleLongPress();
+            AcceptEvent();
+            return;
+        }
+
+        CancelLongPressDelay();
+        var wasPressed = _pressed;
+        var longPressFired = _longPressFired;
+        _pressed = false;
+        _longPressFired = false;
+        if (!wasPressed || longPressFired)
+        {
+            // 长按已经处理过本次手势（鼠标移出后抬起等）：不再触发单击。
+            return;
+        }
+
+        switch (ClickAction)
+        {
+            case ECardClickAction.OpenDetails:
+                TryOpenDetails();
+                AcceptEvent();
+                break;
+            case ECardClickAction.Emit:
+                Clicked?.Invoke(this, _card);
+                AcceptEvent();
+                break;
+        }
+    }
+
+    private void ScheduleLongPress()
+    {
+        CancelLongPressDelay();
+        if (LongPressSec <= 0f)
+        {
+            FireLongPress();
+            return;
+        }
+
+        _longPressTween = CreateTween();
+        _longPressTween.TweenInterval(LongPressSec);
+        _longPressTween.TweenCallback(Callable.From(FireLongPress));
+    }
+
+    private void FireLongPress()
+    {
+        _longPressTween = null;
+        if (!_pressed || _card == null)
+        {
+            return;
+        }
+
+        _longPressFired = true;
+        LongPressed?.Invoke(this, _card);
+    }
+
+    private void CancelLongPressDelay()
+    {
+        _longPressTween?.Kill();
+        _longPressTween = null;
     }
 
     private void TryOpenDetails()
@@ -175,6 +260,8 @@ public partial class BaseCardItem : Control
 
     private void OnHoverTipEntered()
     {
+        Hovered?.Invoke(this, _card);
+
         if (!EnableHoverTip || _card == null)
         {
             return;
@@ -186,6 +273,8 @@ public partial class BaseCardItem : Control
 
     private void OnHoverTipExited()
     {
+        Hovered?.Invoke(this, null);
+
         _hoverTipActive = false;
         CancelHoverTipDelay();
         KeywordTipService.Current?.HideTips(this);

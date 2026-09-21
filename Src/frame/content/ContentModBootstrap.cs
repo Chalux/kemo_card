@@ -9,7 +9,19 @@ public static class ContentModBootstrap
         PropertyNameCaseInsensitive = true,
     };
 
-    public static void EnsureDefaultModsCopied(string modRootDirectory, string bundledModsSourceDirectory)
+    /// <summary>
+    /// 把随包分发的 Mod 拷贝到用户可写目录。<b>版本号相同即跳过</b>（发布语义：不每次启动都重拷）。
+    /// </summary>
+    /// <param name="forceRefresh">
+    /// 调试构建用：忽略版本号，总是重新拷贝。开发期改内容（新增角色/卡牌/翻译……）常常忘了抬
+    /// <c>mod.json</c> 版本号，导致游戏里看不到——打开它即可让每次启动都同步最新内容。
+    /// 由调用方注入（<c>ModStartupContext.ForceContentModRefresh</c>），本类<b>不</b>直接读 Godot 的构建标记，
+    /// 以便逻辑层测试不依赖引擎。
+    /// </param>
+    public static void EnsureDefaultModsCopied(
+        string modRootDirectory,
+        string bundledModsSourceDirectory,
+        bool forceRefresh = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modRootDirectory);
         ArgumentException.ThrowIfNullOrWhiteSpace(bundledModsSourceDirectory);
@@ -24,11 +36,11 @@ public static class ContentModBootstrap
         {
             var folderName = Path.GetFileName(sourceDir);
             var destDir = Path.Combine(modRootDirectory, folderName);
-            EnsureModCopied(sourceDir, destDir);
+            EnsureModCopied(sourceDir, destDir, forceRefresh);
         }
     }
 
-    private static void EnsureModCopied(string sourceDir, string destDir)
+    private static void EnsureModCopied(string sourceDir, string destDir, bool forceRefresh)
     {
         if (!TryReadManifestVersion(sourceDir, out var bundledVersion))
         {
@@ -37,8 +49,9 @@ public static class ContentModBootstrap
 
         if (Directory.Exists(destDir))
         {
-            if (TryReadManifestVersion(destDir, out var installedVersion)
-                && string.Equals(installedVersion, bundledVersion, StringComparison.Ordinal))
+            if (!forceRefresh &&
+                TryReadManifestVersion(destDir, out var installedVersion) &&
+                string.Equals(installedVersion, bundledVersion, StringComparison.Ordinal))
             {
                 return;
             }

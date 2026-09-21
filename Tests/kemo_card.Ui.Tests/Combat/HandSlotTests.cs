@@ -1,3 +1,4 @@
+using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Combat;
 using NUnit.Framework;
 
@@ -20,14 +21,16 @@ public sealed class HandSlotTests
     }
 
     [Test]
-    public void TryAddSlotEffect_stores_buff_ref_for_future_pipeline()
+    public void BuffContainer_starts_empty_and_accepts_instances()
     {
         var slot = new HandSlot(2);
-        var added = slot.TryAddSlotEffect("poison", new Dictionary<string, object> { ["stacks"] = 1 });
+        var buff = new BuffDto { Id = "poison" };
 
-        Assert.That(added, Is.True);
-        Assert.That(slot.SlotEffects, Has.Count.EqualTo(1));
-        Assert.That(slot.SlotEffects[0].BuffId, Is.EqualTo("poison"));
+        var instance = slot.Buffs.Add(buff, null);
+
+        Assert.That(slot.Buffs.All, Has.Count.EqualTo(1));
+        Assert.That(instance.Def.Id, Is.EqualTo("poison"));
+        Assert.That(slot.Buffs.Find("poison"), Is.SameAs(instance));
     }
 
     #region 标记态

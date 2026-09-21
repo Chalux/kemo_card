@@ -1,0 +1,157 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/RunCharacterDeckDlg.cs" id="1_dlg"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="4_carditem"]
+
+[node name="RunCharacterDeckDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_btnClose", "_lblDeckCaption", "_deckTabs", "_btnNewDeck", "_lblDeckCount", "_deckList", "_lblPoolCaption", "_poolList", "_btnDeploy", "_lblStatus")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dlg")
+_lblTitle = NodePath("Panel/VBox/Header/LblTitle")
+_btnClose = NodePath("Panel/VBox/Header/BtnClose")
+_lblDeckCaption = NodePath("Panel/VBox/DeckRow/LblDeckCaption")
+_deckTabs = NodePath("Panel/VBox/DeckRow/DeckTabs")
+_btnNewDeck = NodePath("Panel/VBox/DeckRow/BtnNewDeck")
+_lblDeckCount = NodePath("Panel/VBox/Body/Left/LblDeckCount")
+_deckList = NodePath("Panel/VBox/Body/Left/DeckList")
+_lblPoolCaption = NodePath("Panel/VBox/Body/Right/LblPoolCaption")
+_poolList = NodePath("Panel/VBox/Body/Right/PoolList")
+_btnDeploy = NodePath("Panel/VBox/Footer/BtnDeploy")
+_lblStatus = NodePath("Panel/VBox/Footer/LblStatus")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 60.0
+offset_top = 30.0
+offset_right = -60.0
+offset_bottom = -30.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LblTitle" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+
+[node name="BtnClose" type="Button" parent="Panel/VBox/Header"]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+text = "UI_TEAM_CLOSE"
+script = ExtResource("2_kbtn")
+
+[node name="DeckRow" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LblDeckCaption" type="Label" parent="Panel/VBox/DeckRow"]
+layout_mode = 2
+
+[node name="DeckTabs" type="TabBar" parent="Panel/VBox/DeckRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BtnNewDeck" type="Button" parent="Panel/VBox/DeckRow"]
+custom_minimum_size = Vector2(160, 40)
+layout_mode = 2
+text = "UI_TEAM_NEW_DECK"
+script = ExtResource("2_kbtn")
+
+[node name="Body" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Left" type="VBoxContainer" parent="Panel/VBox/Body"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LblDeckCount" type="Label" parent="Panel/VBox/Body/Left"]
+layout_mode = 2
+
+[node name="DeckList" type="Control" parent="Panel/VBox/Body/Left" node_paths=PackedStringArray("ScrollArea")]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_vlist")
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("4_carditem")
+ItemSize = 208.0
+Spacing = 2.0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Left/DeckList"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Right" type="VBoxContainer" parent="Panel/VBox/Body"]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="LblPoolCaption" type="Label" parent="Panel/VBox/Body/Right"]
+layout_mode = 2
+
+[node name="PoolList" type="Control" parent="Panel/VBox/Body/Right" node_paths=PackedStringArray("ScrollArea")]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_vlist")
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("4_carditem")
+ItemSize = 208.0
+Spacing = 2.0
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Right/PoolList"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Footer" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnDeploy" type="Button" parent="Panel/VBox/Footer"]
+custom_minimum_size = Vector2(220, 44)
+layout_mode = 2
+text = "UI_TEAM_DEPLOY"
+script = ExtResource("2_kbtn")
+Primary = true
+
+[node name="LblStatus" type="Label" parent="Panel/VBox/Footer"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3

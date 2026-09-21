@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.chalux_sword.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "chalux_brilliant_sword" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "PhysicalAttack": 2
+    }
+  },
+  "role": "Warrior",
+  "priority": 44,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Epic",
+  "isExclusive": true
+}

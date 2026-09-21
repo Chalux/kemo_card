@@ -35,8 +35,6 @@ public static class CodexFilterDefinitions
             EElement.Blue => "UI_ELEMENT_BLUE",
             EElement.Green => "UI_ELEMENT_GREEN",
             EElement.Yellow => "UI_ELEMENT_YELLOW",
-            EElement.Yin => "UI_ELEMENT_YIN",
-            EElement.Yang => "UI_ELEMENT_YANG",
             _ => "",
         };
         return key.Length > 0;

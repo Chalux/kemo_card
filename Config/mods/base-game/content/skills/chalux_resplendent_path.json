@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.chalux_path.name",
+  "descId": "skill.chalux_path.desc",
+  "actionRefs": [
+    { "actionId": "chalux_blue_damage_hit", "params": { "Amount": 12 } },
+    { "actionId": "chalux_path_frost_self" }
+  ],
+  "tags": ["attack"]
+}

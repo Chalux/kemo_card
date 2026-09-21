@@ -2,13 +2,14 @@ using System;
 using Godot;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.UI.Base;
+using KemoCard.Mod.Global.Ui.Themes;
 
 namespace KemoCard.Mod.Global.Ui.Comp;
 
 public partial class SettingToggleRow : BaseCmp
 {
     private static readonly Color OffTrackColor = new(0.32f, 0.32f, 0.36f, 1f);
-    private static readonly Color OnTrackColor = new(0.28f, 0.52f, 0.88f, 1f);
+    private static readonly Color OnTrackColor = KemoPalette.Accent;
     private const float KnobPad = 3f;
     private const float KnobSize = 22f;
 

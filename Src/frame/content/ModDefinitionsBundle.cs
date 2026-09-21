@@ -16,7 +16,9 @@ public sealed record ModDefinitionsBundle(
     IReadOnlyDictionary<string, GameplayEffectDefDto> GameplayEffects,
     IReadOnlyDictionary<string, GameplayTagDefDto> GameplayTags,
     IReadOnlyDictionary<string, SkillActionDto> SkillActions,
-    IReadOnlyDictionary<string, StoryDto> Stories)
+    IReadOnlyDictionary<string, StoryDto> Stories,
+    /// <summary>充能球类型（内建 6 种由 base-game 声明；Mod 在此注册特殊球）。</summary>
+    IReadOnlyDictionary<string, OrbTypeDto> OrbTypes)
 {
     public static ModDefinitionsBundle Empty { get; } = new(
         new Dictionary<string, CharacterDto>(StringComparer.Ordinal),
@@ -32,5 +34,6 @@ public sealed record ModDefinitionsBundle(
         new Dictionary<string, GameplayEffectDefDto>(StringComparer.Ordinal),
         new Dictionary<string, GameplayTagDefDto>(StringComparer.Ordinal),
         new Dictionary<string, SkillActionDto>(StringComparer.Ordinal),
-        new Dictionary<string, StoryDto>(StringComparer.Ordinal));
+        new Dictionary<string, StoryDto>(StringComparer.Ordinal),
+        new Dictionary<string, OrbTypeDto>(StringComparer.Ordinal));
 }

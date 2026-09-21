@@ -18,6 +18,7 @@ public sealed class GameDefinitionStore
     private readonly Dictionary<string, GameplayTagDefDto> _gameplayTags = new(StringComparer.Ordinal);
     private readonly Dictionary<string, SkillActionDto> _skillActions = new(StringComparer.Ordinal);
     private readonly Dictionary<string, StoryDto> _stories = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, OrbTypeDto> _orbTypes = new(StringComparer.Ordinal);
 
     public bool TryGetCharacter(string id, out CharacterDto dto) => _characters.TryGetValue(id, out dto!);
 
@@ -47,6 +48,8 @@ public sealed class GameDefinitionStore
 
     public bool TryGetStory(string id, out StoryDto dto) => _stories.TryGetValue(id, out dto!);
 
+    public bool TryGetOrbType(string id, out OrbTypeDto dto) => _orbTypes.TryGetValue(id, out dto!);
+
     public IReadOnlyDictionary<string, CharacterDto> Characters => _characters;
 
     public IReadOnlyDictionary<string, EnemyDto> Enemies => _enemies;
@@ -75,6 +78,8 @@ public sealed class GameDefinitionStore
 
     public IReadOnlyDictionary<string, StoryDto> Stories => _stories;
 
+    public IReadOnlyDictionary<string, OrbTypeDto> OrbTypes => _orbTypes;
+
     public bool Contains(EContentCategory category, string id) => category switch
     {
         EContentCategory.Character => _characters.ContainsKey(id),
@@ -91,6 +96,7 @@ public sealed class GameDefinitionStore
         EContentCategory.GameplayTag => _gameplayTags.ContainsKey(id),
         EContentCategory.SkillAction => _skillActions.ContainsKey(id),
         EContentCategory.Story => _stories.ContainsKey(id),
+        EContentCategory.OrbType => _orbTypes.ContainsKey(id),
         _ => false,
     };
 
@@ -110,6 +116,7 @@ public sealed class GameDefinitionStore
         _gameplayTags.Clear();
         _skillActions.Clear();
         _stories.Clear();
+        _orbTypes.Clear();
     }
 
     internal void Remove(EContentCategory category, string id)
@@ -158,6 +165,9 @@ public sealed class GameDefinitionStore
             case EContentCategory.Story:
                 _stories.Remove(id);
                 break;
+            case EContentCategory.OrbType:
+                _orbTypes.Remove(id);
+                break;
         }
     }
 
@@ -188,4 +198,6 @@ public sealed class GameDefinitionStore
     internal Dictionary<string, SkillActionDto> SkillActionsMutable => _skillActions;
 
     internal Dictionary<string, StoryDto> StoriesMutable => _stories;
+
+    internal Dictionary<string, OrbTypeDto> OrbTypesMutable => _orbTypes;
 }

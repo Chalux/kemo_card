@@ -1,0 +1,4 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": { "buffId": "chalux_charge_glacial", "slotIndex": 2 }
+}

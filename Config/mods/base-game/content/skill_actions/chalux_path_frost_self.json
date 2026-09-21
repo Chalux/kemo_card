@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "chalux_path_frost", "hookTargets": "self" }
+}

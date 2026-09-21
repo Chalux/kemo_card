@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://c4e8o1dsbyc7e"]
 
-[ext_resource type="Script" uid="uid://bqyn754ywiss6" path="res://Src/mod/global/Ui/Comp/BaseCardItem.cs" id="1_o0l0o"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseCardItem.cs" id="1_o0l0o"]
 [ext_resource type="Shader" uid="uid://bfvoqgxj4vsvf" path="res://Src/mod/global/Ui/Comp/BaseCardItem.gdshader" id="2_vsqsq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ytd70"]

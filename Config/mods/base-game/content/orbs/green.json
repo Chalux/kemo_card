@@ -1,0 +1,9 @@
+{
+  "displayNameId": "orb.green.name",
+  "dealsDamage": true,
+  "damageKind": "Elemental",
+  "element": "Green",
+  "perOrbAmount": 6,
+  "attackBonusScale": 1,
+  "attackSource": "Higher"
+}

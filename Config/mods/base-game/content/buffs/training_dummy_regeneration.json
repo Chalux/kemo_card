@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.training_dummy_regen.name",
+  "descId": "buff.training_dummy_regen.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive"],
+  "hooks": {
+    "onTurnStart": [
+      { "effectId": "training_dummy_regeneration_heal" }
+    ]
+  }
+}

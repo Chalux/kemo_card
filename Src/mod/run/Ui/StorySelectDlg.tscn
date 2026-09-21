@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://Src/mod/run/Ui/StorySelectDlg.cs" id="1_storyselect"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
 [node name="StorySelectDlg" type="Control" node_paths=PackedStringArray("_storyList", "_lblName", "_lblAuthor", "_lblMod", "_lblMode", "_lblDesc", "_lblUnlockHint", "_seedInput", "_btnConfirm", "_btnCancel")]
 layout_mode = 3
@@ -110,13 +111,15 @@ text = "UI_STORY_MODE"
 layout_mode = 2
 
 [node name="DescValue" type="Label" parent="Panel/VBox/Content/Right"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_vertical = 3
 autowrap_mode = 3
 
 [node name="UnlockHint" type="Label" parent="Panel/VBox/Content/Right"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.45, 0.45, 1)
+theme_override_colors/font_color = Color(0.894, 0.459, 0.42, 1)
 autowrap_mode = 3
 
 [node name="SeedRow" type="HBoxContainer" parent="Panel/VBox"]
@@ -142,8 +145,11 @@ custom_minimum_size = Vector2(160, 48)
 layout_mode = 2
 text = "UI_RUN_START"
 disabled = true
+script = ExtResource("2_kbtn")
+Primary = true
 
 [node name="BtnCancel" type="Button" parent="Panel/VBox/BtnRow"]
 custom_minimum_size = Vector2(160, 48)
 layout_mode = 2
 text = "UI_COMMON_BACK"
+script = ExtResource("2_kbtn")

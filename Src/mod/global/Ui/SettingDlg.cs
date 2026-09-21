@@ -9,6 +9,7 @@ using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod;
 using KemoCard.Mod.Global;
+using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui.Comp;
 
 namespace KemoCard.Mod.Global.Ui;
@@ -26,6 +27,10 @@ public partial class SettingDlg : BaseDlg
     [Export] public SettingToggleRow? SfxMuteRow { get; set; }
     [Export] public SettingSliderRow? SfxVolumeRow { get; set; }
     [Export] public SettingDropdownRow? LanguageRow { get; set; }
+
+    [Export] public SettingDropdownRow? PotentialConsumeModeRow { get; set; }
+    [Export] public SettingDropdownRow? PotentialProposalsRow { get; set; }
+    [Export] public SettingToggleRow? PotentialUnlimitedRow { get; set; }
 
     private bool _suppressApply;
 
@@ -45,6 +50,9 @@ public partial class SettingDlg : BaseDlg
     private int _pendingSfxVolume = AudioSettingKeys.DefaultVolumePercent;
     private int _pendingMuteFlag = AudioSettingKeys.DefaultMuteFlag;
     private string _pendingLanguage = LocaleSettingKeys.DefaultLanguage;
+    private string _pendingPotentialConsumeMode = MultiplayerSettingKeys.PotentialConsumeModeDefault;
+    private int _pendingPotentialProposals = MultiplayerSettingKeys.DefaultProposalsPerRing;
+    private bool _pendingPotentialUnlimited;
 
     public override string UIId => GlobalUiIds.Setting;
     public override string UIDir => "Src/mod/global/Ui";
@@ -115,6 +123,27 @@ public partial class SettingDlg : BaseDlg
         {
             Binder.Bind(() => LanguageRow.ValueChanged += OnLanguageChanged, () => LanguageRow.ValueChanged -= OnLanguageChanged);
         }
+
+        if (PotentialConsumeModeRow != null)
+        {
+            Binder.Bind(
+                () => PotentialConsumeModeRow.ValueChanged += OnPotentialConsumeModeChanged,
+                () => PotentialConsumeModeRow.ValueChanged -= OnPotentialConsumeModeChanged);
+        }
+
+        if (PotentialProposalsRow != null)
+        {
+            Binder.Bind(
+                () => PotentialProposalsRow.ValueChanged += OnPotentialProposalsChanged,
+                () => PotentialProposalsRow.ValueChanged -= OnPotentialProposalsChanged);
+        }
+
+        if (PotentialUnlimitedRow != null)
+        {
+            Binder.Bind(
+                () => PotentialUnlimitedRow.ValueChanged += OnPotentialUnlimitedChanged,
+                () => PotentialUnlimitedRow.ValueChanged -= OnPotentialUnlimitedChanged);
+        }
     }
 
     protected override void OnOpen()
@@ -141,6 +170,9 @@ public partial class SettingDlg : BaseDlg
         SfxMuteRow?.SetValue(MuteFlagBits.IsMuted(muteFlag, SoundBus.Sfx), animate: false, notify: false);
         SfxVolumeRow?.SetValue(sfxVolume, notify: false);
         LanguageRow?.SetSelectedId(display.LanguageCode, notify: false);
+        PotentialConsumeModeRow?.SetSelectedId(_pendingPotentialConsumeMode, notify: false);
+        PotentialProposalsRow?.SetSelectedId(_pendingPotentialProposals.ToString(), notify: false);
+        PotentialUnlimitedRow?.SetValue(_pendingPotentialUnlimited, animate: false, notify: false);
         _suppressApply = false;
 
         _confirmedWindowMode = display.WindowMode;
@@ -152,6 +184,16 @@ public partial class SettingDlg : BaseDlg
         _pendingSfxVolume = sfxVolume;
         _pendingMuteFlag = muteFlag;
         _pendingLanguage = display.LanguageCode;
+        _pendingPotentialConsumeMode = settings.TryGetValue(MultiplayerSettingKeys.PotentialConsumeMode, out var consumeMode) &&
+            !string.IsNullOrWhiteSpace(consumeMode)
+                ? consumeMode
+                : MultiplayerSettingKeys.PotentialConsumeModeDefault;
+        _pendingPotentialProposals = ReadIntSetting(
+            settings,
+            MultiplayerSettingKeys.PotentialProposalsPerRing,
+            MultiplayerSettingKeys.DefaultProposalsPerRing);
+        _pendingPotentialUnlimited = settings.TryGetValue(MultiplayerSettingKeys.PotentialProposalsUnlimited, out var unlimited) &&
+            unlimited == "1";
         _displayConfirmBusy = false;
     }
 
@@ -205,6 +247,20 @@ public partial class SettingDlg : BaseDlg
         }
 
         LanguageRow?.SetOptions(locales);
+
+        PotentialConsumeModeRow?.SetOptions(
+        [
+            (MultiplayerSettingKeys.PotentialConsumeModeFree, "UI_SETTING_MP_POTENTIAL_MODE_FREE"),
+            (MultiplayerSettingKeys.PotentialConsumeModeVote, "UI_SETTING_MP_POTENTIAL_MODE_VOTE"),
+        ]);
+
+        var proposals = new List<(string id, string label)>();
+        for (var count = 1; count <= 5; count++)
+        {
+            proposals.Add((count.ToString(), count.ToString()));
+        }
+
+        PotentialProposalsRow?.SetOptions(proposals);
     }
 
     private void ApplyNameKeys()
@@ -220,6 +276,9 @@ public partial class SettingDlg : BaseDlg
         SfxMuteRow?.SetNameKey("UI_SETTING_SFX_MUTE");
         SfxVolumeRow?.SetNameKey("UI_SETTING_SFX_VOLUME");
         LanguageRow?.SetNameKey("UI_SETTING_LANGUAGE");
+        PotentialConsumeModeRow?.SetNameKey("UI_SETTING_MP_POTENTIAL_MODE");
+        PotentialProposalsRow?.SetNameKey("UI_SETTING_MP_PROPOSALS");
+        PotentialUnlimitedRow?.SetNameKey("UI_SETTING_MP_PROPOSALS_UNLIMITED");
     }
 
     private static int ReadIntSetting(IReadOnlyDictionary<string, string> settings, string key, int defaultValue)
@@ -310,6 +369,45 @@ public partial class SettingDlg : BaseDlg
         _pendingLanguage = code;
         LocaleSettingsApplier.Apply(code);
     }
+
+    #region 联机潜能设置
+
+    private void OnPotentialConsumeModeChanged(string id)
+    {
+        if (_suppressApply)
+        {
+            return;
+        }
+
+        _pendingPotentialConsumeMode = id;
+    }
+
+    private void OnPotentialProposalsChanged(string id)
+    {
+        if (_suppressApply)
+        {
+            return;
+        }
+
+        if (!int.TryParse(id, out var count) || count <= 0)
+        {
+            return;
+        }
+
+        _pendingPotentialProposals = count;
+    }
+
+    private void OnPotentialUnlimitedChanged(bool unlimited)
+    {
+        if (_suppressApply)
+        {
+            return;
+        }
+
+        _pendingPotentialUnlimited = unlimited;
+    }
+
+    #endregion
 
     #endregion
 
@@ -437,6 +535,9 @@ public partial class SettingDlg : BaseDlg
         SetSettingLogged(gc, AudioSettingKeys.SfxVolume, _pendingSfxVolume.ToString(), changes);
         SetSettingLogged(gc, AudioSettingKeys.MuteFlag, _pendingMuteFlag.ToString(), changes);
         SetSettingLogged(gc, LocaleSettingKeys.Language, _pendingLanguage, changes);
+        SetSettingLogged(gc, MultiplayerSettingKeys.PotentialConsumeMode, _pendingPotentialConsumeMode, changes);
+        SetSettingLogged(gc, MultiplayerSettingKeys.PotentialProposalsPerRing, _pendingPotentialProposals.ToString(), changes);
+        SetSettingLogged(gc, MultiplayerSettingKeys.PotentialProposalsUnlimited, _pendingPotentialUnlimited ? "1" : "0", changes);
         SaveSettingsLogged(gc, changes);
     }
 

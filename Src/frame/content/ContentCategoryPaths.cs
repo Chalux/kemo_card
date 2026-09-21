@@ -18,6 +18,7 @@ public static class ContentCategoryPaths
         EContentCategory.GameplayEffect => "gameplay_effects",
         EContentCategory.GameplayTag => "tags",
         EContentCategory.Story => "stories",
+        EContentCategory.OrbType => "orbs",
         _ => throw new ArgumentOutOfRangeException(nameof(category), category, null),
     };
 }

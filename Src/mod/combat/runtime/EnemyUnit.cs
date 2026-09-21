@@ -1,5 +1,6 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
+using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Gas;
 
 namespace KemoCard.Mod.Combat.Runtime;
@@ -9,6 +10,10 @@ public sealed class EnemyUnit
     public string RuntimeId { get; }
     public string DefinitionId { get; }
     public AbilitySystemComponent Asc { get; }
+
+    /// <summary>挂在该敌人身上的 buff 容器（减益等）。</summary>
+    public BuffContainer Buffs { get; }
+
     public int CurrentHp => (int)MathF.Round(Asc.GetCurrentValue(AttributeIds.Health));
     public int MaxHp => (int)MathF.Round(Asc.GetCurrentValue(AttributeIds.MaxHealth));
     public string? IntentSkillId { get; set; }
@@ -46,6 +51,7 @@ public sealed class EnemyUnit
             new Dictionary<string, AttributeDefDto>(StringComparer.Ordinal),
             new Dictionary<string, float>(baseAttributes, StringComparer.Ordinal));
         Asc.Attributes.SetCurrentValue(AttributeIds.Health, maxHealth);
+        Buffs = new BuffContainer(Asc);
     }
 
     public void ApplyDamage(int amount)

@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://Src/mod/global/Ui/AlertDlg.cs" id="1_alert"]
 [ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_basedlg"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
 
 [node name="AlertDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_lblDesc", "_btnOk", "_btnCancel")]
 layout_mode = 3
@@ -67,6 +68,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "UI_ALERT_OK"
+script = ExtResource("3_kbtn")
+Primary = true
 
 [node name="BtnCancel" type="Button" parent="BaseDlgComp/BtnRow"]
 custom_minimum_size = Vector2(160, 48)
@@ -74,3 +77,4 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 24
 text = "UI_ALERT_CANCEL"
+script = ExtResource("3_kbtn")

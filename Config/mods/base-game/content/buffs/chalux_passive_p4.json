@@ -1,0 +1,13 @@
+{
+  "descId": "buff.chalux_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "condition": { "elementAny": ["Blue"], "raceAny": ["Canine"] },
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } },
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } },
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"]
+}

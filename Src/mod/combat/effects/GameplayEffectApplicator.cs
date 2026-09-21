@@ -40,13 +40,14 @@ public sealed class GameplayEffectApplicator
             if (targetAsc is null)
                 continue;
 
-            // 玩家侧目标的 Health 变化在此被转到共享账本（规格 §1.2 的「应用后转移」）。
-            SharedHpSettlement.RunTransferred(simulation, target, () =>
+            // 玩家侧目标的 Health 变化在此被转到共享账本（规格 §1.2 的「应用后转移」）；
+            // 扣血变化量统一过伤害规则管线（DamagePipeline）。
+            SharedHpSettlement.RunTransferred(simulation, source, target, () =>
             {
                 var result = targetAsc.ApplyGameplayEffect(
                     new GameplayEffectSpec(def, sourceAsc, targetAsc, setByCaller));
                 applied |= result.Success;
-            });
+            }, gameplayEffectId);
 
             // 规格 §2.5：效果挂上封印后立刻清标记并视作已行动。
             if (target.Side == ECombatSide.Player &&

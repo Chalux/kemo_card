@@ -2,6 +2,7 @@ using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Frame.Scripting;
+using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Gas;
 
 namespace KemoCard.Mod.Combat;
@@ -22,6 +23,14 @@ public sealed class CharacterBattleInstance
     public IReadOnlyList<HandSlot> HandSlots => _handSlots;
     public IReadOnlyDictionary<string, float> BaseAttributes { get; }
     public AbilitySystemComponent Asc { get; }
+
+    /// <summary>元素/种族快照（开战从定义读入）：条件 buff 休眠判定与连携统计用。</summary>
+    public EElement Element { get; }
+
+    public ERace Race { get; }
+
+    /// <summary>挂在该角色身上的 buff 容器（被动、增益/减益）。</summary>
+    public BuffContainer Buffs { get; }
 
     /// <summary>每回合用来灌入「当前可用能量」的额度，恒被 clamp 在 [0, <see cref="MaxEnergy"/>]。</summary>
     public int CurrentEnergy { get; private set; }
@@ -52,12 +61,17 @@ public sealed class CharacterBattleInstance
         AbilitySystemComponent asc,
         int currentEnergy,
         int skillCounterCap,
-        IEnumerable<ActiveSkillTier>? activeSkillChain)
+        IEnumerable<ActiveSkillTier>? activeSkillChain,
+        EElement element = EElement.None,
+        ERace race = ERace.None)
     {
         SourceInstanceId = sourceInstanceId;
         DefinitionId = definitionId;
         BaseAttributes = new Dictionary<string, float>(baseAttributes, StringComparer.Ordinal);
         Asc = asc;
+        Element = element;
+        Race = race;
+        Buffs = new BuffContainer(asc, () => Element, () => Race);
         _drawPile.AddRange(drawPile);
         CurrentEnergy = currentEnergy;
         _activeSkillChain = activeSkillChain?.ToArray() ?? [];
@@ -122,7 +136,9 @@ public sealed class CharacterBattleInstance
                 0,
                 Math.Max(0, (int)MathF.Round(asc.GetCurrentValue(AttributeIds.MaxEnergy)))),
             skillCounterCap: 0,
-            activeSkillChain: SnapshotActiveSkillChain(source.Definition));
+            activeSkillChain: SnapshotActiveSkillChain(source.Definition),
+            element: source.Definition?.Element ?? EElement.None,
+            race: source.Definition?.Race ?? ERace.None);
     }
 
     /// <summary>
@@ -438,7 +454,9 @@ public sealed class CharacterBattleInstance
         IReadOnlyDictionary<string, float> baseAttributes,
         IEnumerable<CardRuntimeEntry>? drawPile = null,
         int skillCounterCap = 0,
-        IReadOnlyList<ActiveSkillChainEntryDto>? activeSkillChain = null)
+        IReadOnlyList<ActiveSkillChainEntryDto>? activeSkillChain = null,
+        EElement element = EElement.None,
+        ERace race = ERace.None)
     {
         ArgumentNullException.ThrowIfNull(baseAttributes);
         var copiedAttributes = new Dictionary<string, float>(baseAttributes, StringComparer.Ordinal);
@@ -464,7 +482,9 @@ public sealed class CharacterBattleInstance
             {
                 Id = definitionId,
                 ActiveSkillChain = [.. activeSkillChain ?? []],
-            }));
+            }),
+            element: element,
+            race: race);
     }
 
     internal static CharacterBattleInstance CreateForTests(

@@ -98,6 +98,8 @@ public enum EEffectKind
     ModifyStat,
     ExecuteScript,
     ChainEffects,
+    /// <summary>授予充能球（params.orbTypeId + 可选 params.count，默认 1；产球者 = 来源角色）。</summary>
+    GainOrb,
 }
 
 public enum ESkillActionKind
@@ -111,6 +113,14 @@ public enum ESkillActionKind
     RemoveGameplayEffect,
     /// <summary>投放抽牌数量修正（规格 §4.2 / §4.3），不即时抽牌。</summary>
     ModifyDrawCount,
+    /// <summary>对目标挂 buff（params.buffId 必填）。</summary>
+    ApplyBuff,
+    /// <summary>驱散目标 buff（params.buffId 或 params.withTags）。</summary>
+    RemoveBuff,
+    /// <summary>给来源角色的手牌槽位挂 buff（params.buffId + params.slotIndex）。</summary>
+    AttachSlotBuff,
+    /// <summary>授予充能球（params.orbTypeId + 可选 params.count，默认 1；产球者 = 来源角色）。</summary>
+    GainOrb,
 }
 
 [Flags]
@@ -121,8 +131,24 @@ public enum EElement
     Blue = 1 << 1,
     Green = 1 << 2,
     Yellow = 1 << 3,
-    Yin = 1 << 4,
-    Yang = 1 << 5,
+}
+
+/// <summary>
+/// 伤害的"类型"维度（与 <see cref="EElement"/> 正交的另一维）：物理 / 魔法 / 元素。
+/// </summary>
+/// <remarks>
+/// 物理与魔法走攻防公式（<c>攻击力 − 目标对应防御</c>，见战斗规格「伤害包管线」）；
+/// <see cref="Elemental"/> 是"既非物理也非魔法"的纯属性伤害（充能球的元素球、元素类效果），
+/// 不吃物防/魔防。元素维度单独由 <see cref="EElement"/> 表达：物理/魔法攻击也可以带元素标签
+/// （普通攻击 = 物/魔之一 + 攻击者元素）。
+/// </remarks>
+public enum EDamageKind
+{
+    Elemental,
+
+    Physical,
+
+    Magical,
 }
 
 public enum ERole

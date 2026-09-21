@@ -39,6 +39,9 @@ public sealed partial class RunMod : BaseMod
     public IReadOnlyList<CharacterInstance> CharacterPool => _characterPool;
     public IReadOnlySet<string> CardCollection => _cardCollection;
     public int SharedGold { get; set; }
+
+    /// <summary>团队潜能池：全队共享的可消费额度；重复获得角色 +20 入池（自身已有则直充槽位）。</summary>
+    public int TeamPotentialPool { get; set; }
     public IReadOnlyList<PlayerController> PlayerControllers => _playerControllers;
     public IReadOnlyDictionary<int, string> SlotOwnership => _slotOwnership;
     public IReadOnlyList<BattleRecordDto> BattleHistory => _battleHistory;
@@ -126,11 +129,25 @@ public sealed partial class RunMod : BaseMod
     /// <remarks>
     /// 决策 1：<c>RunMain</c> 生命周期与 Run 会话一致（<c>CacheTime = 0</c>，关闭即销毁），
     /// 避免 Run 结束后残留旧会话的界面实例；<c>StorySelect</c> 是从菜单反复进出的短生命周期弹窗，保留缓存。
+    /// <c>RunDebug</c> 是开发期工具，固定挂在 <see cref="EUILayer.Debug"/> 顶层且不留缓存
+    /// （每次打开都要重新读一遍当前 Run 状态）。
     /// </remarks>
     public static IEnumerable<UIRegistration> GetUIRegistrations()
     {
         yield return UIRegistration.Dialog(FeatureId, RunUiIds.StorySelect, "Src/mod/run/Ui");
         yield return UIRegistration.Window(FeatureId, RunUiIds.RunMain, "Src/mod/run/Ui")
+            with
+        { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
+
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.RunDebug, "Src/mod/run/Ui")
+            with
+        { OpenOpt = new UIOpenOpt { Layer = EUILayer.Debug, CacheTime = 0 } };
+
+        // 队伍编辑：每次打开都要重读当前 Run 状态（槽位/角色池/卡组都可能在别处变化）。
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.TeamEdit, "Src/mod/run/Ui")
+            with
+        { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.CharacterDeck, "Src/mod/run/Ui")
             with
         { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
     }
@@ -176,12 +193,16 @@ public sealed partial class RunMod : BaseMod
             CharacterPool = characterPoolDtos,
             CardCollection = _cardCollection.ToList(),
             SharedGold = SharedGold,
+            TeamPotentialPool = TeamPotentialPool,
             PlayerStates = playerStateDtos,
             BattleHistory = _battleHistory.ToList(),
         };
     }
 
-    public void RestoreFrom(RunDto dto, IReadOnlyDictionary<string, CharacterInstance>? instanceLookup = null)
+    public void RestoreFrom(
+        RunDto dto,
+        IReadOnlyDictionary<string, CharacterInstance>? instanceLookup = null,
+        Func<string, CharacterDto?>? definitionResolver = null)
     {
         ArgumentNullException.ThrowIfNull(dto);
 
@@ -193,6 +214,7 @@ public sealed partial class RunMod : BaseMod
         RunSeed = dto.RunSeed;
         IsMultiplayer = dto.IsMultiplayer;
         SharedGold = dto.SharedGold;
+        TeamPotentialPool = dto.TeamPotentialPool;
 
         _cardCollection.Clear();
         foreach (var cardId in dto.CardCollection)
@@ -208,9 +230,12 @@ public sealed partial class RunMod : BaseMod
                 continue;
             }
 
-            var instance = new CharacterInstance(
-                new CharacterDto { Id = entry.DefinitionId, Cards = entry.DefinitionCardIds },
-                entry.InstanceId);
+            // 存档只记录 definitionId / definitionCardIds，重新取回完整定义才能保住
+            // 显示名、元素、种族、能量与被动（否则读档后角色在界面上是"无名无元素"的空壳，
+            // 角色级能量保底也会丢失）。取不到定义时才回落到存档内的最小快照。
+            var definition = definitionResolver?.Invoke(entry.DefinitionId)
+                ?? new CharacterDto { Id = entry.DefinitionId, Cards = entry.DefinitionCardIds };
+            var instance = new CharacterInstance(definition, entry.InstanceId);
             if (entry.Decks.Count > 0)
             {
                 instance.ApplyDeckSnapshots(
@@ -240,6 +265,10 @@ public sealed partial class RunMod : BaseMod
             PlayerStates[i].EventFlags.Clear();
             foreach (var (k, v) in stateDto.EventFlags)
                 PlayerStates[i].EventFlags[k] = v;
+            PlayerStates[i].ResetPotentialDirectCredit();
+            PlayerStates[i].AddPotentialDirectCredit(stateDto.PotentialDirectCredit);
+            PlayerStates[i].PotentialSpent.Clear();
+            PlayerStates[i].PotentialSpent.AddRange(stateDto.PotentialSpent ?? []);
 
             if (stateDto.ActiveCharacterIndex.HasValue
                 && stateDto.ActiveCharacterIndex.Value >= 0

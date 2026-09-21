@@ -116,14 +116,26 @@ public sealed class SharedSettlementTests
         Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(SharedMaxHp - SlotDamage));
     }
 
+    /// <summary>
+    /// 2026-09-19 统一伤害包语义后：账本结算<b>也</b>过规则管线（队伍级减伤规则可以修正它），
+    /// 但分槽护盾规则按 <c>packet.Target.Index</c> 匹配槽位，Index &lt; 0 的账本目标天然不匹配。
+    /// </summary>
     [Test]
-    public void Team_damage_does_not_go_through_slot_damage_rules()
+    public void Team_ledger_damage_goes_through_the_pipeline_but_not_slot_rules()
     {
-        using var sim = Build(rules: [new SlotShieldRule(slotIndex: -1, reducedAmount: 1f)]);
+        using var slotShield = Build(rules: [new SlotShieldRule(slotIndex: 0, reducedAmount: 1f)]);
+        Execute(slotShield, "effect.slot_damage", [CombatTargetRef.PlayerTeam]);
+        Assert.That(
+            slotShield.PlayerTeam.SharedHp,
+            Is.EqualTo(SharedMaxHp - SlotDamage),
+            "分槽护盾不匹配账本目标（Index < 0）");
 
-        Execute(sim, "effect.slot_damage", [CombatTargetRef.PlayerTeam]);
-
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(SharedMaxHp - SlotDamage), "Team 直伤不经分槽护盾钩子");
+        using var ledgerRule = Build(rules: [new SlotShieldRule(slotIndex: -1, reducedAmount: 1f)]);
+        Execute(ledgerRule, "effect.slot_damage", [CombatTargetRef.PlayerTeam]);
+        Assert.That(
+            ledgerRule.PlayerTeam.SharedHp,
+            Is.EqualTo(SharedMaxHp - 1),
+            "点名账本目标的规则可以修正结算数额");
     }
 
     [Test]

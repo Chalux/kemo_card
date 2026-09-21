@@ -16,4 +16,6 @@ public enum EContentCategory
     GameplayEffect,
     GameplayTag,
     Story,
+    /// <summary>充能球类型（内建 6 种 + Mod 特殊球注册）。</summary>
+    OrbType,
 }

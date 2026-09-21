@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": { "gameplayEffectId": "blue_damage" }
+}

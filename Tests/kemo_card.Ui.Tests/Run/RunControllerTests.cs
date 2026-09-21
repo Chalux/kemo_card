@@ -11,6 +11,79 @@ namespace KemoCard.Ui.Tests.Run;
 public sealed class RunControllerTests
 {
     [Test]
+    public void LoadRun_restores_the_full_character_definition()
+    {
+        // 存档只记 definitionId / definitionCardIds；读档若不按 id 取回完整定义，
+        // 角色会退化成"无名无元素、无能量保底"的空壳（队伍编辑界面上就是空白条目）。
+        var definition = new CharacterDto
+        {
+            Id = "hero_full",
+            DisplayNameId = "char.hero_full.name",
+            Element = EElement.Blue,
+            Race = ERace.Canine,
+            Cards = [CombatSimulationTestBuilder.PartyHpCardId],
+            MaxEnergy = 7,
+            InitialEnergy = 4,
+        };
+        var registry = RunTestHelper.CreateRegistryWithHpCard();
+        CombatTestHelper.RebuildInto(
+            registry,
+            cards: new Dictionary<string, CardDto>
+            {
+                [CombatSimulationTestBuilder.PartyHpCardId] = new()
+                {
+                    Id = CombatSimulationTestBuilder.PartyHpCardId,
+                    Stats = new CardStatBlockDto { HpCap = 10 },
+                },
+            },
+            characters: new Dictionary<string, CharacterDto> { [definition.Id] = definition });
+
+        var source = new RunController(new RunMod());
+        source.CreateRun("story_a", new HostRng(11, "load"), [], isMultiplayer: false);
+        source.AddToCharacterPool(new CharacterInstance(definition, "inst-full"));
+        var saved = source.State.ToDto();
+        source.Dispose();
+
+        var restored = new RunController(
+            new RunMod(),
+            characterDefinitionResolver: id =>
+                registry.Store.TryGetCharacter(id, out var dto) ? dto : null);
+        restored.LoadRun(saved);
+
+        var character = restored.State.CharacterPool.Single();
+        Assert.That(character.Definition, Is.Not.Null);
+        Assert.That(character.Definition!.DisplayNameId, Is.EqualTo("char.hero_full.name"));
+        Assert.That(character.Definition.Element, Is.EqualTo(EElement.Blue));
+        Assert.That(character.Definition.MaxEnergy, Is.EqualTo(7));
+        Assert.That(character.Definition.InitialEnergy, Is.EqualTo(4));
+
+        // 角色级能量保底必须随定义一起回来（此前读档后会整块丢失）。
+        var attributes = character.ComputeAttributeMap(registry);
+        Assert.That(attributes["MaxEnergy"], Is.GreaterThanOrEqualTo(7f));
+    }
+
+    [Test]
+    public void LoadRun_without_a_resolver_still_falls_back_to_the_saved_snapshot()
+    {
+        var source = new RunController(new RunMod());
+        source.CreateRun("story_a", new HostRng(12, "load"), [], isMultiplayer: false);
+        source.AddToCharacterPool(RunTestHelper.CreateCharacterWithHp(0));
+        var saved = source.State.ToDto();
+        source.Dispose();
+
+        var restored = new RunController(new RunMod());
+        restored.LoadRun(saved);
+
+        var character = restored.State.CharacterPool.Single();
+        Assert.That(character.DefinitionId, Is.EqualTo("hero_0"));
+        Assert.That(character.Definition, Is.Not.Null, "取不到定义时退回存档内最小快照");
+        Assert.That(
+            character.Definition!.Cards,
+            Is.EquivalentTo(new[] { CombatSimulationTestBuilder.PartyHpCardId }));
+        Assert.That(character.GetCurrentDeck()!.CardIds, Is.Not.Empty, "卡组快照仍然生效");
+    }
+
+    [Test]
     public void CreateRun_sets_initial_state()
     {
         var controller = new RunController(new RunMod());
@@ -71,6 +144,42 @@ public sealed class RunControllerTests
         Assert.That(result, Is.True);
         Assert.That(controller.State.CharacterPool, Has.Count.EqualTo(1));
         Assert.That(controller.State.CharacterPool[0].InstanceId, Is.EqualTo("inst-1"));
+    }
+
+    /// <summary>
+    /// 角色定义唯一（总规格 §4.5.1）：重复获得同一<b>定义</b>不入第二实例，转化为 +20 潜能入团队池。
+    /// </summary>
+    [Test]
+    public void AddToCharacterPool_duplicate_converts_to_team_pool_potential()
+    {
+        var controller = new RunController(new RunMod());
+        controller.AddToCharacterPool(new CharacterInstance(
+            new CharacterDto { Id = "test", Cards = [] }, "inst-1"));
+
+        var result = controller.AddToCharacterPool(new CharacterInstance(
+            new CharacterDto { Id = "test", Cards = [] }, "inst-2"));
+
+        Assert.That(result, Is.False, "重复获得返回 false（已转化）");
+        Assert.That(controller.State.CharacterPool, Has.Count.EqualTo(1), "不入第二实例");
+        Assert.That(controller.Potential.TeamPool, Is.EqualTo(20), "转化为团队池潜能");
+    }
+
+    /// <summary>重复的是该槽位自己已有的角色 → 直充该槽位（而非团队池）。</summary>
+    [Test]
+    public void AddToCharacterPool_duplicate_of_slots_own_character_credits_that_slot()
+    {
+        var controller = new RunController(new RunMod());
+        var character = new CharacterInstance(
+            new CharacterDto { Id = "test", Cards = [] }, "inst-1");
+        controller.AddToCharacterPool(character);
+        Assert.That(controller.SetActiveCharacter(2, 0), Is.True);
+
+        var result = controller.AddToCharacterPool(new CharacterInstance(
+            new CharacterDto { Id = "test", Cards = [] }, "inst-2"), sourceSlotIndex: 2);
+
+        Assert.That(result, Is.False);
+        Assert.That(controller.State.PlayerStates[2].PotentialDirectCredit, Is.EqualTo(20), "直充来源槽位");
+        Assert.That(controller.Potential.TeamPool, Is.EqualTo(0), "不动团队池");
     }
 
     [Test]

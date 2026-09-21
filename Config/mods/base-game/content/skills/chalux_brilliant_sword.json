@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.chalux_sword.name",
+  "descId": "skill.chalux_sword.desc",
+  "actionRefs": [
+    { "actionId": "chalux_sword_frost_self" },
+    { "actionId": "chalux_gain_blue_orbs" }
+  ],
+  "tags": ["buff"]
+}

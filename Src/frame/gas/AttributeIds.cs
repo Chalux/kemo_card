@@ -14,4 +14,7 @@ public static class AttributeIds
     public const string Damage = "Damage";
     public const string Healing = "Healing";
     public const string DamageTakenScale = "DamageTakenScale";
+
+    /// <summary>全伤害增加（造成伤害时乘算）：伤害 × (1 + DamageDealtScale + 连携加成)。</summary>
+    public const string DamageDealtScale = "DamageDealtScale";
 }

@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.chalux_def_break.name",
+  "descId": "buff.chalux_def_break.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "modifiers": [
+    { "attributeId": "PhysicalDefense", "operation": "Override", "magnitude": { "kind": "Scalar", "scalar": 0 } },
+    { "attributeId": "MagicDefense", "operation": "Override", "magnitude": { "kind": "Scalar", "scalar": 0 } }
+  ],
+  "tags": ["debuff.def_break"]
+}

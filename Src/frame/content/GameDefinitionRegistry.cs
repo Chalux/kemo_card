@@ -100,6 +100,7 @@ public sealed class GameDefinitionRegistry
             EContentCategory.GameplayEffect => Store.GameplayEffects.Keys,
             EContentCategory.GameplayTag => Store.GameplayTags.Keys,
             EContentCategory.Story => Store.Stories.Keys,
+            EContentCategory.OrbType => Store.OrbTypes.Keys,
             _ => Array.Empty<string>(),
         };
 
