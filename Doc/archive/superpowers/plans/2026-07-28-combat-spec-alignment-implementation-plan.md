@@ -2,15 +2,15 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans，按任务逐步实现。步骤使用 checkbox（`- [ ]`）追踪。
 
-**Goal:** 将 `Src/mod/combat/` 现有实现对齐 [战斗系统规格](../specs/2026-07-21-combat-system-design.md)（含 2026-07-28 开放项决议），消除第 7 节及本次全文审计发现的全部差距。
+**Goal:** 将 `Src/mod/combat/` 现有实现对齐 [战斗系统规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)（含 2026-07-28 开放项决议），消除第 7 节及本次全文审计发现的全部差距。
 
 **Architecture:** 保持 `CombatSimulation` 聚合根 + `ICombatCommand` 指令模型不变，重写其内的经济与手牌模型：能量二分（当前能量 / 当前可用能量）、手牌标记入队（不离手）、回合开始管线、主动技蓄力链（`S` 计数器 + `T_k` 扣费）、玩家侧 Shared 结算（D2 分槽 / Team 账本一次）、封印与弃牌分通道。BattleStart 被动/修饰通过**通用开战技能注入入口**（有序列表由调用方传入）执行，Run 层接线不在本计划内。
 
 **Tech Stack:** Godot 4.6.1 Mono + .NET 8 + C# + 现有测试框架（`Tests/kemo_card.Ui.Tests`）+ `HostRng` / `GameDefinitionRegistry` / GAS（ASC）
 
 **规格来源：**
-- [战斗系统规格 2026-07-21](../specs/2026-07-21-combat-system-design.md)（权威；本计划中「§n」均指该文档章节）
-- [总规格 2026-05-11](../specs/2026-05-11-kemo-card-design.md) 第 3 节摘要
+- [战斗系统规格 2026-07-21](../../../superpowers/specs/2026-07-21-combat-system-design.md)（权威；本计划中「§n」均指该文档章节）
+- [总规格 2026-05-11](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 第 3 节摘要
 
 **范围排除（另开任务）：** Run 层潜能/修饰数据源与 BattleStart 接线、战斗 UI、商店/道具、非 Energy 费用类型实装（v1 仅拒绝入队）。
 

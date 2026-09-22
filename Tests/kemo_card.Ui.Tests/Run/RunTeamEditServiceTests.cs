@@ -249,6 +249,75 @@ public sealed class RunTeamEditServiceTests
 
     #endregion
 
+    #region "可加入卡组"列表
+
+    /// <summary>
+    /// 卡组不允许重复，因此"可加入卡组"列表必须把**已在当前卡组内**的牌标出来
+    /// （界面据此加遮罩 + "已在卡组内"提示并停掉点击）。
+    /// </summary>
+    [Test]
+    public void Pool_cards_mark_the_ones_already_in_the_deck()
+    {
+        var (service, _, _) = Build(poolSize: 1, extraCollectionCards: ["card.extra_a", "card.extra_b"]);
+        var instanceId = service.GetPoolEntries()[0].InstanceId;
+
+        var pool = service.GetPoolCards(instanceId, deckIndex: 0);
+
+        Assert.That(
+            pool.Select(entry => entry.CardId),
+            Is.EquivalentTo(new[] { CombatSimulationTestBuilder.PartyHpCardId, "card.extra_a", "card.extra_b" }),
+            "列表 = 可构筑卡牌（收藏 ∪ 角色专属）");
+        Assert.That(pool.Select(entry => entry.CardId), Is.Ordered, "按 id 排序，界面顺序稳定");
+        Assert.That(
+            pool.Single(entry => entry.CardId == CombatSimulationTestBuilder.PartyHpCardId).InDeck,
+            Is.True,
+            "初始卡组里就有的牌必须带标记");
+        Assert.That(pool.Count(entry => entry.InDeck), Is.EqualTo(1));
+
+        Assert.That(service.AddCard(instanceId, 0, "card.extra_a").Ok, Is.True);
+        Assert.That(
+            service.GetPoolCards(instanceId, 0).Single(entry => entry.CardId == "card.extra_a").InDeck,
+            Is.True,
+            "加入后立刻带上标记");
+
+        Assert.That(service.RemoveCard(instanceId, 0, "card.extra_a").Ok, Is.True);
+        Assert.That(
+            service.GetPoolCards(instanceId, 0).Single(entry => entry.CardId == "card.extra_a").InDeck,
+            Is.False,
+            "移出后标记消失");
+    }
+
+    [Test]
+    public void Pool_card_marks_are_per_deck()
+    {
+        var (service, _, _) = Build(poolSize: 1, extraCollectionCards: ["card.extra_a"]);
+        var instanceId = service.GetPoolEntries()[0].InstanceId;
+        Assert.That(service.AddCard(instanceId, 0, "card.extra_a").Ok, Is.True);
+
+        Assert.That(service.CreateDeck(instanceId).Ok, Is.True);
+
+        var first = service.GetPoolCards(instanceId, 0);
+        var second = service.GetPoolCards(instanceId, 1);
+
+        Assert.That(first.Single(entry => entry.CardId == "card.extra_a").InDeck, Is.True);
+        Assert.That(
+            second.Single(entry => entry.CardId == "card.extra_a").InDeck,
+            Is.False,
+            "标记按卡组各自计算（新卡组没这张牌）");
+    }
+
+    [Test]
+    public void Pool_cards_are_empty_for_unknown_character_or_deck()
+    {
+        var (service, _, _) = Build(poolSize: 1);
+        var instanceId = service.GetPoolEntries()[0].InstanceId;
+
+        Assert.That(service.GetPoolCards("inst.missing", 0), Is.Empty);
+        Assert.That(service.GetPoolCards(instanceId, deckIndex: 9), Is.Empty);
+    }
+
+    #endregion
+
     #region 事件广播（Run 功能内部总线）
 
     [Test]

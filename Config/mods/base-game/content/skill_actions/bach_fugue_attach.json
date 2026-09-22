@@ -1,0 +1,4 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": { "buffId": "bach_fugue_charge", "slotSelection": "all" }
+}

@@ -27,10 +27,17 @@ public sealed class BuffInstance
     /// <summary>充能计数（<see cref="BuiltinBuffTags.SlotCharge"/>）：打出一张牌递减，归零触发并重置。</summary>
     public int ChargeCounter { get; private set; }
 
-    public BuffInstance(BuffDto def, IReadOnlyDictionary<string, object>? parameters)
+    private readonly Func<MagnitudeDefDto, float>? _magnitudeResolver;
+    private readonly HashSet<string> _firedThisTurn = new(StringComparer.Ordinal);
+
+    public BuffInstance(
+        BuffDto def,
+        IReadOnlyDictionary<string, object>? parameters,
+        Func<MagnitudeDefDto, float>? magnitudeResolver = null)
     {
         ArgumentNullException.ThrowIfNull(def);
         Def = def;
+        _magnitudeResolver = magnitudeResolver;
         Params = parameters is { Count: > 0 }
             ? new Dictionary<string, object>(parameters, StringComparer.Ordinal)
             : null;
@@ -72,6 +79,15 @@ public sealed class BuffInstance
 
     public void SetDormant(bool dormant) => IsDormant = dormant;
 
+    /// <summary>
+    /// "本回合仅 1 次"门闩（钩子参数 <c>oncePerTurn: true</c>）：首次调用返回 true 并记账，
+    /// 同回合内再次调用返回 false；<see cref="ResetTurnFlags"/> 在回合开始时清空。
+    /// </summary>
+    public bool TryMarkHookFiredThisTurn(string hookKey) => _firedThisTurn.Add(hookKey);
+
+    /// <summary>回合开始：清空"本回合仅 1 次"记账。</summary>
+    public void ResetTurnFlags() => _firedThisTurn.Clear();
+
     /// <summary>把属性修正（× 层数）注册进持有者 ASC 聚合器；休眠实例或无 ASC 的容器（槽位）为空操作。</summary>
     public void RegisterModifiers(AbilitySystemComponent? asc)
     {
@@ -85,17 +101,41 @@ public sealed class BuffInstance
                 continue;
 
             var magnitude = EvaluateMagnitude(modifierDef.Magnitude) * Stacks;
-            if (!grouped.TryGetValue(modifierDef.AttributeId, out var list))
+            // 球伤害增加的「元素掩码」修正按元素拆分记账，球结算时只吃自己那一份。
+            foreach (var attributeId in ResolveModifierAttributeIds(modifierDef))
             {
-                list = [];
-                grouped[modifierDef.AttributeId] = list;
-            }
+                if (!grouped.TryGetValue(attributeId, out var list))
+                {
+                    list = [];
+                    grouped[attributeId] = list;
+                }
 
-            list.Add(new AttributeModifier(modifierDef.Operation, magnitude, sourceHandle: Handle));
+                list.Add(new AttributeModifier(modifierDef.Operation, magnitude, sourceHandle: Handle));
+            }
         }
 
         foreach (var pair in grouped)
             asc.Aggregator.SetModifiersForHandle(pair.Key, Handle, pair.Value);
+    }
+
+    /// <summary>
+    /// 修正落到哪个（些）属性键上：普通修正是自身；<c>OrbDamageScale</c> + 非 0 元素掩码
+    /// 展开为每个命中元素的 <c>OrbDamageScale:&lt;Element&gt;</c>。
+    /// </summary>
+    private static IEnumerable<string> ResolveModifierAttributeIds(AttributeModifierDefDto modifierDef)
+    {
+        if (!string.Equals(modifierDef.AttributeId, AttributeIds.OrbDamageScale, StringComparison.Ordinal) ||
+            modifierDef.ElementMask == 0)
+        {
+            yield return modifierDef.AttributeId;
+            yield break;
+        }
+
+        foreach (var element in Enum.GetValues<EElement>())
+        {
+            if (element != EElement.None && (modifierDef.ElementMask & (int)element) != 0)
+                yield return AttributeIds.OrbDamageScaleFor(element);
+        }
     }
 
     /// <summary>从持有者 ASC 聚合器撤销全部修正句柄（休眠或移除时调用）。</summary>
@@ -105,7 +145,8 @@ public sealed class BuffInstance
     }
 
     /// <summary>
-    /// buff 修正幅度只支持 Scalar 与 SetByCaller（取自挂载参数）；AttributeBased/Custom 按 0 处理。
+    /// buff 修正幅度支持 Scalar / SetByCaller（取自挂载参数）/ PartyCountScaled（走容器的自定义取值，
+    /// 需要队伍视角）；AttributeBased 与其余 Custom 按 0 处理。
     /// </summary>
     private float EvaluateMagnitude(MagnitudeDefDto magnitudeDef) => magnitudeDef.Kind switch
     {
@@ -114,6 +155,7 @@ public sealed class BuffInstance
             !string.IsNullOrWhiteSpace(magnitudeDef.CallerName) &&
             Params.TryGetValue(magnitudeDef.CallerName, out var value) &&
             float.TryParse(value.ToString(), out var parsed) => parsed,
+        EMagnitudeKind.PartyCountScaled => _magnitudeResolver?.Invoke(magnitudeDef) ?? 0f,
         _ => 0f,
     };
 

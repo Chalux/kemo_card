@@ -1,0 +1,8 @@
+{
+  "displayNameId": "buff.reinhardt_free_cost.name",
+  "descId": "buff.reinhardt_free_cost.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active", "slot.free_cost"]
+}

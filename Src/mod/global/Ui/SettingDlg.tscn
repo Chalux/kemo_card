@@ -6,7 +6,9 @@
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/SettingToggleRow.tscn" id="3_toggle"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/SettingSliderRow.tscn" id="4_slider"]
 
-[node name="SettingDlg" type="Control" unique_id=1987764950 node_paths=PackedStringArray("WindowModeRow", "ResolutionRow", "VSyncRow", "MaxFpsRow", "MasterMuteRow", "MasterVolumeRow", "MusicMuteRow", "MusicVolumeRow", "SfxMuteRow", "SfxVolumeRow", "LanguageRow", "PotentialConsumeModeRow", "PotentialProposalsRow", "PotentialUnlimitedRow")]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_close"]
+
+[node name="SettingDlg" type="Control" node_paths=PackedStringArray("WindowModeRow", "ResolutionRow", "VSyncRow", "MaxFpsRow", "MasterMuteRow", "MasterVolumeRow", "MusicMuteRow", "MusicVolumeRow", "SfxMuteRow", "SfxVolumeRow", "LanguageRow", "PotentialConsumeModeRow", "PotentialProposalsRow", "PotentialUnlimitedRow")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -14,99 +16,189 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_olhfn")
-WindowModeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/WindowModeRow")
-ResolutionRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/ResolutionRow")
-VSyncRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/VSyncRow")
-MaxFpsRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/MaxFpsRow")
-MasterMuteRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/MasterMuteRow")
-MasterVolumeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/MasterVolumeRow")
-MusicMuteRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/MusicMuteRow")
-MusicVolumeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/MusicVolumeRow")
-SfxMuteRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/SfxMuteRow")
-SfxVolumeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/SfxVolumeRow")
-LanguageRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer/LanguageRow")
-PotentialConsumeModeRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer/PotentialConsumeModeRow")
-PotentialProposalsRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer/PotentialProposalsRow")
-PotentialUnlimitedRow = NodePath("BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer/PotentialUnlimitedRow")
+WindowModeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/WindowModeRow")
+ResolutionRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/ResolutionRow")
+VSyncRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/VSyncRow")
+MaxFpsRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/MaxFpsRow")
+MasterMuteRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/MasterMuteRow")
+MasterVolumeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/MasterVolumeRow")
+MusicMuteRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/MusicMuteRow")
+MusicVolumeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/MusicVolumeRow")
+SfxMuteRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/SfxMuteRow")
+SfxVolumeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/SfxVolumeRow")
+LanguageRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/LanguageRow")
+PotentialConsumeModeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/PotentialConsumeModeRow")
+PotentialProposalsRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/PotentialProposalsRow")
+PotentialUnlimitedRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/PotentialUnlimitedRow")
 
-[node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("1_rixra")]
+[node name="Bg" type="Panel" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.11111111
-anchor_top = 0.09876543
-anchor_right = 0.8888889
-anchor_bottom = 0.90123457
-metadata/_edit_use_anchors_ = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"PageBg"
 
-[node name="TabContainer" type="TabContainer" parent="BaseDlgComp" unique_id=1502747723]
+[node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.026785715
-anchor_top = 0.10769231
-anchor_right = 0.97321427
-anchor_bottom = 0.95384616
-current_tab = 0
-metadata/_edit_use_anchors_ = true
-
-[node name="UI_MENU_MAIN_SETTING" type="MarginContainer" parent="BaseDlgComp/TabContainer" unique_id=940192917]
-layout_mode = 2
-theme_override_constants/margin_left = 24
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
 theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-metadata/_tab_index = 0
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
 
-[node name="ScrollContainer" type="ScrollContainer" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING" unique_id=1828590129]
+[node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="SettingVBoxContainer" type="VBoxContainer" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer" unique_id=585511158]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="WindowModeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1217916540 instance=ExtResource("2_dropdown")]
-
-[node name="ResolutionRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1937118252 instance=ExtResource("2_dropdown")]
-
-[node name="VSyncRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2122576042 instance=ExtResource("3_toggle")]
-
-[node name="MaxFpsRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2049693217 instance=ExtResource("2_dropdown")]
-
-[node name="MasterMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1472657531 instance=ExtResource("3_toggle")]
-
-[node name="MasterVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1467974067 instance=ExtResource("4_slider")]
-
-[node name="MusicMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2078536112 instance=ExtResource("3_toggle")]
-
-[node name="MusicVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=383275956 instance=ExtResource("4_slider")]
-
-[node name="SfxMuteRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2005594333 instance=ExtResource("3_toggle")]
-
-[node name="SfxVolumeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=2144398692 instance=ExtResource("4_slider")]
-
-[node name="LanguageRow" parent="BaseDlgComp/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/SettingVBoxContainer" unique_id=1701606078 instance=ExtResource("2_dropdown")]
-
-[node name="UI_MENU_MP_SETTING" type="MarginContainer" parent="BaseDlgComp/TabContainer"]
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-metadata/_tab_index = 1
-
-[node name="ScrollContainer" type="ScrollContainer" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-
-[node name="SettingVBoxContainer" type="VBoxContainer" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="PotentialConsumeModeRow" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+[node name="TopBar" type="HBoxContainer" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
 
-[node name="PotentialProposalsRow" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+[node name="Title" type="Label" parent="Margin/VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"Title"
+text = "UI_MENU_SETTINGS"
 
-[node name="PotentialUnlimitedRow" parent="BaseDlgComp/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/SettingVBoxContainer" instance=ExtResource("3_toggle")]
+[node name="CloseGap" type="Control" parent="Margin/VBox/TopBar"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+
+[node name="TabContainer" type="TabContainer" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="UI_MENU_MAIN_SETTING" type="MarginContainer" parent="Margin/VBox/TabContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+metadata/_tab_index = 0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Center" type="HBoxContainer" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Sheet" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center"]
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="SettingVBoxContainer" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="WindowModeRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+layout_mode = 2
+
+[node name="ResolutionRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+layout_mode = 2
+
+[node name="VSyncRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("3_toggle")]
+layout_mode = 2
+
+[node name="MaxFpsRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+layout_mode = 2
+
+[node name="MasterMuteRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("3_toggle")]
+layout_mode = 2
+
+[node name="MasterVolumeRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("4_slider")]
+layout_mode = 2
+
+[node name="MusicMuteRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("3_toggle")]
+layout_mode = 2
+
+[node name="MusicVolumeRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("4_slider")]
+layout_mode = 2
+
+[node name="SfxMuteRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("3_toggle")]
+layout_mode = 2
+
+[node name="SfxVolumeRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("4_slider")]
+layout_mode = 2
+
+[node name="LanguageRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+layout_mode = 2
+
+[node name="UI_MENU_MP_SETTING" type="MarginContainer" parent="Margin/VBox/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+metadata/_tab_index = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Center" type="HBoxContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+
+[node name="Sheet" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center"]
+custom_minimum_size = Vector2(760, 0)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="SettingVBoxContainer" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="PotentialConsumeModeRow" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+layout_mode = 2
+
+[node name="PotentialProposalsRow" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
+layout_mode = 2
+
+[node name="PotentialUnlimitedRow" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("3_toggle")]
+layout_mode = 2
+
+[node name="BaseDlgComp" parent="." instance=ExtResource("1_rixra")]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -72.0
+offset_top = 26.0
+offset_right = -28.0
+offset_bottom = 70.0
+grow_horizontal = 0
+grow_vertical = 1
+
+[node name="DlgBg" parent="BaseDlgComp"]
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_close")
+
+[node name="Ribbon" parent="BaseDlgComp/DlgBg"]
+visible = false
+
+[node name="CloseBtn" parent="BaseDlgComp/DlgBg"]
+offset_left = -44.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 44.0

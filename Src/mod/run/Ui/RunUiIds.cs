@@ -13,4 +13,7 @@ public static class RunUiIds
 
     /// <summary>队伍编辑的二级界面：单个角色的卡组与上阵。</summary>
     public const string CharacterDeck = "RunCharacterDeckDlg";
+
+    /// <summary>ESC 系统菜单（设置 / 图鉴 / 词典 / 保存并退出 / 退出到桌面）。</summary>
+    public const string PauseMenu = "RunPauseDlg";
 }

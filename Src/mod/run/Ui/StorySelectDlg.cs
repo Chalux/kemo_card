@@ -6,6 +6,7 @@ using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Global.Condition;
+using KemoCard.Mod.Global.Ui.Themes;
 using System.Text.Json;
 
 namespace KemoCard.Mod.Run.Ui;
@@ -82,7 +83,8 @@ public partial class StorySelectDlg : BaseDlg
                 var index = list.ItemCount - 1;
                 if (!playable)
                 {
-                    list.SetItemCustomBgColor(index, new Color(0.25f, 0.25f, 0.3f));
+                    list.SetItemCustomBgColor(index, KemoPalette.SurfaceSunken);
+                    list.SetItemCustomFgColor(index, KemoPalette.TextDisabled);
                 }
             }
 

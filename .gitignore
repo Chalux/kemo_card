@@ -22,3 +22,5 @@
 # Brainstorm visual companion sessions
 .superpowers/
 
+# zcode
+.zcode/

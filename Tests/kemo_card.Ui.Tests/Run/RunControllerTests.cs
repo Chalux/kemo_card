@@ -20,7 +20,7 @@ public sealed class RunControllerTests
             Id = "hero_full",
             DisplayNameId = "char.hero_full.name",
             Element = EElement.Blue,
-            Race = ERace.Canine,
+            Race = ERace.Animal,
             Cards = [CombatSimulationTestBuilder.PartyHpCardId],
             MaxEnergy = 7,
             InitialEnergy = 4,

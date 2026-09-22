@@ -107,6 +107,9 @@ public sealed class BuffRuntime
         BuffDto def,
         IReadOnlyDictionary<string, object>? parameters)
     {
+        // 充能互斥优先于一切：同一槽位只允许 1 个充能，新充能无条件覆盖旧的并重置进度。
+        RemoveExistingCharges(simulation, container, holder, def);
+
         if (!string.IsNullOrWhiteSpace(def.ExclusiveGroup))
         {
             foreach (var removed in container.RemoveExclusiveGroup(def.ExclusiveGroup))
@@ -140,6 +143,31 @@ public sealed class BuffRuntime
         var instance = container.Add(def, FilterInstanceParams(parameters));
         FireHook(simulation, holder, instance, def.Hooks.OnApply);
         return instance;
+    }
+
+    /// <summary>
+    /// 充能互斥（充能规格 §2）：同一槽位<b>只允许存在 1 个</b> <see cref="BuiltinBuffTags.SlotCharge"/> buff。
+    /// 新的充能<b>无条件覆盖</b>旧的——即使 new 与 old 完全同 id、也即使 <c>stackRule</c> 写的是
+    /// Refresh/Add——并且<b>进度重置</b>（充能计数回到新 buff 声明的值）。
+    /// 覆盖时对旧实例补发 onRemove，与其它移除路径口径一致。
+    /// </summary>
+    private void RemoveExistingCharges(
+        CombatSimulation simulation,
+        BuffContainer container,
+        CombatTargetRef holder,
+        BuffDto def)
+    {
+        if (!def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal))
+            return;
+
+        var existing = container.All
+            .Where(instance => instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal))
+            .ToList();
+        foreach (var instance in existing)
+        {
+            FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
+            container.Remove(instance);
+        }
     }
 
     /// <summary>驱散：按 buffId 或 tag 集匹配；带 <see cref="BuiltinBuffTags.Undispellable"/> 的一律跳过。</summary>
@@ -194,7 +222,57 @@ public sealed class BuffRuntime
             {
                 if (instance.IsDormant)
                     continue;
+                instance.ResetTurnFlags();
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnTurnStart, gateTurnInterval: true);
+            }
+        }
+    }
+
+    /// <summary>本回合全部卡牌结算结束（普攻之前）：触发所有角色的 onCardExecutionEnd。</summary>
+    public void FireCardExecutionEnd(CombatSimulation simulation)
+    {
+        FireForAllPlayerCharacters(simulation, instance => instance.Def.Hooks.OnCardExecutionEnd);
+    }
+
+    /// <summary>
+    /// 充能球触发结算后：对<b>参与本次产球</b>的角色各触发一次 onOrbTriggered
+    /// （素材按产球者归属，去重；配合 <c>oncePerTurn</c> 即"每回合仅 1 次"）。
+    /// </summary>
+    public void FireOrbTriggered(CombatSimulation simulation, IReadOnlyCollection<int> producerIndexes)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
+        ArgumentNullException.ThrowIfNull(producerIndexes);
+
+        foreach (var index in producerIndexes.Distinct().OrderBy(value => value))
+        {
+            if (!TryGetCharacter(simulation, index, out var character, out _))
+                continue;
+
+            var holder = new CombatTargetRef(ECombatSide.Player, index);
+            foreach (var instance in character.Buffs.All.ToArray())
+            {
+                if (instance.IsDormant)
+                    continue;
+                FireHook(simulation, holder, instance, instance.Def.Hooks.OnOrbTriggered);
+            }
+        }
+    }
+
+    private void FireForAllPlayerCharacters(
+        CombatSimulation simulation,
+        Func<BuffInstance, IReadOnlyList<EffectRefDto>> selectHooks)
+    {
+        for (var index = 0; index < simulation.PlayerTeam.Characters.Count; index++)
+        {
+            if (!TryGetCharacter(simulation, index, out var character, out _))
+                continue;
+
+            var holder = new CombatTargetRef(ECombatSide.Player, index);
+            foreach (var instance in character.Buffs.All.ToArray())
+            {
+                if (instance.IsDormant)
+                    continue;
+                FireHook(simulation, holder, instance, selectHooks(instance));
             }
         }
     }
@@ -256,6 +334,28 @@ public sealed class BuffRuntime
             if (instance.IsDormant)
                 continue;
             FireHook(simulation, holder, instance, instance.Def.Hooks.OnActiveSkillCast);
+        }
+    }
+
+    /// <summary>
+    /// 持有者打出的卡牌<b>结算完成后</b>触发其 onCardSettled（逐张，本回合内累计；2026-09-21 新增）。
+    /// 与 onSlotCardPlayed 的分工：后者是槽位 buff 的"打牌瞬间（结算前）"，本钩子是角色级"结算后"。
+    /// 莱因哈特被动2「本回合打出 2 张以上黄属性卡」据此接线：判定读
+    /// <c>ICombatCondContext.CountCardsPlayedThisTurn</c>（该卡此时已登记进本回合出牌表）。
+    /// </summary>
+    public void FireCardSettled(CombatSimulation simulation, int characterIndex)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
+        if (!TryGetCharacter(simulation, characterIndex, out var character, out _))
+            return;
+
+        var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
+        foreach (var instance in character.Buffs.All.ToArray())
+        {
+            if (instance.IsDormant)
+                continue;
+
+            FireHook(simulation, holder, instance, instance.Def.Hooks.OnCardSettled);
         }
     }
 
@@ -394,8 +494,23 @@ public sealed class BuffRuntime
             if (gateTurnInterval && !PassesTurnInterval(simulation, merged))
                 continue;
 
+            // oncePerTurn：同一 buff 实例的同一效果每回合只触发一次（"每回合仅 1 次"类被动）。
+            if (IsOncePerTurn(merged.Params) && !instance.TryMarkHookFiredThisTurn(effectRef.EffectId))
+                continue;
+
             _executor.ExecuteEffectRef(merged, simulation, holder, ResolveHookTargets(simulation, holder, merged.Params));
         }
+    }
+
+    /// <summary>钩子参数 <c>oncePerTurn: true</c> 判定（记账键用 effectId，同 buff 的不同效果互不影响）。</summary>
+    private static bool IsOncePerTurn(IReadOnlyDictionary<string, object>? parameters)
+    {
+        if (parameters is null || !parameters.TryGetValue("oncePerTurn", out var value) || value is null)
+            return false;
+
+        return value is bool flag
+            ? flag
+            : string.Equals(value.ToString(), "true", StringComparison.OrdinalIgnoreCase);
     }
 
     private void FireHookList(
@@ -459,7 +574,7 @@ public sealed class BuffRuntime
             return null;
 
         var filtered = parameters
-            .Where(pair => pair.Key is not ("hookTargets" or "targetFilter" or "turnInterval"))
+            .Where(pair => pair.Key is not ("hookTargets" or "targetFilter" or "turnInterval" or "oncePerTurn"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         return filtered.Count > 0 ? filtered : null;
     }

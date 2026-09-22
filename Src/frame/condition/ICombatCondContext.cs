@@ -1,6 +1,27 @@
 namespace KemoCard.Frame.Condition;
 
-/// <summary>Combat 域上下文占位；v1 无业务查询方法。</summary>
+/// <summary>
+/// Combat 域的条件上下文（2026-09-21 启用）：效果 <c>conditions</c> 在<b>战斗内</b>求值时可用。
+/// </summary>
+/// <remarks>
+/// 刻意只暴露基础类型（<see cref="int"/> 位标志），避免 <c>Frame.Condition</c> 反向依赖内容层枚举
+/// （内容是 <c>Frame.Content</c> → <c>Frame.Condition</c> 的调用方向）。
+/// 属性/种族位标志的口径与 <c>CardDto.Element</c>、<c>CharacterDto.Race</c> 一致。
+/// </remarks>
 public interface ICombatCondContext
 {
+    /// <summary>全场累计回合数（换波不清零）。</summary>
+    int TurnNumber { get; }
+
+    /// <summary>波内回合计数（换波清零）。</summary>
+    int TurnsIntoWave { get; }
+
+    /// <summary>当前输出来源的角色槽位索引（-1 = 非角色来源）。</summary>
+    int SourceCharacterIndex { get; }
+
+    /// <summary>
+    /// 本回合该角色打出的卡牌张数：只统计属性与 <paramref name="elementFlags"/> 有交集的卡
+    /// （<paramref name="elementFlags"/> 为 0 时不筛属性）。含空放——牌离开手牌即算打出。
+    /// </summary>
+    int CountCardsPlayedThisTurn(int characterIndex, int elementFlags);
 }

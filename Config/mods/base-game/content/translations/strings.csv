@@ -3,10 +3,6 @@ MOD_BASE_GAME_DISPLAY_NAME,基础内容,Base Content
 card.strike.name,打击,Strike
 card.strike.artist,示例画师,Sample Artist
 card.strike_plus.name,打击+,Strike+
-skill.kemo_dash.name,冲刺,Dash
-skill.kemo_dash.desc,对单个敌人造成 5 点伤害。,Deal 5 damage to a single enemy.
-skill.kemo_dash_charged.name,蓄力冲刺,Charged Dash
-skill.kemo_dash_charged.desc,对单个敌人造成 12 点伤害。,Deal 12 damage to a single enemy.
 skill.strike_hit.name,打击,Strike
 skill.strike_hit.desc,造成 6 点伤害。获得 [url=kw:exhaust]消耗[/url]。,Deal 6 damage. Gain [url=kw:exhaust]Exhaust[/url].
 story.kemo_first.name,科莫的初见,Kemo's First Contact
@@ -14,9 +10,8 @@ story.kemo_first.desc,科莫的故事由此开始。抵达森林，遭遇史莱�
 story.kemo_second.name,科莫的试炼,Kemo's Trial
 story.kemo_second.desc,通关「科莫的初见」后解锁的进阶故事。,An advanced story unlocked after clearing "Kemo's First Contact".
 story.base_rogue.name,肉鸽模式,Rogue Mode
-story.base_rogue.desc,标准的肉鸽循环：穿越环层，遭遇战斗与事件，不断收集卡牌强化构筑，直到通关或倒下。,Standard rogue-lite loop: traverse the rings, face battles and events, grow your deck, until victory or defeat.
+story.base_rogue.desc,标准的肉鸽循环：穿越环层，遭遇战斗与事件，不断收集卡牌强化构筑，直到通关或倒下。,"Standard rogue-lite loop: traverse the rings, face battles and events, grow your deck, until victory or defeat."
 char.chalux.name,克鲁克斯,Chalux
-char.chalux.desc,蓝属性的犬族战士。潜能解放后，寒气将追随他的每一次挥击。,A blue-element canine warrior. As his potential awakens, the cold follows every strike.
 buff.chalux_p1.desc,自身打出卡牌时不受[url=kw:hand_slot_damage]手牌槽伤害[/url]效果影响。,Immune to [url=kw:hand_slot_damage]hand slot damage[/url] effects when playing cards.
 card.chalux_orca.name,逆戟冰冲,Orca Ice Rush
 card.chalux_path.name,璨华长路,Resplendent Path
@@ -44,10 +39,10 @@ orb.yellow.name,黄属性球,Yellow Orb
 orb.physical.name,物理球,Physical Orb
 orb.magic.name,魔法球,Magic Orb
 buff.chalux_p2.desc,自身打出的蓝属性卡牌同时计入红属性[url=kw:chain]连携[/url]统计（多属性卡各属性均计入）。,Blue cards he plays also count toward the Red [url=kw:chain]chain[/url] (multi-element cards count for each element).
-buff.chalux_p3.desc,每个阶层开始时与阶层内每 8 回合开始时：自身技能进度 +4，蓝属性角色 +2，犬族角色 +2（可叠加）。,At each wave start and every 8th turn within a wave: his skill progress +4, Blue characters +2, Canine characters +2 (stacks additively).
-buff.chalux_p4.desc,蓝属性或犬族的队友（含自身）物理攻击、魔法攻击、治疗量 +6。,Allies with Blue element or Canine race gain +6 Physical/Magic Attack and Heal Power.
-buff.chalux_p5.desc,蓝属性或犬族的队友（含自身）全伤害增加 25%。,Allies with Blue element or Canine race deal +25% all damage.
-buff.chalux_p6.desc,自身释放主动技时：敌方全体物理防御与魔法防御变为 0（1 回合），自身立即获得 3 点可用能量。,When he casts his active skill: all enemies' defenses become 0 for 1 turn, and he immediately gains 3 available energy.
+buff.chalux_p3.desc,每个阶层开始时与阶层内每 8 回合开始时：自身技能进度 +3，蓝属性角色 +1，动物角色 +1，龙族角色 +1（可叠加）。,"At each wave start and every 8th turn within a wave: his skill progress +3, Blue characters +1, Animal characters +1, Dragon characters +1 (stacks additively)."
+buff.chalux_p4.desc,蓝属性、动物或龙族的队友（含自身）物理攻击、魔法攻击、治疗量 +6。,Allies with Blue element or Animal/Dragon race gain +6 Physical/Magic Attack and Heal Power.
+buff.chalux_p5.desc,蓝属性、动物或龙族的队友（含自身）全伤害增加 25%。,Allies with Blue element or Animal/Dragon race deal +25% all damage.
+buff.chalux_p6.desc,自身释放主动技时：敌方全体物理防御与魔法防御变为 0（1 回合），自身立即获得 3 点可用能量。,"When he casts his active skill: all enemies' defenses become 0 for 1 turn, and he immediately gains 3 available energy."
 buff.chalux_frost.name,超限增幅,Overlimit Amp
 buff.chalux_frost.desc,物理攻击 +6，持续 3 回合。,Physical Attack +6 for 3 turns.
 buff.chalux_charge.name,充能·极寒,Charge: Glacial
@@ -63,10 +58,6 @@ buff.training_dummy_regen.name,木桩再生,Dummy Regeneration
 buff.training_dummy_regen.desc,每回合开始时恢复 10000 点生命。,Restore 10000 health at the start of each turn.
 battle.training_dummy.name,木桩练习,Dummy Practice
 battle.training_dummy.desc,单波两个木桩：血厚且每回合回血，用来观察伤害与机制。,One wave of two dummies that heal each turn.
-char.kemo.name,科莫,Kemo
-char.kemo.desc,红属性的人类与犬族战士，擅长冲刺连击。,A red-element warrior of human and canine blood who excels at dashing strikes.
-buff.kemo_talent.name,天赋,Talent
-buff.kemo_talent.desc,科莫的天赋（永久）。,Kemo's talent (permanent).
 enemy.slime.name,史莱姆,Slime
 enemy.slime.desc,森林里最常见的软体魔物。,The most common soft monster in the forest.
 enemy.slime_elite.name,精英史莱姆,Elite Slime
@@ -101,3 +92,71 @@ attr.damage_dealt_scale.name,全伤害增加,Damage Dealt Scale
 attr.damage_taken_scale.name,受伤倍率,Damage Taken Scale
 attr.max_energy.name,能量上限,Max Energy
 attr.initial_energy.name,初始能量,Initial Energy
+attr.normal_attack_count.name,普攻次数,Normal Attack Count
+attr.normal_attack_damage_dealt_scale.name,普攻伤害增加,Normal Attack Damage Dealt Scale
+attr.normal_attack_damage_taken_scale.name,普攻受伤倍率,Normal Attack Damage Taken Scale
+char.reinhardt.name,莱因哈特,Reinhardt
+card.reinhardt_treasure.name,黑船宝藏,Black Ship Treasure
+card.reinhardt_howling.name,呼啸激攻,Howling Onslaught
+card.reinhardt_voyage.name,碧蓝大海航行,Azure Voyage
+card.reinhardt_blade.name,辉耀宝刀,Radiant Blade
+skill.reinhardt_command.name,黄潮号令,Yellow Tide Command
+skill.reinhardt_command.desc,黄属性·动物的友方角色 2 回合物理攻击 +15；自身 2 回合获得 100% 追打。,Yellow/Animal allies gain +15 P.Atk for 2 turns; gain 100% follow-up attack for 2 turns.
+skill.reinhardt_treasure.name,黑船宝藏,Black Ship Treasure
+skill.reinhardt_treasure.desc,自身 2 回合普通攻击次数 +1。,Gain +1 normal attack for 2 turns.
+skill.reinhardt_howling.name,呼啸激攻,Howling Onslaught
+skill.reinhardt_howling.desc,目标 2 回合内受到的普通攻击伤害增加 25%。,The target takes 25% more normal attack damage for 2 turns.
+skill.reinhardt_voyage.name,碧蓝大海航行,Azure Voyage
+skill.reinhardt_voyage.desc,自身 4 回合获得 100% 追打。,Gain 100% follow-up attack for 4 turns.
+skill.reinhardt_blade.name,辉耀宝刀,Radiant Blade
+skill.reinhardt_blade.desc,对单个敌人造成 3 + 25% 物理攻击的物理伤害；自身 1 回合获得 100% 追打。,Deal 3 + 25% P.Atk physical damage to a single enemy; gain 100% follow-up attack for 1 turn.
+ge.reinhardt_blade.name,辉耀宝刀伤害,Radiant Blade Damage
+buff.reinhardt_command_atk.name,黄潮·锐锋,Tide Edge
+buff.reinhardt_command_atk.desc,物理攻击 +15，持续 2 回合。,Physical Attack +15 for 2 turns.
+buff.reinhardt_p2_atk.desc,物理攻击 +15，持续 1 回合。,Physical Attack +15 for 1 turn.
+buff.reinhardt_follow_up.name,追打,Follow-Up
+buff.reinhardt_follow_up.desc,自身不是本回合普攻归属角色时，仍以 100% 攻击力参与该次普通攻击。,"When not this turn's normal attacker, joins the normal attack at 100% attack power."
+buff.reinhardt_extra_attack.name,连射,Extra Volley
+buff.reinhardt_extra_attack.desc,普通攻击次数 +1。,Normal attack count +1.
+buff.reinhardt_vulnerable.name,破绽,Exposed
+buff.reinhardt_vulnerable.desc,受到的普通攻击伤害增加 25%。,Takes 25% more normal attack damage.
+buff.reinhardt_free_cost.name,零费,Free Cast
+buff.reinhardt_free_cost.desc,该手牌本次行动的费用变为 0。,This hand slot's card costs 0 until end of turn.
+buff.reinhardt_p1.desc,自身不受[url=kw:seal]封印[/url]效果的影响。,Immune to [url=kw:seal]seal[/url] effects.
+buff.reinhardt_p2.desc,卡牌结算后，若本回合自身打出过 2 张以上黄属性卡牌，自身 1 回合物理攻击 +15。,"After a card settles: if he played 2+ Yellow cards this turn, gain +15 P.Atk for 1 turn."
+buff.reinhardt_p3.desc,每个阶层开始时与阶层内每 10 回合开始时：自身技能进度 +2，黄属性角色 +2，动物角色 +2（可叠加）。,"At each wave start and every 10th turn within a wave: his skill progress +2, Yellow characters +2, Animal characters +2 (stacks additively)."
+buff.reinhardt_p4.desc,队伍每有 1 名黄属性·动物角色，自身最大生命 +40（含自身，最多 4 名）。,"For each Yellow/Animal character in the team, his Max Health +40 (includes himself, up to 4)."
+buff.reinhardt_p5.desc,自身普通攻击造成的伤害 +50%。,His normal attacks deal +50% damage.
+buff.reinhardt_p6.desc,自身释放主动技时：自身随机一张手牌的费用直到回合结束前变为 0。,"When he casts his active skill, a random card in his hand costs 0 until end of turn."
+attr.orb_damage_scale.name,元素球伤害增加,Orb Damage Scale
+char.bach.name,巴赫,Bach
+skill.bach_revelation.name,天国神启,Heavenly Revelation
+skill.bach_revelation.desc,获得红·黄·蓝·绿属性球各 1 个。,"Gain 1 Red, Yellow, Blue and Green orb each."
+skill.bach_charge_two.name,天国神启·充能II,Heavenly Revelation: Charge II
+skill.bach_charge_two.desc,自身 2 回合元素球伤害 +25%；获得红·黄·蓝·绿·物理·魔法属性球各 1 个。,"His orb damage +25% for 2 turns; gain 1 Red, Yellow, Blue, Green, Physical and Magic orb each."
+buff.bach_orb_amp.name,启明增幅,Revelation Amp
+buff.bach_orb_amp.desc,元素球伤害 +25%，持续 2 回合。,Orb damage +25% for 2 turns.
+buff.bach_p1.desc,自身不受中毒效果的影响。,Immune to poison effects.
+buff.bach_p2.desc,每回合仅 1 次，触发元素球后获得 2 个绿属性球。,"Once per turn, after orbs trigger he gains 2 Green orbs."
+buff.bach_p3.desc,每个阶层开始时与阶层内每 6 回合开始时：自身技能进度 +2，绿属性角色 +1，人类角色 +1，神族角色 +1（可叠加）。,"At each wave start and every 6th turn within a wave: his skill progress +2, Green characters +1, Human characters +1, God characters +1 (stacks additively)."
+buff.bach_p4.desc,队伍内绿属性角色 ≥ 2 时：全队绿属性球伤害 +50%。,While the team has 2+ Green characters: all allies' Green orb damage +50%.
+buff.bach_p5.desc,本回合内自身打出 2 张以上卡牌时，卡牌执行结束后获得 X-1 个绿属性球（X = 本回合打出的卡牌数）。,"If he played 2+ cards this turn, gain X-1 Green orbs after card execution (X = cards played this turn)."
+buff.bach_p6.desc,自身释放主动技时：自身 1 回合物理攻击·魔法攻击 +30。,When he casts his active skill: his P.Atk and M.Atk +30 for 1 turn.
+buff.bach_p6_stat.desc,物理攻击与魔法攻击 +30，持续 1 回合。,Physical and Magic Attack +30 for 1 turn.
+card.bach_cantata.name,康塔塔,Cantata
+card.bach_hymn.name,赞歌,Hymn
+skill.bach_cantata.name,康塔塔,Cantata
+skill.bach_cantata.desc,自身卡组内绿属性卡牌达到 0/4/7 张时，获得 2/3/4 个绿属性球。,Gain 2/3/4 Green orbs when his deck holds 0/4/7 Green cards.
+skill.bach_hymn.name,赞歌,Hymn
+skill.bach_hymn.desc,赋予自身【2 回合 / 魔法攻击 +6】。,Grant self +6 M.Atk for 2 turns.
+buff.bach_hymn_magic.name,赞歌余韵,Hymn Echo
+buff.bach_hymn_magic.desc,魔法攻击 +6，持续 2 回合。,Magic Attack +6 for 2 turns.
+card.bach_trio.name,三重奏,Trio
+skill.bach_trio.name,三重奏,Trio
+skill.bach_trio.desc,对单个敌人造成 6 点魔法伤害；直到此卡打出前，本回合每触发 1 个绿属性球，本次伤害额外获得 100% 魔法攻击加成（最多 +300%）。,"Deal 6 magic damage to a single enemy. Until this card resolves, every Green orb triggered this turn adds +100% Magic Attack to it (up to +300%)."
+ge.bach_trio.name,三重奏伤害,Trio Damage
+card.bach_fugue.name,赋格,Fugue
+skill.bach_fugue.name,赋格,Fugue
+skill.bach_fugue.desc,自身 1·2·3·4·5 号手牌槽获得【2 回合 / 充能I】：该槽每打出一张牌获得 1 个绿属性球。,All five of his hand slots gain Charge I for 2 turns: each card played from that slot grants 1 Green orb.
+buff.bach_fugue_charge.name,赋格·回响,Fugue Echo
+buff.bach_fugue_charge.desc,该槽每打出一张牌，获得 1 个绿属性球，持续 2 回合。,Each card played from this slot grants 1 Green orb. Lasts 2 turns.

@@ -20,6 +20,8 @@ public partial class BaseCardItem : Control
     [Export] private Label? _txtCardType;
     [Export] private Label? _txtCardVal;
     [Export] private ColorRect? _crAttr;
+    [Export] private ColorRect? _overlayMask;
+    [Export] private Label? _overlayLabel;
     [Export] public ECardClickAction ClickAction { get; set; } = ECardClickAction.OpenDetails;
     [Export] public bool EnableHoverTip { get; set; }
     [Export] public float TipDelaySec { get; set; } = 0.15f;
@@ -217,6 +219,10 @@ public partial class BaseCardItem : Control
         _displayOverride = null;
         _costType = card?.CostType ?? ECostType.None;
 
+        // 遮罩属于"宿主给的临时状态"（如"已在卡组内"），数据一换就必须复位：
+        // 列表项是对象池复用的，不清会让上一张牌的遮罩留到下一张牌上。
+        SetOverlay(null);
+
         if (card is null)
         {
             ClearVisuals();
@@ -236,6 +242,31 @@ public partial class BaseCardItem : Control
         _displayOverride = value;
         RefreshValueLabel();
     }
+
+    /// <summary>
+    /// 整卡遮罩 + 提示文案（如"已在卡组内"）：<paramref name="text"/> 为 null/空白时清除遮罩。
+    /// </summary>
+    /// <remarks>
+    /// 遮罩只负责"看起来不可选"，不改变点击语义——是否还响应单击由宿主决定
+    /// （卡组编辑里"已在卡组内"的牌不再挂 <see cref="Clicked"/>）。
+    /// 数据变更（<see cref="SetData"/>）会自动清除遮罩。
+    /// </remarks>
+    public void SetOverlay(string? text)
+    {
+        var visible = !string.IsNullOrWhiteSpace(text);
+        if (_overlayLabel != null)
+        {
+            _overlayLabel.Text = visible ? text : "";
+        }
+
+        if (_overlayMask != null)
+        {
+            _overlayMask.Visible = visible;
+        }
+    }
+
+    /// <summary>当前是否显示遮罩（宿主与探针用来核对状态）。</summary>
+    public bool HasOverlay => _overlayMask?.Visible ?? false;
 
     public void ShowTips(IReadOnlyList<KeywordTipRequest> tips, TipSide preferSide = TipSide.Right)
     {
@@ -520,6 +551,7 @@ public partial class BaseCardItem : Control
         ApplyElementShader([ColorDefinitions.NoneElement]);
         SetArt(null);
         SetCardFrame(null);
+        SetOverlay(null);
     }
 
     private void ApplyCost(ECostType costType, int cost)

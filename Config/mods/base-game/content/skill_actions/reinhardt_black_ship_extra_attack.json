@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "reinhardt_extra_normal_attack",
+    "targetFilter": { "self": true }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "descId": "buff.reinhardt_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "modifiers": [
+    {
+      "attributeId": "MaxHealth",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "PartyCountScaled",
+        "perCount": 40,
+        "countElementAny": ["Yellow"],
+        "countRaceAny": ["Animal"]
+      }
+    }
+  ]
+}

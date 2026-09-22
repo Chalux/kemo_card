@@ -2,6 +2,7 @@ using System.Text.Json;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Condition;
 using KemoCard.Frame.Gas;
+using KemoCard.Frame.Gas.Executions;
 
 namespace KemoCard.Frame.Content;
 
@@ -151,7 +152,6 @@ public sealed class ContentDefinitionValidator
         foreach (var character in store.Characters.Values)
         {
             ValidateSkillRefs(EContentCategory.Character, character.Id, character.SkillRefs, store, errors);
-            ValidateBuffRefs(EContentCategory.Character, character.Id, character.BuffRefs, store, errors);
             ValidatePassives(character, store, errors);
             foreach (var cardId in character.Cards)
             {
@@ -454,6 +454,9 @@ public sealed class ContentDefinitionValidator
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnWaveStart, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnActiveSkillCast, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnSlotCardPlayed, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardSettled, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardExecutionEnd, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbTriggered, store, errors);
         }
     }
 
@@ -484,9 +487,47 @@ public sealed class ContentDefinitionValidator
                 ValidateBuffRemovalParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
             }
 
-            if (effect.Kind == EEffectKind.GainOrb)
+            if (effect.Kind is EEffectKind.GainOrb or EEffectKind.GainOrbPerPlayedCard or EEffectKind.GainOrbByDeckCount)
             {
                 ValidateOrbTypeIdInParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
+            }
+
+            if (effect.Kind == EEffectKind.AttachSlotBuff)
+            {
+                ValidateAttachSlotParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
+            }
+
+            ValidateEffectConditions(effect, errors);
+            ValidateScaledRuntimeParams(EContentCategory.Effect, effect.Id, effect.Params, errors);
+        }
+    }
+
+    /// <summary>
+    /// 效果级条件（<c>EffectDto.conditions</c>）必须能在 Combat 域解析：运行期对未知 CondType / 非法参数
+    /// 是"条件不通过"的静默失败，写错类型键会让效果永远不触发，必须在内容准入阶段拦下。
+    /// </summary>
+    private static void ValidateEffectConditions(EffectDto effect, List<ContentDefinitionValidationError> errors)
+    {
+        foreach (var condition in effect.Conditions)
+        {
+            var sourcePath = $"effect:{effect.Id}:conditions.{condition.Kind}";
+            if (!ConditionDomains.Combat.TryGet(condition.Kind, out var handler) || handler is null)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.Effect,
+                    effect.Id,
+                    $"Unknown condition kind '{condition.Kind}'."));
+                continue;
+            }
+
+            var args = JsonSerializer.SerializeToElement(
+                condition.Params ?? new Dictionary<string, object>(StringComparer.Ordinal));
+            if (!handler.TryParse(args, sourcePath, out _, out var conditionError))
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    EContentCategory.Effect,
+                    effect.Id,
+                    conditionError ?? $"Invalid params for condition '{condition.Kind}'."));
             }
         }
     }
@@ -548,21 +589,329 @@ public sealed class ContentDefinitionValidator
 
             if (action.Kind == ESkillActionKind.AttachSlotBuff)
             {
-                var slotIndex = GetIntParam(action.Params, "slotIndex");
-                if (slotIndex is null || slotIndex < 0)
-                {
-                    errors.Add(new ContentDefinitionValidationError(
-                        EContentCategory.SkillAction,
-                        action.Id,
-                        "AttachSlotBuff requires a non-negative params.slotIndex."));
-                }
+                ValidateAttachSlotParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
             }
 
             if (action.Kind == ESkillActionKind.GainOrb)
             {
                 ValidateOrbTypeIdInParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
             }
+
+            ValidateScaledRuntimeParams(EContentCategory.SkillAction, action.Id, action.Params, errors);
         }
+    }
+
+    /// <summary>
+    /// 2026-09-21 新增的"参数化机制"取值校验。这些参数在运行期对非法 / 缺失一律<b>静默退化</b>：
+    /// <list type="bullet">
+    /// <item><c>attackScaleFromOrbs</c> 漏写或写错 <c>maxBonus</c> ⇒ <c>attackScale</c> 恒为 1（参数完全无效，卡面伤害静默变低）；</item>
+    /// <item><c>tiers</c> 结构写错 ⇒ 一个球都不发；</item>
+    /// <item><c>perCard</c> / <c>offset</c> / <c>elementMask</c> 非数字 ⇒ 回落缺省；</item>
+    /// <item><c>oncePerTurn</c> 非布尔 ⇒ 恒为 false（"每回合仅 1 次"失效，被动每张牌都触发）。</item>
+    /// </list>
+    /// 与 <c>damageType</c> / 效果条件的校验同口径：这类"静默失败"必须在内容准入阶段拦下。
+    /// </summary>
+    private static void ValidateScaledRuntimeParams(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object>? parameters,
+        List<ContentDefinitionValidationError> errors)
+    {
+        if (parameters is null || parameters.Count == 0)
+        {
+            return;
+        }
+
+        ValidateIntParam(category, definitionId, parameters, "perCard", errors, allowNegative: true);
+        ValidateIntParam(category, definitionId, parameters, "offset", errors, allowNegative: true);
+        ValidateIntParam(category, definitionId, parameters, "elementMask", errors, allowNegative: false);
+        ValidateBoolParam(category, definitionId, parameters, "oncePerTurn", errors);
+        ValidateOrbTiers(category, definitionId, parameters, errors);
+        ValidateAttackScaleFromOrbs(category, definitionId, parameters, errors);
+    }
+
+    private static void ValidateIntParam(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object> parameters,
+        string key,
+        List<ContentDefinitionValidationError> errors,
+        bool allowNegative)
+    {
+        if (!parameters.ContainsKey(key) || parameters[key] is null)
+        {
+            return;
+        }
+
+        if (GetIntParam(parameters, key) is not { } parsed)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, $"params.{key} must be an integer."));
+            return;
+        }
+
+        if (!allowNegative && parsed < 0)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, $"params.{key} must be >= 0."));
+        }
+    }
+
+    private static void ValidateBoolParam(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object> parameters,
+        string key,
+        List<ContentDefinitionValidationError> errors)
+    {
+        if (!parameters.TryGetValue(key, out var value) || value is null)
+        {
+            return;
+        }
+
+        var valid = value switch
+        {
+            bool => true,
+            JsonElement { ValueKind: JsonValueKind.True or JsonValueKind.False } => true,
+            JsonElement { ValueKind: JsonValueKind.String } element =>
+                bool.TryParse(element.GetString(), out _),
+            string text => bool.TryParse(text, out _),
+            _ => false,
+        };
+        if (!valid)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, $"params.{key} must be a boolean."));
+        }
+    }
+
+    /// <summary><c>params.tiers</c>：非空的 <c>[最小张数, 球数]</c> 整数对列表（写成别的一律不发球）。</summary>
+    private static void ValidateOrbTiers(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object> parameters,
+        List<ContentDefinitionValidationError> errors)
+    {
+        if (!parameters.TryGetValue("tiers", out var value) || value is null)
+        {
+            return;
+        }
+
+        if (!TryGetParamItems(value, out var tiers) || tiers.Count == 0)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "params.tiers must be a non-empty array of [minCount, orbCount] pairs."));
+            return;
+        }
+
+        foreach (var tier in tiers)
+        {
+            if (!TryGetParamItems(tier, out var pair) || pair.Count != 2 ||
+                !TryGetIntValue(pair[0], out var minCount) ||
+                !TryGetIntValue(pair[1], out var orbCount))
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    category,
+                    definitionId,
+                    "each params.tiers entry must be [minCount, orbCount] with integers."));
+                return;
+            }
+
+            if (minCount < 0 || orbCount < 0)
+            {
+                errors.Add(new ContentDefinitionValidationError(
+                    category, definitionId, "params.tiers values must be >= 0."));
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// <c>params.attackScaleFromOrbs</c>：<c>{ elementMask, perOrb, maxBonus }</c>。
+    /// <c>maxBonus</c> 必须为正——它同时是"是否启用"的开关（<c>min(maxBonus, perOrb × 球数)</c>），
+    /// 缺省 0 会让这个参数静默变成「永远 +0%」。
+    /// </summary>
+    private static void ValidateAttackScaleFromOrbs(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object> parameters,
+        List<ContentDefinitionValidationError> errors)
+    {
+        if (!parameters.TryGetValue("attackScaleFromOrbs", out var value) || value is null)
+        {
+            return;
+        }
+
+        if (!TryGetParamMembers(value, out var members))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "params.attackScaleFromOrbs must be an object { elementMask, perOrb, maxBonus }."));
+            return;
+        }
+
+        if (!TryGetFloatMember(members, "maxBonus", out var maxBonus) || maxBonus <= 0f)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "params.attackScaleFromOrbs.maxBonus must be a positive number"
+                + " (missing/0 makes attackScale stay 1, i.e. the parameter does nothing)."));
+        }
+
+        if (members.ContainsKey("perOrb") && !TryGetFloatMember(members, "perOrb", out _))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, "params.attackScaleFromOrbs.perOrb must be a number."));
+        }
+
+        if (members.ContainsKey("elementMask") && !TryGetIntValue(members["elementMask"], out _))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, "params.attackScaleFromOrbs.elementMask must be an integer."));
+        }
+    }
+
+    /// <summary>参数值 → 数组元素（接受 JSON 反序列化来的 <see cref="JsonElement"/> 与程序化构造的列表）。</summary>
+    private static bool TryGetParamItems(object value, out IReadOnlyList<object> items)
+    {
+        if (value is JsonElement { ValueKind: JsonValueKind.Array } element)
+        {
+            items = element.EnumerateArray().Select(item => (object)item).ToArray();
+            return true;
+        }
+
+        if (value is IEnumerable<object> list)
+        {
+            items = list.ToArray();
+            return true;
+        }
+
+        items = [];
+        return false;
+    }
+
+    /// <summary>参数值 → 对象成员（同样的两种来源）。</summary>
+    private static bool TryGetParamMembers(object value, out IReadOnlyDictionary<string, object> members)
+    {
+        if (value is JsonElement { ValueKind: JsonValueKind.Object } element)
+        {
+            members = element.EnumerateObject().ToDictionary(
+                property => property.Name,
+                property => (object)property.Value,
+                StringComparer.Ordinal);
+            return true;
+        }
+
+        if (value is IReadOnlyDictionary<string, object> readOnly)
+        {
+            members = readOnly;
+            return true;
+        }
+
+        if (value is IDictionary<string, object> dictionary)
+        {
+            members = new Dictionary<string, object>(dictionary, StringComparer.Ordinal);
+            return true;
+        }
+
+        members = new Dictionary<string, object>(StringComparer.Ordinal);
+        return false;
+    }
+
+    private static bool TryGetIntValue(object value, out int parsed)
+    {
+        switch (value)
+        {
+            case int i:
+                parsed = i;
+                return true;
+            case long l when l is >= int.MinValue and <= int.MaxValue:
+                parsed = (int)l;
+                return true;
+            case JsonElement { ValueKind: JsonValueKind.Number } element:
+                return element.TryGetInt32(out parsed);
+            case string text:
+                return int.TryParse(text, out parsed);
+            default:
+                parsed = 0;
+                return false;
+        }
+    }
+
+    private static bool TryGetFloatMember(IReadOnlyDictionary<string, object> members, string key, out float parsed)
+    {
+        parsed = 0f;
+        if (!members.TryGetValue(key, out var value) || value is null)
+        {
+            return false;
+        }
+
+        switch (value)
+        {
+            case float f:
+                parsed = f;
+                return true;
+            case double d:
+                parsed = (float)d;
+                return true;
+            case int i:
+                parsed = i;
+                return true;
+            case JsonElement { ValueKind: JsonValueKind.Number } element:
+                return element.TryGetSingle(out parsed);
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// 槽位 buff 挂载（同名技能动作与效果共用）：<c>buffId</c> 必填且必须存在；
+    /// 槽位三选一——非负 <c>slotIndex</c>、<c>slotSelection: "randomNonEmpty"</c>（随机一张手牌）、
+    /// <c>slotSelection: "all"</c>（全部手牌槽）。
+    /// </summary>
+    private static void ValidateAttachSlotParams(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object>? parameters,
+        GameDefinitionStore store,
+        List<ContentDefinitionValidationError> errors)
+    {
+        var buffId = GetStringParam(parameters, "buffId");
+        if (string.IsNullOrWhiteSpace(buffId))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "AttachSlotBuff requires params.buffId."));
+        }
+        else if (!store.TryGetBuff(buffId, out _))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                $"Unknown buffId '{buffId}'."));
+        }
+
+        var hasExplicitSlot = GetIntParam(parameters, "slotIndex") is >= 0;
+        if (!hasExplicitSlot && !IsKnownSlotSelection(parameters))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                definitionId,
+                "AttachSlotBuff requires a non-negative params.slotIndex or params.slotSelection = \"randomNonEmpty\"/\"all\"."));
+        }
+    }
+
+    /// <summary><c>params.slotSelection</c> 取值判定（AttachSlotBuff 的槽位选择写法）。</summary>
+    private static bool IsKnownSlotSelection(Dictionary<string, object>? parameters)
+    {
+        var selection = GetStringParam(parameters, "slotSelection");
+        return string.Equals(selection, "randomNonEmpty", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(selection, "all", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>充能球授予（效果 / 技能动作）：<c>orbTypeId</c> 必填且必须存在，否则静默不发球。</summary>
@@ -657,6 +1006,8 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var gameplayEffect in store.GameplayEffects.Values)
         {
+            ValidateDamageExecutions(gameplayEffect, errors);
+
             foreach (var modifier in gameplayEffect.Modifiers)
             {
                 if (!store.TryGetAttribute(modifier.AttributeId, out _))
@@ -687,6 +1038,33 @@ public sealed class ContentDefinitionValidator
                 ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.ImmunityTags, store, errors);
                 ValidateGameplayTagRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.RemoveEffectsWithTags, store, errors);
             }
+        }
+    }
+
+    /// <summary>
+    /// 伤害执行的 <c>damageType</c> / <c>element</c> 必须可解析：运行期 <c>DamageTypeParser</c> 对未知取值
+    /// 是"回落物理无属性"的静默行为，写错一个字母就会让法术卡按物防结算，必须在内容准入阶段拦下。
+    /// </summary>
+    private static void ValidateDamageExecutions(
+        GameplayEffectDefDto gameplayEffect,
+        List<ContentDefinitionValidationError> errors)
+    {
+        foreach (var execution in gameplayEffect.Executions)
+        {
+            if (!string.Equals(execution.Kind, DamageExecution.DamageKind, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            if (DamageTypeParser.TryParse(execution.DamageType, execution.Element, out _, out var error))
+            {
+                continue;
+            }
+
+            errors.Add(new ContentDefinitionValidationError(
+                EContentCategory.GameplayEffect,
+                gameplayEffect.Id,
+                error ?? "Invalid damageType/element on Damage execution."));
         }
     }
 

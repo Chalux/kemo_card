@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.orb_damage_scale.name",
+  "defaultBase": 0,
+  "allowNegative": true,
+  "isMeta": false
+}

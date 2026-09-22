@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.reinhardt_vulnerable.name",
+  "descId": "buff.reinhardt_vulnerable.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.debuff"],
+  "modifiers": [
+    { "attributeId": "NormalAttackDamageTakenScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 0.25 } }
+  ]
+}

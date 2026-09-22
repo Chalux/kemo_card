@@ -1,7 +1,0 @@
-{
-  "kind": "ApplyGameplayEffect",
-  "params": {
-    "gameplayEffectId": "strike_damage",
-    "Amount": 6
-  }
-}

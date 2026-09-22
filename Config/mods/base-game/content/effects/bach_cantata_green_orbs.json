@@ -1,0 +1,4 @@
+{
+  "kind": "GainOrbByDeckCount",
+  "params": { "orbTypeId": "green", "elementMask": 4, "tiers": [[0, 2], [4, 3], [7, 4]] }
+}

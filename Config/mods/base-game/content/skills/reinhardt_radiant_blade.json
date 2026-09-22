@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.reinhardt_blade.name",
+  "descId": "skill.reinhardt_blade.desc",
+  "actionRefs": [
+    { "actionId": "reinhardt_blade_strike" },
+    { "actionId": "reinhardt_blade_follow_up" }
+  ],
+  "tags": ["attack"]
+}

@@ -50,5 +50,8 @@ public sealed partial class GlobalMod : BaseMod
         yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.CharacterDetails, "Src/mod/global/Ui");
         yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.Setting, "Src/mod/global/Ui");
         yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.Alert, "Src/mod/global/Ui");
+
+        // 词典：内容在打开时从词条表 + 内容注册表现算，因此保留缓存没有意义也没有害处（默认缓存）。
+        yield return UIRegistration.Dialog(FeatureId, GlobalUiIds.Glossary, "Src/mod/global/Ui");
     }
 }

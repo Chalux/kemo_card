@@ -20,13 +20,16 @@ public record struct CharacterDetailsDlgPayload
 public partial class CharacterDetailsDlg : BaseDlg
 {
     [Export] private CharacterPresenter? _presenter;
-    [Export] private BaseCharacterItem? _characterItem;
     [Export] private Label? _txtTitle;
     [Export] private Label? _txtCharName;
-    [Export] private RichTextLabel? _rtCharDesc;
+    [Export] private Label? _lblCardsCaption;
+    [Export] private VirtualList? _cardList;
     [Export] private RichTextLabel? _rtPassives;
     [Export] private Label? _lblAnim;
     [Export] private OptionButton? _optAnim;
+
+    /// <summary>当前展示的专属卡 id（横向虚拟列表的渲染回调按索引取用）。</summary>
+    private readonly List<string> _cardIds = [];
 
     private bool _animSelectSuppress;
     private string _defaultAnim = "idle";
@@ -36,11 +39,6 @@ public partial class CharacterDetailsDlg : BaseDlg
 
     protected override void InitEvent()
     {
-        if (_characterItem != null)
-        {
-            _characterItem.ClickAction = ECharacterClickAction.None;
-        }
-
         if (_optAnim != null)
         {
             Binder.OnItemSelected(_optAnim, OnAnimItemSelected);
@@ -89,13 +87,6 @@ public partial class CharacterDetailsDlg : BaseDlg
             _txtTitle.Text = Localization.Tr("UI_CHARACTER_DETAILS_TITLE");
         }
 
-        if (_characterItem != null)
-        {
-            _characterItem.ClickAction = ECharacterClickAction.None;
-            _characterItem.EnableHoverTip = false;
-            _characterItem.SetData(character);
-        }
-
         _presenter?.Bind(character);
 
         if (_txtCharName != null)
@@ -105,15 +96,55 @@ public partial class CharacterDetailsDlg : BaseDlg
                 : Localization.Tr(character.DisplayNameId);
         }
 
-        if (_rtCharDesc != null)
+        BindCards(character);
+
+        if (_lblCardsCaption != null)
         {
-            _rtCharDesc.Text = string.IsNullOrWhiteSpace(character.DescId)
-                ? ""
-                : Localization.Tr(character.DescId);
+            // 没有专属卡时连区标题一起收起，不留一个空标题。
+            _lblCardsCaption.Visible = _cardIds.Count > 0;
         }
 
         BindPassives(character);
         BindAnimOptions();
+    }
+
+    /// <summary>
+    /// 专属卡牌区：横向虚拟列表（<c>BaseCardItem</c> 卡面），只列角色的专属卡（<c>isExclusive</c>）。
+    /// </summary>
+    /// <remarks>
+    /// 不再把卡牌名称与描述拼成文本——那与卡面重复表达同一件事，而且把描述文本塞进 RichTextLabel
+    /// 会让「看一下这个角色的牌」变成要读一大段文字。卡面本身带费用 / 类型 / 属性色，
+    /// 点一下即打开现有的卡牌详情（<see cref="ECardClickAction.OpenDetails"/>），描述在那里看。
+    /// </remarks>
+    private void BindCards(CharacterDto character)
+    {
+        _cardIds.Clear();
+        var store = AppRoot.Services.ContentModPipeline.Registry.Store;
+        foreach (var cardId in character.Cards)
+        {
+            if (store.TryGetCard(cardId, out var card) && card.IsExclusive)
+            {
+                _cardIds.Add(cardId);
+            }
+        }
+
+        _cardList?.SetData(_cardIds.Count, (index, item) => RenderCard(store, index, item));
+    }
+
+    private void RenderCard(GameDefinitionStore store, int index, Control item)
+    {
+        if (item is not BaseCardItem cardItem || index < 0 || index >= _cardIds.Count)
+        {
+            return;
+        }
+
+        // 列表项是对象池复用的：交互契约每次渲染都显式重置，别让上一张牌留下的闭包 / 开关生效。
+        cardItem.Clicked = null;
+        cardItem.LongPressed = null;
+        cardItem.EnableLongPress = false;
+        cardItem.ClickAction = ECardClickAction.OpenDetails;
+        cardItem.EnableHoverTip = true;
+        cardItem.SetData(store.TryGetCard(_cardIds[index], out var card) ? card : null);
     }
 
     /// <summary>
@@ -139,10 +170,8 @@ public partial class CharacterDetailsDlg : BaseDlg
 
         var builder = new System.Text.StringBuilder();
         builder.Append($"[b]{Localization.Tr("UI_CHARACTER_PASSIVES_TITLE")}[/b]\n");
-        var passiveIndex = 0;
         foreach (var passive in character.Passives)
         {
-            passiveIndex++;
             var thresholdText = passive.RequiredPotential > 0
                 ? string.Format(Localization.Tr("UI_CHARACTER_PASSIVE_THRESHOLD"), passive.RequiredPotential)
                 : Localization.Tr("UI_CHARACTER_PASSIVE_THRESHOLD_ZERO");
@@ -154,14 +183,14 @@ public partial class CharacterDetailsDlg : BaseDlg
                     ? Localization.Tr("UI_CHARACTER_PASSIVE_UNLOCKED")
                     : Localization.Tr("UI_CHARACTER_PASSIVE_LOCKED");
 
-            // 被动没有独立技能名：一律按序号显示「被动技能N」（2026-09-19 约定），描述取 buff 的 descId。
-            var name = string.Format(Localization.Tr("UI_CHARACTER_PASSIVE_NAME"), passiveIndex);
+            // 被动没有名字（2026-09-21 决议，撤销 2026-09-19 的「被动技能N」序号显示）：
+            // 直接以「潜能门槛 + 描述」呈现，描述取 buff 的 descId。
             var desc = store.TryGetBuff(passive.BuffId, out var buff) &&
                 !string.IsNullOrWhiteSpace(buff.DescId)
                     ? Localization.Tr(buff.DescId)
                     : "";
 
-            builder.Append($"[b]{name}[/b]（{thresholdText}）{stateText}\n{desc}\n");
+            builder.Append($"[b]{thresholdText}[/b]{stateText}\n{desc}\n");
         }
 
         _rtPassives.Text = builder.ToString().TrimEnd();

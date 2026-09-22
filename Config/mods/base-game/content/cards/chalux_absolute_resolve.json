@@ -8,7 +8,7 @@
   "stats": {
     "attributes": {
       "MaxHealth": 20,
-      "PhysicalAttack": 3
+      "PhysicalAttack": 2
     }
   },
   "role": "Warrior",
@@ -18,6 +18,6 @@
   "targetScope": "Self",
   "targetCount": 1,
   "tags": ["charge", "exclusive"],
-  "rarity": "Epic",
+  "rarity": "Exclusive",
   "isExclusive": true
 }

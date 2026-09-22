@@ -235,7 +235,7 @@ public sealed class CombatStateMachine
         if (card.CostType is not (ECostType.None or ECostType.Energy))
             return new CombatApplyResult(false, "该费用类型尚未实装，无法标记入队。");
 
-        var paid = CardCostCalculator.Compute(simulation, command.CharacterIndex, card);
+        var paid = CardCostCalculator.Compute(simulation, command.CharacterIndex, card, slot.RuntimeInstanceId);
         if (!character.TryConsumeAvailableEnergy(paid))
             return new CombatApplyResult(false, "可用能量不足。");
 
@@ -526,6 +526,10 @@ public sealed class CombatStateMachine
             simulation.SetDiscardChannel(EDiscardChannel.Other);
         }
 
+        // 本回合全部卡牌结算结束的钩子（onCardExecutionEnd）：在普攻之前，
+        // 让"本回合共打出几张卡"这类终局统计先落地（巴赫被动5）。
+        simulation.Buffs.FireCardExecutionEnd(simulation);
+
         // 普通攻击：本回合卡牌全部结算（含弃牌、连携清零）后自动执行一次，归属槽位 = (回合-1) % 队伍人数。
         // 必须在 CheckEndConditions 之前：普攻打死最后一名敌人时本回合敌人不再行动。
         simulation.NormalAttacks.Execute(simulation);
@@ -564,21 +568,26 @@ public sealed class CombatStateMachine
         try
         {
             var resolvedTargets = ResolveCardTargets(simulation, entry, card);
-            if (resolvedTargets.Count == 0)
-                return;
-
-            var sourceRef = new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex);
-            foreach (var skillRef in card.SkillRefs)
+            if (resolvedTargets.Count > 0)
             {
-                if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
-                    continue;
-                ExecuteSkillPayload(simulation, skill, sourceRef, resolvedTargets, skillRef?.Params);
+                var sourceRef = new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex);
+                foreach (var skillRef in card.SkillRefs)
+                {
+                    if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
+                        continue;
+                    ExecuteSkillPayload(simulation, skill, sourceRef, resolvedTargets, skillRef?.Params);
+                }
             }
         }
         finally
         {
             simulation.SetChainBonus(0f);
         }
+
+        // 结算后钩子（onCardSettled）：本回合出牌表此时已含该卡，判定"打出过 N 张某属性卡"才准确。
+        // 空放同样补发——RecordPlayedCard 已把空放计入"本回合打出"（见上方注释），
+        // 若这里跳过，莱因哈特被动2 这类"第 N 张牌触发"的判定会与出牌统计口径不一致（延迟到下一张牌）。
+        simulation.Buffs.FireCardSettled(simulation, entry.CharacterIndex);
     }
 
     /// <summary>按 RuntimeInstanceId 找到打出卡牌所在的槽位并触发其槽位 buff 钩子。</summary>
@@ -641,6 +650,9 @@ public sealed class CombatStateMachine
 
         simulation.IncrementTurnNumber();
         simulation.IncrementTurnsIntoWave();
+        // "本回合已触发充能球"与回合边界对齐地清账（见 ResetOrbsTriggeredThisTurn 注释）：
+        // 上一回合结束产出并即时触发的球不得算进本回合。
+        simulation.ResetOrbsTriggeredThisTurn();
         simulation.DomainManager.FireTurnStartHooks();
         simulation.Buffs.FireTurnStart(simulation);
         simulation.TransitionTo(ECombatPhase.Player);

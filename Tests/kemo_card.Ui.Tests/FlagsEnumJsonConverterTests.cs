@@ -29,7 +29,7 @@ public sealed class FlagsEnumJsonConverterTests
     [Test]
     public void Deserialize_string_array_ors_flags()
     {
-        var w = JsonSerializer.Deserialize<Wrap>("""{"race":["Human","Canine"]}""", Opts());
-        Assert.That(w!.Race, Is.EqualTo(ERace.Human | ERace.Canine));
+        var w = JsonSerializer.Deserialize<Wrap>("""{"race":["Human","Animal"]}""", Opts());
+        Assert.That(w!.Race, Is.EqualTo(ERace.Human | ERace.Animal));
     }
 }

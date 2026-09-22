@@ -1,0 +1,20 @@
+{
+  "descId": "buff.bach_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onWaveStart": [
+      { "effectId": "bach_p3_boost_self", "params": { "targetFilter": { "self": true } } },
+      { "effectId": "bach_p3_boost_green", "params": { "targetFilter": { "elementAny": ["Green"] } } },
+      { "effectId": "bach_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] } } },
+      { "effectId": "bach_p3_boost_god", "params": { "targetFilter": { "raceAny": ["God"] } } }
+    ],
+    "onTurnStart": [
+      { "effectId": "bach_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 6 } },
+      { "effectId": "bach_p3_boost_green", "params": { "targetFilter": { "elementAny": ["Green"] }, "turnInterval": 6 } },
+      { "effectId": "bach_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] }, "turnInterval": 6 } },
+      { "effectId": "bach_p3_boost_god", "params": { "targetFilter": { "raceAny": ["God"] }, "turnInterval": 6 } }
+    ]
+  }
+}

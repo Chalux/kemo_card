@@ -31,6 +31,21 @@ public static class BuiltinBuffTags
 
     /// <summary>特征：连携统计时给该角色打出的卡牌额外注入红属性（chalux 被动2）。</summary>
     public const string TraitChainInjectRed = "trait.chain_inject_red";
+
+    /// <summary>
+    /// 追打（2026-09-21）：持有者在<b>不是</b>本回合普攻归属角色时，仍以
+    /// <c>params.percent</c>%（缺省 100）的攻击力参与该次普攻。多个追打 buff 同时存在时取最高值。
+    /// </summary>
+    public const string TraitFollowUp = "trait.follow_up";
+
+    /// <summary>特征：免疫手牌槽封印（封印以 <c>combat.state.sealed</c> 标签承载）。</summary>
+    public const string TraitImmuneSeal = "trait.immune_seal";
+
+    /// <summary>仅槽位 buff：该槽当前牌的费用视为 0（<c>CardCostCalculator</c> 读它）。</summary>
+    public const string SlotFreeCost = "slot.free_cost";
+
+    /// <summary>特征：免疫中毒（带 <c>debuff.poison</c> 标签的效果对该角色无效）。</summary>
+    public const string TraitImmunePoison = "trait.immune_poison";
 }
 
 /// <summary>buff 的投放范围：被动等团队型 buff 声明挂到每个队友。</summary>
@@ -55,6 +70,22 @@ public sealed class BuffConditionDto
     /// <summary>true 时跨列表取"且"（同时满足属性与种族）；缺省"或"（任一列表命中即满足）。</summary>
     [JsonPropertyName("matchAll")]
     public bool MatchAll { get; init; }
+
+    /// <summary>
+    /// 队伍人数门闩（2026-09-21 新增）：队伍中同时命中 <see cref="PartyElementAny"/> 与
+    /// <see cref="PartyRaceAny"/> 筛选的角色数 ≥ 本值时条件满足（"队伍内绿属性角色 ≥ 2"）。
+    /// 配置了本项时，它与上面的属性/种族维度取<b>且</b>。
+    /// </summary>
+    [JsonPropertyName("partyMinCount")]
+    public int PartyMinCount { get; init; }
+
+    /// <summary>人数门闩的元素筛选（空 = 不筛）。</summary>
+    [JsonPropertyName("partyElementAny")]
+    public List<EElement>? PartyElementAny { get; init; }
+
+    /// <summary>人数门闩的种族筛选（空 = 不筛）。</summary>
+    [JsonPropertyName("partyRaceAny")]
+    public List<ERace>? PartyRaceAny { get; init; }
 }
 
 public sealed class BuffEffectHooksDto
@@ -85,6 +116,21 @@ public sealed class BuffEffectHooksDto
     /// <summary>仅槽位 buff：该槽打出卡牌时触发（结算前）。目标由效果参数 <c>hookTargets</c> 决定。</summary>
     [JsonPropertyName("onSlotCardPlayed")]
     public List<EffectRefDto> OnSlotCardPlayed { get; init; } = [];
+
+    /// <summary>持有者打出的卡牌<b>结算完成后</b>触发（逐张，本回合内累计；2026-09-21 新增）。</summary>
+    [JsonPropertyName("onCardSettled")]
+    public List<EffectRefDto> OnCardSettled { get; init; } = [];
+
+    /// <summary>
+    /// <b>本回合全部卡牌结算结束</b>后触发一次（普攻之前；2026-09-21 新增）。
+    /// 与 onCardSettled 的区别是"整段结算结束"，适合需要"本回合共打出几张"这类终局统计的效果。
+    /// </summary>
+    [JsonPropertyName("onCardExecutionEnd")]
+    public List<EffectRefDto> OnCardExecutionEnd { get; init; } = [];
+
+    /// <summary>充能球触发结算后触发（每个参与产球的角色各一次；2026-09-21 新增）。</summary>
+    [JsonPropertyName("onOrbTriggered")]
+    public List<EffectRefDto> OnOrbTriggered { get; init; } = [];
 }
 
 public sealed class BuffDto

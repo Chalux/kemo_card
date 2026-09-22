@@ -14,12 +14,10 @@ public sealed class CharacterCodexQueryTests
         ERace race = ERace.Human,
         IEnumerable<string>? tags = null,
         string displayNameId = "char.ch1.name",
-        string descId = "char.ch1.desc",
         IEnumerable<string>? skillIds = null) => new()
         {
             Id = id,
             DisplayNameId = displayNameId,
-            DescId = descId,
             Element = element,
             Role = role,
             Race = race,
@@ -30,7 +28,7 @@ public sealed class CharacterCodexQueryTests
     [Test]
     public void Race_contains_and_exact()
     {
-        var c = new CharacterDto { Id = "a", Race = ERace.Human | ERace.Canine };
+        var c = new CharacterDto { Id = "a", Race = ERace.Human | ERace.Animal };
         Assert.That(CharacterCodexQuery.MatchesCondition(c, new(ECharFilterField.Race, ECardFilterOp.Contains, nameof(ERace.Human), "")), Is.True);
         Assert.That(CharacterCodexQuery.MatchesCondition(c, new(ECharFilterField.Race, ECardFilterOp.Exact, nameof(ERace.Human), "")), Is.False);
         var single = new CharacterDto { Id = "b", Race = ERace.Human };
@@ -87,20 +85,20 @@ public sealed class CharacterCodexQueryTests
     }
 
     [Test]
-    public void Filter_text_matches_name_desc_and_skill_desc()
+    public void Filter_text_matches_name_and_skill_desc()
     {
         var characters = new[]
         {
-            Character(id: "n", displayNameId: "char.fire.name", descId: "char.fire.desc", skillIds: ["s1"]),
-            Character(id: "d", displayNameId: "char.ice.name", descId: "char.ice.desc", skillIds: ["s2"]),
-            Character(id: "x", displayNameId: "char.rock.name", descId: "char.rock.desc", skillIds: ["s3"]),
+            Character(id: "n", displayNameId: "char.fire.name", skillIds: ["s1"]),
+            Character(id: "d", displayNameId: "char.ice.name", skillIds: ["s2"]),
+            Character(id: "x", displayNameId: "char.rock.name", skillIds: ["s3"]),
         };
 
         string Tr(string key) => key switch
         {
             "char.fire.name" => "火焰使者",
-            "char.ice.desc" => "掌控寒冰之力",
             "skill.s2.desc" => "造成火焰伤害",
+            "skill.s3.desc" => "掌控寒冰之力",
             _ => key,
         };
 
@@ -108,14 +106,16 @@ public sealed class CharacterCodexQueryTests
         {
             "s1" => new SkillDto { Id = "s1", DescId = "skill.s1.desc" },
             "s2" => new SkillDto { Id = "s2", DescId = "skill.s2.desc" },
+            "s3" => new SkillDto { Id = "s3", DescId = "skill.s3.desc" },
             _ => null,
         };
 
-        var byName = CharacterCodexQuery.Filter(characters, [], "火焰", Tr, GetSkill);
-        Assert.That(byName.Select(c => c.Id), Is.EqualTo(new[] { "d", "n" }).AsCollection);
+        // 角色已无 descId：文本检索只看角色名与技能描述。
+        var byName = CharacterCodexQuery.Filter(characters, [], "火焰使者", Tr, GetSkill);
+        Assert.That(byName.Select(c => c.Id), Is.EqualTo(new[] { "n" }));
 
-        var byDesc = CharacterCodexQuery.Filter(characters, [], "寒冰", Tr, GetSkill);
-        Assert.That(byDesc.Select(c => c.Id), Is.EqualTo(new[] { "d" }));
+        var bySkillDesc = CharacterCodexQuery.Filter(characters, [], "寒冰", Tr, GetSkill);
+        Assert.That(bySkillDesc.Select(c => c.Id), Is.EqualTo(new[] { "x" }));
 
         var empty = CharacterCodexQuery.Filter(characters, [], "  ", Tr, GetSkill);
         Assert.That(empty.Count, Is.EqualTo(3));

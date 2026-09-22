@@ -45,6 +45,9 @@ public partial class RunCharacterDeckDlg : BaseDlg
     private int _deckIndex;
     private DeckEditView? _deck;
 
+    /// <summary>"可加入卡组"列表的数据（含"已在卡组内"标记），渲染回调按索引取用。</summary>
+    private IReadOnlyList<DeckPoolCardView> _poolCards = [];
+
     /// <summary>true = 正在重建卡组页签：程序化选中不得被当成用户点击（否则递归）。</summary>
     private bool _rebuildingTabs;
 
@@ -228,24 +231,36 @@ public partial class RunCharacterDeckDlg : BaseDlg
             return;
         }
 
-        var buildable = _deck?.BuildableCardIds ?? [];
-        _poolList.SetData(buildable.Count, (index, item) => RenderPoolCard(index, item, buildable));
+        _poolCards = _service.GetPoolCards(_instanceId, _deckIndex);
+        _poolList.SetData(_poolCards.Count, RenderPoolCard);
     }
 
-    private void RenderPoolCard(int index, Control item, IReadOnlyList<string> buildable)
+    private void RenderPoolCard(int index, Control item)
     {
-        if (item is not BaseCardItem cardItem || _service is null || index < 0 || index >= buildable.Count)
+        if (item is not BaseCardItem cardItem || _service is null || index < 0 || index >= _poolCards.Count)
         {
             return;
         }
 
-        var cardId = buildable[index];
-        cardItem.SetData(_service.GetCard(cardId));
+        var entry = _poolCards[index];
+        cardItem.SetData(_service.GetCard(entry.CardId));
         cardItem.EnableHoverTip = true;
         cardItem.EnableLongPress = true;
         cardItem.ClickAction = ECardClickAction.Emit;
         cardItem.MouseFilter = _service.CanEdit ? MouseFilterEnum.Stop : MouseFilterEnum.Ignore;
-        cardItem.Clicked = (_, card) => AddCard(card.Id);
+
+        // 已在当前卡组内的牌：遮罩 + "已在卡组内"提示，并且**不再响应点击**——
+        // 卡组不允许重复，点下去只会拿到一句失败提示（服务层仍会兜底拒绝）。
+        if (entry.InDeck)
+        {
+            cardItem.Clicked = null;
+            cardItem.SetOverlay(Localization.Tr("UI_TEAM_DECK_DUPLICATE"));
+        }
+        else
+        {
+            cardItem.Clicked = (_, card) => AddCard(card.Id);
+        }
+
         cardItem.LongPressed = (_, card) => OpenCardDetails(card.Id);
     }
 

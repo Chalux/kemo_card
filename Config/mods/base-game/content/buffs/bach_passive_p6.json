@@ -1,0 +1,11 @@
+{
+  "descId": "buff.bach_p6.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onActiveSkillCast": [
+      { "effectId": "bach_p6_stat_up" }
+    ]
+  }
+}

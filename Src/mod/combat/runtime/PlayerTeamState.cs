@@ -52,6 +52,31 @@ public sealed class PlayerTeamState
         Asc = teamAsc ?? new CombatAscFactory().CreateTeamAsc(
             new Dictionary<string, AttributeDefDto>(StringComparer.Ordinal),
             sharedMaxHp);
+
+        // PartyCountScaled 取值（「队伍每有 1 名 X 角色 → 自身 +N」）需要队伍视角：
+        // 上阵名单在战斗内固定，因此这里一次性把查询函数绑给每个角色，buff 修正按回合重估时自动刷新。
+        foreach (var character in _characters)
+            character.BindPartyCountQuery(CountMatchingMembers);
+    }
+
+    /// <summary>
+    /// 统计上阵名单中同时命中元素与种族筛选的角色数（未配置的维度不参与筛选；
+    /// 两个维度都配置时取"且"，与 <c>targetFilter</c> 口径一致）。含调用者自己、不封顶。
+    /// </summary>
+    public int CountMatchingMembers(int elementFlags, int raceFlags)
+    {
+        var count = 0;
+        foreach (var character in _characters)
+        {
+            if (elementFlags != 0 && (character.Element & (EElement)elementFlags) == EElement.None)
+                continue;
+            if (raceFlags != 0 && (character.Race & (ERace)raceFlags) == ERace.None)
+                continue;
+
+            count++;
+        }
+
+        return count;
     }
 
     /// <summary>

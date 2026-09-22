@@ -1,0 +1,11 @@
+{
+  "descId": "buff.bach_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onOrbTriggered": [
+      { "effectId": "bach_p2_green_orbs", "params": { "oncePerTurn": true } }
+    ]
+  }
+}

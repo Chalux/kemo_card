@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "bach_hymn_magic_up",
+    "targetFilter": { "self": true }
+  }
+}

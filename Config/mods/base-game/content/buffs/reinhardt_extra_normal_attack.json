@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.reinhardt_extra_attack.name",
+  "descId": "buff.reinhardt_extra_attack.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "maxStacks": 1,
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "NormalAttackCount", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 1 } }
+  ]
+}

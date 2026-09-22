@@ -1,0 +1,8 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "reinhardt_follow_up_2",
+    "percent": 100,
+    "targetFilter": { "self": true }
+  }
+}

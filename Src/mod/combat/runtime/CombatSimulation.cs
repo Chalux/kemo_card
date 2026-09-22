@@ -18,6 +18,7 @@ public sealed class CombatSimulation : IDisposable
     private readonly CombatStateMachine _stateMachine;
     private readonly TeamMaxHealthCoordinator _teamMaxHealthCoordinator;
     private readonly List<PlayedCardRecord> _playedThisTurn = [];
+    private readonly Dictionary<string, int> _orbsTriggeredThisTurn = new(StringComparer.Ordinal);
     private long _nextQueueSequence = 1;
 
     public PlayerTeamState PlayerTeam { get; }
@@ -168,6 +169,40 @@ public sealed class CombatSimulation : IDisposable
     internal void RecordPlayedCard(string cardId, int characterIndex) =>
         _playedThisTurn.Add(new PlayedCardRecord(cardId, characterIndex));
 
+    /// <summary>
+    /// 本回合出牌登记的只读视图（<c>CardPlayedThisTurn</c> 条件与回合内被动读它）。
+    /// 生命周期：结算阶段累计 → 回合结束产球时由 <see cref="TakePlayedThisTurn"/> 取走并清空。
+    /// </summary>
+    public IReadOnlyList<PlayedCardRecord> PlayedThisTurn => _playedThisTurn;
+
+    /// <summary>
+    /// 本回合该角色打出的卡牌张数：只统计属性与 <paramref name="elementFlags"/> 有交集的卡
+    /// （<paramref name="elementFlags"/> 为 0 时不筛属性）。含空放——牌离开手牌即算打出。
+    /// </summary>
+    public int CountCardsPlayedThisTurn(int characterIndex, int elementFlags)
+    {
+        var count = 0;
+        foreach (var record in _playedThisTurn)
+        {
+            if (record.CharacterIndex != characterIndex)
+                continue;
+
+            if (elementFlags == 0)
+            {
+                count++;
+                continue;
+            }
+
+            if (Definitions.Store.TryGetCard(record.CardId, out var card) &&
+                (card.Element & elementFlags) != 0)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
     /// <summary>取走本回合出牌记录并清空（每回合结束产出充能球时调用一次）。</summary>
     internal IReadOnlyList<PlayedCardRecord> TakePlayedThisTurn()
     {
@@ -177,6 +212,50 @@ public sealed class CombatSimulation : IDisposable
         var records = _playedThisTurn.ToArray();
         _playedThisTurn.Clear();
         return records;
+    }
+
+    /// <summary>
+    /// 回合开始：清空"本回合已触发充能球"统计。
+    /// </summary>
+    /// <remarks>
+    /// 账期必须与<b>回合边界</b>对齐。这个统计曾经挂在 <see cref="TakePlayedThisTurn"/>（回合结束产球时）
+    /// 一起清，但产球会即时触发并再次记账，于是"上一回合结束产出的球"被算进了下一回合——
+    /// 于是「本回合每触发 1 个绿球 +100% 魔攻」会凭空多算。改到回合开始清，语义回到
+    /// "本回合内触发的球"；回合结束产出的球发生在全部卡牌结算之后，本就不该归给任何一回合的卡牌。
+    /// </remarks>
+    internal void ResetOrbsTriggeredThisTurn() => _orbsTriggeredThisTurn.Clear();
+
+    /// <summary>登记本次触发结算掉的充能球（按类型计数，回合开始清账）。</summary>
+    internal void RecordOrbsTriggered(IReadOnlyDictionary<string, int> cleared)
+    {
+        ArgumentNullException.ThrowIfNull(cleared);
+        foreach (var (orbTypeId, count) in cleared)
+            _orbsTriggeredThisTurn[orbTypeId] = _orbsTriggeredThisTurn.GetValueOrDefault(orbTypeId) + count;
+    }
+
+    /// <summary>
+    /// 本回合已触发的、元素命中 <paramref name="elementMask"/> 的充能球总数
+    /// （掩码 0 = 全部球，含物理/魔法球）。「本回合每触发 1 个绿球 → 增伤」这类效果读它。
+    /// </summary>
+    public int CountOrbsTriggeredThisTurn(int elementMask)
+    {
+        var count = 0;
+        foreach (var (orbTypeId, triggered) in _orbsTriggeredThisTurn)
+        {
+            if (elementMask == 0)
+            {
+                count += triggered;
+                continue;
+            }
+
+            if (Definitions.Store.TryGetOrbType(orbTypeId, out var orbType) &&
+                ((int)orbType.Element & elementMask) != 0)
+            {
+                count += triggered;
+            }
+        }
+
+        return count;
     }
 
     public void CheckEndConditions()

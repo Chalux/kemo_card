@@ -30,9 +30,9 @@ public static class CardUiDefinitions
     private static readonly Dictionary<ERarity, string> CardFramePaths = new()
     {
         [ERarity.Common] = "res://Resource/Assets/CardFrame/Common.png",
-        [ERarity.Uncommon] = "res://Resource/Assets/CardFrame/Uncommon.png",
+        [ERarity.Special] = "res://Resource/Assets/CardFrame/Special.png",
         [ERarity.Rare] = "res://Resource/Assets/CardFrame/Rare.png",
-        [ERarity.Epic] = "res://Resource/Assets/CardFrame/Epic.png",
+        [ERarity.Exclusive] = "res://Resource/Assets/CardFrame/Exclusive.png",
         [ERarity.Legendary] = "res://Resource/Assets/CardFrame/Legendary.png",
     };
 

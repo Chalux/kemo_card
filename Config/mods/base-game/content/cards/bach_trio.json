@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.bach_trio.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 6,
+  "skillRefs": [{ "skillId": "bach_trio" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "MagicAttack": 1
+    }
+  },
+  "role": "Elementist",
+  "priority": 1,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "orb", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

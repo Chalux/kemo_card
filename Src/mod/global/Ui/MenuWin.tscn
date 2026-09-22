@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://b6hr46gwht4x7" path="res://Src/mod/global/Ui/MenuWin.cs" id="1_menu"]
 [ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="MenuDlg" type="Control" unique_id=1218940125 node_paths=PackedStringArray("StartBtn", "LoadBtn", "SettingsBtn", "CodexBtn", "QuitBtn")]
+[node name="MenuDlg" type="Control" node_paths=PackedStringArray("StartBtn", "LoadBtn", "SettingsBtn", "CodexBtn", "QuitBtn")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,81 +11,231 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
-StartBtn = NodePath("Panel/VBox/StartBtn")
-LoadBtn = NodePath("Panel/VBox/LoadBtn")
-SettingsBtn = NodePath("Panel/VBox/SettingsBtn")
-CodexBtn = NodePath("Panel/VBox/CodexBtn")
-QuitBtn = NodePath("Panel/VBox/QuitBtn")
+StartBtn = NodePath("Layout/Rail/Margin/VBox/StartBtn")
+LoadBtn = NodePath("Layout/Rail/Margin/VBox/LoadBtn")
+SettingsBtn = NodePath("Layout/Rail/Margin/VBox/SettingsBtn")
+CodexBtn = NodePath("Layout/Rail/Margin/VBox/CodexBtn")
+QuitBtn = NodePath("Layout/Rail/Margin/VBox/QuitBtn")
 
-[node name="Panel" type="Panel" parent="." unique_id=1723274310]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -250.0
-offset_right = 190.0
-offset_bottom = 250.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBox" type="VBoxContainer" parent="Panel" unique_id=779539337]
+[node name="Bg" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 28.0
-offset_top = 28.0
-offset_right = -28.0
-offset_bottom = -28.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+mouse_filter = 2
+theme_type_variation = &"PageBg"
 
-[node name="Title" type="Label" parent="Panel/VBox" unique_id=293406181]
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="Rail" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
+theme_type_variation = &"Rail"
+
+[node name="Margin" type="MarginContainer" parent="Layout/Rail"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 36
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
+
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Layout/Rail/Margin/VBox"]
+layout_mode = 2
+theme_type_variation = &"Title"
 theme_override_font_sizes/font_size = 34
 text = "UI_MENU_TITLE"
-horizontal_alignment = 1
 
-[node name="TitleSpacer" type="Control" parent="Panel/VBox"]
-custom_minimum_size = Vector2(0, 12)
+[node name="Rule" type="HSeparator" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
 
-[node name="StartBtn" type="Button" parent="Panel/VBox" unique_id=866888484]
-custom_minimum_size = Vector2(0, 52)
+[node name="TopGap" type="Control" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="StartBtn" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 theme_override_font_sizes/font_size = 19
 text = "UI_MENU_NEW_GAME"
 script = ExtResource("2_kbtn")
 Primary = true
 
-[node name="LoadBtn" type="Button" parent="Panel/VBox" unique_id=1535473950]
-custom_minimum_size = Vector2(0, 52)
+[node name="NavGap" type="Control" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 12)
 layout_mode = 2
-theme_override_font_sizes/font_size = 19
+
+[node name="LoadBtn" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_type_variation = &"RailNav"
+theme_override_font_sizes/font_size = 18
 text = "UI_MENU_CONTINUE"
+alignment = 0
 script = ExtResource("2_kbtn")
+EnableHoverScale = false
 
-[node name="SettingsBtn" type="Button" parent="Panel/VBox" unique_id=1101588564]
-custom_minimum_size = Vector2(0, 52)
+[node name="SettingsBtn" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 19
+theme_type_variation = &"RailNav"
+theme_override_font_sizes/font_size = 18
 text = "UI_MENU_SETTINGS"
+alignment = 0
 script = ExtResource("2_kbtn")
+EnableHoverScale = false
 
-[node name="CodexBtn" type="Button" parent="Panel/VBox" unique_id=1128775345]
-custom_minimum_size = Vector2(0, 52)
+[node name="CodexBtn" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
-theme_override_font_sizes/font_size = 19
+theme_type_variation = &"RailNav"
+theme_override_font_sizes/font_size = 18
 text = "UI_CODEX_TITLE"
+alignment = 0
 script = ExtResource("2_kbtn")
+EnableHoverScale = false
 
-[node name="QuitBtn" type="Button" parent="Panel/VBox" unique_id=522458133]
-custom_minimum_size = Vector2(0, 52)
+[node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 19
+size_flags_vertical = 3
+
+[node name="QuitBtn" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_type_variation = &"Ghost"
 text = "UI_MENU_QUIT"
+alignment = 0
 script = ExtResource("2_kbtn")
+EnableHoverScale = false
+
+[node name="Content" type="MarginContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="Table" type="Control" parent="Layout/Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="CardLeft" type="Panel" parent="Layout/Content/Table"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -250.0
+offset_top = -130.0
+offset_right = -30.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+rotation = -0.16
+pivot_offset = Vector2(110, 150)
+mouse_filter = 2
+
+[node name="Inner" type="Panel" parent="Layout/Content/Table/CardLeft"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
+
+[node name="CardRight" type="Panel" parent="Layout/Content/Table"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = 30.0
+offset_top = -130.0
+offset_right = 250.0
+offset_bottom = 170.0
+grow_horizontal = 2
+grow_vertical = 2
+rotation = 0.16
+pivot_offset = Vector2(110, 150)
+mouse_filter = 2
+
+[node name="Inner" type="Panel" parent="Layout/Content/Table/CardRight"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
+
+[node name="CardCenter" type="Panel" parent="Layout/Content/Table"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = -160.0
+offset_right = 110.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(110, 150)
+mouse_filter = 2
+
+[node name="Inner" type="Panel" parent="Layout/Content/Table/CardCenter"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 14.0
+offset_top = 14.0
+offset_right = -14.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
+
+[node name="Seal" type="ColorRect" parent="Layout/Content/Table/CardCenter"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -14.0
+offset_top = -46.0
+offset_right = 14.0
+offset_bottom = -18.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.545, 0.18, 0.227, 1)

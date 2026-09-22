@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.bach_hymn.name",
+  "descId": "skill.bach_hymn.desc",
+  "actionRefs": [
+    { "actionId": "bach_hymn_magic_up" }
+  ],
+  "tags": ["buff"]
+}

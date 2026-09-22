@@ -1,0 +1,5 @@
+{
+  "displayNameId": "ge.reinhardt_blade.name",
+  "durationPolicy": "Instant",
+  "executions": [{ "kind": "Damage", "damageType": "Physical", "attackScale": 0.25 }]
+}

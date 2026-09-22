@@ -1,0 +1,4 @@
+{
+  "kind": "GainOrbPerPlayedCard",
+  "params": { "orbTypeId": "green", "perCard": 1, "offset": -1 }
+}

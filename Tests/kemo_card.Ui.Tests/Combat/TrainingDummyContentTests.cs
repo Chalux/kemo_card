@@ -106,9 +106,11 @@ public sealed class TrainingDummyContentTests
     {
         var battle = registry.Store.Battles[BattleId];
         // 用出货内容里的角色与卡牌组队（ch只做数值占位：木桩不还手，队伍强度不影响断言）。
+        // 卡牌必须真实存在于内容里：牌面 stats 决定队伍共享 HP 上限，牌 id 悬空会让战斗直接建不起来
+        // （占位卡 strike / strike_plus 已于 2026-09-21 删除，这里改用 chalux 的专属卡）。
         var party = Enumerable.Range(0, CombatConstants.SlotCount)
             .Select(index => new CharacterInstance(
-                new CharacterDto { Id = "chalux", Cards = ["strike"] },
+                new CharacterDto { Id = "chalux", Cards = ["chalux_orca_ice_rush"] },
                 $"inst-{index}"))
             .ToArray();
         var sim = CombatSimulationFactory.TryCreate(

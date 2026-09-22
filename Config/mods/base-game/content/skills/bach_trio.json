@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.bach_trio.name",
+  "descId": "skill.bach_trio.desc",
+  "actionRefs": [
+    { "actionId": "bach_trio_strike" }
+  ],
+  "tags": ["attack"]
+}

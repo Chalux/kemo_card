@@ -1,0 +1,27 @@
+{
+  "displayNameId": "char.reinhardt.name",
+  "element": "Yellow",
+  "role": "SwordMan",
+  "race": ["Animal"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "reinhardt_yellow_tide_command", "cooldown": 10 }
+  ],
+  "cards": [
+    "reinhardt_black_ship_treasure",
+    "reinhardt_howling_onslaught",
+    "reinhardt_azure_voyage",
+    "reinhardt_radiant_blade"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "reinhardt_passive_p1", "requiredPotential": 0 },
+    { "buffId": "reinhardt_passive_p2", "requiredPotential": 10 },
+    { "buffId": "reinhardt_passive_p3", "requiredPotential": 30 },
+    { "buffId": "reinhardt_passive_p4", "requiredPotential": 50 },
+    { "buffId": "reinhardt_passive_p5", "requiredPotential": 70 },
+    { "buffId": "reinhardt_passive_p6", "requiredPotential": 99 }
+  ],
+  "tags": ["starter"]
+}

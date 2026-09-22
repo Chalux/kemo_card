@@ -1,0 +1,4 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": { "buffId": "reinhardt_free_cost", "slotSelection": "randomNonEmpty" }
+}

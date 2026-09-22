@@ -1,0 +1,4 @@
+{
+  "kind": "GainOrb",
+  "params": { "orbTypeId": "physical", "count": 1 }
+}

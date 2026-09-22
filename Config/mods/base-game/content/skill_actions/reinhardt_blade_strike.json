@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "reinhardt_blade_damage",
+    "Amount": 3
+  }
+}

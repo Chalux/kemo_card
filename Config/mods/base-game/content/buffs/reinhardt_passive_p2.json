@@ -1,0 +1,11 @@
+{
+  "descId": "buff.reinhardt_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onCardSettled": [
+      { "effectId": "reinhardt_p2_boost" }
+    ]
+  }
+}

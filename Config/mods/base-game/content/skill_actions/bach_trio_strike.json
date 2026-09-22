@@ -1,0 +1,8 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "bach_trio_damage",
+    "Amount": 6,
+    "attackScaleFromOrbs": { "elementMask": 4, "perOrb": 1, "maxBonus": 3 }
+  }
+}

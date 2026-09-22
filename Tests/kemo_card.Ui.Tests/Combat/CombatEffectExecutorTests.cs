@@ -80,8 +80,8 @@ public sealed class CombatEffectExecutorTests
 
         executor.ExecuteEffectRef(new EffectRefDto { EffectId = "hit.scaled" }, sim, source, [target]);
 
-        // 10 × (1 + 0.25 增伤 + 0.5 连携) = 17.5；DamageDealtScale 不影响治疗的对照见下。
-        Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(82.5f).Within(0.001f));
+        // 10 × (1 + 0.25 增伤) × (1 + 0.5 连携) = 18.75：增伤与连携分开，连携仍是乘算因子。
+        Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(81.25f).Within(0.001f));
     }
 
     /// <summary>治疗吃源侧治疗强度（+ HealPower）再乘连携；DamageDealtScale 不参与治疗。</summary>

@@ -10,8 +10,8 @@ public sealed class CharacterDto
     [JsonPropertyName("displayNameId")]
     public string DisplayNameId { get; init; } = "";
 
-    [JsonPropertyName("descId")]
-    public string DescId { get; init; } = "";
+    // 2026-09-21：角色不再有 descId。角色详细界面改为展示该角色的专属卡牌列表，
+    // 避免"角色简介"与卡组/被动重复表达同一件事。
 
     [JsonPropertyName("element")]
     public EElement Element { get; init; } = EElement.None;
@@ -26,10 +26,11 @@ public sealed class CharacterDto
     [JsonPropertyName("activeSkillChain")]
     public List<ActiveSkillChainEntryDto> ActiveSkillChain { get; init; } = [];
 
-    [JsonPropertyName("buffRefs")]
-    public List<BuffRefDto> BuffRefs { get; init; } = [];
-
-    /// <summary>潜能门闩被动：解锁后开战挂对应 buff（见 <see cref="PassiveRefDto"/>）。</summary>
+    /// <summary>
+    /// 潜能门闩被动：解锁后开战挂对应 buff（见 <see cref="PassiveRefDto"/>）。
+    /// 2026-09-21 起这是角色唯一的"常驻增益"通道——旧的 <c>buffRefs</c>（常驻天赋）已移除，
+    /// 因为它与被动重复却走另一条挂载路径。
+    /// </summary>
     [JsonPropertyName("passives")]
     public List<PassiveRefDto> Passives { get; init; } = [];
 

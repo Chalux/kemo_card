@@ -1,13 +1,57 @@
-# 内容 Mod 管理器设计规格
+# 内容与数据规格
+
+（原「内容 Mod 管道」规格；2026-09-21 并入两份内容 DTO 与角色/战斗实例规格）
 
 **日期**：2026-05-17  
-**最后修订**：2026-07-30  
-**状态**：已定稿（对话评审合并；2026-07-30 单轨合并修订）  
-**范围**：磁盘内容包 Mod 的发现、启用、依赖排序、冲突合并、定义注册表刷新；与 C# 功能 Mod 分界；不含脚本宿主细节与 Mod 设置 UI 具体实现。
+**最后修订**：2026-09-21（内容与数据域下级规格合并）  
+**状态**：已定稿（对话评审合并；2026-07-30 单轨合并修订；2026-09-21 内容与数据域下级规格合并）  
+**关系**：服从 [总规格](2026-05-11-kemo-card-design.md)。本文是**内容与数据域**的唯一权威文档 —— **内容 Mod 管道 + 内容定义 DTO + 角色/战斗实例**。战斗运行时（阶段机 / 伤害 / GAS 结算）归 [战斗规格](2026-07-21-combat-system-design.md)；Buff 运行时与连携归 [战斗规格](2026-07-21-combat-system-design.md) §13，团体潜能归 [Run 规格](2026-06-22-run-mod-design.md) §13；条件域与 CondType 归 [UI 与运行时规格](2026-05-15-ui-manager-design.md) §16；Mod 脚本宿主归 [jsenv-mod-scripting](2026-05-15-ui-manager-design.md)；普通攻击运行时归 [普通攻击规格](2026-07-21-combat-system-design.md)。  
+**范围**：① 磁盘内容包 Mod 的发现、启用、依赖排序、冲突合并、定义注册表刷新（原「内容 Mod 管道」职责）；② 卡牌 / 技能 / Buff / 效果 / 角色 / 敌人 / 战斗 / 事件 / 道具 / 故事的内容定义 DTO、枚举、加载与校验；③ `DeckPreset` / `CharacterInstance` / `HandSlot` / `CharacterBattleInstance` 及直接依赖类型；④ 内容域的收敛事实（种族 / 稀有度档名 / 字段移除）与卡组属性预算。与 C# 功能 Mod 分界；不含脚本宿主细节与 Mod 设置 UI 具体实现。  
+**非范围**：Mod 压缩包 / Workshop / Run 内热切换；主菜单 Mod 列表面板的具体 UI；Buff 结算管线（`BuffInstance`）与局内存档（`RunSaveDto` / `RunSaveService` / `ToSaveDto` / `FromSaveDto`）；队伍共用 HP（`TeamBattleState`）与战斗阶段机、`CombatTurnController`；战斗数值公式与伤害包管线；内容包 UI（角色详细界面 / 横向卡牌列表等展示形态）。
+
+**本文承载的下级规格（2026-09-21 合并并归档）**：
+
+| 原规格文件（`Doc/superpowers/specs/`） | 归档路径 | 并入本文 |
+|---|---|---|
+| `2026-06-16-content-definition-dto-design.md`（卡牌 / 技能 / Buff / 效果 内容 DTO 设计规格） | `Doc/archive/superpowers/specs/2026-06-16-content-definition-dto-design.md` | 全文（原 §1–§7）→ 本文 §12 |
+| `2026-06-16-character-battle-event-item-dto-design.md`（角色 / 敌人 / 战斗 / 事件 / 道具 内容 DTO 设计规格） | `Doc/archive/superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md` | 全文（原 §1–§9）→ 本文 §13 |
+| `2026-06-18-character-instance-design.md`（角色实例 / 战斗实例 / 卡组预设 / 手牌槽 设计规格） | `Doc/archive/superpowers/specs/2026-06-18-character-instance-design.md` | 全文（原 §1–§4）→ 本文 §14 |
+| `2026-09-21-reinhardt-and-normal-attack-extensions.md`（莱因哈特套件与战斗机制扩展） | **不归档**（该规格仍存活：其余章节归战斗规格与 Global 功能规格维护） | 仅原 §2 种族收敛 / §3 常驻天赋移除 / §9 卡组属性预算 / §12.1 稀有度档名收敛 / §12.2 的 `CharacterDto.descId` 删除 → 本文 §15 |
+
+**段号映射（原规格 §N → 本文 §M.K）**：`Src/` 与 `Doc/` 里的注释按原段号引用规格（如 `ContentDefinitionValidator`、各 `*Dto.cs` 引「内容 DTO 规格」），下表用于继续定位。
+
+| 原规格 | 原段号 | 本文段号 | 主题 |
+|---|---|---|---|
+| 卡牌 / 技能 / Buff / 效果 内容 DTO 规格 | §1 | §12.1 | 引用链与时机分层 |
+| 同上 | §2 | §12.2 | DTO 类型约束 |
+| 同上 | §3 | §12.3 | CardDto 字段 |
+| 同上 | §4 | §12.4 | 枚举 |
+| 同上 | §5 | §12.5 | Mod 目录 |
+| 同上 | §6 | §12.6 | 脚本 |
+| 同上 | §7 | §12.7 | 自检 |
+| 角色 / 敌人 / 战斗 / 事件 / 道具 内容 DTO 规格 | §1 | §13.1 | 已确认边界 |
+| 同上 | §2 | §13.2 | 引用链 |
+| 同上 | §3 | §13.3 | Mod 目录与加载 |
+| 同上 | §4 | §13.4 | 枚举（含 §13.4.1–§13.4.3） |
+| 同上 | §5 | §13.5 | DTO 字段（含 §13.5.1–§13.5.6） |
+| 同上 | §6 | §13.6 | 校验规则 |
+| 同上 | §7 | §13.7 | 示例内容 |
+| 同上 | §8 | §13.8 | 开放项 |
+| 同上 | §9 | §13.9 | 自检 |
+| 角色实例设计规格 | §1 | §14.1 | 首期实现边界 |
+| 同上 | §2 | §14.2 | 已确认玩法规则 |
+| 同上 | §3 | §14.3 | 类型职责 |
+| 同上 | §4 | §14.4 | 自检 |
+| 莱因哈特套件与战斗机制扩展 | §2 | §15.1 | 种族收敛 |
+| 同上 | §3 | §15.2 | 常驻天赋移除（`CharacterDto.buffRefs`） |
+| 同上 | §9 | §15.3 | 卡组属性预算 |
+| 同上 | §12.1 | §15.4 | 稀有度档名收敛 |
+| 同上 | §12.2（DTO 部分） | §15.5 | 角色简介字段移除（`CharacterDto.descId`） |
 
 **修订记录**：
 - **2026-07-30**：合并「id HashSet 表 + DTO Store」双轨为单轨；`ModContentBundle` 仅持 `Definitions`；Merger 写入 Store 并返回 `ContentRegistryMergeResult`。实现计划见归档 [content-mod-single-track-merge](../../archive/superpowers/plans/2026-07-30-content-mod-single-track-merge.md)。
 - **2026-07-31**：新增 **Story** 内容类别与 `StoryDto`（作者、解锁条件、仅单人等字段）；`unlock` 走 Persistent 域条件解析校验，运行期在选故事 UI 求值。
+- **2026-09-21**：并入三份下级规格（两份内容 DTO 规格 + 角色实例规格，见上表）为本文 §12–§14；并入「莱因哈特套件与战斗机制扩展」的**内容域**章节为本文 §15（种族收敛、`CharacterDto.buffRefs` 移除、卡组属性预算、`ERarity` 收敛、`CharacterDto.descId` 移除）。原规格段号经上表映射，仍可定位。
 
 ---
 
@@ -126,7 +170,7 @@ user://mods/
 | `DisplayNameId` | `displayNameId` | 故事名翻译键 |
 | `DescId` | `descId` | 描述翻译键 |
 | `Author` | `author` | 作者署名，**明文**（非翻译键） |
-| `Unlock` | `unlock?` | 可选解锁条件（Persistent 域内联表达式，见[条件规格](../2026-07-30-condition-system-design.md) §8） |
+| `Unlock` | `unlock?` | 可选解锁条件（Persistent 域内联表达式，见[条件规格](2026-05-15-ui-manager-design.md) §8） |
 | `ScriptPath` | `scriptPath?` | 故事脚本入口（可空，宿主保底后补） |
 | `ScriptEntry` | `scriptEntry?` | 脚本函数名（可空） |
 | `SinglePlayerOnly` | `singlePlayerOnly` | 缺省 `true`；仅允许单人游玩 |
@@ -313,3 +357,516 @@ public interface IContentModUserNotifier
 - **一致性**：与总规格宿主/Mod 分界、启动/启用时刷新、分表非法语义一致；代码统一在 `Src/frame/content/`。
 - **单轨**：定义权威仅 `GameDefinitionStore`；冲突与 owner 在合 DTO 时产出。
 - **歧义消除**：注册顺序 = 激活规划器输出顺序；内容冲突不跳过整个 Mod（除非加载失败）。
+
+---
+
+## 12. 卡牌 / 技能 / Buff / 效果 DTO（原 2026-06-16 内容 DTO 规格 §1–§7）
+
+> **来源**：`2026-06-16-content-definition-dto-design.md`（**日期** 2026-06-16；**最后同步** 2026-06-17，与代码 `Src/frame/content/definitions/` 对齐；**状态** 已实现；**范围** Card / Skill / Buff / Effect 四类 Mod JSON DTO、枚举、加载与校验）。已归档至 `Doc/archive/superpowers/specs/2026-06-16-content-definition-dto-design.md`。目录与代码布局见本文 §2；其余类别 DTO 见本文 §13。
+
+### 12.1 引用链与时机分层（原 §1）
+
+- 出牌 → 卡牌按 `skillRefs` 顺序触发技能
+- 技能一旦被调用，`effectRefs` 同步即时执行完毕
+- 延时 / 跨回合效果：`ApplyBuff` + Buff `Hooks`
+- Buff 仅由效果或宿主白名单 API 添加
+
+| 层级 | 是否延时 | 说明 |
+|------|----------|------|
+| 卡牌执行队列 | 可延时 | 按 `priority` 排队，轮到才调用技能 |
+| 技能 | 始终即时 | 调用瞬间跑完 `effectRefs` |
+| Buff | 可延时 | 钩子驱动持续与延时效果 |
+
+Skill DTO **不含** `ESkillTrigger` / `IsInstant`。
+
+---
+
+### 12.2 DTO 类型约束（原 §2）
+
+- 可 JSON 往返：`string`, `int`, `bool`, `double`, 枚举, `List<T>`, `Dictionary<string, object>?`（仅 params）
+- `tags` 使用 `List<string>`
+- 形态：`sealed class` + `JsonPropertyName` + `init`
+
+---
+
+### 12.3 CardDto 字段（原 §3）
+
+见 `CardDto.cs`。无 `descId`；描述由 UI 组合 `skillRefs` 对应技能的 `descId`。升级链：`cardGroupId` + `upgradeTier`。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `element` | int | 位标志（`ElementFlags`）；尚未迁移为 `EElement` |
+| `role` | ERole | 与 Character / Enemy 共用枚举 |
+| `costType` | ECostType | |
+| `cost` | int | |
+| `skillRefs` | SkillRefDto[] | |
+| `cardType` | ECardType | |
+| `targetSide` / `targetScope` / `targetCount` / `retargetPolicy` | | 目标规格 |
+| `rarity` | ERarity | |
+| `cardGroupId` | string? | 升级链分组 |
+| `upgradeTier` | int | |
+| `playConditions` | ConditionRefDto[] | |
+| `costScaling` | CostScalingDto? | |
+| `hideInDex` / `isExclusive` / `priority` | | |
+| `animationId` / `sfxId` | string? | |
+| `artPath` / `tags` | | |
+
+---
+
+### 12.4 枚举（原 §4）
+
+`ECostType`, `ECardType`, `ECostScalingKind`, `ETargetSide`, `ETargetScope`, `ERetargetPolicy`, `ERarity`, `EBuffDurationType`, `EBuffStackRule`, `EEffectKind`, `ERole`。
+
+`EElement` / `ERace` / `EEventKind` / `ERewardKind` 定义于同一文件，供 Character / Battle / Event 等 DTO 使用（见本文 §13.4）。
+
+> 2026-09-21 合并：本节的 `ERace` / `ERarity` 成员清单以本文 §13.4.1 为准（`ERace` 收敛见本文 §15.1，`ERarity` 档名收敛见本文 §15.4）。
+
+---
+
+### 12.5 Mod 目录（原 §5）
+
+```
+content/cards/*.json
+content/skills/*.json
+content/buffs/*.json
+content/effects/*.json
+```
+
+`id` = 文件名（无扩展名）；加载时注入 DTO `Id`。
+
+---
+
+### 12.6 脚本（原 §6）
+
+- 主通道：TypeScript（`ExecuteScript` + `ScriptPath`）
+- 进阶：HybridCLR（信任 Mod）
+- 接口桩：`IContentEffectScriptHost`
+
+---
+
+### 12.7 自检（原 §7）
+
+- 无 TBD；与 `2026-05-11-kemo-card-design.md` 宿主/Mod 分界一致
+- 非法引用：加载合并后校验，失败项不进入 `GameDefinitionStore`
+
+---
+
+## 13. 角色 / 敌人 / 战斗 / 事件 / 道具 DTO（原 2026-06-16 角色·战斗·事件·道具 DTO 规格 §1–§9）
+
+> **来源**：`2026-06-16-character-battle-event-item-dto-design.md`（**日期** 2026-06-16；**最后同步** 2026-06-17，与代码 `Src/frame/content/definitions/` 对齐；**状态** 已实现；**范围** Character / Enemy / Battle / Event / Item 五类 Mod JSON DTO、枚举、加载与校验）。已归档至 `Doc/archive/superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md`。类型约束见本文 §12.2；管道与校验接线见本文 §4.3 / §4.4。
+
+### 13.1 已确认边界（原 §1）
+
+| 决策点 | 结论 |
+|--------|------|
+| CharacterDto | 仅可操控友方角色（4 人小队） |
+| 敌人 | 独立 `EnemyDto`（`content/enemies/*.json`），`BattleDto` 引用 |
+| ItemDto | 仅消耗品（使用后消失） |
+| EventDto | 混合：`eventKind` 区分数据驱动 vs 脚本驱动 |
+| Battle | 多波次 + 可选 `scriptPath` + 战后奖励 |
+
+---
+
+### 13.2 引用链（原 §2）
+
+- Character：`cards` → Card；`skillRefs` → Skill；`activeSkillChain[].skillId` → Skill；`passives[].buffId` → Buff
+- Enemy：`skillRefs` → Skill；`buffRefs` → Buff
+- Battle：`waves[].enemySpawns[].enemyId` → Enemy；`enemySpawns[].skillOverrides` → Skill；奖励 `ItemGrant`/`Effect`/`CardChoice` 引用 Item/Effect/Card
+- Event（Data）：`options[].effectRefs` → Effect
+- Item：`useSkillRefs` → Skill
+
+---
+
+### 13.3 Mod 目录与加载（原 §3）
+
+```
+content/characters/*.json
+content/enemies/*.json
+content/battles/*.json
+content/events/*.json
+content/items/*.json
+```
+
+- `id` = 文件名（无扩展名）；`ContentModLoader.LoadDefinitions<T>()` 加载时注入 DTO `Id`
+- `EContentCategory` 新增 `Enemy`，与 Character / Battle / Event / Item 并列
+- 合并后由 `GameDefinitionRegistry.Rebuild()` 调用 `ContentDefinitionValidator`，非法定义从 `GameDefinitionStore` 剔除
+
+---
+
+### 13.4 枚举（`ContentEnums.cs`）（原 §4）
+
+#### 13.4.1 本规格直接使用（原 §4「本规格直接使用」）
+
+| 枚举 | 说明 |
+|------|------|
+| `EElement` | `[Flags]`：None, Fire, Water, Wind, Earth, Dark, Light |
+| `ERole` | None, Warrior, Wizard, Healer, Guard, Shield, Controller, Support, CardPlayer, SwordMan, Mage, Alchemist |
+| `ERace` | `[Flags]`：None, Human, Animal（动物：原犬/猫/鸟/兽/爬行合并）, Insect, Fish, Plant, Machine, Demon（恶魔族：原 Demonic + Devil）, Angel, Dragon, God, Undead, Academic（学术）, Fantasy（幻想）, Astronomy（天文）, Hero（英雄）, Calamity（灾厄）, Unknown（未知，2026-09-21 由 UnKnown 更名） |
+| `EEventKind` | Data, Script |
+| `ERewardKind` | Gold, CardChoice, ItemGrant, Effect |
+| `ERarity` | ItemDto 稀有度：Common, Special（原 Uncommon）, Rare, Exclusive（原 Epic）, Legendary |
+
+> 2026-09-21 合并：原表述（`ERarity`：Common, Uncommon, Rare, Epic, Legendary）已收敛为（`Common` / `Special`（原 Uncommon）/ `Rare` / `Exclusive`（原 Epic）/ `Legendary`）；详见本文 §15.4。
+>
+> 2026-09-21 合并：原表述（`ERace` 旧成员清单含 Canine / Feline / Bird / Beast / Reptile 与 Demonic / Devil、并由 `UnKnown` 拼写）已收敛为（5 族并 1 → `Animal`、2 族并 1 → `Demon`、新增 `Academic` / `Fantasy` / `Astronomy` / `Hero` / `Calamity`、`UnKnown` → `Unknown`，即上表清单）；详见本文 §15.1。
+
+#### 13.4.2 共用（定义于同一文件，被嵌套 DTO 引用）（原 §4「共用」）
+
+`ETargetSide`, `ETargetScope`, `ERetargetPolicy`（ItemDto `targetSpec` 与 CardDto 目标字段共用）。
+
+#### 13.4.3 与 CardDto 的差异（原 §4「与 CardDto 的差异」）
+
+- Character / Enemy 的 `element`、`role` 已使用 `EElement` / `ERole`
+- CardDto 的 `element` 仍为 `int`（位标志，见 `ElementFlags`）；`role` 已迁移为 `ERole`
+
+---
+
+### 13.5 DTO 字段（原 §5）
+
+#### 13.5.1 CharacterDto（`CharacterDto.cs`）（原 §5 CharacterDto）
+
+| JSON 字段 | 类型 | 说明 |
+|-----------|------|------|
+| `id` | string | 加载时注入 |
+| `displayNameId` | string | 本地化键 |
+| `element` | EElement | 元素 |
+| `role` | ERole | 职业/定位 |
+| `race` | ERace | 种族（可组合 Flags） |
+| `skillRefs` | SkillRefDto[] | 角色技能池 |
+| `activeSkillChain` | ActiveSkillChainEntryDto[] | 主动技蓄力链（战斗主动按钮只读本字段） |
+| `passives` | PassiveRefDto[] | 潜能门闩被动：解锁后开战挂对应 buff（**角色唯一的"常驻增益"通道**，2026-09-21 起取代已移除的 `buffRefs`） |
+| `cards` | string[] | 角色专属构筑池（非 Run 初始牌库） |
+| `maxEnergy` | int | 能量上限 |
+| `initialEnergy` | int | 初始能量 |
+| `artPath` | string | 立绘路径 |
+| `tags` | string[] | 标签 |
+
+> 2026-09-21 合并：原表述（CharacterDto 含 `descId` 角色简介翻译键字段）已收敛为（`CharacterDto.descId` 删除；详见本文 §15.5）。
+>
+> 2026-09-21 合并：原表述（CharacterDto 含 `buffRefs` 常驻天赋增益引用字段）已收敛为（`CharacterDto.buffRefs` 删除，角色常驻增益唯一通道 = `passives`；详见本文 §15.2）。敌人侧 `EnemyDto.buffRefs` **保留**。
+
+#### 13.5.2 EnemyDto（`EnemyDto.cs`）（原 §5 EnemyDto）
+
+| JSON 字段 | 类型 | 说明 |
+|-----------|------|------|
+| `id` | string | 加载时注入 |
+| `displayNameId` | string | |
+| `descId` | string | |
+| `maxHp` | int | 必须 > 0 |
+| `element` | EElement | |
+| `role` | ERole | |
+| `skillRefs` | SkillRefDto[] | AI 技能池（运行时规范见开放项） |
+| `buffRefs` | BuffRefDto[] | |
+| `artPath` | string | |
+| `scriptPath` | string? | 可选自定义 AI 脚本 |
+| `tags` | string[] | |
+
+#### 13.5.3 BattleDto（`BattleDto.cs`）（原 §5 BattleDto）
+
+| JSON 字段 | 类型 | 说明 |
+|-----------|------|------|
+| `id` | string | |
+| `displayNameId` | string | |
+| `descId` | string | |
+| `waves` | BattleWaveDto[] | 至少一波 |
+| `scriptPath` | string? | 可选战斗脚本 |
+| `rewards` | BattleRewardDto | 战后奖励 |
+| `backgroundPath` | string? | |
+| `musicId` | string? | |
+| `tags` | string[] | |
+
+**嵌套类型**（`SharedDefinitionDtos.cs`）：
+
+- `BattleWaveDto`：`enemySpawns`（非空）、`waveScriptPath?`
+- `EnemySpawnDto`：`enemyId`、`count`（默认 1）、`hpScale?`、`skillOverrides?`
+- `BattleRewardDto`：`entries`
+- `RewardEntryDto`：`kind`、`weight`（默认 1）、`params?`
+
+**奖励 `params` 约定**（首版 `Dictionary<string, object>`，加载期部分校验）：
+
+| kind | params 键 | 校验 |
+|------|-----------|------|
+| Gold | `min`, `max` | 无引用校验 |
+| CardChoice | `count`, `pool`；可选 `cardIds` | 若提供 `cardIds`，逐项校验 Card 存在 |
+| ItemGrant | `itemId` | 必填，校验 Item 存在 |
+| Effect | `effectId` | 必填，校验 Effect 存在 |
+
+#### 13.5.4 EventDto（`EventDto.cs`）（原 §5 EventDto）
+
+| JSON 字段 | 类型 | 说明 |
+|-----------|------|------|
+| `id` | string | |
+| `displayNameId` | string | |
+| `descId` | string | |
+| `eventKind` | EEventKind | Data 或 Script |
+| `artPath` | string | |
+| `pages` | EventPageDto[] | 叙事页 |
+| `options` | EventOptionDto[] | 选项（Data 事件必填） |
+| `scriptPath` | string? | Script 事件必填 |
+| `tags` | string[] | |
+
+**嵌套类型**：
+
+- `EventPageDto`：`textId`、`imagePath?`
+- `EventOptionDto`：`optionId`、`labelId`、`descId?`、`conditions`、`effectRefs`、`nextPageIndex?`
+
+**eventKind 约束**：
+
+- `Data`：`options` 至少一项；各 `effectRefs` 校验 Effect 存在
+- `Script`：`scriptPath` 非空
+
+#### 13.5.5 ItemDto（`ItemDto.cs`）（原 §5 ItemDto）
+
+| JSON 字段 | 类型 | 说明 |
+|-----------|------|------|
+| `id` | string | |
+| `displayNameId` | string | |
+| `descId` | string | |
+| `rarity` | ERarity | |
+| `useSkillRefs` | SkillRefDto[] | 非空；使用后触发技能链 |
+| `targetSpec` | TargetSpecDto? | 目标规格 |
+| `maxStack` | int | 默认 1 |
+| `artPath` | string | |
+| `shopPrice` | int? | 商店价格 |
+| `tags` | string[] | |
+
+#### 13.5.6 共用嵌套 DTO（`SharedDefinitionDtos.cs`）（原 §5 共用嵌套 DTO）
+
+| 类型 | 字段 |
+|------|------|
+| `SkillRefDto` | `skillId`, `params?` |
+| `BuffRefDto` | `buffId`, `params?` |
+| `EffectRefDto` | `effectId`, `params?` |
+| `TargetSpecDto` | `side`, `scope`, `targetCount`（默认 1）, `retargetPolicy` |
+| `ConditionRefDto` | `kind`, `params?`（Event 选项条件） |
+
+---
+
+### 13.6 校验规则（`ContentDefinitionValidator`）（原 §6）
+
+加载合并后执行；失败项从 `GameDefinitionStore` 与 `_tables` 同时移除，错误写入 `ContentLoadReport.ValidationErrors`。
+
+| 类别 | 规则 |
+|------|------|
+| Character | `skillRefs` / `cards` / `passives[].buffId` 引用存在；`requiredPotential` 非负 |
+| Enemy | `maxHp > 0`；`skillRefs` / `buffRefs` 引用存在 |
+| Battle | `waves` 非空；每波 `enemySpawns` 非空；`enemyId` 存在；`skillOverrides` 技能存在；奖励按 kind 校验 |
+| Event | Data：`options` 非空 + effect 引用；Script：`scriptPath` 必填 |
+| Item | `useSkillRefs` 非空；技能引用存在 |
+
+---
+
+### 13.7 示例内容（`Config/mods/base-game/content/`）（原 §7）
+
+| 文件 | 说明 |
+|------|------|
+| `characters/kemo.json` | 角色 + 卡牌池 + 技能/Buff |
+| `enemies/slime.json`, `slime_elite.json` | 敌人定义 |
+| `battles/forest_ambush.json` | 两波战斗 + Gold/CardChoice 奖励 |
+| `events/shrine.json` | Data 事件 + 选项效果 |
+| `items/health_potion.json` | 消耗品 + targetSpec |
+
+---
+
+### 13.8 开放项（原 §8）
+
+- `EElement` 与 CardDto `int element` 统一迁移（CardDto 仍用 `ElementFlags` 位标志）
+- Enemy AI 运行时规范（DTO 仅提供 `skillRefs` 池与可选 `scriptPath`）
+- `RewardEntryDto.params` 强类型化（首版 `Dictionary<string, object>`）
+
+---
+
+### 13.9 自检（原 §9）
+
+- 与 `2026-05-11-kemo-card-design.md` 宿主/Mod 分界一致
+- 与本文 §12.2 类型约束（sealed class + JsonPropertyName + init）一致
+- 实现文件：`CharacterDto.cs`, `EnemyDto.cs`, `BattleDto.cs`, `EventDto.cs`, `ItemDto.cs`, `SharedDefinitionDtos.cs`, `ContentEnums.cs`, `ContentDefinitionValidator.cs`, `ContentModLoader.cs`, `GameDefinitionRegistry.cs`
+
+---
+
+## 14. 角色实例 / 战斗实例 / 卡组预设 / 手牌槽（原 2026-06-18 角色实例设计规格 §1–§4）
+
+> **来源**：`2026-06-18-character-instance-design.md`（**日期** 2026-06-18；**状态** 已确认（首期实现范围）；**范围** `DeckPreset`、`CharacterInstance`、`HandSlot`、`CharacterBattleInstance` 及直接依赖的类型（`CharacterAttributes`、`CardStatBlockDto`））。已归档至 `Doc/archive/superpowers/specs/2026-06-18-character-instance-design.md`。角色 DTO 见本文 §13.5.1；卡牌 DTO 见本文 §12.3。
+
+### 14.1 首期实现边界（原 §1）
+
+#### 本期实现
+
+| 类型 | 路径 |
+|------|------|
+| `DeckPreset` | `Src/mod/combat/DeckPreset.cs` |
+| `CharacterInstance` | `Src/mod/combat/CharacterInstance.cs` |
+| `HandSlot` | `Src/mod/combat/HandSlot.cs` |
+| `CharacterBattleInstance` | `Src/mod/combat/CharacterBattleInstance.cs` |
+| `CharacterAttributes` | `Src/mod/combat/CharacterAttributes.cs` |
+| `CardStatBlockDto` | `Src/frame/content/definitions/CardStatBlockDto.cs`（扩展 `CardDto`） |
+
+#### 后续单独文档实现（本期不做）
+
+- `BuffInstance` 及 Buff 结算管线
+- 局内存档（`RunSaveDto`、`RunSaveService`、`ToSaveDto` / `FromSaveDto`）
+- `ObtainedCardPool` 类型（本期构筑校验通过方法参数传入已获得卡 id 集合）
+- `TeamBattleState`、队伍共用 HP
+- `CharacterBattleFactory` 独立类（本期用 `CharacterBattleInstance.TryCreate` 静态方法）
+- 战斗阶段机、`CombatTurnController`
+
+---
+
+### 14.2 已确认玩法规则（原 §2）
+
+| 决策 | 结论 |
+|------|------|
+| `CharacterDto` | 无战斗属性；`cards` 为角色专属构筑池 |
+| 角色属性 | 当前卡组内卡牌 `stats` 字段 **逐项求和** |
+| 卡组数量 | 初始 **1 套**；`TryCreateDeck()` 最多 **10 套**；**不可删除** |
+| 新建卡组默认 | 填入专属卡；超过 10 张取 `CharacterDto.Cards` **前 10 张** |
+| 每套卡组 | 最多 10 张、不可重复 |
+| 构筑卡来源 | 已获得卡 id 集合（调用方传入）∪ 角色专属卡 |
+| 构筑时机 | 战斗外；`IsDeckLocked == true` 时禁止编辑 |
+| 手牌 | 固定 5 槽；槽位效果本期用 `HandSlotEffectRef`（仅 `buffId` + `params`）占位，后续替换为 `BuffInstance` |
+| 战斗实例 | 不参与存档；由 `CharacterInstance` 当前卡组生成牌库并洗牌 |
+
+卡组内卡牌 `stats` 的属性预算口径见本文 §15.3。
+
+---
+
+### 14.3 类型职责（原 §3）
+
+#### `DeckPreset`
+
+- `DeckId`、`DisplayName?`、`CardIds`（≤10，无重复）
+- `CreateWithExclusiveCards(CharacterDto)`
+- `TryAddCard` / `TryRemoveCard`
+- `Validate(IReadOnlySet<string> buildableCardIds)`
+
+#### `CharacterInstance`
+
+- 构造：`CharacterInstance(CharacterDto)` 与无参 `CharacterInstance()`
+- `TryCreateDeck()`、`TryEditDeck`、`TrySetCurrentDeck`
+- `GetBuildableCardIds(IReadOnlySet<string> obtainedCardIds)`
+- `ComputeAttributes(GameDefinitionRegistry)` — 基于当前卡组
+- `SetDeckLocked(bool)` — 由上层战斗流程调用
+
+#### `HandSlot`
+
+- `PlaceCard` / `ClearCard`
+- `SlotEffects`：`List<HandSlotEffectRef>`（后续对接 Buff 系统）
+
+#### `CharacterBattleInstance`
+
+- `TryCreate(CharacterInstance, GameDefinitionRegistry, HostRng, out error)`
+- 牌库 / 5 手牌槽 / 墓地、`CardRuntimeEntry`
+- 能量三元组与 `BaseAttributes` 快照
+- `HasActed`
+
+---
+
+### 14.4 自检（原 §4）
+
+- 无局内存档、无 BuffInstance、无队伍 HP — 与首期范围一致  
+- 手牌槽位效果可扩展 — 通过 `HandSlotEffectRef` 预留  
+- 属性唯一定义在 `CardDto.stats` — 与「CharacterDto 无属性」一致
+
+---
+
+## 15. 内容域收敛与卡组预算（并入自 2026-09-21 莱因哈特套件与战斗机制扩展规格）
+
+> **来源**：`2026-09-21-reinhardt-and-normal-attack-extensions.md` 的**内容域**章节 —— 原 §2 种族收敛、§3 常驻天赋移除、§9 卡组属性预算、§12.1 稀有度档名收敛、§12.2 的 `CharacterDto.descId` 删除。该规格**仍存活**（普攻扩展、魔法伤害、Combat 条件域、取值与槽位机制、莱因哈特/巴赫套件归战斗规格与 Buff 规格维护；角色详细界面展示形态归 Global 功能规格维护），本规格不归档。本文只承载上述内容域事实；未并入清单见本文 §16。
+
+### 15.1 种族收敛（2026-09-21）（原 §2）
+
+`ERace` 位标志重排（安全：种族只存在于内容 JSON 与运行期 DTO，不落存档）：
+
+| 旧 | 新 |
+|---|---|
+| Canine / Feline / Bird / Beast / Reptile | **Animal**（动物） |
+| Demonic / Devil | **Demon**（恶魔族） |
+| — | **Academic / Fantasy / Astronomy / Hero / Calamity** |
+| UnKnown | **Unknown**（更名） |
+| 未提及 | 保留：Human / Insect / Fish / Plant / Machine / Angel / Dragon / God / Undead |
+
+- 本地化键随枚举走：`UI_RACE_ANIMAL` / `UI_RACE_DEMON` / `UI_RACE_ACADEMIC` …（图鉴筛选下拉与队伍编辑界面共用）。
+- `RunTeamEditDlg` 的元素/种族显示从"枚举 ToString()"改为本地化键（多标志用「、」连接）——否则双种族角色会显示 `Animal, Dragon`。
+
+生效清单见本文 §13.4.1 的 `ERace` 行。
+
+---
+
+### 15.2 常驻天赋移除（原 §3）
+
+`CharacterDto.buffRefs` 字段、校验器接线与文档全部删除：该机制与 `passives` 重复却走另一条挂载路径。角色常驻增益一律用 `passives`（潜能门闩 → 开战挂 buff）。
+
+> 敌人侧 `EnemyDto.buffRefs` **保留**：木桩的"每回合回血"等开战 buff 靠它，与角色被动是两件事。
+
+生效字段表见本文 §13.5.1（`CharacterDto.passives`）与 §13.5.2（`EnemyDto.buffRefs`）；校验规则见本文 §13.6。
+
+---
+
+### 15.3 卡组属性预算（原 §9）
+
+一张卡的 `stats.attributes` 折算总值 = **40 最大生命**，其中 **1 点物理攻击 = 10 点最大生命**。
+
+- 对齐方式固定为**保留最大生命、削减物攻**，不要反过来削生命去换物攻。
+- chalux：逆戟冰冲 `20生命/2物攻`、璨华长路 `40生命`、才煌的绝剑 `30生命/1物攻`、绝念 `20生命/2物攻`。
+- 莱因哈特：黑船宝藏 `20/2`、呼啸激攻 `30/1`、碧蓝大海航行 `40/0`、辉耀宝刀 `30/1`。
+
+卡组属性求和口径见本文 §14.2（`CardStatBlockDto` 路径见 §14.1）。
+
+---
+
+### 15.4 稀有度档名收敛（原 §12.1）
+
+`ERarity` 收敛为 `Common` / `Special`（原 Uncommon）/ `Rare` / `Exclusive`（原 Epic）/ `Legendary`。
+卡框资源路径同步为 `Resource/Assets/CardFrame/{Common,Special,Rare,Exclusive,Legendary}.png`；
+出货内容里 8 张专属卡已从 `Epic` 迁到 `Exclusive`。
+
+> 2026-09-21 合并：原表述（`ERarity`：Common, Uncommon, Rare, Epic, Legendary）已收敛为（`Common` / `Special` / `Rare` / `Exclusive` / `Legendary`）。
+
+生效清单见本文 §13.4.1 的 `ERarity` 行。
+
+---
+
+### 15.5 角色简介字段移除（原 §12.2 的 DTO 部分）
+
+`CharacterDto.descId` 删除（字段、内容、翻译行、图鉴文本检索、DTO 文档一并清理）。
+
+> 2026-09-21 合并：原表述（`CharacterDto` 含 `descId` 简介字段）已收敛为（`CharacterDto.descId` 删除，角色详细界面不再读取该字段）。
+
+生效字段表见本文 §13.5.1。
+
+> **范围外指路**：同批的「角色详细界面改为展示专属卡牌 / 横向卡牌列表」属 **UI 展示形态**，归 Global 功能规格维护，本文不承载。
+
+---
+
+## 16. 合并自检与范围外指路（2026-09-21）
+
+### 16.1 合并自检
+
+- **占位扫描**：无 TBD/TODO 强制项。
+- **保真**：三份下级规格的规则句、字段表（含每个 DTO 的全部字段行）、枚举成员清单、数值、代码标识符、明确后置项均原样并入 §12–§14；仅追加收敛注记、段号映射表、来源说明与本节。
+- **段号锚点**：§12–§15 的各小节标题均标注原段号（如 `### 15.1 种族收敛（2026-09-21）（原 §2）`），并按文档头「段号映射」表与原规格 §N 一一对应。
+- **链接处理**：指向本次被并入规格的链接已改写为本文 §N；指向仍存活规格（总规格 / 战斗规格 / 条件规格 / Buff 规格 / 普攻规格 / jsenv-mod-scripting）的链接保持原样。
+- **单轨**：定义权威仅 `GameDefinitionStore`；DTO 字段表与校验规则（§13.6）描述同一套定义。
+
+### 16.2 未并入本文的内容（含理由）
+
+| 来源 | 未并入章节 | 归属 |
+|---|---|---|
+| 2026-09-21 莱因哈特套件与战斗机制扩展 | §1 本次交付总览 | 汇总表，非规则；下属各章已分别归档（内容域 → 本文 §15，其余归战斗规格） |
+| 同上 | §4 连携统计口径修正 | 战斗运行时（连携档位与 `ChainCalculator` / `AppliesToCard`） |
+| 同上 | §5 魔法伤害落地（含 §5.1 `attackScale`） | 战斗规格 §7 后置项清账；伤害包管线 |
+| 同上 | §6 普通攻击扩展（§6.1–§6.4） | 扩充普通攻击规格（次数 / 追打 / 专项倍率 / 可观测） |
+| 同上 | §7 Combat 条件域启用 | 条件规格 + 战斗运行时（`ICombatCondContext`、`CardPlayedThisTurn`） |
+| 同上 | §8 新增取值与槽位机制（`PartyCountScaled`、`slot.free_cost`、`trait.immune_seal`） | Buff 运行时 / GAS / 战斗取值 |
+| 同上 | §10 莱因哈特、§11 巴赫（含 §11.0–§11.3） | 具体出货角色与卡牌套件；其**卡组属性贡献**数值口径已由本文 §15.3 承载 |
+| 同上 | §12.2 的 UI 部分（角色详细界面改为展示专属卡牌 / 横向虚拟列表） | Global 功能规格（界面展示形态） |
+| 同上 | §13 明确后置项 | 归属各自运行时规格（普攻次数上限 / 追打可观测 UI / 元素克制抗性 / 敌方 `buffRefs` 未统一） |
+
+### 16.3 来源冲突修正（四处）
+
+| 冲突 | 旧表述 | 本文处置 |
+|---|---|---|
+| ① `ERace` | 5 族分散（Canine/Feline/Bird/Beast/Reptile）、Demonic + Devil 分列、`UnKnown` 拼写 | 收敛为 `Animal` / `Demon` / 新增 5 族 / `Unknown`；注记见 §13.4.1，规则见 §15.1 |
+| ② `ERarity` | Common, Uncommon, Rare, Epic, Legendary | 收敛为 `Common` / `Special`（原 Uncommon）/ `Rare` / `Exclusive`（原 Epic）/ `Legendary`；注记见 §13.4.1，规则见 §15.4 |
+| ③ `CharacterDto.buffRefs` | 角色常驻天赋引用字段 | 删除；角色常驻增益唯一通道 = `passives`；`EnemyDto.buffRefs` 保留；注记见 §13.5.1，规则见 §15.2 |
+| ④ `CharacterDto.descId` | 角色简介翻译键字段 | 删除；注记见 §13.5.1，规则见 §15.5 |

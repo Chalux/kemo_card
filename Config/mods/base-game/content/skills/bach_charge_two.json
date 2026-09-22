@@ -1,0 +1,15 @@
+{
+  "displayNameId": "skill.bach_charge_two.name",
+  "descId": "skill.bach_charge_two.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "bach_orb_amp_self" },
+    { "actionId": "bach_grant_red_orb" },
+    { "actionId": "bach_grant_yellow_orb" },
+    { "actionId": "bach_grant_blue_orb" },
+    { "actionId": "bach_grant_green_orb" },
+    { "actionId": "bach_grant_physical_orb" },
+    { "actionId": "bach_grant_magic_orb" }
+  ],
+  "tags": ["active", "orb", "charge"]
+}

@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.reinhardt_howling.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "reinhardt_howling_onslaught" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "PhysicalAttack": 1
+    }
+  },
+  "role": "SwordMan",
+  "priority": 30,
+  "cardType": "Weak",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["debuff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

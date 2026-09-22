@@ -11,145 +11,186 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_storyselect")
-_storyList = NodePath("Panel/VBox/Content/Left/StoryList")
-_lblName = NodePath("Panel/VBox/Content/Right/Form/NameValue")
-_lblAuthor = NodePath("Panel/VBox/Content/Right/Form/AuthorValue")
-_lblMod = NodePath("Panel/VBox/Content/Right/Form/ModValue")
-_lblMode = NodePath("Panel/VBox/Content/Right/Form/ModeValue")
-_lblDesc = NodePath("Panel/VBox/Content/Right/DescValue")
-_lblUnlockHint = NodePath("Panel/VBox/Content/Right/UnlockHint")
-_seedInput = NodePath("Panel/VBox/SeedRow/SeedInput")
-_btnConfirm = NodePath("Panel/VBox/BtnRow/BtnConfirm")
-_btnCancel = NodePath("Panel/VBox/BtnRow/BtnCancel")
+_storyList = NodePath("Layout/Rail/Margin/VBox/StoryList")
+_lblName = NodePath("Layout/Content/VBox/StoryCard/VBox/NameValue")
+_lblAuthor = NodePath("Layout/Content/VBox/StoryCard/VBox/Form/AuthorValue")
+_lblMod = NodePath("Layout/Content/VBox/StoryCard/VBox/Form/ModValue")
+_lblMode = NodePath("Layout/Content/VBox/StoryCard/VBox/Form/ModeValue")
+_lblDesc = NodePath("Layout/Content/VBox/StoryCard/VBox/DescValue")
+_lblUnlockHint = NodePath("Layout/Content/VBox/StoryCard/VBox/UnlockHint")
+_seedInput = NodePath("Layout/Content/VBox/Footer/SeedInput")
+_btnConfirm = NodePath("Layout/Content/VBox/Footer/BtnConfirm")
+_btnCancel = NodePath("Layout/Rail/Margin/VBox/BtnCancel")
 
-[node name="Panel" type="Panel" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 140.0
-offset_top = 70.0
-offset_right = -140.0
-offset_bottom = -70.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Bg" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"PageBg"
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="Rail" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+theme_type_variation = &"Rail"
+
+[node name="Margin" type="MarginContainer" parent="Layout/Rail"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin"]
+layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="Panel/VBox"]
+[node name="Title" type="Label" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
+theme_type_variation = &"Title"
 text = "UI_RUN_STORY_SELECT_TITLE"
-horizontal_alignment = 1
 
-[node name="Content" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Rule" type="HSeparator" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 24
 
-[node name="Left" type="VBoxContainer" parent="Panel/VBox/Content"]
+[node name="LeftTitle" type="Label" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="LeftTitle" type="Label" parent="Panel/VBox/Content/Left"]
-layout_mode = 2
+theme_type_variation = &"Caption"
 text = "UI_STORY_LIST"
 
-[node name="StoryList" type="ItemList" parent="Panel/VBox/Content/Left"]
-custom_minimum_size = Vector2(380, 0)
+[node name="StoryList" type="ItemList" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Right" type="VBoxContainer" parent="Panel/VBox/Content"]
+[node name="BtnCancel" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_COMMON_BACK"
+script = ExtResource("2_kbtn")
+
+[node name="Content" type="MarginContainer" parent="Layout"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 8
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
 
-[node name="RightTitle" type="Label" parent="Panel/VBox/Content/Right"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Content"]
 layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="StoryCard" type="PanelContainer" parent="Layout/Content/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBox" type="VBoxContainer" parent="Layout/Content/VBox/StoryCard"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RightTitle" type="Label" parent="Layout/Content/VBox/StoryCard/VBox"]
+layout_mode = 2
+theme_type_variation = &"Eyebrow"
 text = "UI_STORY_DETAILS"
 
-[node name="Form" type="GridContainer" parent="Panel/VBox/Content/Right"]
+[node name="NameValue" type="Label" parent="Layout/Content/VBox/StoryCard/VBox"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 34
+autowrap_mode = 3
+
+[node name="Rule" type="HSeparator" parent="Layout/Content/VBox/StoryCard/VBox"]
+layout_mode = 2
+
+[node name="Form" type="GridContainer" parent="Layout/Content/VBox/StoryCard/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 6
 columns = 2
-theme_override_constants/h_separation = 12
 
-[node name="NameLabel" type="Label" parent="Panel/VBox/Content/Right/Form"]
+[node name="AuthorLabel" type="Label" parent="Layout/Content/VBox/StoryCard/VBox/Form"]
 layout_mode = 2
-text = "UI_STORY_NAME"
-
-[node name="NameValue" type="Label" parent="Panel/VBox/Content/Right/Form"]
-layout_mode = 2
-
-[node name="AuthorLabel" type="Label" parent="Panel/VBox/Content/Right/Form"]
-layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
 text = "UI_STORY_AUTHOR"
 
-[node name="AuthorValue" type="Label" parent="Panel/VBox/Content/Right/Form"]
+[node name="AuthorValue" type="Label" parent="Layout/Content/VBox/StoryCard/VBox/Form"]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="ModLabel" type="Label" parent="Panel/VBox/Content/Right/Form"]
+[node name="ModLabel" type="Label" parent="Layout/Content/VBox/StoryCard/VBox/Form"]
 layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
 text = "UI_STORY_MOD"
 
-[node name="ModValue" type="Label" parent="Panel/VBox/Content/Right/Form"]
+[node name="ModValue" type="Label" parent="Layout/Content/VBox/StoryCard/VBox/Form"]
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="ModeLabel" type="Label" parent="Panel/VBox/Content/Right/Form"]
+[node name="ModeLabel" type="Label" parent="Layout/Content/VBox/StoryCard/VBox/Form"]
 layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
 text = "UI_STORY_MODE"
 
-[node name="ModeValue" type="Label" parent="Panel/VBox/Content/Right/Form"]
+[node name="ModeValue" type="Label" parent="Layout/Content/VBox/StoryCard/VBox/Form"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Rule2" type="HSeparator" parent="Layout/Content/VBox/StoryCard/VBox"]
 layout_mode = 2
 
-[node name="DescValue" type="Label" parent="Panel/VBox/Content/Right"]
+[node name="DescValue" type="Label" parent="Layout/Content/VBox/StoryCard/VBox"]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_font_sizes/font_size = 17
 autowrap_mode = 3
 
-[node name="UnlockHint" type="Label" parent="Panel/VBox/Content/Right"]
+[node name="UnlockHint" type="Label" parent="Layout/Content/VBox/StoryCard/VBox"]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.894, 0.459, 0.42, 1)
+theme_type_variation = &"DangerText"
 autowrap_mode = 3
 
-[node name="SeedRow" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Footer" type="HBoxContainer" parent="Layout/Content/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SeedLabel" type="Label" parent="Panel/VBox/SeedRow"]
+[node name="SeedLabel" type="Label" parent="Layout/Content/VBox/Footer"]
 layout_mode = 2
+size_flags_vertical = 4
 text = "UI_RUN_SEED_INPUT_LABEL"
 
-[node name="SeedInput" type="LineEdit" parent="Panel/VBox/SeedRow"]
-custom_minimum_size = Vector2(160, 0)
+[node name="SeedInput" type="LineEdit" parent="Layout/Content/VBox/Footer"]
+custom_minimum_size = Vector2(180, 44)
 layout_mode = 2
+size_flags_vertical = 4
 text = "-1"
 
-[node name="BtnRow" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Spacer" type="Control" parent="Layout/Content/VBox/Footer"]
 layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 24
+size_flags_horizontal = 3
 
-[node name="BtnConfirm" type="Button" parent="Panel/VBox/BtnRow"]
-custom_minimum_size = Vector2(160, 48)
+[node name="BtnConfirm" type="Button" parent="Layout/Content/VBox/Footer"]
+custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
+theme_override_font_sizes/font_size = 18
 text = "UI_RUN_START"
 disabled = true
 script = ExtResource("2_kbtn")
 Primary = true
-
-[node name="BtnCancel" type="Button" parent="Panel/VBox/BtnRow"]
-custom_minimum_size = Vector2(160, 48)
-layout_mode = 2
-text = "UI_COMMON_BACK"
-script = ExtResource("2_kbtn")

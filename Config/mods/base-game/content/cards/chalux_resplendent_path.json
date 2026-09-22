@@ -18,6 +18,6 @@
   "targetCount": 4,
   "retargetPolicy": "RandomLegal",
   "tags": ["attack", "aoe", "exclusive"],
-  "rarity": "Epic",
+  "rarity": "Exclusive",
   "isExclusive": true
 }

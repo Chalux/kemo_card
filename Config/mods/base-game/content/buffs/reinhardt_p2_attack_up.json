@@ -1,0 +1,10 @@
+{
+  "descId": "buff.reinhardt_p2_atk.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.passive"],
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 15 } }
+  ]
+}

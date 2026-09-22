@@ -1,11 +1,11 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://c6w4eing5n03l"]
 
-[ext_resource type="Script" path="res://Src/mod/run/Ui/RunCharacterDeckDlg.cs" id="1_dlg"]
-[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
-[ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
-[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="4_carditem"]
+[ext_resource type="Script" uid="uid://bkydvncn2gsm0" path="res://Src/mod/run/Ui/RunCharacterDeckDlg.cs" id="1_dlg"]
+[ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
+[ext_resource type="Script" uid="uid://dfkgx3jci17w8" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
+[ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="4_carditem"]
 
-[node name="RunCharacterDeckDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_btnClose", "_lblDeckCaption", "_deckTabs", "_btnNewDeck", "_lblDeckCount", "_deckList", "_lblPoolCaption", "_poolList", "_btnDeploy", "_lblStatus")]
+[node name="RunCharacterDeckDlg" type="Control" unique_id=1670807035 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_lblDeckCaption", "_deckTabs", "_btnNewDeck", "_lblDeckCount", "_deckList", "_lblPoolCaption", "_poolList", "_btnDeploy", "_lblStatus")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,145 +13,196 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dlg")
-_lblTitle = NodePath("Panel/VBox/Header/LblTitle")
-_btnClose = NodePath("Panel/VBox/Header/BtnClose")
-_lblDeckCaption = NodePath("Panel/VBox/DeckRow/LblDeckCaption")
-_deckTabs = NodePath("Panel/VBox/DeckRow/DeckTabs")
-_btnNewDeck = NodePath("Panel/VBox/DeckRow/BtnNewDeck")
-_lblDeckCount = NodePath("Panel/VBox/Body/Left/LblDeckCount")
-_deckList = NodePath("Panel/VBox/Body/Left/DeckList")
-_lblPoolCaption = NodePath("Panel/VBox/Body/Right/LblPoolCaption")
-_poolList = NodePath("Panel/VBox/Body/Right/PoolList")
-_btnDeploy = NodePath("Panel/VBox/Footer/BtnDeploy")
-_lblStatus = NodePath("Panel/VBox/Footer/LblStatus")
+_lblTitle = NodePath("Layout/Rail/Margin/VBox/LblTitle")
+_btnClose = NodePath("Layout/Rail/Margin/VBox/BtnClose")
+_lblDeckCaption = NodePath("Layout/Content/VBox/DeckRow/LblDeckCaption")
+_deckTabs = NodePath("Layout/Content/VBox/DeckRow/DeckTabs")
+_btnNewDeck = NodePath("Layout/Content/VBox/DeckRow/BtnNewDeck")
+_lblDeckCount = NodePath("Layout/Content/VBox/Body/Left/LeftHeader/LblDeckCount")
+_deckList = NodePath("Layout/Content/VBox/Body/Left/DeckList")
+_lblPoolCaption = NodePath("Layout/Content/VBox/Body/Right/LblPoolCaption")
+_poolList = NodePath("Layout/Content/VBox/Body/Right/PoolList")
+_btnDeploy = NodePath("Layout/Rail/Margin/VBox/BtnDeploy")
+_lblStatus = NodePath("Layout/Rail/Margin/VBox/LblStatus")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Bg" type="Panel" parent="." unique_id=899097034]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 60.0
-offset_top = 30.0
-offset_right = -60.0
-offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"PageBg"
 
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Layout" type="HBoxContainer" parent="." unique_id=1241441019]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = -16.0
-offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 0
 
-[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Rail" type="PanelContainer" parent="Layout" unique_id=250792391]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_type_variation = &"Rail"
 
-[node name="LblTitle" type="Label" parent="Panel/VBox/Header"]
+[node name="Margin" type="MarginContainer" parent="Layout/Rail" unique_id=1420207735]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
 
-[node name="BtnClose" type="Button" parent="Panel/VBox/Header"]
-custom_minimum_size = Vector2(120, 40)
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin" unique_id=385124846]
 layout_mode = 2
-text = "UI_TEAM_CLOSE"
-script = ExtResource("2_kbtn")
+theme_override_constants/separation = 10
 
-[node name="DeckRow" type="HBoxContainer" parent="Panel/VBox"]
+[node name="LblTitle" type="Label" parent="Layout/Rail/Margin/VBox" unique_id=274210691]
+custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 26
+autowrap_mode = 3
 
-[node name="LblDeckCaption" type="Label" parent="Panel/VBox/DeckRow"]
+[node name="Rule" type="HSeparator" parent="Layout/Rail/Margin/VBox" unique_id=124696890]
 layout_mode = 2
 
-[node name="DeckTabs" type="TabBar" parent="Panel/VBox/DeckRow"]
+[node name="LblHint" type="Label" parent="Layout/Rail/Margin/VBox" unique_id=1080082718]
+custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
-size_flags_horizontal = 3
+theme_type_variation = &"Caption"
+text = "UI_TEAM_HINT_CLICK_OR_HOLD"
+autowrap_mode = 3
 
-[node name="BtnNewDeck" type="Button" parent="Panel/VBox/DeckRow"]
-custom_minimum_size = Vector2(160, 40)
-layout_mode = 2
-text = "UI_TEAM_NEW_DECK"
-script = ExtResource("2_kbtn")
-
-[node name="Body" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox" unique_id=643311015]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
 
-[node name="Left" type="VBoxContainer" parent="Panel/VBox/Body"]
-custom_minimum_size = Vector2(360, 0)
+[node name="LblStatus" type="Label" parent="Layout/Rail/Margin/VBox" unique_id=906977722]
+custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
 
-[node name="LblDeckCount" type="Label" parent="Panel/VBox/Body/Left"]
+[node name="BtnDeploy" type="Button" parent="Layout/Rail/Margin/VBox" unique_id=1157520995]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-
-[node name="DeckList" type="Control" parent="Panel/VBox/Body/Left" node_paths=PackedStringArray("ScrollArea")]
-layout_mode = 2
-size_flags_vertical = 3
-script = ExtResource("3_vlist")
-ScrollArea = NodePath("Scroll")
-ItemTemplate = ExtResource("4_carditem")
-ItemSize = 208.0
-Spacing = 2.0
-
-[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Left/DeckList"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Right" type="VBoxContainer" parent="Panel/VBox/Body"]
-custom_minimum_size = Vector2(360, 0)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
-
-[node name="LblPoolCaption" type="Label" parent="Panel/VBox/Body/Right"]
-layout_mode = 2
-
-[node name="PoolList" type="Control" parent="Panel/VBox/Body/Right" node_paths=PackedStringArray("ScrollArea")]
-layout_mode = 2
-size_flags_vertical = 3
-script = ExtResource("3_vlist")
-ScrollArea = NodePath("Scroll")
-ItemTemplate = ExtResource("4_carditem")
-ItemSize = 208.0
-Spacing = 2.0
-
-[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Right/PoolList"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Footer" type="HBoxContainer" parent="Panel/VBox"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BtnDeploy" type="Button" parent="Panel/VBox/Footer"]
-custom_minimum_size = Vector2(220, 44)
-layout_mode = 2
+theme_override_font_sizes/font_size = 18
 text = "UI_TEAM_DEPLOY"
 script = ExtResource("2_kbtn")
 Primary = true
 
-[node name="LblStatus" type="Label" parent="Panel/VBox/Footer"]
-custom_minimum_size = Vector2(400, 0)
+[node name="BtnClose" type="Button" parent="Layout/Rail/Margin/VBox" unique_id=309905519]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_TEAM_CLOSE"
+script = ExtResource("2_kbtn")
+
+[node name="Content" type="MarginContainer" parent="Layout" unique_id=1993091417]
 layout_mode = 2
 size_flags_horizontal = 3
-autowrap_mode = 3
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Layout/Content" unique_id=691082320]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DeckRow" type="HBoxContainer" parent="Layout/Content/VBox" unique_id=1767097634]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="LblDeckCaption" type="Label" parent="Layout/Content/VBox/DeckRow" unique_id=271970649]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="DeckTabs" type="TabBar" parent="Layout/Content/VBox/DeckRow" unique_id=489308154]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+
+[node name="BtnNewDeck" type="Button" parent="Layout/Content/VBox/DeckRow" unique_id=222179342]
+custom_minimum_size = Vector2(150, 40)
+layout_mode = 2
+size_flags_vertical = 4
+text = "UI_TEAM_NEW_DECK"
+script = ExtResource("2_kbtn")
+
+[node name="Body" type="HBoxContainer" parent="Layout/Content/VBox" unique_id=1930599519]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="Left" type="VBoxContainer" parent="Layout/Content/VBox/Body" unique_id=2122582278]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="LeftHeader" type="HBoxContainer" parent="Layout/Content/VBox/Body/Left" unique_id=1501201804]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LblLeftCaption" type="Label" parent="Layout/Content/VBox/Body/Left/LeftHeader" unique_id=255218235]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 17
+text = "UI_TEAM_DECK_CAPTION"
+
+[node name="LblDeckCount" type="Label" parent="Layout/Content/VBox/Body/Left/LeftHeader" unique_id=1077192039]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 2
+
+[node name="DeckList" type="Control" parent="Layout/Content/VBox/Body/Left" unique_id=2123686648 node_paths=PackedStringArray("ScrollArea")]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_vlist")
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("4_carditem")
+ItemSize = 208.0
+Spacing = 10.0
+FlowLayout = true
+
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Left/DeckList" unique_id=1464232371]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Right" type="VBoxContainer" parent="Layout/Content/VBox/Body" unique_id=1554286866]
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="LblPoolCaption" type="Label" parent="Layout/Content/VBox/Body/Right" unique_id=1020997323]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="PoolList" type="Control" parent="Layout/Content/VBox/Body/Right" unique_id=50602466 node_paths=PackedStringArray("ScrollArea")]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_vlist")
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("4_carditem")
+ItemSize = 208.0
+Spacing = 10.0
+FlowLayout = true
+
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/PoolList" unique_id=123046070]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

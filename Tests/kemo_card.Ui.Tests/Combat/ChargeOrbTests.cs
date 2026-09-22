@@ -117,8 +117,8 @@ public sealed class ChargeOrbTests
         sim.Orbs.Grant(sim, Blue, producerIndex: 0, count: 3);
         sim.Orbs.TriggerManual(sim);
 
-        // 单球 = (6 + 1.0×10) × (1 + 0.25) × (1 + 0.5) = 30；3 球 = 90。
-        Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(before - 90f).Within(0.001f));
+        // 单球 = (6 + 1.0×10) × (1 + 0.25 增伤 + 0.5 受伤增加) = 28；3 球 = 84。
+        Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(before - 84f).Within(0.001f));
     }
 
     [Test]
@@ -311,6 +311,37 @@ public sealed class ChargeOrbTests
         }
 
         Assert.That(Describe(20260919), Is.EqualTo(Describe(20260919)), "同种子必须可复现");
+    }
+
+    /// <summary>
+    /// 回合内球数（<c>CountOrbsTriggeredThisTurn</c>）的账期与<b>回合边界</b>对齐：
+    /// 清账发生在回合开始，而不是"回合结束产球"——产球会即时触发并再次记账，
+    /// 若在取走出牌记录时清账，上一回合结束产出的球就会被算进下一回合
+    /// （「本回合每触发 1 个绿球 +100% 魔攻」凭空多算）。
+    /// </summary>
+    [Test]
+    public void Orb_trigger_count_is_cleared_at_turn_start_not_when_played_cards_are_taken()
+    {
+        using var sim = BuildSim(orbTypes: BuiltinOrbs());
+
+        sim.RecordOrbsTriggered(new Dictionary<string, int>(StringComparer.Ordinal) { [Blue] = 2 });
+        Assert.That(sim.CountOrbsTriggeredThisTurn(0), Is.EqualTo(2));
+
+        // 回合结束产球：取走出牌记录。此时**不得**清球数账。
+        sim.TakePlayedThisTurn();
+        Assert.That(
+            sim.CountOrbsTriggeredThisTurn(0),
+            Is.EqualTo(2),
+            "取走出牌记录不得清球数账，否则同一时点产出的球会被算进下一回合");
+
+        // 回合开始：清账，本回合只统计本回合触发的球。
+        sim.ResetOrbsTriggeredThisTurn();
+        Assert.That(sim.CountOrbsTriggeredThisTurn(0), Is.Zero, "回合开始必须清账");
+
+        // 元素掩码筛选不受清账影响。
+        sim.RecordOrbsTriggered(new Dictionary<string, int>(StringComparer.Ordinal) { [Blue] = 1 });
+        Assert.That(sim.CountOrbsTriggeredThisTurn((int)EElement.Blue), Is.EqualTo(1));
+        Assert.That(sim.CountOrbsTriggeredThisTurn((int)EElement.Green), Is.Zero);
     }
 
     #endregion

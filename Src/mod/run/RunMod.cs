@@ -150,6 +150,11 @@ public sealed partial class RunMod : BaseMod
         yield return UIRegistration.Dialog(FeatureId, RunUiIds.CharacterDeck, "Src/mod/run/Ui")
             with
         { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
+
+        // ESC 系统菜单：每次打开都重读当前阶段（战斗中要禁用"保存并退出"），因此不留缓存。
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.PauseMenu, "Src/mod/run/Ui")
+            with
+        { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
     }
 
     public RunDto ToDto()

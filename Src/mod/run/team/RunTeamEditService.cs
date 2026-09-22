@@ -31,6 +31,12 @@ public readonly record struct TeamPoolEntryView(
 /// <summary>卡组页签视图（多套卡组）。</summary>
 public readonly record struct DeckTabView(int DeckIndex, bool IsCurrent, int CardCount);
 
+/// <summary>
+/// "可加入卡组"列表的条目：<see cref="InDeck"/> 为 true 表示该牌已在当前卡组内，
+/// 界面必须加遮罩与"已在卡组内"提示，并且不再响应加入操作。
+/// </summary>
+public readonly record struct DeckPoolCardView(string CardId, bool InDeck);
+
 /// <summary>单个卡组的编辑视图。</summary>
 public sealed record DeckEditView(
     string InstanceId,
@@ -174,6 +180,32 @@ public sealed class RunTeamEditService
 
     public CardDto? GetCard(string cardId) =>
         _registry.Store.TryGetCard(cardId, out var card) ? card : null;
+
+    /// <summary>
+    /// "可加入卡组"列表：可构筑卡牌（收藏 ∪ 角色专属卡）按 id 排序，并标出**已在当前卡组内**的牌。
+    /// </summary>
+    /// <remarks>
+    /// 卡组不可重复（<see cref="DeckPreset"/> 规则），因此列表里必须把已在卡组内的牌显式标出来，
+    /// 否则玩家点下去只会得到一句失败提示。角色或卡组不存在时返回空列表（界面显示空态）。
+    /// </remarks>
+    public IReadOnlyList<DeckPoolCardView> GetPoolCards(string instanceId, int deckIndex)
+    {
+        if (FindCharacter(instanceId) is not { } character)
+        {
+            return [];
+        }
+
+        if (TryGetDeck(character, deckIndex) is not { } deck)
+        {
+            return [];
+        }
+
+        var inDeck = new HashSet<string>(deck.CardIds, StringComparer.Ordinal);
+        var buildable = character.GetBuildableCardIds(_run.State.CardCollection).ToList();
+        buildable.Sort(StringComparer.Ordinal);
+
+        return [.. buildable.Select(cardId => new DeckPoolCardView(cardId, inDeck.Contains(cardId)))];
+    }
 
     public CharacterInstance? FindCharacter(string instanceId) =>
         _run.State.CharacterPool.FirstOrDefault(character =>

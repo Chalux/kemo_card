@@ -3,23 +3,23 @@
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Toast/ToastItem.cs" id="1_toastitem"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_toast"]
-bg_color = Color(0.086, 0.11, 0.18, 0.94)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.541, 0.431, 0.2, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
 content_margin_left = 24.0
 content_margin_top = 10.0
 content_margin_right = 24.0
 content_margin_bottom = 10.0
+bg_color = Color(0.227, 0.18, 0.145, 0.96)
+border_width_left = 5
+border_color = Color(0.545, 0.18, 0.227, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+shadow_color = Color(0.227, 0.18, 0.145, 0.25)
+shadow_size = 6
+shadow_offset = Vector2(0, 3)
 
 [node name="ToastItem" type="Control" node_paths=PackedStringArray("_lblText")]
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("1_toastitem")
@@ -27,9 +27,15 @@ _lblText = NodePath("Panel/Label")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -26.0
+offset_right = 260.0
+offset_bottom = 26.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -40,7 +46,12 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 20.0
+offset_right = -20.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"OnDark"
 horizontal_alignment = 1
 vertical_alignment = 1
+text_overrun_behavior = 3

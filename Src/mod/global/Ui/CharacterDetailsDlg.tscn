@@ -3,8 +3,10 @@
 [ext_resource type="Script" path="res://Src/mod/global/Ui/CharacterDetailsDlg.cs" id="1_script"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_dlg"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.tscn" id="3_presenter"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="4_vlist"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="5_carditem"]
 
-[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_rtCharDesc", "_rtPassives", "_lblAnim", "_optAnim")]
+[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_lblCardsCaption", "_cardList", "_rtPassives", "_lblAnim", "_optAnim")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,87 +17,188 @@ script = ExtResource("1_script")
 _presenter = NodePath("BaseDlgComp/CharacterPresenter")
 _txtTitle = NodePath("BaseDlgComp/TxtTitle")
 _txtCharName = NodePath("BaseDlgComp/TxtCharName")
-_rtCharDesc = NodePath("BaseDlgComp/RTCharDesc")
+_lblCardsCaption = NodePath("BaseDlgComp/LblCardsCaption")
+_cardList = NodePath("BaseDlgComp/CardList")
 _rtPassives = NodePath("BaseDlgComp/RTPassives")
 _lblAnim = NodePath("BaseDlgComp/LblAnim")
 _optAnim = NodePath("BaseDlgComp/OptAnim")
 
+[node name="Scrim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.227, 0.18, 0.145, 0.38)
+
 [node name="BaseDlgComp" parent="." instance=ExtResource("2_dlg")]
 layout_mode = 1
-offset_left = 152.0
-offset_top = 88.0
-offset_right = -88.0
-offset_bottom = -88.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -490.0
+offset_top = -320.0
+offset_right = 490.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="TxtTitle" type="Label" parent="BaseDlgComp"]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.04
-anchor_top = 0.04
-anchor_right = 0.5
-anchor_bottom = 0.12
-theme_override_font_sizes/font_size = 28
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 24.0
+offset_right = -84.0
+offset_bottom = 52.0
+grow_horizontal = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 15
 text = "UI_CHARACTER_DETAILS_TITLE"
+vertical_alignment = 1
+
+[node name="PortraitSunken" type="Panel" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 64.0
+offset_right = 360.0
+offset_bottom = -40.0
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
 
 [node name="CharacterPresenter" parent="BaseDlgComp" instance=ExtResource("3_presenter")]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.04
-anchor_top = 0.14
-anchor_right = 0.36
-anchor_bottom = 0.88
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 72.0
+offset_right = 352.0
+offset_bottom = -48.0
+grow_vertical = 2
 mouse_filter = 2
 
 [node name="TxtCharName" type="Label" parent="BaseDlgComp"]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.4
-anchor_top = 0.14
-anchor_right = 0.92
-anchor_bottom = 0.24
-theme_override_font_sizes/font_size = 32
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 400.0
+offset_top = 60.0
+offset_right = -84.0
+offset_bottom = 104.0
+grow_horizontal = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 30
 text = ""
+vertical_alignment = 1
+text_overrun_behavior = 3
 
 [node name="LblAnim" type="Label" parent="BaseDlgComp"]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.4
-anchor_top = 0.26
-anchor_right = 0.52
-anchor_bottom = 0.34
-theme_override_font_sizes/font_size = 24
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 400.0
+offset_top = 112.0
+offset_right = -472.0
+offset_bottom = 150.0
+grow_horizontal = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
 text = "UI_CODEX_ANIM"
 vertical_alignment = 1
 
 [node name="OptAnim" type="OptionButton" parent="BaseDlgComp"]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.53
-anchor_top = 0.26
-anchor_right = 0.92
-anchor_bottom = 0.34
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 520.0
+offset_top = 112.0
+offset_right = -40.0
+offset_bottom = 150.0
+grow_horizontal = 2
 
-[node name="RTCharDesc" type="RichTextLabel" parent="BaseDlgComp"]
+[node name="Rule" type="HSeparator" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 400.0
+offset_top = 162.0
+offset_right = -40.0
+offset_bottom = 170.0
+grow_horizontal = 2
+
+[node name="LblCardsCaption" type="Label" parent="BaseDlgComp"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.4
-anchor_top = 0.38
-anchor_right = 0.92
-anchor_bottom = 0.6
-theme_override_font_sizes/normal_font_size = 24
-bbcode_enabled = true
-text = ""
-fit_content = false
-scroll_active = true
+anchor_right = 1.0
+offset_left = 400.0
+offset_top = 180.0
+offset_right = -40.0
+offset_bottom = 206.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 18
+text = "UI_CHARACTER_CARDS_TITLE"
+vertical_alignment = 1
+
+[node name="CardList" type="Control" parent="BaseDlgComp" node_paths=PackedStringArray("ScrollArea")]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.688
+offset_left = 400.0
+offset_top = 212.0
+offset_right = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_vlist")
+ScrollArea = NodePath("Scroll")
+ItemTemplate = ExtResource("5_carditem")
+ItemSize = 160.0
+Spacing = 10.0
+IsVertical = false
+
+[node name="Scroll" type="ScrollContainer" parent="BaseDlgComp/CardList"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Rule2" type="HSeparator" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.688
+anchor_right = 1.0
+anchor_bottom = 0.688
+offset_left = 400.0
+offset_top = 4.0
+offset_right = -40.0
+offset_bottom = 12.0
+grow_horizontal = 2
 
 [node name="RTPassives" type="RichTextLabel" parent="BaseDlgComp"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.4
-anchor_top = 0.62
-anchor_right = 0.92
-anchor_bottom = 0.88
-theme_override_font_sizes/normal_font_size = 18
+anchor_top = 0.688
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 400.0
+offset_top = 20.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+theme_override_font_sizes/bold_italics_font_size = 15
+theme_override_font_sizes/italics_font_size = 15
+theme_override_font_sizes/mono_font_size = 15
 bbcode_enabled = true
 text = ""
 fit_content = false

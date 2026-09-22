@@ -1,0 +1,18 @@
+{
+  "descId": "buff.reinhardt_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onWaveStart": [
+      { "effectId": "reinhardt_p3_boost_self", "params": { "targetFilter": { "self": true } } },
+      { "effectId": "reinhardt_p3_boost_yellow", "params": { "targetFilter": { "elementAny": ["Yellow"] } } },
+      { "effectId": "reinhardt_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] } } }
+    ],
+    "onTurnStart": [
+      { "effectId": "reinhardt_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 10 } },
+      { "effectId": "reinhardt_p3_boost_yellow", "params": { "targetFilter": { "elementAny": ["Yellow"] }, "turnInterval": 10 } },
+      { "effectId": "reinhardt_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] }, "turnInterval": 10 } }
+    ]
+  }
+}

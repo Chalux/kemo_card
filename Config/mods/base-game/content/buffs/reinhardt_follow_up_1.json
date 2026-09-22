@@ -1,0 +1,8 @@
+{
+  "displayNameId": "buff.reinhardt_follow_up.name",
+  "descId": "buff.reinhardt_follow_up.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active", "trait.follow_up"]
+}

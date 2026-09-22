@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "bach_orb_amp",
+    "targetFilter": { "self": true }
+  }
+}

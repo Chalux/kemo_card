@@ -27,7 +27,7 @@ public static class QueuedCostReconciler
                 continue;
 
             var character = characters[entry.CharacterIndex];
-            var currentCost = CardCostCalculator.Compute(simulation, entry.CharacterIndex, card);
+            var currentCost = CardCostCalculator.Compute(simulation, entry.CharacterIndex, card, entry.RuntimeInstanceId);
             if (currentCost == entry.Paid)
                 continue;
 

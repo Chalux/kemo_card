@@ -4,7 +4,7 @@
 
 **Goal:** 在 `Src/mod/combat/` 实现纯 C#、确定性、联机就绪的战斗核心逻辑层：状态机、初始化时冻结的规则引擎、队伍级领域 buff、最小效果执行器、最小敌人 AI、共享 HP 胜负判定；配套单元测试。不含 Buff 单位实例、战斗 UI、局内存档。
 
-**Architecture:** 权威模拟 `CombatSimulation` 聚合 `PlayerTeamState`/`EnemyTeamState`/`CardExecutionQueue`/`CombatRuleEngine`；所有玩家操作经可序列化 `ICombatCommand`（显式 `characterIndex`）进入 `TryApply`。规则集在 `CombatSimulationFactory` 初始化时一次性注入后冻结。领域是队伍级 buff 单例（非规则），经 `BuffDto` 钩子 + 效果执行器生效。状态机落实 [kemo-card 设计规格](../specs/2026-05-11-kemo-card-design.md) 第 3 节。
+**Architecture:** 权威模拟 `CombatSimulation` 聚合 `PlayerTeamState`/`EnemyTeamState`/`CardExecutionQueue`/`CombatRuleEngine`；所有玩家操作经可序列化 `ICombatCommand`（显式 `characterIndex`）进入 `TryApply`。规则集在 `CombatSimulationFactory` 初始化时一次性注入后冻结。领域是队伍级 buff 单例（非规则），经 `BuffDto` 钩子 + 效果执行器生效。状态机落实 [kemo-card 设计规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 第 3 节。
 
 **Tech Stack:** Godot 4.6.1 Mono + .NET 8 + C# 12 + NUnit 4 + 现有 `HostRng` / `GameDefinitionRegistry` / `PuertsContentEffectScriptHost`
 

@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.bach_cantata.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "bach_cantata" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "MagicAttack": 1
+    }
+  },
+  "role": "Elementist",
+  "priority": 10,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "orb", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

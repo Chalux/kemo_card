@@ -96,22 +96,23 @@ UI_CODEX_FILTER_RACE,种族,Race
 UI_CODEX_CHAR_TXT_FILTER,角色名或描述,Character Name Or Desc
 UI_CODEX_ANIM,动作,Anim
 UI_CHARACTER_DETAILS_TITLE,角色详情,Character Details
+UI_CHARACTER_CARDS_TITLE,专属卡牌,Signature Cards
 UI_RACE_HUMAN,人族,Human
-UI_RACE_CANINE,犬科,Canine
-UI_RACE_FELINE,猫科,Feline
-UI_RACE_BIRD,鸟类,Bird
+UI_RACE_ANIMAL,动物,Animal
 UI_RACE_INSECT,昆虫,Insect
-UI_RACE_BEAST,野兽,Beast
 UI_RACE_FISH,水族,Fish
-UI_RACE_REPTILE,爬行,Reptile
 UI_RACE_PLANT,植物,Plant
 UI_RACE_MACHINE,机械,Machine
-UI_RACE_DEMONIC,恶魔,Demonic
+UI_RACE_DEMON,恶魔族,Demon
 UI_RACE_ANGEL,天使,Angel
 UI_RACE_DRAGON,龙族,Dragon
 UI_RACE_GOD,神族,God
-UI_RACE_DEVIL,魔族,Devil
 UI_RACE_UNDEAD,不死,Undead
+UI_RACE_ACADEMIC,学术,Academic
+UI_RACE_FANTASY,幻想,Fantasy
+UI_RACE_ASTRONOMY,天文,Astronomy
+UI_RACE_HERO,英雄,Hero
+UI_RACE_CALAMITY,灾厄,Calamity
 UI_RACE_UNKNOWN,未知,Unknown
 COND_HAS_FLAG_SHORT,条件未满足,Requirement not met
 COND_HAS_FLAG_LONG,需要旗标,Requires flag
@@ -121,6 +122,8 @@ COND_HAS_ALL_ITEMS_SHORT,物品不足,Not enough items
 COND_HAS_ALL_ITEMS_LONG,需要全部物品,Requires all items
 COND_HAS_ANY_ITEM_SHORT,物品不足,Not enough items
 COND_HAS_ANY_ITEM_LONG,需要任一物品,Requires any item
+COND_CARD_PLAYED_THIS_TURN_SHORT,出牌不足,Not enough cards played
+COND_CARD_PLAYED_THIS_TURN_LONG,本回合需要打出指定数量的卡牌,Requires a number of cards played this turn
 UI_RUN_STORY_SELECT_TITLE,选择故事,Select Story
 UI_STORY_LIST,故事列表,Stories
 UI_STORY_DETAILS,故事详情,Story Details
@@ -242,11 +245,11 @@ UI_DEBUG_SET_RING,设置环,Set Ring
 UI_DEBUG_PHASE,目标阶段,Target Phase
 UI_DEBUG_SET_PHASE,设置阶段,Set Phase
 KW_HAND_SLOT_DAMAGE_TITLE,手牌槽伤害,Hand Slot Damage
-KW_HAND_SLOT_DAMAGE_DESC,当手牌槽被附加伤害效果时，打出这个槽位的手牌将受到对应数值的伤害（在此手牌结算前触发）。,When a hand slot has a damage effect attached, playing a card from that slot deals the listed damage to the player (resolved before the card).
+KW_HAND_SLOT_DAMAGE_DESC,当手牌槽被附加伤害效果时，打出这个槽位的手牌将受到对应数值的伤害（在此手牌结算前触发）。,"When a hand slot has a damage effect attached, playing a card from that slot deals the listed damage to the player (resolved before the card)."
 KW_CHARGE_TITLE,充能,Charge
 KW_CHARGE_DESC,该手牌槽每打出一张牌即触发一次充能效果（罗马序号表示触发所需计数），持续指定回合数。,Playing a card from this slot triggers the charge payload (roman numeral = required count). Lasts for the listed turns.
 KW_CHAIN_TITLE,连携,Chain
-KW_CHAIN_DESC,同一回合内，队伍中有 2 名不同角色打出同属性卡牌时全员该属性伤害/治疗 +10%，3 名 +25%，4 名 +50%。,Per turn, when 2 different characters play cards of the same element, all damage/heal cards of that element gain +10%; 3 characters +25%; 4 characters +50%.
+KW_CHAIN_DESC,同一回合内按出牌队列统计各属性的不同角色数（出牌队列里的所有卡都计入，含支援/弱化等非输出卡）：2 名 +25%，3 名 +50%，4 名 +100%。加成只作用于物理/魔法/治疗卡，多属性卡取最高档。,"Per turn the queue is tallied per element by distinct characters (every queued card counts, support and debuff cards included): 2 characters +25%, 3 +50%, 4 +100%. The bonus only applies to physical, magic and healing cards, and a multi-element card takes its best element."
 UI_MENU_MP_SETTING,联机,Multiplayer
 UI_SETTING_MP_POTENTIAL_MODE,潜能消费模式,Potential Consumption
 UI_SETTING_MP_POTENTIAL_MODE_FREE,自由消费,Free
@@ -268,3 +271,40 @@ UI_CHARACTER_PASSIVE_LOCKED,【未解锁】,[Locked]
 UI_CARD_NAME,卡牌名,Card Name
 UI_CARD_DESC,卡牌描述,Card Description
 SETTING_NAME,设置项,Setting
+KW_NORMAL_ATTACK_TITLE,普通攻击,Normal Attack
+KW_NORMAL_ATTACK_DESC,每回合卡牌结算完成后自动执行一次：按（回合数-1）％队伍人数决定出手角色；对该角色的物攻与魔攻取较高者减目标对应防御后对全部敌人造成伤害。普攻次数加成会让归属角色连续执行多次，[url=kw:follow_up]追打[/url]者每次都会参与。不吃[url=kw:chain]连携[/url]也不触发手牌槽效果。,"Runs once per turn after all cards resolve. The acting character rotates by (turn - 1) % party size and strikes every enemy with the higher of physical or magic attack minus the matching defense. Extra normal attack count makes the acting character repeat it, and follow-up holders join each repetition. Ignores chain and slot effects."
+KW_ORB_TITLE,充能球,Charge Orb
+KW_ORB_DESC,全队共享的队列资源：满 7 个即刻自动触发；出牌阶段球数 ≥3 时可主动触发（可重复）。触发会清空队列并逐球结算，每个球以「获得它时的角色」为产球者。每回合结束固定产出 1 个[url=kw:orb_element]属性球[/url]加 1 个物理或魔法球。,A team-shared queue. Reaching the cap of 7 triggers it automatically and during your turn you may trigger it manually at 3 or more orbs (repeatable). Triggering clears the queue and resolves each orb in order using the producer captured when it was granted. Each turn end grants 1 element orb plus 1 physical or magic orb.
+KW_ORB_ELEMENT_TITLE,属性球,Element Orb
+KW_ORB_ELEMENT_DESC,红蓝绿黄四种[url=kw:orb]充能球[/url]中的元素球：单球伤害 =（每球固定值 + 产球者攻击力 × 加成比例）×（1 + 产球者增伤 + 目标受伤增加）；增伤与受伤增加一律同桶加算、不吃连携，也不吃目标的物理与魔法防御。所用攻击力按球类型取物攻、魔攻或两者较高者。,"Four elemental orbs (red / blue / green / yellow). Per-orb damage = (flat value + producer attack × scale) × (1 + producer damage bonuses + target damage-taken scale); all damage bonuses share one additive bucket, and orbs ignore chain as well as both physical and magic defense. The attack stat used depends on the orb type."
+KW_SHARED_HP_TITLE,共享血量,Shared HP
+KW_SHARED_HP_DESC,整支队伍共用一本血量账本：任何角色受到的伤害都从账本扣除；账本归零即整队失败（同归于尽判负）。治疗同样只回账本。,The party shares a single HP ledger. Damage to any character is deducted from it and the run is lost when it hits zero. Healing only refills the ledger.
+KW_TEAM_POTENTIAL_TITLE,团体潜能,Team Potential
+KW_TEAM_POTENTIAL_DESC,全队共享的解锁资源：用于解锁角色被动（阈值即成本）。重复获得同一角色会转化为潜能（见 [url=kw:character_passive]角色被动[/url]）——该角色已在某个槽位时直充那个槽位，否则进入团队池（表决模式下消费需提议通过）。,A team-shared unlock resource used to unlock character passives (the threshold is the cost). Duplicate characters convert into potential: credited to that slot when the character already holds it and to the team pool otherwise (in vote mode spending requires a passed proposal).
+KW_CHARACTER_PASSIVE_TITLE,角色被动,Character Passive
+KW_CHARACTER_PASSIVE_DESC,角色定义里声明的被动：开战时按潜能档位由低到高挂载，之后完全由 buff 钩子驱动（回合开始、释放主动技、阶层开始等）。未解锁的被动不生效。,Passives declared on the character definition. They are attached at battle start in ascending potential order and driven entirely by buff hooks (turn start / active skill cast / wave start and so on). Locked passives do nothing.
+KW_FOLLOW_UP_TITLE,追打,Follow-Up
+KW_FOLLOW_UP_DESC,持有者在不是本回合[url=kw:normal_attack]普通攻击[/url]归属角色时，仍以标明的百分比攻击力参与该次普攻（目标与公式同普攻）。多个追打效果同时存在时只取最高值；归属角色自己持有追打不会重复出手。,"When the holder is not this turn's normal attacker, they still join that normal attack at the listed percentage of their attack power (same targets and formula). Only the highest follow-up value applies, and the acting character never strikes twice."
+KW_SEAL_TITLE,封印,Seal
+KW_SEAL_DESC,被封印的角色无法标记卡牌与释放主动技，已有标记会被清空并退还费用，并视作本回合已行动；封印只挡出牌，不影响普通攻击与被动的触发。免疫封印的角色完全不受该效果影响。,A sealed character cannot mark cards or cast the active skill: existing marks are cleared with their cost refunded and the character counts as having acted this turn. Sealing only blocks card play; normal attacks and passives still happen. Characters immune to seal ignore the effect entirely.
+UI_PAUSE_TITLE,系统菜单,System Menu
+UI_PAUSE_HINT,按 ESC 可随时打开或关闭此菜单。,Press ESC anytime to toggle this menu.
+UI_PAUSE_RESUME,继续游戏,Resume
+UI_PAUSE_SETTINGS,打开设置,Settings
+UI_PAUSE_CODEX,打开图鉴,Codex
+UI_PAUSE_GLOSSARY,打开词典,Glossary
+UI_PAUSE_SAVE_EXIT,保存并退出到主菜单,Save and Exit to Menu
+UI_PAUSE_SAVE_EXIT_BLOCKED,战斗中不可保存：请先结束本场战斗。,Cannot save during battle. Finish the battle first.
+UI_PAUSE_QUIT_DESKTOP,退出到桌面,Quit to Desktop
+UI_PAUSE_QUIT_TITLE,退出到桌面,Quit to Desktop
+UI_PAUSE_QUIT_DESC,将直接关闭游戏：最近一次自动保存之后的进度会丢失。,The game will close now. Progress since the last autosave will be lost.
+UI_PAUSE_NO_RUN,当前没有进行中的 Run。,There is no run in progress.
+UI_GLOSSARY_TITLE,词典,Glossary
+UI_GLOSSARY_FILTER,搜索词条,Search entries
+UI_GLOSSARY_EMPTY,没有匹配的词条。,No entries match your search.
+UI_GLOSSARY_SECTION_KEYWORDS,机制词条,Mechanics
+UI_GLOSSARY_SECTION_ORBS,充能球,Charge Orbs
+UI_GLOSSARY_ORB_BODY_ELEMENTAL,元素球：触发时对全部存活敌人造成「每球 {0} 点 + 攻击力的 {1}%」的元素伤害；不吃防御。,Element orb. On trigger it deals (flat {0} + {1}% of attack) elemental damage to every living enemy and ignores defense.
+UI_GLOSSARY_ORB_BODY_PHYSICAL,物理球：按物理攻击计算（每球 {0} 点 + 物攻的 {1}%）；对全部存活敌人结算且不吃防御。,Physical orb. Scales with physical attack (flat {0} + {1}% of it) against every living enemy and ignores defense.
+UI_GLOSSARY_ORB_BODY_MAGICAL,魔法球：按魔法攻击计算（每球 {0} 点 + 魔攻的 {1}%）；对全部存活敌人结算且不吃防御。,Magic orb. Scales with magic attack (flat {0} + {1}% of it) against every living enemy and ignores defense.
+UI_GLOSSARY_ORB_BODY_SUPPORT,支援球：不造成伤害；触发时改为执行自身携带的效果（效果来源为该球的产球者）。,Support orb. It deals no damage and instead runs its own effects with the orb producer as the source.

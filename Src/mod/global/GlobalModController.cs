@@ -98,6 +98,15 @@ public sealed class GlobalModController(GlobalMod model, GlobalSaveService saveS
         return await (UIManager.Instance?.OpenAsync<SettingDlg>(new UiId<SettingDlg>(GlobalUiIds.Setting), default, null) ?? Task.FromResult<UIVo?>(null));
     }
 
+    /// <summary>
+    /// 打开词典（机制词条 + 充能球等玩法元素）。主菜单与 Run 的 ESC 系统菜单共用这一入口。
+    /// </summary>
+    public static async Task<UIVo?> OpenGlossaryAsync()
+    {
+        return await (UIManager.Instance?.OpenAsync<GlossaryDlg>(new UiId<GlossaryDlg>(GlobalUiIds.Glossary), default, null)
+            ?? Task.FromResult<UIVo?>(null));
+    }
+
     public static async Task<UIVo?> OpenAlertAsync(AlertDlgPayload payload)
     {
         ArgumentNullException.ThrowIfNull(payload);

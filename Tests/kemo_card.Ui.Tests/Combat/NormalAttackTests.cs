@@ -155,8 +155,8 @@ public sealed class NormalAttackTests
 
         var result = sim.NormalAttacks.Execute(sim);
 
-        // 10 × (1 + 0.5 增伤) × (1 + 1 受伤倍率) = 30。
-        Assert.That(result!.TotalDamage, Is.EqualTo(30f).Within(0.001f));
+        // 10 × (1 + 0.5 增伤 + 1 受伤增加) = 25：两者同桶加算（规格「一律加算」）。
+        Assert.That(result!.TotalDamage, Is.EqualTo(25f).Within(0.001f));
     }
 
     [Test]

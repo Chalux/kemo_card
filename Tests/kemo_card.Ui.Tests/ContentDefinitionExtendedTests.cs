@@ -69,11 +69,10 @@ public sealed class ContentDefinitionExtendedTests
         ContentModTestHelper.AddCharacter(modDir, "kemo", """
 			{
 			  "displayNameId": "char.kemo.name",
-			  "descId": "char.kemo.desc",
 			  "element": "Red",
 			  "role": "Warrior",
 			  "skillRefs": [{ "skillId": "kemo_dash" }],
-			  "buffRefs": [{ "buffId": "kemo_talent" }],
+			  "passives": [{ "buffId": "kemo_talent", "requiredPotential": 10 }],
 			  "cards": ["strike"],
 			  "artPath": "chars/kemo.png"
 			}
@@ -160,11 +159,10 @@ public sealed class ContentDefinitionExtendedTests
         {
             Id = "kemo",
             DisplayNameId = "char.kemo.name",
-            DescId = "char.kemo.desc",
             Element = EElement.Red,
             Role = ERole.Warrior,
             SkillRefs = [new SkillRefDto { SkillId = "kemo_dash" }],
-            BuffRefs = [new BuffRefDto { BuffId = "kemo_talent" }],
+            Passives = [new PassiveRefDto { BuffId = "kemo_talent", RequiredPotential = 10 }],
             Cards = ["strike"],
         };
 
@@ -173,7 +171,8 @@ public sealed class ContentDefinitionExtendedTests
 
         Assert.That(restored, Is.Not.Null);
         Assert.That(restored!.Element, Is.EqualTo(EElement.Red));
-        Assert.That(restored.BuffRefs[0].BuffId, Is.EqualTo("kemo_talent"));
+        Assert.That(restored.Passives[0].BuffId, Is.EqualTo("kemo_talent"));
+        Assert.That(restored.Passives[0].RequiredPotential, Is.EqualTo(10));
     }
 
     [Test]

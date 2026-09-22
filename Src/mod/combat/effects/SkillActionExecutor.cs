@@ -83,6 +83,7 @@ public sealed class SkillActionExecutor
                 EEffectKind.GainResource => ESkillActionKind.GainResource,
                 EEffectKind.ExecuteScript => ESkillActionKind.ExecuteScript,
                 EEffectKind.ChainEffects => ESkillActionKind.ChainActions,
+                EEffectKind.AttachSlotBuff => ESkillActionKind.AttachSlotBuff,
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
             },
             ScriptPath = effect.ScriptPath,
@@ -242,7 +243,12 @@ public sealed class SkillActionExecutor
         if (!TryGetString(parameters, "gameplayEffectId", out var gameplayEffectId))
             return;
 
-        _gameplayEffectApplicator.ApplyToTargets(simulation, source, targets, gameplayEffectId, parameters);
+        // 动态攻击系数（"本回合每触发 1 个绿球 +100% 魔攻"）在两条通道上必须同口径，
+        // 因此把覆盖值并进 SetByCaller 后再交给应用器。
+        var setByCaller = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
+        DamageScaling.ApplyAttackScaleOverride(simulation, parameters, setByCaller);
+
+        _gameplayEffectApplicator.ApplyToTargets(simulation, source, targets, gameplayEffectId, setByCaller);
     }
 
     private void RemoveGameplayEffect(
@@ -305,7 +311,12 @@ public sealed class SkillActionExecutor
             simulation.Buffs.Dispel(simulation, target, buffId, withTags);
     }
 
-    /// <summary>给来源角色的手牌槽位挂 buff：params.buffId + params.slotIndex（0 起）。</summary>
+    /// <summary>
+    /// 给来源角色的手牌槽位挂 buff：<c>params.buffId</c> + 槽位选择。
+    /// 槽位选择：<c>params.slotIndex</c>（0 起，显式指定）；
+    /// <c>params.slotSelection: "randomNonEmpty"</c>（当前有牌的槽里随机一个，用于「随机一张手牌费用变为 0」）；
+    /// <c>params.slotSelection: "all"</c>（全部手牌槽，空槽也挂，用于「1~5 号槽都获得充能」）。都不给时零操作。
+    /// </summary>
     private static void AttachSlotBuff(
         CombatSimulation simulation,
         CombatTargetRef source,
@@ -318,9 +329,50 @@ public sealed class SkillActionExecutor
         if (!BuffActionParams.TryGetBuffId(parameters, out var buffId))
             return;
 
-        var slotIndex = ReadInt(parameters, "slotIndex", -1);
-        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId", "slotIndex");
-        simulation.Buffs.ApplyToSlot(simulation, source.Index, slotIndex, buffId, instanceParams);
+        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId", "slotIndex", "slotSelection");
+        foreach (var slotIndex in ResolveSlotIndexes(simulation, source.Index, parameters))
+        {
+            simulation.Buffs.ApplyToSlot(simulation, source.Index, slotIndex, buffId, instanceParams);
+        }
+    }
+
+    /// <summary>解析目标槽位集合：显式 <c>slotIndex</c> &gt; <c>slotSelection</c>（randomNonEmpty / all）。</summary>
+    private static IEnumerable<int> ResolveSlotIndexes(
+        CombatSimulation simulation,
+        int characterIndex,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        var explicitIndex = ReadInt(parameters, "slotIndex", -1);
+        if (explicitIndex >= 0)
+        {
+            yield return explicitIndex;
+            yield break;
+        }
+
+        if (!BuffActionParams.TryGetString(parameters, "slotSelection", out var selection))
+            yield break;
+
+        if (string.Equals(selection, "all", StringComparison.OrdinalIgnoreCase))
+        {
+            var slotCount = simulation.PlayerTeam.Characters[characterIndex].HandSlots.Count;
+            for (var index = 0; index < slotCount; index++)
+                yield return index;
+            yield break;
+        }
+
+        if (!string.Equals(selection, "randomNonEmpty", StringComparison.OrdinalIgnoreCase))
+            yield break;
+
+        var candidates = new List<int>();
+        var slots = simulation.PlayerTeam.Characters[characterIndex].HandSlots;
+        for (var index = 0; index < slots.Count; index++)
+        {
+            if (!slots[index].IsEmpty)
+                candidates.Add(index);
+        }
+
+        if (candidates.Count > 0)
+            yield return candidates[simulation.RetargetRng.NextInt(0, candidates.Count)];
     }
 
     private static Dictionary<string, object>? BuildScriptContext(

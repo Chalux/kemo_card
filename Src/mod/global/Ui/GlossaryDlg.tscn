@@ -1,0 +1,116 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Src/mod/global/Ui/GlossaryDlg.cs" id="1_glossary"]
+[ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_basedlg"]
+
+[node name="GlossaryDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_iptFilter", "_listEntries", "_rtDetail", "_lblEmpty")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_glossary")
+_lblTitle = NodePath("BaseDlgComp/LblTitle")
+_iptFilter = NodePath("BaseDlgComp/IptFilter")
+_listEntries = NodePath("BaseDlgComp/ListEntries")
+_rtDetail = NodePath("BaseDlgComp/RTDetail")
+_lblEmpty = NodePath("BaseDlgComp/LblEmpty")
+
+[node name="Scrim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.227, 0.18, 0.145, 0.38)
+
+[node name="BaseDlgComp" parent="." instance=ExtResource("2_basedlg")]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -500.0
+offset_top = -300.0
+offset_right = 500.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LblTitle" type="Label" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 44.0
+offset_right = -84.0
+offset_bottom = 92.0
+grow_horizontal = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 30
+text = "UI_GLOSSARY_TITLE"
+vertical_alignment = 1
+
+[node name="IptFilter" type="LineEdit" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 104.0
+offset_right = -528.0
+offset_bottom = 142.0
+grow_horizontal = 2
+placeholder_text = "UI_GLOSSARY_FILTER"
+clear_button_enabled = true
+
+[node name="ListEntries" type="ItemList" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 154.0
+offset_right = -528.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+allow_reselect = true
+
+[node name="LblEmpty" type="Label" parent="BaseDlgComp"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 154.0
+offset_right = -528.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.431, 0.369, 0.314, 1)
+theme_type_variation = &"Caption"
+text = "UI_GLOSSARY_EMPTY"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="RTDetail" type="RichTextLabel" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 512.0
+offset_top = 104.0
+offset_right = -40.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 20
+bbcode_enabled = true
+fit_content = false
+scroll_active = true

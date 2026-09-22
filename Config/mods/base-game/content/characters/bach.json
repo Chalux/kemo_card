@@ -1,0 +1,28 @@
+{
+  "displayNameId": "char.bach.name",
+  "element": "Green",
+  "role": "Elementist",
+  "race": ["Human", "God"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "bach_heavenly_revelation", "cooldown": 6 },
+    { "skillId": "bach_charge_two", "cooldown": 4 }
+  ],
+  "cards": [
+    "bach_cantata",
+    "bach_hymn",
+    "bach_trio",
+    "bach_fugue"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "bach_passive_p1", "requiredPotential": 0 },
+    { "buffId": "bach_passive_p2", "requiredPotential": 10 },
+    { "buffId": "bach_passive_p3", "requiredPotential": 30 },
+    { "buffId": "bach_passive_p4", "requiredPotential": 50 },
+    { "buffId": "bach_passive_p5", "requiredPotential": 70 },
+    { "buffId": "bach_passive_p6", "requiredPotential": 99 }
+  ],
+  "tags": ["starter"]
+}

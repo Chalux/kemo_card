@@ -8,7 +8,7 @@ namespace KemoCard.Mod.Global.Ui.Comp;
 
 public partial class SettingToggleRow : BaseCmp
 {
-    private static readonly Color OffTrackColor = new(0.32f, 0.32f, 0.36f, 1f);
+    private static readonly Color OffTrackColor = KemoPalette.TextDisabled;
     private static readonly Color OnTrackColor = KemoPalette.Accent;
     private const float KnobPad = 3f;
     private const float KnobSize = 22f;

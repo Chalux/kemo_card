@@ -9,7 +9,30 @@ public sealed class KeywordCatalog
 
     private readonly Dictionary<string, KeywordEntry> _entries = new(StringComparer.Ordinal);
 
+    /// <summary>注册顺序（词典按机制引入的先后展示，比字典序可读）。</summary>
+    private readonly List<string> _order = [];
+
     public static KeywordCatalog Shared => SharedInstance;
+
+    /// <summary>
+    /// 全部词条，按注册顺序（词典/图鉴等只读展示用；覆盖注册保持首次出现的位置）。
+    /// </summary>
+    public IReadOnlyList<KeywordEntry> Entries
+    {
+        get
+        {
+            var entries = new List<KeywordEntry>(_order.Count);
+            foreach (var id in _order)
+            {
+                if (_entries.TryGetValue(id, out var entry))
+                {
+                    entries.Add(entry);
+                }
+            }
+
+            return entries;
+        }
+    }
 
     /// <summary>冲突覆盖等警告回调；运行时可接到 AppLog.Warning。</summary>
     public Action<string>? WarningHandler { get; set; }
@@ -23,7 +46,11 @@ public sealed class KeywordCatalog
             return;
         }
 
-        if (_entries.ContainsKey(entry.Id))
+        if (!_entries.ContainsKey(entry.Id))
+        {
+            _order.Add(entry.Id);
+        }
+        else
         {
             WarningHandler?.Invoke($"KeywordCatalog: 词条 id '{entry.Id}' 已存在，将被覆盖。");
         }
@@ -52,6 +79,7 @@ public sealed class KeywordCatalog
         }
 
         _entries.Remove(id);
+        _order.Remove(id);
     }
 
     public bool TryGet(string id, out KeywordEntry? entry)
@@ -72,5 +100,9 @@ public sealed class KeywordCatalog
         return false;
     }
 
-    public void Clear() => _entries.Clear();
+    public void Clear()
+    {
+        _entries.Clear();
+        _order.Clear();
+    }
 }

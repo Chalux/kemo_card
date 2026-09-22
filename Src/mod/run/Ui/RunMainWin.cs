@@ -78,6 +78,26 @@ public partial class RunMainWin : BaseWin
         UpdateView();
     }
 
+    /// <summary>
+    /// ESC：随时打开 / 关闭系统菜单（已打开则关闭）。
+    /// </summary>
+    /// <remarks>
+    /// 走 <c>_UnhandledInput</c> 而不是 <c>_Input</c>：被弹出的下拉框 / 弹窗消费掉的 ESC
+    /// （例如关掉 OptionButton 的弹出列表）不该同时把系统菜单也开起来。Run 会话期间 RunMain 常驻，
+    /// 因此菜单在任何界面之上都能响应；"是否开着"的唯一判据是
+    /// <see cref="RunUiController.IsPauseMenuOpen"/>，不在这里另存一份状态。
+    /// </remarks>
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (RunRuntime.Current is null || !@event.IsActionPressed("ui_cancel"))
+        {
+            return;
+        }
+
+        GetViewport().SetInputAsHandled();
+        _ = RunUiController.TogglePauseMenuAsync();
+    }
+
     protected override void UpdateView()
     {
         var run = RunRuntime.Current;
@@ -120,7 +140,7 @@ public partial class RunMainWin : BaseWin
             _lblGold.Text = run.GetGold().ToString();
         }
 
-        var inCombat = state.Phase is ERunPhase.Battle or ERunPhase.BattleEnd;
+        var inCombat = state.Phase.IsCombatPhase();
         if (_btnSave != null)
         {
             _btnSave.Disabled = inCombat;
@@ -146,7 +166,7 @@ public partial class RunMainWin : BaseWin
     private void RefreshOrbPanel(RunController run)
     {
         var simulation = run.Simulation;
-        var inBattle = simulation is not null && run.State.Phase is ERunPhase.Battle or ERunPhase.BattleEnd;
+        var inBattle = simulation is not null && run.State.Phase.IsCombatPhase();
         if (_orbPanel != null)
         {
             _orbPanel.Visible = inBattle;

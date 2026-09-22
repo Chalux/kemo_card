@@ -8,7 +8,7 @@
   "stats": {
     "attributes": {
       "MaxHealth": 20,
-      "PhysicalAttack": 3
+      "PhysicalAttack": 2
     }
   },
   "role": "Warrior",
@@ -19,6 +19,6 @@
   "targetCount": 1,
   "retargetPolicy": "RandomLegal",
   "tags": ["attack", "exclusive"],
-  "rarity": "Epic",
+  "rarity": "Exclusive",
   "isExclusive": true
 }

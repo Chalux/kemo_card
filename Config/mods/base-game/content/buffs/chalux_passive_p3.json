@@ -7,12 +7,14 @@
     "onWaveStart": [
       { "effectId": "chalux_p3_boost_self", "params": { "targetFilter": { "self": true } } },
       { "effectId": "chalux_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] } } },
-      { "effectId": "chalux_p3_boost_canine", "params": { "targetFilter": { "raceAny": ["Canine"] } } }
+      { "effectId": "chalux_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] } } },
+      { "effectId": "chalux_p3_boost_dragon", "params": { "targetFilter": { "raceAny": ["Dragon"] } } }
     ],
     "onTurnStart": [
       { "effectId": "chalux_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 8 } },
       { "effectId": "chalux_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] }, "turnInterval": 8 } },
-      { "effectId": "chalux_p3_boost_canine", "params": { "targetFilter": { "raceAny": ["Canine"] }, "turnInterval": 8 } }
+      { "effectId": "chalux_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] }, "turnInterval": 8 } },
+      { "effectId": "chalux_p3_boost_dragon", "params": { "targetFilter": { "raceAny": ["Dragon"] }, "turnInterval": 8 } }
     ]
   }
 }

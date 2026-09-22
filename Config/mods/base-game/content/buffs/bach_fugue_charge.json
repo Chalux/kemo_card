@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.bach_fugue_charge.name",
+  "descId": "buff.bach_fugue_charge.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Replace",
+  "tags": ["buff.active", "slot.charge"],
+  "hooks": {
+    "onSlotCardPlayed": [
+      { "effectId": "bach_fugue_green_orb" }
+    ]
+  }
+}

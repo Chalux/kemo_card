@@ -38,8 +38,13 @@ public sealed class LocaleIntegrityTests
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (var line in lines.Skip(1))
             {
-                var cells = line.Split(',');
-                Assert.That(cells.Length, Is.GreaterThanOrEqualTo(3), $"{csvPath} 行「{Truncate(line)}」至少要有 keys/zh_CN/en 三列");
+                var cells = SplitCsvLine(line);
+                Assert.That(
+                    cells.Count,
+                    Is.EqualTo(3),
+                    $"{csvPath} 行「{Truncate(line)}」必须正好 3 列（keys/zh_CN/en）："
+                    + "文案里的半角逗号是列分隔符，必须用双引号包住整个字段——"
+                    + "否则 Godot 的 CSV 导入器（FileAccess.get_csv_line）会在第一个逗号处截断该语言文案");
                 Assert.That(cells[0], Is.Not.Empty, $"{csvPath} 行「{Truncate(line)}」键为空");
                 Assert.That(cells[1], Is.Not.Empty, $"{csvPath} 键 {cells[0]} 缺少 zh_CN 文案");
                 Assert.That(cells[2], Is.Not.Empty, $"{csvPath} 键 {cells[0]} 缺少 en 文案");
@@ -102,6 +107,41 @@ public sealed class LocaleIntegrityTests
     }
 
     [Test]
+    public void Pause_and_glossary_literal_keys_exist_in_resource_csv()
+    {
+        var keys = ReadCsvKeys(ResourceCsvPath());
+        var missing = new List<string>();
+        var literalPattern = new Regex("\"(UI_[A-Z0-9_]+)\"");
+
+        // 这两处的文案键有一部分是"先存进常量/局部变量、再交给 Tr(key)"的形式
+        // （GlossaryBuilder 的分组键与正文键、RunPauseDlg 的禁用原因键），
+        // Tr("KEY") 的通用扫描匹配不到——漏一个就只会在界面上显示原始键名。
+        string[] files =
+        [
+            Path.Combine("Src", "mod", "run", "Ui", "RunPauseDlg.cs"),
+            Path.Combine("Src", "mod", "global", "Ui", "GlossaryDlg.cs"),
+            Path.Combine("Src", "mod", "global", "Glossary", "GlossaryBuilder.cs"),
+        ];
+
+        foreach (var relative in files)
+        {
+            var text = File.ReadAllText(LocateRepoFile(relative));
+            foreach (Match match in literalPattern.Matches(text))
+            {
+                var key = match.Groups[1].Value;
+                if (!keys.Contains(key))
+                {
+                    missing.Add($"{relative}: {key}");
+                }
+            }
+        }
+
+        Assert.That(missing, Is.Empty,
+            "ESC 系统菜单与词典引用的键必须写进 Resource/Locale/strings.csv：" + Environment.NewLine
+            + string.Join(Environment.NewLine, missing.Distinct()));
+    }
+
+    [Test]
     public void Base_game_content_locale_ids_exist_in_mod_csv()
     {
         var keys = ReadCsvKeys(ModCsvPath());
@@ -137,12 +177,60 @@ public sealed class LocaleIntegrityTests
         var keys = new HashSet<string>(StringComparer.Ordinal);
         foreach (var line in File.ReadAllLines(csvPath).Skip(1))
         {
-            var key = line.Split(',')[0];
+            var key = SplitCsvLine(line)[0];
             if (key.Length > 0)
                 keys.Add(key);
         }
 
         return keys;
+    }
+
+    /// <summary>
+    /// CSV 行 → 各列。口径与 Godot 的 <c>FileAccess.get_csv_line</c> 一致：<c>"</c> 开头的字段进入引号模式，
+    /// 引号内的 <c>,</c> 不是分隔符，<c>""</c> 表示一个字面引号。
+    /// </summary>
+    private static List<string> SplitCsvLine(string line)
+    {
+        var cells = new List<string>();
+        var current = new StringBuilder();
+        var inQuotes = false;
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var ch = line[i];
+            if (inQuotes)
+            {
+                if (ch != '"')
+                {
+                    current.Append(ch);
+                }
+                else if (i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    current.Append('"');
+                    i++;
+                }
+                else
+                {
+                    inQuotes = false;
+                }
+            }
+            else if (ch == '"' && current.Length == 0)
+            {
+                inQuotes = true;
+            }
+            else if (ch == ',')
+            {
+                cells.Add(current.ToString());
+                current.Clear();
+            }
+            else
+            {
+                current.Append(ch);
+            }
+        }
+
+        cells.Add(current.ToString());
+        return cells;
     }
 
     private static IEnumerable<string> ListRepoFiles(string relativeDir, string pattern)

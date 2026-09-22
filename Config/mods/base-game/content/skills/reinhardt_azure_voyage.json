@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.reinhardt_voyage.name",
+  "descId": "skill.reinhardt_voyage.desc",
+  "actionRefs": [
+    { "actionId": "reinhardt_voyage_follow_up" }
+  ],
+  "tags": ["buff"]
+}

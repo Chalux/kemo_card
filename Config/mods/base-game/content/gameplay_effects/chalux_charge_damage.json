@@ -1,5 +1,5 @@
 {
   "displayNameId": "ge.chalux_charge_damage.name",
   "durationPolicy": "Instant",
-  "executions": [{ "kind": "Damage", "damageType": "Blue" }]
+  "executions": [{ "kind": "Damage", "damageType": "Physical", "element": "Blue" }]
 }

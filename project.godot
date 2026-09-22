@@ -63,4 +63,4 @@ locale/fallback="zh_CN"
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-environment/defaults/default_clear_color=Color(0.055, 0.075, 0.133, 1)
+environment/defaults/default_clear_color=Color(0.945, 0.906, 0.827, 1)

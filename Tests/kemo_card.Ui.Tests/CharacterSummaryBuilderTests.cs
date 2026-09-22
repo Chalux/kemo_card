@@ -12,8 +12,8 @@ public sealed class CharacterSummaryBuilderTests
         "UI_ELEMENT_RED" => "红",
         "UI_ELEMENT_BLUE" => "蓝",
         "UI_ROLE_WARRIOR" => "战士",
-        "UI_RACE_CANINE" => "犬科",
-        "UI_RACE_FELINE" => "猫科",
+        "UI_RACE_ANIMAL" => "动物",
+        "UI_RACE_DRAGON" => "龙族",
         "char.kemo.name" => "可萝",
         "d1" => "造成 6 点伤害。",
         "d2" => "[url=kw:exhaust]消耗[/url]",
@@ -28,7 +28,7 @@ public sealed class CharacterSummaryBuilderTests
             DisplayNameId = "char.kemo.name",
             Element = EElement.Red | EElement.Blue,
             Role = ERole.Warrior,
-            Race = ERace.Canine | ERace.Feline,
+            Race = ERace.Animal | ERace.Dragon,
             SkillRefs =
             [
                 new SkillRefDto { SkillId = "s1" },
@@ -47,7 +47,7 @@ public sealed class CharacterSummaryBuilderTests
             Tr);
 
         Assert.That(tip.Title, Is.EqualTo("可萝"));
-        Assert.That(tip.Body, Is.EqualTo("红、蓝 战士 犬科、猫科\n造成 6 点伤害。\n消耗"));
+        Assert.That(tip.Body, Is.EqualTo("红、蓝 战士 动物、龙族\n造成 6 点伤害。\n消耗"));
     }
 
     [Test]

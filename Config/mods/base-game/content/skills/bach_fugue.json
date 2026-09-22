@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.bach_fugue.name",
+  "descId": "skill.bach_fugue.desc",
+  "actionRefs": [
+    { "actionId": "bach_fugue_attach" }
+  ],
+  "tags": ["charge"]
+}

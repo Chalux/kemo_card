@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.bach_revelation.name",
+  "descId": "skill.bach_revelation.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "bach_grant_red_orb" },
+    { "actionId": "bach_grant_yellow_orb" },
+    { "actionId": "bach_grant_blue_orb" },
+    { "actionId": "bach_grant_green_orb" }
+  ],
+  "tags": ["active", "orb"]
+}

@@ -1,8 +1,8 @@
 # 战斗系统规格对齐 —— 交接说明（T1–T12 全部完成）
 
 > 本文是**上下文交接**文档,不是计划本体。
-> 计划本体:[2026-07-28-combat-spec-alignment-implementation-plan.md](./2026-07-28-combat-spec-alignment-implementation-plan.md)
-> 权威规格:[2026-07-21-combat-system-design.md](../specs/2026-07-21-combat-system-design.md)(文中「§n」均指此文档)
+> 计划本体:[2026-07-28-combat-spec-alignment-implementation-plan.md](../../../superpowers/plans/2026-07-28-combat-spec-alignment-implementation-plan.md)
+> 权威规格:[2026-07-21-combat-system-design.md](../../../superpowers/specs/2026-07-21-combat-system-design.md)(文中「§n」均指此文档)
 >
 > **接手方式**:计划本体里 T1–T12 的步骤已全部完成,不必重做。读本文的「决议」「已建成的 API」「最终遗留项」即可。
 

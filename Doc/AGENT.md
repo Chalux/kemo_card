@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-09-15（新增界面归属与统一订阅生命周期规格）
+**最后修订**：2026-09-21（活规格收敛为 6 份：新增 Global 规格，框架与内容域各自合并）
 
 ---
 
@@ -39,8 +39,8 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 
 - **语言**：游戏本体只写 **C#**，不写 GDScript。布局用 Godot 场景编辑器，代码只写逻辑。
 - **组合优先于继承**：持有并委托（节点组合、小服务/接口），避免深继承。
-- **界面订阅一律经 `BindingScope`**：Godot 信号 / 事件总线 / 静态门面事件都必须用 `Binder.OnXxx(...)` 或 `Binder.Bind(...)` 登记，**不得裸写 `+=`**，也不得自写 `_eventsBound` 之类守卫。框架在离场时统一解绑（见 ui-mod-binding 规格 §4）。
-- **UI 节点不得 override `_ExitTree`**：`BaseUI` / `BaseMask` 已把它收敛为 `sealed`，请改 override 框架级生命周期 `OnExitTree()`；无法继承 `BaseUI` 的节点（`Button` / `CanvasLayer` 等）按 ui-mod-binding 规格 §4.3 的 6 行模式组合 `BindingScope`。
+- **界面订阅一律经 `BindingScope`**：Godot 信号 / 事件总线 / 静态门面事件都必须用 `Binder.OnXxx(...)` 或 `Binder.Bind(...)` 登记，**不得裸写 `+=`**，也不得自写 `_eventsBound` 之类守卫。框架在离场时统一解绑（见 UI 与运行时规格「界面归属与统一订阅生命周期」，即原 ui-mod-binding 规格 §4）。
+- **UI 节点不得 override `_ExitTree`**：`BaseUI` / `BaseMask` 已把它收敛为 `sealed`，请改 override 框架级生命周期 `OnExitTree()`；无法继承 `BaseUI` 的节点（`Button` / `CanvasLayer` 等）按 UI 与运行时规格的 6 行模式（原 ui-mod-binding 规格 §4.3）组合 `BindingScope`。
 - **订阅登记写在 `_EnterTree`，不要写在 `_Ready`**：Godot 的 `_Ready` **每个节点只调用一次**，界面进缓存走 `RemoveChild`、重开走 `AddChild`，**不会**再触发 `_Ready`（除非显式 `RequestReady()`）。写在 `_Ready` 的订阅会在第一次离场时被 `Binder` 解绑后永不再登记（`BaseCmp` 走框架级 `InitEvent()`，已挂在 `_EnterTree`）。`_Ready` 只放一次性初始化（尺寸、样式、外部数据同步）。
 - **界面必须声明归属 Mod 且只取自家门面**：`UIRegistration` 的 `OwnerModId` 必填、在 `Src/mod/FeatureModCatalog.cs` 登记；界面取数用 `Facade<T>()`，不得跨功能直接访问 `AppRoot.Services`。
 - **本地化**：面向用户的文案必须用翻译键；场景 `text` 填键；C# 用 `Localization.Tr`。新增键写入 `Resource/Locale/strings.csv`（及 mod CSV）。日志 / `GD.Print` 等可用明文。
@@ -58,18 +58,18 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 
 冲突时以上位为准，并回写实现或下级文档。
 
-1. **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md)  
-   产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、潜能/被动边界。
-2. **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md)  
-   阶段机、SharedHp、能量/抽牌、标记队列、主动/蓄力、指令管线。
-3. **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md)（与总规格冲突时以总规格为准）
-4. **内容** — [content-mod-manager](superpowers/specs/2026-05-17-content-mod-manager-design.md) + [卡牌/技能/Buff DTO](superpowers/specs/2026-06-16-content-definition-dto-design.md) + [角色/战斗/事件/道具 DTO](superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md)
-5. **脚本** — [jsenv-mod-scripting](superpowers/specs/2026-06-17-jsenv-mod-scripting-design.md)（PuerTS ScriptEnv）
-6. **角色实例** — [character-instance](superpowers/specs/2026-06-18-character-instance-design.md)
-7. **UI 框架** — [ui-manager](superpowers/specs/2026-05-15-ui-manager-design.md) + [event-dispatcher](superpowers/specs/2026-07-07-event-dispatcher-design.md) + [ui-mod-binding](superpowers/specs/2026-09-15-ui-mod-binding-design.md)  
-   ui-mod-binding 补充**界面归属功能 Mod**与**统一订阅生命周期**（`BindingScope` / 框架级 `OnExitTree`）两条规则，不改层级/状态机/遮罩语义。
-8. **条件判断** — [condition-system](superpowers/specs/2026-07-30-condition-system-design.md)  
-   共享求值引擎、Persistent/Combat 双域 CondType、内联 JSON 组合、Explain 结果；已接 `StoryDto.unlock`（Combat 域 v1 空表）
+**2026-09-21 起活规格收敛为 6 份**。其余规格（含已落地的功能级设计）已并入下表对应文档并归档到 `Doc/archive/superpowers/specs/`，**原路径留重定向 stub**，旧链接仍可解析。
+
+| # | 规格 | 承载 |
+|---|------|------|
+| 1 | **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md) | 产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、潜能/被动边界 |
+| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、SharedHp、能量/抽牌、标记队列、主动/蓄力、指令管线、伤害包管线、普攻（次数/追打/专项倍率）、充能球、buff 运行时、连携、槽位效果、战斗条件 |
+| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档闭环、队伍编辑、ESC 系统菜单、团体潜能实现（与总规格冲突时以总规格为准） |
+| 4 | **Global** — [global-mod-design](superpowers/specs/2026-09-21-global-mod-design.md) | `Src/mod/global`：主菜单、图鉴、卡牌/角色详情、设置、词典、界面主题（羊皮纸）、Toast、关键词提示、界面清单 |
+| 5 | **内容与数据** — [content-mod-manager-design](superpowers/specs/2026-05-17-content-mod-manager-design.md) | 内容 Mod 管道 + 内容定义 DTO（卡/技能/效果/Buff + 角色/敌人/战斗/事件/道具）+ 角色与战斗实例 |
+| 6 | **UI 与运行时** — [ui-manager-design](superpowers/specs/2026-05-15-ui-manager-design.md) | `Src/frame`：UI 管理器与 BaseUI、**界面归属功能 Mod + BindingScope 统一订阅生命周期**（`BindingScope` / 框架级 `OnExitTree`）、事件分发器、条件判断（Persistent/Combat 双域 CondType、内联 JSON 组合、Explain；已接 `StoryDto.unlock` 与效果 `conditions`）、Mod 脚本运行时（PuerTS ScriptEnv） |
+
+被并入章节的**原段号保留**在新文档里（标题带「（原 §N）」标注，并各附「段号索引」），因此按旧段号引用规格的代码注释（如「战斗规格 §1.3」「ui-mod-binding 规格 §4.3」）仍可定位。
 
 完整索引与归档入口：[INDEX.md](INDEX.md)。
 
@@ -84,16 +84,16 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 | Run 编排 | `Src/mod/run/` | 环模型、奖励、存档；`RunRuntime` 会话门面 + `Ui/` 选故事与 Run 主界面壳 |
 | 全局 UI / 图鉴 / 设置 | `Src/mod/global/` | Menu、Codex、Card/Character UI 组件 |
 | 内容管道 | `Src/frame/content/` | 发现、加载、合并、校验（含 Story 类别）；`GameDefinitionStore` 为定义权威，`Registry` 管版本/owner/`Contains` |
-| 条件判断 | `Src/frame/condition/` + `Src/mod/global/Condition/` | 引擎在 frame；Persistent CondType 与 `GlobalPersistentCondContext`（`HasFlag` → 全局 `Unlocks`）在 mod；权威见条件规格 |
+| 条件判断 | `Src/frame/condition/` + `Src/mod/global/Condition/` | 引擎在 frame；Persistent CondType 与 `GlobalPersistentCondContext`（`HasFlag` → 全局 `Unlocks`）在 mod；权威见 UI 与运行时规格「条件系统」 |
 | GAS | `Src/frame/gas/` + `Src/mod/combat/gas/` | 属性、GE、战斗桥接 |
 | UI 框架 | `Src/frame/ui/` | `UiManager`、Base*、生命周期状态机 |
 | 事件 | `Src/frame/mvc/` | `EventDispatcher`、源生成器 |
-| UI 订阅生命周期 | `Src/frame/ui/BindingScope.cs`，`BindingScopeSignals.cs` | 订阅登记簿 + 信号糖；框架级 `OnExitTree` 统一解绑 |
-| 界面归属 | `Src/mod/FeatureModCatalog.cs`，`Src/frame/ui/IUiFacadeProvider.cs` | 功能 Mod 界面声明与门面解析（唯一登记处） |
+| UI 订阅生命周期 | `Src/frame/ui/BindingScope.cs`，`BindingScopeSignals.cs` | 订阅登记簿 + 信号糖；框架级 `OnExitTree` 统一解绑（权威见 UI 与运行时规格） |
+| 界面归属 | `Src/mod/FeatureModCatalog.cs`，`Src/frame/ui/IUiFacadeProvider.cs` | 功能 Mod 界面声明与门面解析（唯一登记处；权威见 UI 与运行时规格） |
 | 音频 | `Src/frame/audio/` | `Sound` 门面 + `SoundManager` |
 | 日志 | `Src/frame/logging/` + `Src/fixed/godot/GodotAppLog.cs` | `AppLog` 门面 |
 | 红点 | `Src/frame/notification/` | |
-| 脚本宿主 | `Src/frame/scripting/` | Puerts；agent builtins 在 `Src/typescript/src/builtins/`，mod 脚本源在 `Config/mods/<mod>/scripts-src/`（编译至 `scripts/`） |
+| 脚本宿主 | `Src/frame/scripting/` | Puerts；agent builtins 在 `Src/typescript/src/builtins/`，mod 脚本源在 `Config/mods/<mod>/scripts-src/`（编译至 `scripts/`）；权威见 UI 与运行时规格「Mod 脚本运行时」 |
 | 显示 / 语言设置 | `Src/frame/display/`，`Src/frame/locale/` | |
 
 ---
@@ -130,7 +130,22 @@ dotnet format kemo_card.csproj --include Src/mod/combat/SomeFile.cs
 
 ## 8. 文档维护
 
-- 活规格 / 进行中计划：`Doc/superpowers/{specs,plans}/`
-- 已落地功能文档：`Doc/archive/superpowers/`（原路径留重定向 stub）
+**布局**（2026-07-29 定，2026-09-21 收敛活规格）：
+
+```
+Doc/
+  AGENT.md                # 本文：约定唯一权威 + Agent 地图
+  INDEX.md                # 活规格 / 计划 / 归档清单
+  superpowers/specs/      # 活规格（固定 6 份，见 §4）
+  superpowers/plans/      # 仅进行中或仍有交接价值
+  archive/superpowers/{specs,plans}/   # 已落地文档正文
+README.md                 # 短入口，指向 AGENT.md 与 INDEX.md
+.cursor/skills/maintain-agent-doc/SKILL.md
+```
+
+- 活规格（固定 6 份，见 §4）/ 进行中计划：`Doc/superpowers/{specs,plans}/`
+- 已落地功能文档：`Doc/archive/superpowers/`（用 `git mv`，**原路径留短重定向 stub**，避免旧链接断裂）
+- **新功能落地后**：把其耐用规则并入 §4 对应规格，再 `git mv` 原文档进归档 + 原路径留 stub + 同步 [INDEX.md](INDEX.md)；不要新增活规格，除非它属于新的域并同时更新 §4。
+- **本文约束**：约 150–250 行；**不复制规格正文**（玩法权威以 §4 规格为准）；硬性约定只写在本文件，`.cursor/rules/` 仅保留指向本文的薄指针。
 - **更新本文件**：使用项目 skill [maintain-agent-doc](../.cursor/skills/maintain-agent-doc/SKILL.md)  
   触发：目录重组、新模块入口、权威规格增删、归档策略变化、**硬性约定变更**；日常小改不更新。

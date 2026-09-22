@@ -8,7 +8,7 @@
 
 **Tech Stack:** Godot 4.6.1 Mono + .NET 8 + C# 12 + NUnit 4
 
-**设计规格:** [`Doc/superpowers/specs/2026-06-18-character-instance-design.md`](../specs/2026-06-18-character-instance-design.md)
+**设计规格:** [`Doc/superpowers/specs/2026-06-18-character-instance-design.md`](../../../superpowers/specs/2026-06-18-character-instance-design.md)
 
 ---
 

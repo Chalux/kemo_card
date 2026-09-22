@@ -1,16 +1,13 @@
 {
   "displayNameId": "char.chalux.name",
-  "descId": "char.chalux.desc",
   "element": "Blue",
   "role": "Warrior",
-  "race": ["Canine"],
+  "race": ["Animal", "Dragon"],
   "skillRefs": [],
   "activeSkillChain": [
     { "skillId": "chalux_glacial_overflow", "cooldown": 8 }
   ],
   "cards": [
-    "strike",
-    "strike_plus",
     "chalux_orca_ice_rush",
     "chalux_resplendent_path",
     "chalux_brilliant_sword",

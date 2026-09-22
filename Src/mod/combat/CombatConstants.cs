@@ -14,6 +14,12 @@ public static class CombatConstants
     public const string SealedTag = "combat.state.sealed";
 
     /// <summary>
+    /// 中毒（2026-09-21）：以 GAS GrantedTags 约定标签承载；持有 <c>trait.immune_poison</c> 的角色
+    /// 免疫带该标签的效果（中毒本体由将来的内容用该标签 + 钩子拼装）。
+    /// </summary>
+    public const string PoisonTag = "debuff.poison";
+
+    /// <summary>
     /// 普通攻击的伤害系数：1 = 100% 攻击力，再减目标对应防御（见普通攻击规格）。
     /// 调到 0 可临时关闭普攻的伤害（仍会执行并消耗本回合的普攻机会）。
     /// </summary>

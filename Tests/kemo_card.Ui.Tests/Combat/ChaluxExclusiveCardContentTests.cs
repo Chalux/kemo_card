@@ -31,10 +31,10 @@ public sealed class ChaluxExclusiveCardContentTests
 
     #region 元数据与接线
 
-    [TestCase(OrcaCard, 3, "Physics", 4, 20, 3)]
+    [TestCase(OrcaCard, 3, "Physics", 4, 20, 2)]
     [TestCase(PathCard, 4, "Physics", 9, 40, 0)]
-    [TestCase(SwordCard, 2, "Support", 44, 30, 2)]
-    [TestCase(ResolveCard, 2, "Support", 50, 20, 3)]
+    [TestCase(SwordCard, 2, "Support", 44, 30, 1)]
+    [TestCase(ResolveCard, 2, "Support", 50, 20, 2)]
     public void Exclusive_cards_match_the_design(
         string cardId,
         int cost,
@@ -51,7 +51,7 @@ public sealed class ChaluxExclusiveCardContentTests
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.CardType.ToString(), Is.EqualTo(cardType));
         Assert.That(card.Priority, Is.EqualTo(priority));
-        Assert.That(card.Rarity, Is.EqualTo(ERarity.Epic));
+        Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
         Assert.That(card.IsExclusive, Is.True, "专属卡必须标记 isExclusive");
         Assert.That(card.CardGroupId, Is.Null, "无升级链");
         Assert.That(card.UpgradeTier, Is.Zero);

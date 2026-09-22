@@ -6,7 +6,7 @@
 
 **请改读权威文档：**
 
-- **总规格**：[2026-05-11-kemo-card-design.md](./2026-05-11-kemo-card-design.md)
-- **战斗系统**：[2026-07-21-combat-system-design.md](./2026-07-21-combat-system-design.md)
+- **总规格**：[2026-05-11-kemo-card-design.md](../../../superpowers/specs/2026-05-11-kemo-card-design.md)
+- **战斗系统**：[2026-07-21-combat-system-design.md](../../../superpowers/specs/2026-07-21-combat-system-design.md)
 
 历史正文不再维护；若需对照旧稿，请查阅 Git 历史中本文件 2026-07-21 之前的版本。

@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.bach_cantata.name",
+  "descId": "skill.bach_cantata.desc",
+  "effectRefs": [
+    { "effectId": "bach_cantata_green_orbs" }
+  ],
+  "tags": ["orb"]
+}

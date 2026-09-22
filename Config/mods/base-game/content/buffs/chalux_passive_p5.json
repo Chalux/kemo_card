@@ -3,7 +3,7 @@
   "durationType": "Permanent",
   "stackRule": "Replace",
   "applyScope": "AllAllies",
-  "condition": { "elementAny": ["Blue"], "raceAny": ["Canine"] },
+  "condition": { "elementAny": ["Blue"], "raceAny": ["Animal", "Dragon"] },
   "modifiers": [
     { "attributeId": "DamageDealtScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 0.25 } }
   ],

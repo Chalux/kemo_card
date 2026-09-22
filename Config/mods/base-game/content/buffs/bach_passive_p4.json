@@ -1,0 +1,16 @@
+{
+  "descId": "buff.bach_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "condition": { "partyMinCount": 2, "partyElementAny": ["Green"] },
+  "modifiers": [
+    {
+      "attributeId": "OrbDamageScale",
+      "elementMask": 4,
+      "operation": "Add",
+      "magnitude": { "kind": "Scalar", "scalar": 0.5 }
+    }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"]
+}

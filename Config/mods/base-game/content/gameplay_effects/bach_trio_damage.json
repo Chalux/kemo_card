@@ -1,0 +1,5 @@
+{
+  "displayNameId": "ge.bach_trio.name",
+  "durationPolicy": "Instant",
+  "executions": [{ "kind": "Damage", "damageType": "Magical" }]
+}

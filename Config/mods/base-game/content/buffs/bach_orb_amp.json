@@ -1,0 +1,16 @@
+{
+  "displayNameId": "buff.bach_orb_amp.name",
+  "descId": "buff.bach_orb_amp.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    {
+      "attributeId": "OrbDamageScale",
+      "elementMask": 15,
+      "operation": "Add",
+      "magnitude": { "kind": "Scalar", "scalar": 0.25 }
+    }
+  ]
+}

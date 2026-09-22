@@ -23,6 +23,12 @@ public enum EMagnitudeKind
     SetByCaller,
     AttributeBased,
     Custom,
+
+    /// <summary>
+    /// 按队伍匹配人数缩放（2026-09-21 新增）：<c>perCount × 队伍中命中筛选项的角色数</c>。
+    /// 用于「队伍每有 1 名黄属性·动物角色，自身最大生命 +40」这类被动。
+    /// </summary>
+    PartyCountScaled,
 }
 
 public enum EAttributeCapture
@@ -50,6 +56,18 @@ public sealed class MagnitudeDefDto
 
     [JsonPropertyName("capture")]
     public EAttributeCapture Capture { get; init; }
+
+    /// <summary><see cref="EMagnitudeKind.PartyCountScaled"/>：每个命中角色的数值。</summary>
+    [JsonPropertyName("perCount")]
+    public float PerCount { get; init; }
+
+    /// <summary><see cref="EMagnitudeKind.PartyCountScaled"/>：人数统计的元素筛选（空 = 不筛）。</summary>
+    [JsonPropertyName("countElementAny")]
+    public List<EElement>? CountElementAny { get; init; }
+
+    /// <summary><see cref="EMagnitudeKind.PartyCountScaled"/>：人数统计的种族筛选（空 = 不筛）。</summary>
+    [JsonPropertyName("countRaceAny")]
+    public List<ERace>? CountRaceAny { get; init; }
 }
 
 public sealed class AttributeModifierDefDto
@@ -62,6 +80,14 @@ public sealed class AttributeModifierDefDto
 
     [JsonPropertyName("magnitude")]
     public MagnitudeDefDto Magnitude { get; init; } = new();
+
+    /// <summary>
+    /// 元素掩码（2026-09-21 新增，仅 <c>OrbDamageScale</c> 使用）：0 = 所有充能球（含物理/魔法球）；
+    /// 否则为 <see cref="EElement"/> 位掩码（如 15 = 红|蓝|绿|黄四色属性球，4 = 仅绿属性球）。
+    /// 带掩码的修正按元素拆成 <c>OrbDamageScale:&lt;Element&gt;</c> 分别记账，球结算时只吃自己那一份。
+    /// </summary>
+    [JsonPropertyName("elementMask")]
+    public int ElementMask { get; init; }
 }
 
 public sealed class ExecutionDefDto
@@ -69,8 +95,26 @@ public sealed class ExecutionDefDto
     [JsonPropertyName("kind")]
     public string Kind { get; init; } = "Damage";
 
+    /// <summary>
+    /// 伤害维度①：<c>Physical</c>（默认）/ <c>Magical</c> / <c>Elemental</c>；
+    /// 旧内容也接受直接写属性名（等价于物理 + 该属性）。见 <see cref="DamageTypeParser"/>。
+    /// </summary>
     [JsonPropertyName("damageType")]
     public string DamageType { get; init; } = "Physical";
+
+    /// <summary>
+    /// 伤害维度②：属性标签（<c>None</c>/<c>Red</c>/<c>Blue</c>/<c>Green</c>/<c>Yellow</c>，
+    /// 多属性用 <c>,</c> 分隔）。供连携统计与克制/抗性规则读取。
+    /// </summary>
+    [JsonPropertyName("element")]
+    public string Element { get; init; } = "";
+
+    /// <summary>
+    /// 源攻击力系数（2026-09-21 新增）：缺省 <c>1.0</c> = 100% 攻击力，即历史口径。
+    /// 「3 + 25% 物攻」这类卡填 <c>0.25</c>。只缩放攻击力，<c>Amount</c> 与 <c>Damage</c> 属性不受影响。
+    /// </summary>
+    [JsonPropertyName("attackScale")]
+    public float AttackScale { get; init; } = 1f;
 }
 
 public sealed class GameplayEffectHooksDto

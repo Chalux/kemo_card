@@ -26,7 +26,8 @@ public sealed record OrbTriggerResult(
 /// <b>逐球</b>结算：每个球跑一次自身类型的效果，源为该球的产球者。</para>
 /// <para><b>单球伤害</b> = <c>perOrbAmount + attackBonusScale × 产球者攻击</c>
 /// （攻击按球类型的 attackSource 取物攻/魔攻/两者较高者）
-/// × (1 + 产球者全伤害增加) × (1 + 目标受伤倍率)；<b>不吃目标物防/魔防、不吃连携</b>。</para>
+/// × (1 + 产球者增伤 + 目标受伤增加)（增伤与受伤增加同桶加算，含 <c>OrbDamageScale</c> 球伤害增加）；
+/// <b>不吃目标物防/魔防、不吃连携</b>。</para>
 /// <para><b>回合结束产出</b>：固定 1 个四属性球 + 1 个物理/魔法球。四属性球按"本回合打出的卡牌自身
 /// element"计数取最多者，物理/魔法球按卡牌类型（Physics/Magical）计数取最多者；平局或本回合未出牌
 /// 时随机（走 <c>combat.orb</c> 独立随机流）。产球者：四属性球 = 全队 max(物攻,魔攻) 最高者、
@@ -193,6 +194,7 @@ public sealed class OrbRuntime
             return OrbTriggerResult.NotTriggered("充能球队列为空。");
 
         var cleared = new Dictionary<string, int>(StringComparer.Ordinal);
+        var producers = new List<int>();
         var enemies = AliveEnemies(simulation);
         foreach (var orb in drained)
         {
@@ -205,6 +207,7 @@ public sealed class OrbRuntime
                 ? orb.ProducerIndex
                 : ResolveHighestAttackCharacter(simulation, orbType.AttackSource);
             var source = ToSourceRef(producerIndex);
+            producers.Add(producerIndex);
 
             if (orbType.DealsDamage && enemies.Count > 0)
                 ApplyOrbDamage(simulation, orbType, producerIndex, source, enemies);
@@ -216,6 +219,11 @@ public sealed class OrbRuntime
                 simulation.EffectExecutor.ExecuteEffectRef(effectRef, simulation, source, targets);
             }
         }
+
+        // 触发后钩子（onOrbTriggered）：按产球者去重，配合 oncePerTurn 实现"每回合仅 1 次"。
+        simulation.Buffs.FireOrbTriggered(simulation, producers);
+        // 回合内统计：供"本回合每触发 N 个 X 球 → 增伤"这类效果读取。
+        simulation.RecordOrbsTriggered(cleared);
 
         return new OrbTriggerResult(true, cleared);
     }
@@ -229,18 +237,29 @@ public sealed class OrbRuntime
     {
         var attack = ResolveAttack(simulation, producerIndex, orbType.AttackSource);
         var baseAmount = orbType.PerOrbAmount + (orbType.AttackBonusScale * attack);
-        var dealtScale = ResolvePlayerAsc(simulation, producerIndex)
-            ?.GetCurrentValue(AttributeIds.DamageDealtScale) ?? 0f;
-        var amount = MathF.Max(0f, baseAmount * MathF.Max(0f, 1f + dealtScale));
-        if (amount <= 0f)
+        var asc = ResolvePlayerAsc(simulation, producerIndex);
+        var dealtScale = asc?.GetCurrentValue(AttributeIds.DamageDealtScale) ?? 0f;
+        // 球伤害增加：无掩码的那份（所有球） + 命中该球元素的那几份。
+        var orbScale = asc?.GetCurrentValue(AttributeIds.OrbDamageScale) ?? 0f;
+        foreach (var element in Enum.GetValues<EElement>())
+        {
+            if (element != EElement.None && (orbType.Element & element) != 0)
+                orbScale += asc?.GetCurrentValue(AttributeIds.OrbDamageScaleFor(element)) ?? 0f;
+        }
+
+        // 球侧增伤（全伤害增加 + 球伤害增加）与目标受伤增加同桶加算（规格：一律加算），逐目标算。
+        var dealtBonus = dealtScale + orbScale;
+        if (baseAmount <= 0f)
             return;
 
         foreach (var enemy in enemies)
         {
-            // 受伤倍率按目标逐个算（与 GAS / 直伤同口径）：查询统一走 DamagePipeline；
             // 规则管线（OnBeforeDamage/OnAfterDamage）由 ApplyFixedDamage 负责。
-            var takenScale = DamagePipeline.ResolveTakenScale(simulation, enemy);
-            var perTarget = amount * MathF.Max(0f, 1f + takenScale);
+            var perTarget = baseAmount *
+                DamageScaling.CombineBonuses(dealtBonus, DamagePipeline.ResolveTakenScale(simulation, enemy));
+            if (perTarget <= 0f)
+                continue;
+
             simulation.EffectExecutor.ApplyFixedDamage(
                 simulation,
                 source,

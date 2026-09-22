@@ -7,7 +7,9 @@
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="6_kbtn"]
 
-[node name="CodexDlg" type="Control" unique_id=1495356838 node_paths=PackedStringArray("_tabContainer", "_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager", "_obCharField", "_obCharOp", "_obCharVal", "_itemListCharConditions", "_btnCharAdd", "_btnCharSearch", "_iptCharTxtFilter", "_gridCharList", "_charPager")]
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_close"]
+
+[node name="CodexDlg" type="Control" node_paths=PackedStringArray("_tabContainer", "_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager", "_obCharField", "_obCharOp", "_obCharVal", "_itemListCharConditions", "_btnCharAdd", "_btnCharSearch", "_iptCharTxtFilter", "_gridCharList", "_charPager")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,321 +17,310 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_x5fxm")
-_tabContainer = NodePath("TabContainer")
-_obField = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardTypeSelector")
-_obOp = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardOperateSelector")
-_obVal = NodePath("TabContainer/UI_CARD/HBoxContainer/OBCardValSelector")
-_itemListConditions = NodePath("TabContainer/UI_CARD/ItemListConditions")
-_btnAdd = NodePath("TabContainer/UI_CARD/BAdd")
-_btnSearch = NodePath("TabContainer/UI_CARD/BtnSearch")
-_iptTxtFilter = NodePath("TabContainer/UI_CARD/IptTxtFilter")
-_gridCardList = NodePath("TabContainer/UI_CARD/Control/GridContainerCardList")
-_pager = NodePath("TabContainer/UI_CARD/BasePager")
-_obCharField = NodePath("TabContainer/UI_CHARACTER/HBoxContainer/OBCharFieldSelector")
-_obCharOp = NodePath("TabContainer/UI_CHARACTER/HBoxContainer/OBCharOpSelector")
-_obCharVal = NodePath("TabContainer/UI_CHARACTER/HBoxContainer/OBCharValSelector")
-_itemListCharConditions = NodePath("TabContainer/UI_CHARACTER/ItemListConditions")
-_btnCharAdd = NodePath("TabContainer/UI_CHARACTER/BAdd")
-_btnCharSearch = NodePath("TabContainer/UI_CHARACTER/BtnSearch")
-_iptCharTxtFilter = NodePath("TabContainer/UI_CHARACTER/IptTxtFilter")
-_gridCharList = NodePath("TabContainer/UI_CHARACTER/Control/GridContainerCharList")
-_charPager = NodePath("TabContainer/UI_CHARACTER/BasePager")
+_tabContainer = NodePath("Margin/VBox/TabContainer")
+_obField = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/Selectors/OBCardTypeSelector")
+_obOp = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/Selectors/OBCardOperateSelector")
+_obVal = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/Selectors/OBCardValSelector")
+_itemListConditions = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/ItemListConditions")
+_btnAdd = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/BAdd")
+_btnSearch = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/BtnSearch")
+_iptTxtFilter = NodePath("Margin/VBox/TabContainer/UI_CARD/Filter/VBox/IptTxtFilter")
+_gridCardList = NodePath("Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList")
+_pager = NodePath("Margin/VBox/TabContainer/UI_CARD/Results/BasePager")
+_obCharField = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Selectors/OBCharFieldSelector")
+_obCharOp = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Selectors/OBCharOpSelector")
+_obCharVal = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Selectors/OBCharValSelector")
+_itemListCharConditions = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/ItemListConditions")
+_btnCharAdd = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/BAdd")
+_btnCharSearch = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/BtnSearch")
+_iptCharTxtFilter = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/IptTxtFilter")
+_gridCharList = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList")
+_charPager = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Results/BasePager")
 
-[node name="BaseDlgComp" parent="." unique_id=1648768781 instance=ExtResource("2_ii0j4")]
+[node name="Bg" type="Panel" parent="."]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.11111111
-anchor_top = 0.09876543
-anchor_right = 0.8888889
-anchor_bottom = 0.8888889
-metadata/_edit_use_anchors_ = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"PageBg"
 
-[node name="TabContainer" type="TabContainer" parent="." unique_id=2144659579]
-layout_mode = 0
-anchor_left = 0.1388889
-anchor_top = 0.14814815
-anchor_right = 0.8454861
-anchor_bottom = 0.8518519
-current_tab = 0
-metadata/_edit_use_anchors_ = true
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 28
 
-[node name="UI_CARD" type="Control" parent="TabContainer" unique_id=169329727]
+[node name="VBox" type="VBoxContainer" parent="Margin"]
 layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TopBar" type="HBoxContainer" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Margin/VBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_type_variation = &"Title"
+text = "UI_CODEX_TITLE"
+
+[node name="CloseGap" type="Control" parent="Margin/VBox/TopBar"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+
+[node name="TabContainer" type="TabContainer" parent="Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+
+[node name="UI_CARD" type="HBoxContainer" parent="Margin/VBox/TabContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
 metadata/_tab_index = 0
 
-[node name="ItemListConditions" type="ItemList" parent="TabContainer/UI_CARD" unique_id=1150691685]
-layout_mode = 0
-anchor_left = 0.02948403
-anchor_top = 0.05882353
-anchor_right = 0.3243243
-anchor_bottom = 0.75529414
-metadata/_edit_use_anchors_ = true
-
-[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/UI_CARD" unique_id=605029749]
-layout_mode = 0
-offset_left = 28.0
-offset_top = 337.0
-offset_right = 381.0
-offset_bottom = 369.0
-
-[node name="OBCardTypeSelector" type="OptionButton" parent="TabContainer/UI_CARD/HBoxContainer" unique_id=1175027382]
+[node name="Filter" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_CARD"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-metadata/_edit_use_anchors_ = true
+theme_type_variation = &"SunkenContainer"
 
-[node name="OBCardOperateSelector" type="OptionButton" parent="TabContainer/UI_CARD/HBoxContainer" unique_id=2089973766]
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_CARD/Filter"]
 layout_mode = 2
-size_flags_horizontal = 3
-metadata/_edit_use_anchors_ = true
+theme_override_constants/separation = 8
 
-[node name="OBCardValSelector" type="OptionButton" parent="TabContainer/UI_CARD/HBoxContainer" unique_id=1107163914]
+[node name="Selectors" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox"]
 layout_mode = 2
-size_flags_horizontal = 3
-metadata/_edit_use_anchors_ = true
+theme_override_constants/separation = 6
 
-[node name="IptTxtFilter" type="LineEdit" parent="TabContainer/UI_CARD" unique_id=766004567]
-layout_mode = 0
-anchor_left = 0.16707617
-anchor_top = 0.8870588
-anchor_right = 0.31941032
-anchor_bottom = 0.96
-placeholder_text = "UI_CODEX_TXT_FILTER"
-metadata/_edit_use_anchors_ = true
+[node name="OBCardTypeSelector" type="OptionButton" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox/Selectors"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
 
-[node name="BAdd" type="Button" parent="TabContainer/UI_CARD" unique_id=1759687585]
-layout_mode = 0
-anchor_left = 0.02948403
-anchor_top = 0.8870588
-anchor_right = 0.14742015
-anchor_bottom = 0.96
+[node name="OBCardOperateSelector" type="OptionButton" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox/Selectors"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+
+[node name="OBCardValSelector" type="OptionButton" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox/Selectors"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+
+[node name="BAdd" type="Button" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 text = "UI_OP_ADD"
 script = ExtResource("6_kbtn")
-metadata/_edit_use_anchors_ = true
 
-[node name="Control" type="Control" parent="TabContainer/UI_CARD" unique_id=642701578]
-layout_mode = 1
-anchor_left = 0.35380834
-anchor_top = 0.05882353
-anchor_right = 0.9041769
-anchor_bottom = 0.75529414
+[node name="ItemListConditions" type="ItemList" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="IptTxtFilter" type="LineEdit" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+placeholder_text = "UI_CODEX_TXT_FILTER"
+
+[node name="BtnSearch" type="Button" parent="Margin/VBox/TabContainer/UI_CARD/Filter/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_SEARCH"
+script = ExtResource("6_kbtn")
+Primary = true
+
+[node name="Results" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_CARD"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Control" type="Control" parent="Margin/VBox/TabContainer/UI_CARD/Results"]
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
-metadata/_edit_use_anchors_ = true
 
-[node name="ColorRect" type="ColorRect" parent="TabContainer/UI_CARD/Control" unique_id=1200481427]
+[node name="GridContainerCardList" type="GridContainer" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -344.0
+offset_top = 8.0
+offset_right = 344.0
+offset_bottom = 440.0
 grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.5568628, 0.80784315, 0.9254902, 0.28627452)
-
-[node name="GridContainerCardList" type="GridContainer" parent="TabContainer/UI_CARD/Control" unique_id=1292484503]
-custom_minimum_size = Vector2(688, 432)
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.039285693
-anchor_top = 0.062162142
-anchor_right = 0.96071434
-anchor_bottom = 0.93783784
-offset_left = -137.59999
-offset_top = -86.399994
-offset_right = 137.59998
-offset_bottom = 86.399994
-grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(0.6, 0.6)
-pivot_offset_ratio = Vector2(0.5, 0.5)
 theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 16
 columns = 4
-metadata/_edit_use_anchors_ = true
 
-[node name="BaseCardItem" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1269321399 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem2" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1827231589 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem2" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem3" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=851331133 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem3" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem4" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=2054858552 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem4" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem5" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1286298373 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem5" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem6" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=693910254 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem6" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem7" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=966911258 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem7" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BaseCardItem8" parent="TabContainer/UI_CARD/Control/GridContainerCardList" unique_id=1201054966 instance=ExtResource("3_tnh6y")]
+[node name="BaseCardItem8" parent="Margin/VBox/TabContainer/UI_CARD/Results/Control/GridContainerCardList" instance=ExtResource("3_tnh6y")]
 layout_mode = 2
 
-[node name="BasePager" parent="TabContainer/UI_CARD" unique_id=525618807 instance=ExtResource("4_egqms")]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.5331695
-anchor_top = 0.8117647
-anchor_right = 0.9459459
-anchor_bottom = 0.8870588
-offset_left = 3.0517578e-05
-metadata/_edit_use_anchors_ = true
+[node name="BasePager" parent="Margin/VBox/TabContainer/UI_CARD/Results" instance=ExtResource("4_egqms")]
+layout_mode = 2
 
-[node name="BtnSearch" type="Button" parent="TabContainer/UI_CARD" unique_id=1357079192]
-layout_mode = 0
-anchor_left = 0.35380834
-anchor_top = 0.8870588
-anchor_right = 0.46805897
-anchor_bottom = 0.96
-text = "UI_SEARCH"
-script = ExtResource("6_kbtn")
-metadata/_edit_use_anchors_ = true
-
-[node name="UI_CHARACTER" type="Control" parent="TabContainer" unique_id=169329728]
+[node name="UI_CHARACTER" type="HBoxContainer" parent="Margin/VBox/TabContainer"]
 visible = false
 layout_mode = 2
+theme_override_constants/separation = 20
 metadata/_tab_index = 1
 
-[node name="ItemListConditions" type="ItemList" parent="TabContainer/UI_CHARACTER" unique_id=-2144275611]
-layout_mode = 0
-anchor_left = 0.02948403
-anchor_top = 0.05882353
-anchor_right = 0.3243243
-anchor_bottom = 0.75529414
-metadata/_edit_use_anchors_ = true
-
-[node name="HBoxContainer" type="HBoxContainer" parent="TabContainer/UI_CHARACTER" unique_id=1605029749]
-layout_mode = 0
-offset_left = 28.0
-offset_top = 337.0
-offset_right = 381.0
-offset_bottom = 369.0
-
-[node name="OBCharFieldSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=-2119939914]
+[node name="Filter" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_CHARACTER"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-metadata/_edit_use_anchors_ = true
+theme_type_variation = &"SunkenContainer"
 
-[node name="OBCharOpSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=2089973767]
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter"]
 layout_mode = 2
-size_flags_horizontal = 3
-metadata/_edit_use_anchors_ = true
+theme_override_constants/separation = 8
 
-[node name="OBCharValSelector" type="OptionButton" parent="TabContainer/UI_CHARACTER/HBoxContainer" unique_id=1107163915]
+[node name="Selectors" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox"]
 layout_mode = 2
-size_flags_horizontal = 3
-metadata/_edit_use_anchors_ = true
+theme_override_constants/separation = 6
 
-[node name="IptTxtFilter" type="LineEdit" parent="TabContainer/UI_CHARACTER" unique_id=1766004567]
-layout_mode = 0
-anchor_left = 0.16707617
-anchor_top = 0.8870588
-anchor_right = 0.31941032
-anchor_bottom = 0.96
-placeholder_text = "UI_CODEX_CHAR_TXT_FILTER"
-metadata/_edit_use_anchors_ = true
+[node name="OBCharFieldSelector" type="OptionButton" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Selectors"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
 
-[node name="BAdd" type="Button" parent="TabContainer/UI_CHARACTER" unique_id=1759687586]
-layout_mode = 0
-anchor_left = 0.02948403
-anchor_top = 0.8870588
-anchor_right = 0.14742015
-anchor_bottom = 0.96
+[node name="OBCharOpSelector" type="OptionButton" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Selectors"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+
+[node name="OBCharValSelector" type="OptionButton" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Selectors"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+
+[node name="BAdd" type="Button" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
 text = "UI_OP_ADD"
 script = ExtResource("6_kbtn")
-metadata/_edit_use_anchors_ = true
 
-[node name="Control" type="Control" parent="TabContainer/UI_CHARACTER" unique_id=1642701578]
-layout_mode = 1
-anchor_left = 0.35380834
-anchor_top = 0.05882353
-anchor_right = 0.9041769
-anchor_bottom = 0.75529414
+[node name="ItemListConditions" type="ItemList" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="IptTxtFilter" type="LineEdit" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+placeholder_text = "UI_CODEX_CHAR_TXT_FILTER"
+
+[node name="BtnSearch" type="Button" parent="Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_SEARCH"
+script = ExtResource("6_kbtn")
+Primary = true
+
+[node name="Results" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_CHARACTER"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Control" type="Control" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results"]
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
-metadata/_edit_use_anchors_ = true
 
-[node name="ColorRect" type="ColorRect" parent="TabContainer/UI_CHARACTER/Control" unique_id=1200481428]
+[node name="GridContainerCharList" type="GridContainer" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control"]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -344.0
+offset_top = 8.0
+offset_right = 344.0
+offset_bottom = 440.0
 grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.5568628, 0.80784315, 0.9254902, 0.28627452)
-
-[node name="GridContainerCharList" type="GridContainer" parent="TabContainer/UI_CHARACTER/Control" unique_id=1292484504]
-custom_minimum_size = Vector2(688, 432)
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.039285693
-anchor_top = 0.062162142
-anchor_right = 0.96071434
-anchor_bottom = 0.93783784
-offset_left = -137.59999
-offset_top = -86.399994
-offset_right = 137.59998
-offset_bottom = 86.399994
-grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(0.6, 0.6)
-pivot_offset_ratio = Vector2(0.5, 0.5)
 theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 16
 columns = 4
-metadata/_edit_use_anchors_ = true
 
-[node name="BaseCharacterItem" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=-2025645897 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem2" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=-1467735707 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem2" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem3" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=-1443636163 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem3" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem4" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=2054858553 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem4" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem5" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=1286298374 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem5" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem6" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=693910255 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem6" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem7" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=966911259 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem7" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BaseCharacterItem8" parent="TabContainer/UI_CHARACTER/Control/GridContainerCharList" unique_id=1201054967 instance=ExtResource("5_charitem")]
+[node name="BaseCharacterItem8" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList" instance=ExtResource("5_charitem")]
 layout_mode = 2
 EnableHoverTip = true
 
-[node name="BasePager" parent="TabContainer/UI_CHARACTER" unique_id=525618808 instance=ExtResource("4_egqms")]
+[node name="BasePager" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results" instance=ExtResource("4_egqms")]
+layout_mode = 2
+
+[node name="BaseDlgComp" parent="." instance=ExtResource("2_ii0j4")]
 layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.5331695
-anchor_top = 0.8117647
-anchor_right = 0.9459459
-anchor_bottom = 0.8870588
-offset_left = 3.0517578e-05
-metadata/_edit_use_anchors_ = true
+anchors_preset = 1
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -72.0
+offset_top = 26.0
+offset_right = -28.0
+offset_bottom = 70.0
+grow_horizontal = 0
+grow_vertical = 1
 
-[node name="BtnSearch" type="Button" parent="TabContainer/UI_CHARACTER" unique_id=1357079193]
-layout_mode = 0
-anchor_left = 0.35380834
-anchor_top = 0.8870588
-anchor_right = 0.46805897
-anchor_bottom = 0.96
-text = "UI_SEARCH"
-script = ExtResource("6_kbtn")
-metadata/_edit_use_anchors_ = true
+[node name="DlgBg" parent="BaseDlgComp"]
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_close")
+
+[node name="Ribbon" parent="BaseDlgComp/DlgBg"]
+visible = false
+
+[node name="CloseBtn" parent="BaseDlgComp/DlgBg"]
+offset_left = -44.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 44.0

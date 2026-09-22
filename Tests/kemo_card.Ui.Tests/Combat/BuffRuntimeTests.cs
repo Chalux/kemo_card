@@ -156,7 +156,7 @@ public sealed class BuffRuntimeTests
             Condition = new BuffConditionDto
             {
                 ElementAny = [EElement.Blue],
-                RaceAny = [ERace.Canine],
+                RaceAny = [ERace.Animal],
             },
             Modifiers = StatBuff().Modifiers,
         };
@@ -605,10 +605,11 @@ public sealed class BuffRuntimeTests
     }
 
     /// <summary>
-    /// 非 output 卡（控制/诅咒）不把人头数堆进连携档位：统计侧与加成侧同规则。
+    /// 统计侧统计队列里的<b>所有</b>卡：控制/诅咒等非输出卡同样把它打出的角色计入人头；
+    /// 只有加成侧（<see cref="ChainCalculator.AppliesToCard"/>）限定物/魔/治疗卡。
     /// </summary>
     [Test]
-    public void Chain_counting_ignores_non_output_cards_in_queue()
+    public void Chain_counting_includes_non_output_cards_in_queue()
     {
         var blue = ElementCard("card.blue3", EElement.Blue);
         var curse = ElementCard("card.curse3", EElement.Blue, ECardType.Curse);
@@ -622,8 +623,16 @@ public sealed class BuffRuntimeTests
 
         var counts = ChainCalculator.CountDistinctCharacters(sim);
 
-        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(1),
-            "角色 1 的诅咒卡不得把自己计入蓝属性人头（否则 2 人即触发二连档）");
+        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(2),
+            "诅咒卡也堆人头：2 人即二连档");
+        Assert.That(
+            ChainCalculator.BonusForCard(counts, curse, sim.PlayerTeam.Characters[1]),
+            Is.Zero,
+            "但非输出卡自身不吃连携加成");
+        Assert.That(
+            ChainCalculator.BonusForCard(counts, blue, sim.PlayerTeam.Characters[0]),
+            Is.EqualTo(ChainCalculator.TwoChainScale),
+            "同一档位下物/魔/治疗卡照常吃加成");
     }
 
     #endregion
@@ -654,7 +663,8 @@ public sealed class BuffRuntimeTests
 
         new DamageExecution().Execute(new ExecutionDefDto(), spec, target);
 
-        // base = 12 + 10(物攻) - 2(物防) = 20；×(1 + 0.25 + 0.5 连携加算) = 35；×(1 + 0.5 受伤) = 52.5
+        // base = 12 + 10(物攻) − 2(物防) = 20；
+        // ×(1 + 0.25 增伤 + 0.5 受伤增加) = 35 → ×(1 + 0.5 连携) = 52.5（规格「一律加算，连携除外」）。
         Assert.That(target.GetCurrentValue(AttributeIds.Health), Is.EqualTo(100f - 52.5f).Within(0.001f));
     }
 

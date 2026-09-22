@@ -1,10 +1,58 @@
 # kemo_card：战斗系统规格
 
 **日期**：2026-07-21  
-**状态**：权威（grilling 冻结）  
-**范围**：战斗阶段机、共享 HP、能量与抽牌、手牌标记队列、主动/蓄力技能、封印、弃牌通道、指令与回合开始管线、玩家侧伤害/治疗模型  
+**最后修订**：2026-09-21（战斗域下级规格合并）  
+**状态**：权威（grilling 冻结；战斗域下级规格已于 2026-09-21 合并归档，本文为战斗域**唯一权威文档**）  
+**范围**：战斗阶段机、共享 HP、能量与抽牌、手牌标记队列、主动/蓄力技能、封印、弃牌通道、指令与回合开始管线、玩家侧伤害/治疗模型；**并**（2026-09-21 合并）充能球（元素球）系统、普通攻击、Buff 运行时与槽位效果、连携档位、伤害维度与 `attackScale`、Combat 条件域、新增取值与槽位机制（`PartyCountScaled` / 手牌槽费用归零 / 封印免疫）  
+**非范围**（正文归其它权威规格，本文只留指针）：团体潜能模型（团队池、消费与返还、联机表决）、种族收敛、常驻天赋移除、卡组与卡牌数值预算、稀有度档名、角色简介与被动命名、正式战斗 UI 与美术  
 **上位文档**：[总规格](./2026-05-11-kemo-card-design.md)  
 **实现参考**：`Src/mod/combat/`（本文与代码冲突时，以本文为准并回写实现）
+
+**本文承载的下级规格（2026-09-21 合并并归档）**
+
+以下 4 份战斗域下级规格均已实装，2026-09-21 起全文并入本文，本文自此是战斗域的**唯一权威文档**；原文件按仓库归档策略移入 `Doc/archive/superpowers/specs/`（同名文件），需要历史原文时读归档副本。
+
+| 原规格 | 归档路径 | 并入范围 | 落点 |
+|---|---|---|---|
+| `2026-09-19-charge-orb-system-design.md` | `Doc/archive/superpowers/specs/2026-09-19-charge-orb-system-design.md` | 整篇（§1–§8） | 本文 §11（§11.1–§11.8） |
+| `2026-09-20-normal-attack-design.md` | `Doc/archive/superpowers/specs/2026-09-20-normal-attack-design.md` | 整篇（§1–§10） | 本文 §12（§12.1–§12.10） |
+| `2026-09-19-buff-potential-chain-system-design.md` | `Doc/archive/superpowers/specs/2026-09-19-buff-potential-chain-system-design.md` | §1 BuffInstance 运行时、§2 槽位效果、§3 连携、§5 新触发点、§6 首个使用者 chalux、§7 明确后置项；**不含 §4 团体潜能** | 本文 §13（§13.1 / §13.2 / §13.3 / §13.5 / §13.6 / §13.7；§13.4 空号，见下） |
+| `2026-09-21-reinhardt-and-normal-attack-extensions.md` | `Doc/archive/superpowers/specs/2026-09-21-reinhardt-and-normal-attack-extensions.md` | §1（仅战斗机制相关行）、§4、§5 + §5.1、§6、§7、§8、§10（仅战斗机制行）、§11.0（仅战斗机制行）、§11.1、§11.2、§13；**不含 §2 种族收敛、§3 常驻天赋移除、§9 卡组属性预算、§11.3 被动命名、§12.1 稀有度档名、§12.2 角色简介移除** | 本文 §14 |
+| 本文本身（`2026-07-21-combat-system-design.md` §1–§10） | —（本文即该文档） | 全部保留 | 本文 §1–§10，段号未变 |
+
+**未并入的内容落在哪**（同批收敛里的非战斗项，由对应权威规格承载）：
+
+| 原内容 | 归口 |
+|---|---|
+| `2026-09-19-buff-potential-chain-system-design.md` §4 团体潜能（`TeamPotentialPool`、`PotentialService`、联机表决、Run 存档 v1→v2） | Run / 潜能规格 |
+| `2026-09-21-reinhardt-and-normal-attack-extensions.md` §2 种族收敛、§3 常驻天赋移除、§9 卡组属性预算、§12.1 稀有度档名、§12.2 角色简介移除、§11.3 被动不需要名字 | 「内容与数据规格」/ UI 专文 |
+
+**段号锚点：合并后旧引用改指本文**
+
+`Src/` 与 `Doc/` 里有大量按段号引用规格的注释。合并后引用关系如下；被并入章节的标题保留**原段号注记**（形如 `### 11.2 队列与触发（原 充能球规格 §2）`），因此旧引用仍可按「原 §N」定位：
+
+| 旧引用写法 | 现在指向 |
+|---|---|
+| 战斗规格 §1–§10（含 §1.2 / §1.3 / §2.x / §3.3 / §4.x / §5.x / §6.x / §7 / §9） | 本文 §1–§10，段号未变 |
+| 充能规格 §1–§8 / 充能球规格 §1–§8 | 本文 §11.1–§11.8 |
+| 普通攻击规格 §1–§10 | 本文 §12.1–§12.10 |
+| buff 运行时规格 §1 / §2 / §3 / §5 / §6 / §7 | 本文 §13.1 / §13.2 / §13.3 / §13.5 / §13.6 / §13.7 |
+| buff 运行时规格 §4（团体潜能） | **不在本文**；见 Run / 潜能规格 |
+| 莱因哈特扩展规格 §1 / §4 / §5 / §5.1 / §6 / §7 / §8 / §10 / §11.0 / §11.1 / §11.2 / §13 | 本文 §14.1 / §14.4 / §14.5 / §14.5.1 / §14.6 / §14.7 / §14.8 / §14.10 / §14.11.0 / §14.11.1 / §14.11.2 / §14.13 |
+| 莱因哈特扩展规格 §2 / §3 / §9 / §11.3 / §12.1 / §12.2 | **不在本文**；见「内容与数据规格」/ UI 专文 |
+
+已改指本文的具体调用点（抽查）：
+
+- `Src/mod/combat/effects/SharedHpSettlement.cs`「战斗规格 §1.2 / §1.3」→ 本文 §1.2 / §1.3（未变）。
+- `Src/mod/combat/buffs/BuffRuntime.cs`「充能规格 §2」→ 本文 §13.2（槽位效果 / 充能互斥）。
+- `Src/frame/gas/Executions/DamageExecution.cs`「规格 §1.3『Elemental 不吃物防/魔防』」→ 本文 §1.3。
+- `Src/mod/combat/effects/DamageScaling.cs`「战斗规格『增伤与受伤增加一律加算』」→ 本文 §1.3（完整表述见 §14.11.2）。
+- `Src/frame/content/definitions/DamageTypeSpec.cs`「此前是战斗规格 §7 的后置项」→ 已清账，见本文 §14.5。
+- `Doc/AGENT.md` §4 权威规格链「角色套件扩展 §7」→ 本文 §14.7（Combat 条件域）。
+- `Doc/superpowers/specs/2026-05-11-kemo-card-design.md`「buff 运行时规格 §1/§5」→ 本文 §13.1 / §13.5；同文「buff 运行时规格 §4」→ 团体潜能（Run / 潜能规格）。
+- `Doc/archive/superpowers/specs/2026-09-19-ui-theme-and-debug-panel.md`「buff 运行时规格 §3」→ 本文 §13.3。
+
+> **歧义提示**：「充能规格 §2」在两份原文档里各有一个 §2——**buff 运行时规格 §2 = 槽位效果（含充能互斥）→ 本文 §13.2**；**充能球规格 §2 = 队列与触发 → 本文 §11.2**。引用时请按上下文区分；本文两节标题都带原段号注记。
 
 ---
 
@@ -23,7 +71,7 @@
 - **SharedHp 仅存在于本场战斗内**；Run / 非战斗层不持久化「当前共享血量」。
 - 开战：在 BattleStart 被动/修饰结算之后，按当时公式得到 `MaxSharedHp`，`SharedHp = MaxSharedHp`（恒补满一次）。
 - **BattleStart 通道约束**：被动自动技能与修饰技能 **禁止读写 SharedHp**（伤害、治疗、直接改血）；只允许改属性 / `MaxHealth` 等，再由补满步骤冻结账本。若将来要「带伤开战」，须另改管线，不得依赖现有顺序碰运气。
-- 重算 `MaxSharedHp` 时：**不**按比例缩放 `SharedHp`；该重算路径不读改 SharedHp。若出现 `SharedHp > MaxSharedHp`，立刻 `SharedHp = min(SharedHp, MaxSharedHp)`。
+- 重算 `MaxSharedHp` 时：**不** 按比例缩放 `SharedHp`；该重算路径不读改 SharedHp。若出现 `SharedHp > MaxSharedHp`，立刻 `SharedHp = min(SharedHp, MaxSharedHp)`。
 - 伤害扣共享 HP；治疗加共享 HP，不超过 `MaxSharedHp`。
 - `SharedHp <= 0` → 败北；敌方全灭（或战斗定义的胜利条件）→ 胜利。
 - 同场 **多波**：跨波 **保留** `SharedHp` / 按规则重算的 `MaxSharedHp`，不因清波回满。
@@ -35,10 +83,19 @@
 - **内容约定**：对玩家的多目标/全体伤害，数值按 **单槽期望伤** 来写，并注明会按命中槽数多次扣 Shared。
 - **Team / Shared 直伤**：与 Heal 对称；内容使用显式 **Team / Shared** 目标规格时，对账本 **只结算一次**（不走分槽点名）。禁止把「全体一次」与「分槽 AoE」混用语义。
 - **内容声明方式（2026-07-28 决议）**：`ETargetScope` 新增 **`Team`** 档——`side` 继续表达敌我相对关系，`scope: Team` = 对该侧队伍账本一次结算；`scope: All` = 分槽逐次结算（D2）。玩家侧 `Heal` 必须 `scope: Team`；`Heal` + 玩家侧 `Single/All` → 内容校验失败。
-- **护盾 / 格挡 / 槽位减伤**：挂在被点名的槽位上；仅当该次伤害目标含该槽时参与该次结算（B2）。Team/Shared 直伤 **不**吃分槽护盾（除非效果显式另写）。
+- **护盾 / 格挡 / 槽位减伤**：挂在被点名的槽位上；仅当该次伤害目标含该槽时参与该次结算（B2）。Team/Shared 直伤 **不** 吃分槽护盾（除非效果显式另写）。
 - **伤害包管线（2026-09-19 统一）**：**所有**伤害写入——GAS 公式通道（GE 的 `Damage` 执行）、直伤定值通道、充能球通道——一律 先 `OnBeforeDamage`（可改数额、可完全抵消）→ 写入 → 再广播 `OnAfterDamage`（只读观测最终数额）。分槽护盾规则按 `packet.Target.Index` 匹配槽位，因此账本目标（`Index < 0`）天然不吃分槽护盾，与上一条一致；队伍级减伤规则则可以点名账本目标参与结算。
-- **三条通道的差异只在"数额怎么算"**：GAS = `Amount + 源物攻 + 源 Damage 属性 − 目标物防`；直伤 = 定值；充能球 = 定值 + `attackBonusScale × 产球者攻击`；普通攻击 = `攻击力 × 系数 − 目标对应防御`。三者都乘源全伤害增加 / 连携（各自口径）与**目标受伤倍率**（`DamageTakenScale`；账本目标取队伍 ASC，无该属性即不缩放）。
-- **伤害维度自 2026-09-20 起拆成两维**：`DamagePacket.Kind`（`Elemental` / `Physical` / `Magical`）+ `DamagePacket.Element`（`EElement`，可多元素或空）。物理/魔法吃目标对应防御（物防/魔防），`Elemental` 不吃防御；元素标签供未来克制/抗性使用。充能球与普通攻击都按该结构标注；GAS 的 `ExecutionDefDto.damageType` 字符串尚未落到这两个维度（后置项）。
+- **三条通道的差异只在"数额怎么算"**：GAS = `Amount + 源攻×attackScale + 源 Damage 属性 − 目标对应防御`（源攻/对应防御由 `damageType` 决定，见下一条；`attackScale` 缺省 1.0）；直伤 = 定值；充能球 = 定值 + `attackBonusScale × 产球者攻击`；普通攻击 = `攻击力 × 系数 − 目标对应防御`。缩放口径见下条。
+- **增伤与受伤增加一律加算，只有连携是乘算（2026-09-21 决议，全游戏统一）**：
+  ```
+  最终伤害 = base × (1 + Σ增伤 + Σ受到伤害增加) × (1 + 连携加成)
+  ```
+  - **进同一个加算桶**（不分攻防两侧、不互相乘算）：`DamageDealtScale`（全伤害增加）、`NormalAttackDamageDealtScale`（普攻增伤）、`DamageTakenScale`（受伤倍率）、`NormalAttackDamageTakenScale`（普攻受伤增加）、`OrbDamageScale`（球伤害增加，可带元素掩码）。
+  - **唯一的乘算因子是连携**：它是"多人同属性协奏"的档位奖励，语义上不属于单次伤害的增伤。
+  - 理由：多条增伤若互相乘算，同时吃到受伤倍率时会指数放大，数值不可预期；加算后每条增伤的实际收益是固定的线性叠加，便于平衡与向玩家解释。
+  - 治疗不受影响（`治疗 = (amount + 源 HealPower) × (1 + 连携)`）。
+  - 实现入口：`DamageExecution`（GAS 通道）与 `DamageScaling`（mod 侧：直伤 / 普攻 / 充能球共用）。
+- **伤害维度自 2026-09-20 起拆成两维**：`DamagePacket.Kind`（`Elemental` / `Physical` / `Magical`）+ `DamagePacket.Element`（`EElement`，可多元素或空）。物理/魔法吃目标对应防御（物防/魔防），`Elemental` 不吃防御；元素标签供未来克制/抗性使用。充能球与普通攻击都按该结构标注。**2026-09-21 起 GAS 通道也落到这两维**（原 §7 后置项已清，见本文 §7 与 §14.5）：`ExecutionDefDto.damageType`（`Physical` 默认 / `Magical` / `Elemental`，也兼容旧的"直接写属性名"写法）+ 可选 `element`（`Red`/`Blue`/`Green`/`Yellow`，多属性逗号分隔）由 `DamageTypeParser` 解析 → `DamageExecution` 据此选攻/防 → `GameplayEffectApplicator` 把维度随 `SharedHpSettlement` 传进伤害包管线。写错的 `damageType`/`element` 会被内容准入拒绝，不会静默退化成"物理无属性"。
 - **治疗**：只回队伍 Shared；内容须使用显式 **Team / Shared** 目标规格。`Heal` + 点名队友（如 `Ally+Single`）→ **内容校验失败**。不存在「对某个队友回血」。
 
 ---
@@ -64,7 +121,7 @@
    - 排序：主键 = 卡牌 `priority` **降序**（**越大越先**）；同优先级按 **入队/标记序号升序**（先标记先执行）。**不用** RNG 破平局。
    - 内容约定：`priority` 为执行顺序权重；建议默认 `100`，先制 `200+`，延后 `50` 以下。
    - 结算后：该牌进入持有者 **弃牌堆**（含空放），手牌槽空出。
-   - 队列清空后执行 **普通攻击**（见 [普通攻击规格](2026-09-20-normal-attack-design.md)：归属槽位 = (回合-1) % 队伍人数，敌方全体，物/魔取较高者减对应防御），**然后** 检查胜负。
+   - 队列清空后执行 **普通攻击**（见本文 §12：归属槽位 = (回合-1) % 队伍人数，敌方全体，物/魔取较高者减对应防御），**然后** 检查胜负。
    - 胜负未分则进入 **敌方阶段**；普攻击杀最后一名敌人时本回合敌人不再行动。
 4. **敌方阶段**
    - 执行敌人行动；回合结束钩子；四人 `HasActed = false`。
@@ -101,8 +158,9 @@
 
 - **效果**：清空该角色全部手牌标记并退还各 `paid`；将该角色 **视作已行动/跳过**；本阶段 **禁止** 再标记；**禁止** `CastActiveSkillCommand`（软失败）。
 - **资源**：玩家阶段开始管线（能量 / `S` / 抽牌）**照常**；管线结束后若仍处于封印，再套用上款行动封锁。
-- **中途挂上封印**：立刻清标记、标已行动、禁主动；**不**回滚本阶段已获得的能量 / `S` / 牌。
+- **中途挂上封印**：立刻清标记、标已行动、禁主动；**不** 回滚本阶段已获得的能量 / `S` / 牌。
 - 需要「不能出牌但仍可放主动」时，另做更窄 Debuff；默认封印含禁主动。
+- **免疫封印**（2026-09-21 新增）：持有 `trait.immune_seal` 的角色不吃封印，见 §14.8.3。
 
 ---
 
@@ -135,6 +193,7 @@
   - 新费用 &lt; `paid`：退还差额，更新 `paid`。
   - 新费用 &gt; `paid`：若可用能量足够则补差并更新 `paid`；**不够则自动取消该标记并退还全部 `paid`**，并按 2.3 回退该角色未确认。
 - 未标记手牌：费用变化只影响可否标记，不改可用能量。
+- **手牌槽费用归零（2026-09-21 新增）**：槽位上的 `slot.free_cost` buff 使该槽当前那张牌的费用视为 0，入队扣费与队列对账同口径，见 §14.8.2。
 
 ---
 
@@ -261,6 +320,8 @@ activeSkillChain: [
 3. 按公式冻结/得到当时 `MaxSharedHp`，`SharedHp = MaxSharedHp`  
 4. 每名角色开局抽满手牌 5（可洗牌；不走每回合公式）  
 
+> 2026-09-19 / 2026-09-20 补充：开战 buff 的注入顺序与容器见 §13.1.3（玩家侧被动在技能注入之后、冻结 SharedHp 之前；敌方 `EnemyDto.buffRefs` 在冻结 SharedHp 之后、`onWaveStart` 之前）。
+
 ### 6.2 每个玩家阶段开始（含首个）
 
 对 **每名** 玩家角色依次：
@@ -280,12 +341,13 @@ activeSkillChain: [
 
 - **敌方侧 `ETargetScope.Team`**：v1 无处结算，指向敌方队伍的 Team 退化为空放；敌方队伍账本未实装。
 - **点选式主动弃牌 UI**：ActiveSkill 弃牌通道 v1 为「均匀随机含已标记」；玩家点选弃哪张后置。
-- **`costScaling` / 动态费用**：`CardCostCalculator` 目前是恒等接缝，尚未接入动态费用来源与展示。
+- **`costScaling` / 动态费用**：`CardCostCalculator` 目前是恒等接缝，尚未接入动态费用来源与展示（2026-09-21 已新增 `runtimeInstanceId` 参数与 `slot.free_cost` 通道，见 §14.8.2；动态费用来源本身仍未接入）。
 - **Run 层 BattleStart 接线**：模拟层已提供 `BattleStartSkills` / `RunBattleStart`；由谁按被动→修饰排序并注入，仍属 Run/编排层。
 - **链配置加载期校验**：主动链合法性目前在建战斗实例时校验；内容加载期 / 合成内容仍缺「档位 skillId 必须存在于注册表」的 frame 层校验（受 `frame` 不得依赖 `mod` 约束）。
 - **独立技能 Heal 目标校验**：独立技能的 `targetOverride.side` 无法在内容层判敌我，写错 scope 只能靠运行期软失败 + `RejectedSlotHealCount`。
 - **诊断出口**：`BlockedSharedHpWriteCount` / `RejectedSlotHealCount` / `BlockedMidDrawCount` 等仅供测试；UI/日志接入时再接 `IAppLog`。
 - **更窄 Debuff**：「仅禁出牌、仍可主动」是否需要独立标签——见 §9。
+- **GAS 伤害维度标注（`damageType` / `element` / `attackScale`）**：~~后置项~~ ——**已于 2026-09-21 清账**（代码 / 测试注释里按「战斗规格 §7 后置项」引用的就是本条：`ExecutionDefDto.damageType` 此前无任何读取方）。现行口径见 §14.5 / §14.5.1，`Src/frame/content/definitions/DamageTypeSpec.cs` 是解析入口。
 
 ---
 
@@ -299,8 +361,9 @@ activeSkillChain: [
 - 主动：档位阈值表；释放扣 `T_k`；溢出资保留；效果 `+S` 连发；达 Cap 不再涨；不占已行动。
 - 队列：priority **降序** + 入队序升序；单体 RNG 改选；多目标子集结算；目标丢失取消相关标记并回退。
 - 共享 HP：BattleStart 技能不碰 Shared；MaxHealth 重算与越界 clamp；跨波保留；AoE 分槽分算；Team 直伤一次；Heal 仅 Team/Shared；无槽位 Health 当前值。
-- 封印：清标记退费 + 已行动 + 禁主动；资源管线仍跑。
+- 封印：清标记退费 + 已行动 + 禁主动；资源管线仍跑；`trait.immune_seal` 只抵消封印本身（§14.8.3）。
 - 弃牌：主动弃已标记回退；执行/敌方/钩子只随机未标记；池空软失败。
+- 并入章节（§11–§14）自带要点：充能球队列 / 触发 / 产出（§11），普攻轮转 / 类型与数值 / 追打 / 专项倍率（§12），buff 时长 tick 与充能互斥（§13），伤害缩放加算口径 / `damageType` 解析 / Combat 条件域 / `PartyCountScaled`（§14）。
 
 ---
 
@@ -311,6 +374,7 @@ activeSkillChain: [
 - 非 Energy 费用类型专项（含 Health=SharedHp 的预扣/退费细则）。
 - ~~Team/Shared 目标枚举落点~~ → 已决议（2026-07-28）：`ETargetScope` 扩展 `Team`，见 1.3。
 - 更窄的「仅禁出牌、仍可主动」Debuff 是否需要独立 id。
+- 并入章节的未决 / 后置项分别见：§11.8（充能球）、§12.10（普通攻击）、§13.7（Buff / 槽位 / 连携 / chalux）、§14.13（战斗机制扩展）。
 
 ---
 
@@ -322,3 +386,577 @@ activeSkillChain: [
 - 2026-07-21（第六轮 grilling）：BattleStart 禁碰 SharedHp；无单角色倒地；Team/Shared 直伤通道；主动扣 `T_k` 溢出资保留；封印（清标记+已行动+禁主动，资源照跑）；弃牌分通道；玩家无 Health 当前值；Health 费预定=Shared 且 v1 拒入队；`priority` 改为越大越先。
 - 2026-07-28：开放项决议——Team/Shared 目标落点为 `ETargetScope.Team`；`CastActiveSkillCommand` 的 `targets` 按将释放档位的目标规格校验（各档可不同，UI 跟随 `S`）。对齐实施计划见 `Doc/superpowers/plans/2026-07-28-combat-spec-alignment-implementation-plan.md`。
 - 2026-07-28：§7 回写为「对齐完成 + 显式遗留项」；T1–T12 实施完毕（交接见 `Doc/superpowers/plans/2026-07-28-combat-spec-alignment-handoff.md`）。
+- 2026-09-19：充能球（元素球）系统、Buff 运行时 / 槽位效果 / 连携、伤害包管线统一（三条通道）——原规格已归档，正文见 §11、§13。
+- 2026-09-20：伤害维度拆成 `Kind` + `Element`；普通攻击实装（原规格已归档，正文见 §12）；「回合开始每回合只发生一次」修正（§2.1）。
+- 2026-09-21：**战斗域下级规格合并进本文**（原 4 份规格归档，映射见文首「本文承载的下级规格」）；伤害缩放统一为「增伤与受伤增加一律加算，只有连携乘算」（§1.3 / §14.11.2）；GAS 通道魔法伤害与 `attackScale` 落地（§14.5）；普攻次数 / 追打 / 专项倍率（§14.6）；Combat 条件域启用（§14.7）；`PartyCountScaled` / 手牌槽费用归零 / 封印免疫（§14.8）；充能互斥与 `OrbDamageScale` 掩码（§13.2 / §14.11.1）。
+
+---
+
+## 11. 充能球（元素球）系统（原 充能球规格 §1–§8）
+
+> **原规格**：`2026-09-19-charge-orb-system-design.md`（**日期** 2026-09-19；**状态** 已实装）→ 归档于 `Doc/archive/superpowers/specs/2026-09-19-charge-orb-system-design.md`。
+> **原关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md) 与本文；与 [buff 运行时 / 槽位效果 / 连携（见本文 §13）] 同批落地（槽位充能、连携、潜能）。
+> **段号对应**：§11.1–§11.8 依次等于原规格 §1–§8，原段号注记在各节标题上。
+
+### 11.1 球类型与内容注册（原 §1）
+
+- 新内容类别 `orbs`（`content/orbs/*.json`，DTO `OrbTypeDto`）：Mod 与 base-game 走同一条内容管道（校验失败即剔除、归属 mod、翻译扫描自动覆盖）。
+- 内建 6 种（base-game 声明）：红 / 蓝 / 绿 / 黄（元素球）+ 物理球 + 魔法球。
+- 字段：
+  - `dealsDamage`：是否造成伤害；`false` = 纯效果球（只跑 `triggerEffects`）。
+  - `damageKind` + `element`（2026-09-20 拆维）：元素球 = `Elemental` + 元素（必填）；物理球 = `Physical`；魔法球 = `Magical`（物理/魔法球不带元素）。
+  - `perOrbAmount`（内建 6）：每球固定伤害基数。
+  - `attackBonusScale`（内建 1 = 100%）：产球者攻击的加成比例。
+  - `attackSource`：`Higher`（物攻/魔攻取较高者，元素球）/ `Physical`（物理球）/ `Magic`（魔法球）。
+  - `triggerEffects`：每球额外执行一次的效果引用（特殊球用）。
+- **特殊球**（Mod 注册）不能由回合结束统计产出，只能经角色 / 卡牌 / 效果（`GainOrb`）授予。
+- 校验：悬空 `triggerEffects` 引用、负的伤害基数 / 加成比例、纯效果球却没有触发效果、元素球却没有元素，一律拒绝；`GainOrb` 的 `orbTypeId` 必须存在。
+
+### 11.2 队列与触发（原 §2）
+
+- **全队共享**队列（FIFO，容量 7 = `OrbQueue.Capacity`），每个球记录**球类型 + 产球者**（产球时的玩家槽位；`<0` = 无产球者）。
+- **主动触发**：出牌阶段球数 ≥ 3（`OrbQueue.ManualTriggerThreshold`）时可触发，**可重复**（只要仍 ≥ 3）；走正式玩家命令 `TriggerOrbsCommand`（不占"已行动"、不消耗能量，因此不推动阶段推进）。
+- **被动触发**：球数达到容量上限时**获得即触发**，立即结算后继续原流程（回合结束产出导致满员 → 就在回合结束时结算）。
+- **触发结算**：一次清空队列全部球，按入队顺序（FIFO）**逐球**结算 —— 每个球执行一次自身类型的效果，源为**该球的产球者**。
+- 敌方无存活目标时**照常清空、不产生伤害**（避免满员后卡死队列）。
+
+### 11.3 单球伤害公式（原 §3）
+
+```
+单球伤害 = (perOrbAmount + attackBonusScale × 产球者攻击)
+          × (1 + 产球者全伤害增加 DamageDealtScale)
+          × (1 + 目标受伤倍率 DamageTakenScale)
+```
+
+- 产球者攻击按 `attackSource` 取物攻 / 魔攻 / 两者较高者（当前有效值，含 buff 与被动）。
+- **不吃目标物防 / 魔防，不吃连携**（充能球是团队触发，不属于任何单卡的连携区间）。
+- 伤害走统一的**伤害包管线**（`DamagePipeline`：`OnBeforeDamage` 可改数额、可完全抵消 → 写入 → `OnAfterDamage` 观测最终数额），
+  写入方式与其它伤害一致（敌方写目标 ASC、玩家槽位转共享账本、账本目标一次结算）。
+- 与 GAS 路径的差异说明：GAS `DamageExecution` 是 `Amount + 物攻 + Damage − 物防`；球伤害走定值通道
+  （`CombatEffectExecutor.ApplyFixedDamage`），只做规则与写入。自 2026-09-19 统一后，三条通道的
+  受伤倍率口径与规则管线完全一致（见本文 §1.3「伤害包管线」）。
+
+> **2026-09-21 合并**：原 充能球规格 §3 的旧口径（把 `DamageDealtScale` 与 `DamageTakenScale` 写成**互相乘算**的两个因子，即 `× (1 + 增伤) × (1 + 受伤倍率)`）已由本文 §1.3「增伤与受伤增加一律加算，只有连携是乘算」取代。现行口径：
+>
+> ```
+> 最终伤害 = base × (1 + Σ增伤 + Σ受到伤害增加) × (1 + 连携加成)
+> ```
+>
+> 即把上面公式里的两个 `(1 + …)` 因子**合并进同一个加算桶**：`单球伤害 = base × (1 + DamageDealtScale + DamageTakenScale)`（`OrbDamageScale` 球伤害增加同桶，可带元素掩码，见 §14.11.1）；充能球不吃连携，连携因子恒为 1。`base = perOrbAmount + attackBonusScale × 产球者攻击`，攻击取值、不吃物/魔防、伤害包管线三项不变。
+
+### 11.4 回合结束产出（原 §4）
+
+每个回合结束固定产出 **1 个四属性球 + 1 个物理/魔法球**：
+
+- 统计口径 = **本回合打出的卡牌**（含空放；卡牌结算入口登记，回合结束取走并清空）。
+  - 四属性球：按卡牌**自身 `element`** 计红/蓝/绿/黄出现次数，取最多者。chalux 被动2 的"注入红"**不**计入（统计只认卡面属性）。
+  - 物理/魔法球：按卡牌 `cardType`（`Physics` / `Magical`）计数，取最多者；其它类型（Support/Healing/Curse…）不计。
+  - 平局或本回合未打出任何卡牌：各在自己那一组里**随机**（走 `combat.orb` 独立随机流，同种子可复现）。
+- 产出顺序固定：先四属性球，后物理/魔法球。
+- **产球者**（回合结束产出的球）：
+  - 四属性球 = 全队 `max(物攻, 魔攻)` 最高者；
+  - 物理球 = 全队物攻最高者；魔法球 = 全队魔攻最高者；
+  - 按当前有效值判定，并列取**槽序最小**（确定性）。
+
+> **2026-09-21 合并**：普攻**不计入**本节的卡牌分布统计（普攻不是打出牌），见 §12.6；「回合结束」这一步在敌方阶段末执行，顺序在普通攻击之后（§12.2）。
+
+### 11.5 内容授予（`GainOrb`）（原 §5）
+
+- 新增效果种类 `EEffectKind.GainOrb` 与技能动作 `ESkillActionKind.GainOrb`，参数 `orbTypeId`（必填）+ `count`（可选，默认 1）。
+- **产球者 = 来源角色**（卡片授予时为打出者；非玩家槽位来源视为无产球者，触发时按"全队最高攻击者"解析）。
+- 2026-09-21 另有两条按条件发球的通道：`GainOrbPerPlayedCard`、`GainOrbByDeckCount`，见 §14.11.1 / §14.11.0。
+
+### 11.6 UI（原 §6）
+
+- 正式战斗界面尚未实装（后置项），因此球指示器暂挂 **Run 主界面右上角**（`RunMainWin` 的 `OrbPanel`）：标题 + 各球数量（按球类型的翻译名）+ 提示（满 7 自动 / ≥3 可手动）+ 触发按钮（球数不足时禁用）。
+- 触发按钮走正式命令管线；失败弹 Toast。
+- 调试面板：`GrantOrb`（指定球类型 / 数量 / 产球者槽位）、`TriggerOrbs`，`InspectBattle` 输出 `充能球 n/7（各类型数量；可否主动触发）`。
+- 球无美术图标（用文字与主题配色），等美术替换。
+
+### 11.7 chalux 四张专属卡（原 §7）
+
+「专属」= `isExclusive: true`（DTO 无 `ownerCharacterId`，归属经角色初始卡组体现）；四张均为蓝属性、Epic、无升级链（不设 `cardGroupId`）、`artPath` 留空等美术。
+
+| 卡 | 费用 | 类型 | 效果 | 属性贡献 | 优先级 |
+|---|---|---|---|---|---|
+| 逆戟冰冲 `chalux_orca_ice_rush` | 3 | Physics | 敌方单体蓝属性 12 点物理伤害 | +20 最大生命 / 物攻 +2 | 4 |
+| 璨华长路 `chalux_resplendent_path` | 4 | Physics | 敌方**全体** 12 点物理伤害 + 自身【2 回合 / 物攻 +6】 | +40 最大生命 | 9 |
+| 才煌的绝剑 `chalux_brilliant_sword` | 2 | Support | 自身【2 回合 / 物攻 +9】+ 获得 2 个蓝属性球 | +30 最大生命 / 物攻 +1 | 44 |
+| 绝念 `chalux_absolute_resolve` | 2 | Support | 2 号手牌槽【5 回合 / 充能 II】，载荷【3 回合 / 物攻 +6】 | +20 最大生命 / 物攻 +2 | 50 |
+
+- **卡组属性预算（2026-09-21 统一）**：一张卡的 `stats.attributes` 折算总值 = **40 最大生命**，其中 **1 点物理攻击折算 10 点最大生命**。对齐方式固定为**保留最大生命、削减物攻**（逆戟冰冲 20 + 2×10 = 40；才煌的绝剑 30 + 1×10 = 40），不要反过来削生命去换物攻。
+
+- 「12 点物理伤害」沿用现有约定：`Amount: 12` 走 `DamageExecution`（实战 = 12 + 100% 施法者物攻 − 目标物防），与充能载荷同构。
+- Support 类型不吃连携加成，但**计入**人头统计（连携规格 §3：统计所有卡，加成只作用于物/魔/治疗卡）→ 见本文 §13.3 / §14.4。
+- 卡4 的充能载荷复用 `chalux_active_frost`（超限增幅：物攻 +6 / 3 回合）；「2 号手牌槽」= `slotIndex: 1`（与主动技「3 号槽 = 索引 2」同口径）。
+- 增益投放靠 `ApplyBuff` 的 `hookTargets` / `targetFilter` 目标选择器（**新增能力**）：同一个技能里"打敌方全体 + 增益自身"因此无需额外机制。
+- 四张卡已加入 `characters/chalux.json` 的 `cards`；占位卡 `strike` / `strike_plus` 已于 2026-09-21 删除，chalux 卡组即这四张专属卡。
+
+> **2026-09-21 合并（两处口径提示）**：
+> ① 本节表格里的「Epic」是当时的稀有度档名，2026-09-21 起已更名为 **`Exclusive`**（原扩展规格 §12.1，归「内容与数据规格」）；内容现状以 `Exclusive` 为准。
+> ② 「卡组属性预算」这条的同批权威表述（含莱因哈特四张卡）在「内容与数据规格」侧（原扩展规格 §9）；本文按 充能球规格 §7 原样保留，**数值预算单由内容规格维护**，本文只引用其结论。
+
+#### 11.7.1 卡牌目标解析的两条既有约束（内容侧须知）（原 §7 子节）
+
+1. **卡牌技能一律使用卡牌级目标**：`skill.targetOverride` 只对主动技 / 开战注入生效，对卡牌技能无效。
+2. `targetSide: Self` 的卡标记入队时必须带上自身目标（`targets: [self]`）；`targetScope: All` 的卡按"全体"语义需要带上全部合法敌人。正式战斗 UI 必须自动填充这两类默认目标，否则会退化成空放。
+
+### 11.8 明确后置项（原 §8）
+
+- 正式战斗界面（球的图标化展示与触发交互从 Run 主界面迁入）。
+- 球的正式美术（图标 / 特效 / 数字动画）。
+- 特殊球的正式内容（当前只有内建 6 种；注册通道已就绪）。
+- 球与"元素师"角色定位的联动（`ERole.Elementist` 目前只是角色枚举注释）。
+
+---
+
+## 12. 普通攻击（Normal Attack）系统（原 普通攻击规格 §1–§10）
+
+> **原规格**：`2026-09-20-normal-attack-design.md`（**日期** 2026-09-20；**状态** 已实装）→ 归档于 `Doc/archive/superpowers/specs/2026-09-20-normal-attack-design.md`。
+> **原关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md) 与本文（阶段机 §2.1 的卡牌执行阶段末尾）；伤害维度与充能球（见本文 §11）共用同一套标注。
+> **段号对应**：§12.1–§12.10 依次等于原规格 §1–§10；其中 §12.9 是 2026-09-21 的扩展入口，扩展正文见 §14.6。
+
+### 12.1 机制概述（原 §1）
+
+每个回合**所有卡牌结算完成后**，自动执行一次**普通攻击**：由轮转到的槽位角色出手，打**敌方全体**。
+
+不存在"回合没出牌就不普攻"的例外——只要进入卡牌执行阶段，本回合的普攻机会就一定会被消费（哪怕这一回合没有出牌）。
+
+### 12.2 触发时点与顺序（原 §2）
+
+插入点在 `ExecuteCardExecutionPhase` 的卡牌循环之后、`CheckEndConditions` 之前：
+
+```
+卡牌逐张结算（含空放）→ 全部弃牌 → 连携加成清零
+  → 普通攻击          ← 本机制
+  → 检查胜负 → 敌方阶段
+```
+
+- 因此**普攻先于敌人行动**：普攻打死最后一名敌人时，本回合敌人不再行动（胜利判定紧随其后）。
+- 与敌方阶段末的「充能球回合产出」「buff 时长 tick」互不影响（顺序在后面，见 §11.4 / §13.1.3）。
+
+### 12.3 归属槽位（轮转）（原 §3）
+
+```
+槽位索引 = (TurnNumber - 1) % 队伍人数
+```
+
+- 回合计数用**全场累计** `CombatSimulation.TurnNumber`（**不随换波清零**）：第 1 回合 → 槽位 1，第 2 回合 → 槽位 2，…，第 5 回合 → 回到槽位 1。
+  （注：`TurnNumber` 从 1 起算，此处「槽位 1」即槽位索引 0。）
+- 取模基数是**队伍实际人数**（当前恒为 4，但非满编战斗也不会越界；开战校验仍要求满编）。
+- 纯函数口径见 `NormalAttackRuntime.ResolveSlotIndex(turnNumber, characterCount)`，便于测试与调试面板显示"本回合归哪个槽位"。
+
+### 12.4 类型与数值（原 §4）
+
+- **类型**：比较该角色的 `PhysicalAttack` 与 `MagicAttack`，较高者决定 `Kind`（`Physical` / `Magical`）；**平手取物理**（保证确定性）。
+- **数值**：`max(0, 攻击力 × CombatConstants.NormalAttackScale − 目标对应防御)` —— 物理减 `PhysicalDefense`、魔法减 `MagicDefense`。
+  - `NormalAttackScale` 当前为 `1.0`（= 100% 攻击力）；调到 0 可临时关掉普攻的伤害（仍会消费本回合机会）。
+  - 这是 `MagicDefense` 的**第一个消费方**（此前该属性只有定义与映射、没有任何公式读取）。
+- **元素**：带出攻击者的**全部**元素标志位（多元素角色全部生效），落在伤害包的 `Element` 维度；当前无克制/抗性消费方。
+- **目标**：敌方全体，按敌人索引升序，每名敌人一个伤害包（已阵亡的跳过）；无存活目标时照常"执行"但不产生伤害。
+
+### 12.5 放大与减免（原 §5）
+
+| 项 | 是否生效 |
+|---|---|
+| 攻击者 `DamageDealtScale`（全伤害增加） | ✅ |
+| 目标 `DamageTakenScale`（受伤倍率） | ✅（逐目标计算） |
+| 减伤规则 `ICombatRule.OnBeforeDamage`（可改数额/完全抵消） | ✅（走统一伤害包管线） |
+| `OnAfterDamage` 广播 | ✅（数额 > 0 时） |
+| 连携（连携只作用于"伤害/治疗**卡**"） | ❌ |
+
+伤害走 `CombatEffectExecutor.ApplyFixedDamage`（定值通道，与充能球同一条）：先由普攻运行时算好含源侧与目标侧倍率的数额，再交给管线做规则分发与写入。
+
+> **2026-09-21 合并**：表中两项增伤 / 受伤倍率与 `DamageDealtScale` / `DamageTakenScale` **同桶加算**（本文 §1.3）；另有只作用于普攻的专项倍率 `NormalAttackDamageDealtScale` / `NormalAttackDamageTakenScale`，见 §14.6.3。
+
+### 12.6 与"打出牌"机制完全解耦（原 §6）
+
+普攻**不是**打出牌，因此：
+
+- 不触发槽位 buff：不消耗 `slot.charge` 充能、不触发 `slot.damage` 槽位伤害、不触发 `onSlotCardPlayed` 钩子；
+- 不计入**连携**人头统计（连携统计只看卡牌队列）；
+- 不计入回合结束**充能球产出**的卡牌分布统计（元素/卡牌类型统计）；
+- 不消耗能量、不占"已行动"、不可取消、不进入卡牌队列；
+- 被**封印**的角色仍会普攻（封印只限制出牌/主动技）。
+
+### 12.7 可复现性（原 §7）
+
+无随机、无浮动：槽位由回合数决定，目标按索引升序，数值只依赖当前属性快照。同种子同输入必然得到同一结果。
+
+### 12.8 可观测与调试（原 §8）
+
+- 战斗层刻意不打日志（保持纯逻辑层无输出），改为在仿真上暴露状态：`simulation.NormalAttacks.LastResult`（槽位 / 角色定义 id / 类型 / 元素 / 命中数 / 总伤害）与 `ExecutionCount`。
+- Run 调试面板的「战斗检查」（`RunDebugService.InspectBattle`）输出：`普通攻击：本回合归槽位 N（累计 K 次）；上次 槽位/角色/类型/元素/命中/总伤`。
+- 正式战斗 UI（伤害飘字、回合结算摘要）仍属后置项。
+- 2026-09-21 扩展后的结果结构（含追打与多轮明细）见 §14.6.4。
+
+### 12.9 2026-09-21 扩展（莱因哈特套件）（原 §9）
+
+本文描述的是"每回合一次、归属槽位出手"的基础口径；以下三项在同一运行时的扩展见
+本文 §14.6（原为扩展规格 §6）：
+
+- **普攻次数**（`NormalAttackCount`）：执行 `1 + 该属性` 轮，每轮都是"归属者 + 追打者"。
+- **追打**（`trait.follow_up`）：非归属角色以 `percent%` 攻击力参与，多个取最高，归属者不重复出手。
+- **普攻专属倍率**（`NormalAttackDamageDealtScale` / `NormalAttackDamageTakenScale`）：只作用于普攻，卡牌伤害不吃。
+
+### 12.10 明确后置项（原 §10）
+
+- **内容侧可配**：角色级普攻覆盖（替换技能、不同系数/元素、附带效果、多段）——本轮只有全局常量 + 上述属性/buff 通道。
+- **成长与平衡**：是否随潜能/环数成长、是否设多目标衰减、暴击/伤害浮动等。
+- ~~**GAS 通道的类型标注**~~：已于 2026-09-21 落地（`damageType`/`element`/`attackScale`，见本文 §14.5 / §14.5.1）。
+- **元素克制/抗性**：`Element` 维度已就位但无消费方（2026-09-21：已贯通到 GAS 通道，仍无消费方，见 §14.13）。
+
+---
+
+## 13. Buff 运行时 · 槽位效果 · 连携 · 首个使用者（原 buff 运行时规格 §1 / §2 / §3 / §5 / §6 / §7）
+
+> **原规格**：`2026-09-19-buff-potential-chain-system-design.md`（**日期** 2026-09-19；**状态** 已实装，chalux 角色为首个使用者）→ 归档于 `Doc/archive/superpowers/specs/2026-09-19-buff-potential-chain-system-design.md`。
+> **原关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md) 与本文；**潜能一节替代总规格 §4.5.2–4.5.3 的旧模型**。
+> **段号对应**：§13.1 / §13.2 / §13.3 / §13.5 / §13.6 / §13.7 依次等于原规格 §1 / §2 / §3 / §5 / §6 / §7。**原规格 §4（团体潜能）不并入本文**——团队池、`PotentialService` 消费返还、联机表决、Run 存档 v1→v2 归 Run / 潜能规格；因此本文 §13.4 是**空号**（保留空号是为了让「§13.5 = 原 §5」这类对应关系不串位）。
+
+### 13.1 BuffInstance 运行时（原 Buff 系统死代码的实装）（原 §1）
+
+原 `BuffDto`/`buffRefs` 只做内容校验、不参与战斗（`CombatEffectExecutor` 对 ApplyBuff/RemoveBuff no-op）；`HandSlotEffectRef` 为占位。本设计把 buff 实装为**被动/增益/减益/槽位效果的唯一载体**。
+
+#### 13.1.1 数据（BuffDto 扩展）（原 §1.1）
+
+- `modifiers`: 属性修正列表（镜像 GE modifier：attributeId / op(Add|Multiply|Divide|Override) / magnitude(Scalar|SetByCaller)），幅度 × 层数。
+- `condition`: 持有者条件 `{elementAny, raceAny, matchAll}`。列表内"或"、跨列表默认"或"、`matchAll: true` 取"且"。
+- `applyScope`: `Self`（默认）/ `AllAllies`（团队型被动挂到每个队友）。
+- 钩子节点：`onApply / onTurnStart / onTurnEnd / onStackChanged / onRemove / onWaveStart / onActiveSkillCast / onSlotCardPlayed`。
+- `onTurnStart` 效果参数支持 `turnInterval: N`：按**波内回合计数**每 N 回合触发一次。
+- 钩子效果目标解析：`hookTargets`（self 缺省 / randomEnemy / allEnemies）与 `targetFilter`（self / elementAny / raceAny 筛选玩家角色），按**单个效果引用**的合并参数（效果参数 + 实例挂载参数）解析。
+
+> **2026-09-21 合并**：钩子节点表在后批扩展里新增了 `onCardSettled` / `onCardExecutionEnd` / `onOrbTriggered`，并给钩子效果加了 `oncePerTurn` 参数；见 §14.11.1。
+
+#### 13.1.2 tag 约定（取代独立字段）（原 §1.2）
+
+`BuiltinBuffTags`：`buff.passive` / `buff.active` / `buff.leader`（预留队长技与"被动无效/沉默"类 debuff 按类别筛选）、`buff.undispellable`（不可驱散）、`slot.damage`（槽位伤害）、`slot.charge`（充能）、`trait.immune_slot_damage`、`trait.chain_inject_red`。
+旧布尔 `dispellable: false` 在读取层归一为 undispellable tag（外部 mod 内容兼容）。**驱散规则**：任何清除效果只移除无 `buff.undispellable` tag 的 buff。
+
+> **2026-09-21 合并**：后续新增的约定 tag：`trait.immune_seal`（§14.8.3）、`slot.free_cost`（§14.8.2）、`trait.immune_poison`（§14.11.1）；`BuiltinBuffTags` 内的 `slot` / `trait` 族语义沿用本节。
+
+#### 13.1.3 运行时（原 §1.3）
+
+- 挂点三类容器：角色（含 ASC）、敌人（含 ASC）、手牌槽位（无 ASC，只承载钩子与 tag）。
+- 修正经 `Aggregator.SetModifiersForHandle` 走与 GameplayEffect **同一条聚合管线**（Override 优先 → (base+ΣAdd)×ΠMul）。
+- **条件休眠**：条件不满足 → 撤销句柄、不参与聚合、不触发钩子、UI 不显示；**不移除**。每回合开始重估，持有者属性/种族变化下一回合自动切换。休眠/移除后必须 `RecalculateAll`。
+- **时长**：`durationType: Turns` 由 BuffRuntime 在回合结束统一 tick（先 onTurnEnd → 递减 → 到期 onRemove → 移除），覆盖角色/敌人/槽位全部容器（角色/敌方 ASC 回合钩子的历史缺口由本层接管）。
+- **快照语义**（2026-09-19 评审修正）：钩子分发一律在容器**快照**上枚举——钩子可能对自己的容器挂/删 buff，活列表枚举中修改会抛异常。回合结束以触发前快照为本回合基准（钩子期间新增的 buff 本回合不 tick）；到期补发只对**仍持有**的实例触发 onRemove（先被驱散的不双触发）。
+- 叠层：Add（至 MaxStacks）/ Refresh（重置时长）/ Replace（移除重建）；互斥组 exclusiveGroup 先删后挂。
+- 开战被动：`RunController.StartBattle` 按各角色**已解锁被动**（槽序 + 潜能档低→高）构造 `BattleStartBuffEntry`，在 BattleStart 管线中于技能注入之后、冻结 SharedHp 之前挂载。
+- **敌人开战 buff（2026-09-20 接线）**：`EnemyDto.buffRefs` 声明的 buff 在 `RunBattleStart` 中（冻结 SharedHp 之后、`onWaveStart` 之前）逐敌挂到其自身，与玩家侧开战注入对称。此前该字段只做内容引用校验、从不生效。首个使用者是训练沙包「木桩」（`enemies/training_dummy.json` + `battles/training_dummy.json`：单波两个木桩、10000 血、每回合开始恢复 10000，无行动意图）。
+  > 注：角色侧 `CharacterDto.buffRefs`（如 `kemo_talent`）仍是仅校验的旧通道，未接线（角色被动已统一走 `passives`）。
+  >
+  > **2026-09-21 合并**：角色侧 `CharacterDto.buffRefs`（常驻天赋）已于 2026-09-21 **整条移除**（原扩展规格 §3，归「内容与数据规格」）；**敌人侧 `EnemyDto.buffRefs` 保留**，与角色被动分属两条路径（见 §14.13）。
+
+### 13.2 槽位效果（伤害 / 充能）（原 §2）
+
+- **槽位伤害**（`slot.damage` tag）：该槽打出卡牌时（`SettleQueuedCard` 结算前触发，含空放），对打出者造成参数伤害（玩家槽位 → 共享血量账本）。打出者持有 `trait.immune_slot_damage` 时跳过（chalux 被动1）。
+- **充能**（`slot.charge` tag）：实例参数 `charge`（罗马序号计数，充能 I = 1）。该槽每打出一张牌计数递减，归零触发 `onSlotCardPlayed` 载荷并**重置计数**（持续期内可反复触发）；到期移除前不因触发消失。chalux 专属卡「绝念」用同一机制投放**充能 II**（`charge: 2`，见本文 §11.7）。
+- **充能互斥（2026-09-21 决议）**：同一手牌槽**只允许存在 1 个充能**。新的充能**无条件覆盖**旧的，并**重置进度**：
+  - 覆盖无视 id 与 `stackRule`——即使新旧完全同 id、即使写下的是 `Refresh`/`Add`，也是"移除旧的 + 新建实例"，不会叠层、不会保留已积累的计数；
+  - 覆盖时对旧实例补发 `onRemove`（与驱散/到期路径同口径）；
+  - 实现位置 `BuffRuntime.StackOrAdd` 的最前置分支（`RemoveExistingCharges`），因此槽位与角色容器的充能投放走同一规则。
+  - 语义理由：充能是"这一槽当前在读哪个序列"的唯一状态，允许并存会让"归零触发"的判定与玩家预期脱节。
+- 载荷示例：`{kind: Damage, params: {amount: 12, damageGameplayEffectId: ..., hookTargets: "randomEnemy"}}`；DamageExecution 本就加 100% 源物攻，因此"12+100%物攻"即 `amount: 12`，元素（蓝）仅为 damageType 标签，不参与数值。
+- **槽位 buff 的投放通道（2026-09-21 新增）**：技能动作 `AttachSlotBuff` 新增 `params.slotSelection`（`randomNonEmpty` / `all`），并让 `EEffectKind.AttachSlotBuff` 也能从 **buff 钩子**挂槽位 buff；`slot.free_cost` 见 §14.8.2。
+
+### 13.3 连携（乖离性 MA 式，批量定档）（原 §3）
+
+- 出牌是"标记 → CardExecution 统一结算"批处理：**结算阶段开始**按完整出牌队列一次性统计各属性的**不同角色数**（同一角色多张只计 1 人），档位作用于**本回合全部**该属性伤害/治疗卡——无次序、无首角色惩罚、无回溯。**统计侧与加成侧口径不同（2026-09-21 修正）**：统计侧统计队列里的**所有**卡——Support / Curse 等非输出卡同样把打出它们的角色计入人头；加成侧只作用于连携适用的卡牌类型（Physics/Magical/Healing），即非输出卡堆人头但不吃加成。
+- 档位：**2 人 +25% / 3 人 +50% / 4 人 +100%**（1 人无增益；数值由 `ChainCalculator.TwoChainScale / ThreeChainScale / FourChainScale` 三个常量控制，2026-09-20 调档后写死在这三处，改档只改常量）。加成仅对卡牌类型 Physics/Magical/Healing 生效；多属性卡取各属性最高档。
+- 加成注入：结算单卡时设 `simulation.CurrentChainBonus`（try/finally 归零，卡牌上下文之外恒 0）；GAS 路径经 SetByCaller `ChainBonusScale`，直伤/治疗路径直接缩放。
+- **加算规则（2026-09-21 修订）**：`伤害 = base × (1 + Σ增伤 + Σ受到伤害增加) × (1 + 连携)`——**增伤与受伤增加一律加算，只有连携乘算**（权威表述见本文 §1.3）。**三条伤害通道（GAS 公式 / 直伤定值 / 充能球）共用同一套缩放与伤害包管线**（2026-09-19 统一），通道差异只在 `base` 怎么算。治疗 = `(amount + 源 HealPower) × (1 + 连携)`，不受增伤影响。`MagicAttack` / `MagicDefense` 的消费公式已于 2026-09-21 落地（GAS 通道 `damageType: "Magical"` → `魔攻 − 魔防`，见 §14.5）。
+- 注入红（chalux 被动2）：持有 `trait.chain_inject_red` 的角色打出的卡在统计上额外计入红属性（双属性卡 = 各属性 + 红各自计入）。
+
+> **2026-09-21 合并**：统计侧口径的逐字权威表述与理由见 §14.4（原扩展规格 §4 的修正）；本节原文与之一致，两者不冲突。
+
+### 13.4 （空号：团体潜能，不并入本文）
+
+原 buff 运行时规格 §4「团体潜能（替代总规格 §4.5.2–4.5.3）」**不在本文范围**，其正文（`TeamPotentialPool`、槽位账本 `PotentialDirectCredit` / `PotentialSpent`、`CharacterDto.passives[{buffId, requiredPotential}]`、`PotentialService` 消费与返还、联机 `multiplayer.potential.*` 表决、Run 存档 schema v1→v2）归 **Run / 潜能规格**。此处保留空号，使 `§13.5/§13.6/§13.7 = 原 §5/§6/§7` 的对应关系成立。
+
+### 13.5 新触发点（原 §5）
+
+| 节点 | 触发时机 | 接线位置 |
+|---|---|---|
+| onWaveStart | 每个波次（阶层）开始；第一波在 RunBattleStart 补发 | `AdvanceToNextWave` / `RunBattleStart` |
+| onTurnStart(+turnInterval) | 回合开始，波内每 N 回合 | `FireTurnStartHooks` 三处伴随调用 |
+| onActiveSkillCast | 持有者释放主动技载荷执行后 | `ApplyCastActiveSkill` |
+| onSlotCardPlayed | 该槽打出卡牌（结算前） | `SettleQueuedCard` 前置钩子 |
+| 回合结束 tick | 全容器时长递减与到期 | `ExecuteEnemyPhase` DispatchTurnEnd 后 |
+
+波内回合计数 `TurnsIntoWave`：换波清零、每回合递增；`TurnNumber` 保持全场累计。
+
+> **2026-09-21 合并**：本轮另新增三个节点 `onCardSettled` / `onCardExecutionEnd` / `onOrbTriggered`，以及钩子参数 `oncePerTurn`；完整表见 §14.11.1。
+
+### 13.6 首个使用者：chalux（原 §6）
+
+`characters/chalux.json`：蓝 / Warrior / Animal + Dragon（2026-09-21 种族收敛后为动物·龙族双种族），能量 8/3（角色定义级能量保底加算在卡组贡献之上），主动技蓄力链单档 [超限极寒 ×8]，卡组为四张专属卡（占位 strike / strike_plus 已于 2026-09-21 删除）。六条潜能被动（0/10/30/50/70/99）全部为 buff：
+
+| 被动 | 实现 |
+|---|---|
+| P1 寒躯 | trait.immune_slot_damage tag |
+| P2 寒火同源 | trait.chain_inject_red tag |
+| P3 凛冬节拍 | onWaveStart + onTurnStart(turnInterval:8)：BoostSkillCounter 自身+3 / 蓝+1 / 动物+1 / 龙族+1（走 GainResource resource:skillcounter，叠加计算，超阈值丢弃由 GainSkillCounter 的 Cap 语义保证） |
+| P4 极地血脉 | AllAllies + 条件(蓝或动物或龙族)：物攻/魔攻/治疗 +6 |
+| P5 永冻威压 | AllAllies + 条件(蓝或动物或龙族)：DamageDealtScale +0.25 |
+| P6 零度领域 | onActiveSkillCast：敌方全体 PDef/MDef Override 0 持续 1 回合 + 自身 +3 可用能量 |
+
+主动技超限极寒：自身物攻 +6（3 回合）+ 3 号槽（索引 2）附加充能 I（3 回合，载荷 12+100%物攻蓝伤随机 1 敌）。
+
+> **展示命名约定（2026-09-19）**：被动没有独立技能名，UI（角色详情被动列表）一律按序号显示「被动技能1~N」（`UI_CHARACTER_PASSIVE_NAME` 格式键），描述仍取各 buff 的 `descId`；被动 buff 的 JSON 不再声明 `displayNameId`（主动技增益类 buff 不受影响）。本节表格中的 P1 寒躯 / P2 寒火同源等仅是设计期代号。
+>
+> **2026-09-21 合并**：该「被动技能1~N」序号命名约定已被**撤销**（原扩展规格 §11.3，归 UI 专文）：角色详情界面被动列表只显示**潜能门槛 + 描述**，不再拼 `UI_CHARACTER_PASSIVE_NAME`，被动载荷 buff 也不再声明 `displayNameId`。原文保留以存历史。
+
+> **专属卡（2026-09-19）**：chalux 另有四张蓝属性 Epic 专属卡（逆戟冰冲 / 璨华长路 / 才煌的绝剑 / 绝念），已加入其初始卡组；其中「才煌的绝剑」授予充能球、「绝念」投放槽位充能 II。详见本文 §11.7。
+
+### 13.7 明确后置项（原 §7）
+
+- 联机表决网络同步（`IPotentialProposalApprover` 联机实现）
+- 正式战斗界面（槽位 buff / 连携的玩家侧 UI；当前可视化在 RunDebugDlg"战斗检查"）
+- chalux 正式卡组（2026-09-21 已落地四张专属卡；占位 strike/strike_plus 已删除）
+- **潜能消费玩家 UI**：解锁/返还目前只有 RunDebugDlg 调试面板可达，正式的潜能消费界面未实装
+- **重复角色正式奖励管线**：+20 转化已接 `RunController.AddToCharacterPool`，但角色获取（战斗奖励/商店/事件）发放重复角色时的调用方接线未实装
+- **魔攻 / 魔防数值通道**：`MagicAttack` / `MagicDefense` 属性已定义但没有任何战斗公式消费（魔法伤害公式后置；治疗已改为吃 `HealPower`，见 §13.3）
+  > **2026-09-21 合并**：本条后置项**已清账**——`MagicAttack` / `MagicDefense` 现由 GAS 通道 `damageType: "Magical"` → `魔攻 − 魔防` 消费，普通攻击也用两者取较高者决定 `Kind`（见 §14.5 / §12.4）；旧表述「没有任何战斗公式消费」不再成立。
+
+---
+
+## 14. 战斗机制扩展（莱因哈特 / 巴赫套件）（原扩展规格 §1 / §4–§8 / §10 / §11 / §13）
+
+> **原规格**：`2026-09-21-reinhardt-and-normal-attack-extensions.md`（**日期** 2026-09-21；**状态** 已实装）→ 归档于 `Doc/archive/superpowers/specs/2026-09-21-reinhardt-and-normal-attack-extensions.md`。
+> **原关系**：服从 [总规格](2026-05-11-kemo-card-design.md) 与本文；原规格扩充普通攻击（次数 / 追打 / 专项倍率，见本文 §12 / §14.6）与 Buff/潜能/连携（统计口径、条件域、取值方式，见本文 §13 / §14.4 / §14.7 / §14.8），并落地本文 §7 遗留的「魔法伤害」后置项（见 §14.5）。
+> **段号对应**：本节子节第二段号 = 原规格段号（§14.5 ↔ 原 §5、§14.6.2 ↔ 原 §6.2、§14.11.2 ↔ 原 §11.2 …）。
+> **未并入**（归「内容与数据规格」/ UI 专文，本节只留空号）：原 §2 种族收敛、§3 常驻天赋移除、§9 卡组属性预算、§11.3 被动不需要名字、§12.1 稀有度档名、§12.2 角色简介移除。因此 §14.2 / §14.3 / §14.9 / §14.11.3 / §14.12 为**空号**（保留空号以维持段号对应）。
+
+### 14.1 本次交付总览（仅战斗机制相关行）（原 §1）
+
+| 主题 | 结论 |
+|---|---|
+| 连携统计 | 统计侧统计**所有**卡；加成侧仍只作用于物理/魔法/治疗卡 |
+| 魔法伤害 | `damageType: "Magical"` → `魔攻 − 魔防`（战斗规格后置项清账） |
+| 普攻扩展 | 普攻次数、追打、普攻专属增伤/受伤倍率 |
+| 伤害执行 | 新增 `attackScale`（源攻击力系数） |
+| 条件域 | Combat 域启用，新增 `CardPlayedThisTurn`；效果 `conditions` 正式求值 |
+| 取值方式 | 新增 `PartyCountScaled`（按队伍匹配人数缩放） |
+| 槽位机制 | 新增"随机手牌槽费用归零"；封印免疫特征 |
+
+> 原表另有 3 行属非战斗项，已按合并分工剔除：**种族收敛**（§2）、**常驻天赋移除**（§3）、**新角色**（莱因哈特，§10 内容侧）——前两项归「内容与数据规格」，新角色卡面数据见 §14.10 与本规格外的内容规格。
+
+### 14.2 （空号：种族收敛）
+
+原扩展规格 §2「种族收敛（2026-09-21）」（`ERace` 位标志重排、Canine/Feline/… → `Animal`、Demonic/Devil → `Demon`、新增 Academic/Fantasy/Astronomy/Hero/Calamity、`UnKnown` → `Unknown`、本地化键随枚举走、`RunTeamEditDlg` 元素/种族显示改本地化键）不属战斗机制，归「内容与数据规格」。本条只影响战斗侧的一处语义：buff `condition.raceAny` / `targetFilter` / `PartyCountScaled` 的 `countRaceAny` 按**重排后的** `ERace` 位标志匹配（如 chalux = 动物·龙族，见 §13.6）。
+
+### 14.3 （空号：常驻天赋移除）
+
+原扩展规格 §3「常驻天赋移除」（删除 `CharacterDto.buffRefs` 字段 / 校验器接线 / 文档；角色唯一常驻增益通道 = `passives`）归「内容与数据规格」。战斗侧结论保留在本节，因为它改变开战挂载路径：**角色侧只走 `passives` → 开战挂 buff**（§13.1.3），**敌人侧 `EnemyDto.buffRefs` 保留**（木桩"每回合回血"靠它，与角色被动是两件事）。
+
+### 14.4 连携统计口径修正（原 §4）
+
+- **统计侧**：`ChainCalculator.CountDistinctCharacters` 统计出牌队列里的**所有**卡——Support / Curse 等非输出卡同样把打出它们的角色计入人头。理由：否则队友一张增益卡"白出"，档位无法反映这一回合有多少人参与了该属性。
+- **加成侧**：`AppliesToCard`（Physics / Magical / Healing）不变，只影响 `BonusForCard`。
+- 档位不变：2 人 +25% / 3 人 +50% / 4 人 +100%。
+
+### 14.5 魔法伤害落地（原 §5）
+
+本文 §7 的后置项（`ExecutionDefDto.damageType` 未被读取）在本轮清账：
+
+- `Src/frame/content/definitions/DamageTypeSpec.cs`（新增）：把 `damageType` + `element` 解析成伤害包的两维 `(EDamageKind, EElement)`。
+  - `damageType`：`Physical`（缺省）/ `Magical` / `Elemental`，大小写不敏感；**兼容旧写法**——直接写属性名（如 `"Blue"`）等价于"物理 + 该属性"。
+  - `element`：`None` / `Red` / `Blue` / `Green` / `Yellow`，多属性用 `,` 或 `|` 分隔。
+- `DamageExecution`：`Physical` → `物攻 − 物防`；`Magical` → `魔攻 − 魔防`；`Elemental` → 不吃攻防（只 `Amount + 源 Damage`）。
+- `GameplayEffectApplicator` 把维度随 `SharedHpSettlement` 传进伤害包管线——规则侧（分槽护盾、抗性）不再一律看到"物理 + 无属性"。
+- 内容准入：无法解析的 `damageType` / `element` 直接判非法，不会静默退化成物理伤害。
+- 出货内容迁移：`blue_damage` / `chalux_charge_damage` 改为显式 `{"damageType":"Physical","element":"Blue"}`（行为不变）。
+
+#### 14.5.1 `attackScale`（源攻击力系数）（原 §5.1）
+
+`ExecutionDefDto.attackScale`（缺省 `1.0` = 100% 攻击力）只缩放攻击力项，不影响 `Amount` 与源 `Damage` 属性。
+「辉耀宝刀」的 `3 + 25% 物攻` 即 `Amount: 3` + `attackScale: 0.25`。
+
+> **2026-09-21 合并**：`attackScale` 另有动态来源——技能动作参数 `attackScaleFromOrbs` 经 SetByCaller `AttackScale` 覆盖静态值，见 §14.11.1。
+
+### 14.6 普通攻击扩展（原 §6）
+
+在普通攻击（本文 §12）之上新增三项，全部**只作用于普通攻击**：
+
+#### 14.6.1 普攻次数（`NormalAttackCount`）（原 §6.1）
+
+- 本回合普攻执行次数 = `1 + max(0, NormalAttackCount)`；该属性默认 0，buff 用 `Add` 叠加（不同 buff 的加成天然可加）。
+- 每次执行都是完整的"归属者 + 追打者"，目标重新按存活敌人取（上一轮打死的不会重复吃伤害）。
+
+#### 14.6.2 追打（`trait.follow_up`）（原 §6.2）
+
+- 持有者**不是**本回合普攻归属角色时，仍以 `params.percent`%（缺省 100）的攻击力参与该次普攻。
+- 数值口径：`max(0, 攻击力 × percent × NormalAttackScale − 目标对应防御)`；带攻击者元素、走同一伤害包管线、不吃连携。
+- **多个追打只取最高值**（同名 buff 在容器里是同一实例，因此"多个"指不同 buff 定义——出货内容用 `follow_up_1/_2/_4` 三个 id 表达不同时长）。
+- 归属者自己持追打**不重复出手**。
+- 每个角色每次普攻都重新判定，因此普攻次数 +1 时追打者每轮都会补打。
+
+#### 14.6.3 普攻专属倍率（原 §6.3）
+
+| 属性 | 作用 | 位置 |
+|---|---|---|
+| `NormalAttackDamageDealtScale` | 攻击者：普攻伤害 `× (1 + 本属性)`，与 `DamageDealtScale` 同桶加算 | 攻击侧 |
+| `NormalAttackDamageTakenScale` | 目标：被普攻时 `× (1 + 本属性)`，与 `DamageTakenScale` 同桶加算 | 受击侧 |
+
+卡牌伤害两者都不吃——这正是"受到的普通攻击伤害 +25%"与"自身普攻伤害 +50%"必须与全伤害增加区分的原因。
+
+#### 14.6.4 可观测（原 §6.4）
+
+`NormalAttackResult` 扩展为：`Strikes`（逐次明细，含是否归属打击与百分比）、`Executions`（归属轮数）、`ParticipantCount`、`FollowUpDamage`；`TotalDamage` 升级为**本回合普攻总输出**（含追打与多轮）。原字段 `SlotIndex` / `Kind` / `Element` / `TargetCount` 保持"归属者第一次打击"口径。
+
+### 14.7 Combat 条件域启用（原 §7）
+
+`ICombatCondContext` 从空占位变为可用上下文（`TurnNumber` / `TurnsIntoWave` / `SourceCharacterIndex` / `CountCardsPlayedThisTurn`），由 `CombatCondContext` 在求值时构造。
+
+- 新增 CondType **`CardPlayedThisTurn`**：参数 `{ count, elementAny? }`，判定"本回合该角色打出过 N 张命中指定属性的卡"（含空放，读 `CombatSimulation.PlayedThisTurn`）。
+- `EffectDto.conditions` 正式求值（AND，未知类型 / 参数非法 = 不通过）；内容准入阶段用同一套 parser 提前报错。
+- 接口刻意只暴露基础类型（属性位标志用 `int`），避免 `Frame.Condition` 反向依赖 `Frame.Content`。
+
+> **2026-09-21 合并**：本节即 `Doc/AGENT.md` §4 权威规格链里按「角色套件扩展 §7」引用的那一节，现指向本文 §14.7；条件引擎本体见 [UI 与运行时规格](./2026-05-15-ui-manager-design.md) 的「条件判断系统」节（原 condition-system 规格已归档，正文并入该文 §16）。
+
+### 14.8 新增取值与槽位机制（原 §8）
+
+#### 14.8.1 `PartyCountScaled`（`EMagnitudeKind`）（原 §8.1）
+
+`perCount × 队伍中命中筛选项的角色数`，筛选项为 `countElementAny`（元素）与 `countRaceAny`（种族），两者都配时取"且"。
+
+- 人数统计**含自己**、**不封顶**、只算**已上阵**角色（队伍名单战斗内固定 → 最多 4 人）。
+- 实现：`BuffContainer` 接受一个自定义取值委托（`CharacterBattleInstance.ResolveCustomMagnitude`），队伍查询由 `PlayerTeamState` 在组队时注入；buff 修正随回合开始的重估自动刷新。
+- 「每有 1 名黄属性·动物角色，自身最大生命 +40」即 `perCount: 40` + 双筛选（4 人 = +160）。
+
+#### 14.8.2 手牌槽费用归零（原 §8.2）
+
+- 新 tag **`slot.free_cost`**：槽位上的该 buff 使**该槽当前那张牌**的费用视为 0。
+- `CardCostCalculator.Compute` 增加 `runtimeInstanceId` 参数（标记入队后牌仍在槽内，按实例反查槽位），队列对账 `QueuedCostReconciler` 因此自动同口径退补。
+- `AttachSlotBuff`（技能动作与同名效果）新增 `params.slotSelection: "randomNonEmpty"`：在当前有牌的槽里随机一个；`slotIndex` 与 `slotSelection` 二选一。
+- `EEffectKind` 新增同名 `AttachSlotBuff`，让 **buff 钩子**也能挂槽位 buff（此前只有技能动作能做），以便"释放主动技时随机一张手牌免费"这类被动。
+- 时长用 `durationType: Turns` + `duration: 1` → 回合结束自动到期。
+
+#### 14.8.3 封印免疫（原 §8.3）
+
+- 新特征 **`trait.immune_seal`**（与 `trait.immune_slot_damage` 同模式）。
+- 实现：GE 挂上后 `GameplayEffectApplicator` 立刻摘掉授予 `combat.state.sealed` 的 Gameplay Effect——只抵消封印本身，同一 GE 的其它修饰/标签照常生效。
+
+### 14.9 （空号：卡组属性预算）
+
+原扩展规格 §9「卡组属性预算」（一张卡 `stats.attributes` 折算总值 = 40 最大生命、1 点物攻 = 10 生命、对齐方式为保留最大生命削减物攻、chalux / 莱因哈特各卡数值）归「内容与数据规格」。本文只在 §11.7 保留 充能球规格 §7 的原文表述，**数值预算单由内容规格维护**。
+
+### 14.10 莱因哈特（`reinhardt`）（原 §10，仅保留战斗机制相关行）
+
+黄 / SwordMan / 动物；能量 8/3；主动技单档 CD 10。
+
+| 卡 | 战斗机制效果 |
+|---|---|
+| 黑船宝藏 `reinhardt_black_ship_treasure` | 自身 2 回合【普攻次数 +1】（`NormalAttackCount`，见 §14.6.1） |
+| 呼啸激攻 `reinhardt_howling_onslaught` | 敌方单体 2 回合【受到普攻伤害 +25%】（`NormalAttackDamageTakenScale`，见 §14.6.3） |
+| 碧蓝大海航行 `reinhardt_azure_voyage` | 自身 4 回合【追打 100%】（`trait.follow_up`，见 §14.6.2） |
+| 辉耀宝刀 `reinhardt_radiant_blade` | 敌方单体 `3 + 25% 物攻` 物理伤害（`Amount: 3` + `attackScale: 0.25`，见 §14.5.1）；自身 1 回合【追打 100%】 |
+
+> 原表的 费 / 类型 / 属性贡献 / 优先级 四列属卡牌数值预算，归「内容与数据规格」（原 §9）；本节只保留与战斗机制直接相关的效果描述。
+
+主动技「黄潮号令」`reinhardt_yellow_tide_command`：黄属性·动物的友方角色 2 回合物攻 +15（`targetFilter` 双筛选取"且"）；自身 2 回合 100% 追打。
+
+被动（0/10/30/50/70/99）：
+
+| 被动 | 实现 |
+|---|---|
+| P1 免疫封印 | `trait.immune_seal`（§14.8.3） |
+| P2 二连黄潮 | `onCardSettled` + 条件 `CardPlayedThisTurn{count:2, elementAny:["Yellow"]}` → 自身 1 回合物攻 +15 |
+| P3 潮汐节拍 | `onWaveStart` + `onTurnStart(turnInterval:10)`：自身技能进度 +2 / 黄 +2 / 动物 +2 |
+| P4 兽群庇佑 | `PartyCountScaled`：命中黄·动物的角色数 × 40 加到自身最大生命（§14.8.1） |
+| P5 群猎本能 | `NormalAttackDamageDealtScale +0.5`（§14.6.3） |
+| P6 一掷千金 | `onActiveSkillCast` → `AttachSlotBuff{slotSelection: randomNonEmpty}` 挂 `slot.free_cost`（1 回合）（§14.8.2） |
+
+### 14.11 巴赫（`bach`，角色3）（原 §11）
+
+绿 / Elementist / 人类·神族；能量 8/3；主动技**两档**蓄力链。
+
+| 档 | 技能 | CD | 效果 |
+|---|---|---|---|
+| 1 | 天国神启 `bach_heavenly_revelation` | 6 | 获得红·黄·蓝·绿属性球各 1 个 |
+| 2 | 天国神启·充能II `bach_charge_two` | 4 | 自身 2 回合【元素球伤害 +25%】；获得红·黄·蓝·绿·物理·魔法球各 1 个 |
+
+被动（0/10/30/50/70/99）：
+
+| 被动 | 实现 |
+|---|---|
+| P1 免疫中毒 | `trait.immune_poison`（GE 挂 `debuff.poison` 后立刻摘掉标签） |
+| P2 触发回响 | `onOrbTriggered` + `oncePerTurn: true` → `GainOrb{green, 2}` |
+| P3 启蒙节拍 | `onWaveStart` + `onTurnStart(turnInterval:6)`：自身技能进度 +2 / 绿 +1 / 人类 +1 / 神族 +1 |
+| P4 绿意共鸣 | `condition.partyMinCount 2 + partyElementAny [Green]` → `GreenOrbDamageScale +0.5`（全队） |
+| P5 满载启示 | `onCardExecutionEnd` → `GainOrbPerPlayedCard{green, perCard:1, offset:-1}` |
+| P6 神启之威 | `onActiveSkillCast` → 自身 1 回合物攻/魔攻 +30 |
+
+> 卡组为四张专属卡（占位卡 `strike` / `strike_plus` 已随 2026-09-21 收尾删除）。
+
+#### 14.11.0 巴赫的专属卡（已出货 2 张）（原 §11.0，仅保留战斗机制相关行）
+
+| 卡 | 战斗机制效果 |
+|---|---|
+| 康塔塔 `bach_cantata` | 自身卡组内绿属性卡牌达到 0/4/7 张时，获得 2/3/4 个绿属性球（`GainOrbByDeckCount`，见下） |
+| 赞歌 `bach_hymn` | 赋予自身【2 回合 / 魔攻 +6】 |
+| 三重奏 `bach_trio` | 敌方单体 6 点魔法伤害；直到此卡打出前，本回合每触发 1 个绿属性球额外 +100% 魔攻（最多 +300%）（`attackScaleFromOrbs`，见下） |
+| 赋格 `bach_fugue` | 自身 1·2·3·4·5 号手牌槽获得【2 回合 / 充能I】（该槽每打出一张牌获得 1 个绿属性球）（`slotSelection: "all"`，见下） |
+
+> 原表标题为「已出货 2 张」，但实际列出 4 行（截至 2026-09-21 四张专属卡已全部落盘，见下文末行）；原表的 费 / 类型 / 属性贡献 / 优先级 四列属卡牌数值预算，归「内容与数据规格」。
+
+- 康塔塔用新效果 **`GainOrbByDeckCount`**：`params.tiers: [[0,2],[4,3],[7,4]]` + `elementMask: 4`（只数绿卡）。
+  "卡组内"口径 = 该角色本场战斗持有的全部卡（抽牌堆 + 手牌 + 弃牌堆，`CharacterBattleInstance.OwnedCardIds`）。
+  ⚠️ 需要走**效果通道**（`SkillDto.effectRefs`）而不是技能动作——`GainOrbByDeckCount` 是 `EEffectKind`。
+- 三重奏用动态攻击系数：技能动作参数 **`attackScaleFromOrbs = { elementMask, perOrb, maxBonus }`** →
+  `attackScale = 1 + min(maxBonus, perOrb × 本回合已触发的命中球数)`，算好后经
+  SetByCaller **`AttackScale`** 覆盖 GE 的静态 `attackScale`（`DamageExecution` 优先读它）。
+  回合内球数由 `OrbRuntime.Trigger` → `CombatSimulation.RecordOrbsTriggered` 累计，
+  **账期与回合边界对齐**（`CombatStateMachine` 在回合开始时 `ResetOrbsTriggeredThisTurn`）。
+  注意不能在"回合结束产球"时清账：产球会即时触发并再次记账，那样上一回合结束时产出的球会被算进下一回合。
+- 赋格用 `slotSelection: "all"`（本轮新增）：给**全部 5 个手牌槽**各挂一份 `slot.charge` buff（空槽也挂），
+  载荷复用既有充能机制（`onSlotCardPlayed` → `GainOrb{green,1}`），充能 I = 计数 1、2 回合后到期。
+- 充能互斥（本轮决议，见本文 §13.2）：
+  同一槽位只允许 1 个充能，新充能**无条件覆盖**旧的并**重置进度**（同 id、`Refresh`/`Add` 也一样）。
+- 四张专属卡已全部落盘。
+
+#### 14.11.1 本轮新增的通用机制（原 §11.1）
+
+| 机制 | 说明 |
+|---|---|
+| `OrbDamageScale` + `elementMask` | 球伤害增加的**两参数**写法：掩码 0 = 所有球（含物理/魔法球），否则为 `EElement` 位掩码（15 = 四色属性球，4 = 仅绿球）。带掩码的修正按元素拆成 `OrbDamageScale:<Element>` 分别记账，球结算时只吃自己那一份 |
+| `condition.partyMinCount` + `partyElementAny` / `partyRaceAny` | 队伍人数门闩：命中筛选的上阵角色数 ≥ 阈值时满足；与持有者维度取"且"，只配人数时完全由人数决定 |
+| `onOrbTriggered` | 充能球触发结算后，对参与产球的角色（去重）各触发一次 |
+| `oncePerTurn`（钩子参数） | 同一 buff 实例的同一效果每回合只触发一次，回合开始清账 |
+| `onCardExecutionEnd` | 本回合全部卡牌结算结束后触发一次（普攻之前） |
+| `GainOrbPerPlayedCard` | 按本回合出牌数发球：`max(0, 出牌数 × perCard + offset)` |
+| `GainOrbByDeckCount` | 按卡组内命中筛选项的卡牌数分档发球：`tiers: [[最小张数, 球数], …]` 取最高档 |
+| `attackScaleFromOrbs` + SetByCaller `AttackScale` | 动态攻击系数：按本回合已触发的命中球数提升源攻击力系数，算好后覆盖 GE 的静态 `attackScale`（效果通道与技能动作通道共用同一解析） |
+| `AttachSlotBuff` 的 `slotSelection` | `randomNonEmpty`（随机一张有牌的手牌）/ `all`（全部手牌槽，空槽也挂）；与显式 `slotIndex` 三选一 |
+| `trait.immune_poison` | 中毒免疫（约定标签 `debuff.poison`） |
+
+> `OrbDamageScale` 进的是本文 §1.3 的**同一个加算桶**（球伤害增加），与 `DamageDealtScale` / `DamageTakenScale` 加算（§11.3 合并提示同此口径）。
+
+#### 14.11.2 伤害缩放口径（全局，2026-09-21）（原 §11.2）
+
+**所有增伤与所有受到伤害增加一律加算，只有连携乘算**：
+
+```
+最终伤害 = base × (1 + Σ增伤 + Σ受到伤害增加) × (1 + 连携)
+```
+
+权威表述已写入本文 §1.3「增伤与受伤增加一律加算」条；
+mod 侧统一入口是 `Src\mod\combat\effects\DamageScaling.cs`（直伤 / 普攻 / 充能球共用），GAS 通道在 `DamageExecution` 内联同一公式。
+
+#### 14.11.3 （空号：被动不需要名字）
+
+原扩展规格 §11.3「被动不需要名字（2026-09-21）」（撤销 2026-09-19 的「被动技能1~N」序号命名约定；被动列表只显示潜能门槛 + 描述）归 UI 专文。该撤销已作为合并提示写在本文 §13.6 的展示命名约定处。
+
+### 14.12 （空号：同批全局收敛）
+
+原扩展规格 §12「同批全局收敛」——§12.1 稀有度档名（`ERarity` 收敛为 `Common` / `Special` / `Rare` / `Exclusive` / `Legendary`）与 §12.2 角色简介移除（`CharacterDto.descId` 删除、角色详细界面改展示专属卡横向虚拟列表）均归「内容与数据规格」/ UI 专文。战斗侧唯一相关点已写在本文 §11.7 的合并提示（`Epic` → `Exclusive`）。
+
+### 14.13 明确后置项（战斗相关）（原 §13）
+
+- **普攻次数上限**：`reinhardt_extra_normal_attack` 目前 `maxStacks: 1` + `Refresh`，即"同一张卡的 buff 不自我叠层，不同 buff 之间靠属性相加"。若要让同一张卡反复打出也能叠，需要抬 `maxStacks` 并改叠层规则。
+- **追打的独立可观测 UI**：伤害飘字与回合摘要仍属后置项。
+- **元素克制 / 抗性**：`Element` 维度已贯通到 GAS 通道，但仍无消费方。
+- **敌方 buffRefs**：仍与角色被动分属两条路径，未统一。

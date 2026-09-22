@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.reinhardt_command.name",
+  "descId": "skill.reinhardt_command.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "reinhardt_command_attack_up" },
+    { "actionId": "reinhardt_command_follow_up" }
+  ],
+  "tags": ["active"]
+}

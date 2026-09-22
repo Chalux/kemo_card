@@ -15,12 +15,36 @@ public sealed class CharacterBattleInstance
     private readonly List<int> _drawModifiers = [];
     private readonly ActiveSkillTier[] _activeSkillChain;
     private bool _phaseShuffleUsed;
+    private Func<int, int, int>? _partyCountQuery;
 
     public string SourceInstanceId { get; }
     public string DefinitionId { get; }
     public IReadOnlyList<CardRuntimeEntry> DrawPile => _drawPile;
     public IReadOnlyList<CardRuntimeEntry> Graveyard => _graveyard;
     public IReadOnlyList<HandSlot> HandSlots => _handSlots;
+
+    /// <summary>
+    /// 本场战斗该角色持有的全部卡牌 id（抽牌堆 + 手牌 + 弃牌堆），即"卡组内"的实际口径。
+    /// 供"卡组内命中筛选项的卡牌数"这类分档效果使用（元素判定由调用方查内容库）。
+    /// </summary>
+    public IReadOnlyList<string> OwnedCardIds
+    {
+        get
+        {
+            var ids = new List<string>(_drawPile.Count + _handSlots.Length + _graveyard.Count);
+            foreach (var entry in _drawPile)
+                ids.Add(entry.CardId);
+            foreach (var slot in _handSlots)
+            {
+                if (!slot.IsEmpty && slot.CardId is not null)
+                    ids.Add(slot.CardId);
+            }
+
+            foreach (var entry in _graveyard)
+                ids.Add(entry.CardId);
+            return ids;
+        }
+    }
     public IReadOnlyDictionary<string, float> BaseAttributes { get; }
     public AbilitySystemComponent Asc { get; }
 
@@ -71,7 +95,12 @@ public sealed class CharacterBattleInstance
         Asc = asc;
         Element = element;
         Race = race;
-        Buffs = new BuffContainer(asc, () => Element, () => Race);
+        Buffs = new BuffContainer(
+            asc,
+            () => Element,
+            () => Race,
+            ResolveCustomMagnitude,
+            CountPartyMembers);
         _drawPile.AddRange(drawPile);
         CurrentEnergy = currentEnergy;
         _activeSkillChain = activeSkillChain?.ToArray() ?? [];
@@ -82,6 +111,40 @@ public sealed class CharacterBattleInstance
         _handSlots = Enumerable.Range(0, CombatConstants.HandSlotCount)
             .Select(index => new HandSlot(index))
             .ToArray();
+    }
+
+    /// <summary>
+    /// 绑定"队伍匹配人数"查询（由 <see cref="KemoCard.Mod.Combat.Runtime.PlayerTeamState"/> 在组队时注入）。
+    /// 注入前 <c>PartyCountScaled</c> 取 0、<c>partyMinCount</c> 条件恒不满足。
+    /// </summary>
+    public void BindPartyCountQuery(Func<int, int, int> query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        _partyCountQuery = query;
+    }
+
+    /// <summary>队伍中同时命中元素/种族筛选的角色数（未注入查询时为 0）。</summary>
+    private int CountPartyMembers(int elementFlags, int raceFlags) =>
+        _partyCountQuery?.Invoke(elementFlags, raceFlags) ?? 0;
+
+    /// <summary>
+    /// buff 修正的自定义取值：<see cref="EMagnitudeKind.PartyCountScaled"/> =
+    /// <c>perCount × 队伍中同时命中元素与种族筛选的角色数</c>（含自己、不封顶）。
+    /// </summary>
+    private float ResolveCustomMagnitude(MagnitudeDefDto magnitudeDef)
+    {
+        if (magnitudeDef.Kind != EMagnitudeKind.PartyCountScaled || _partyCountQuery is null)
+            return 0f;
+
+        var elementFlags = 0;
+        foreach (var element in magnitudeDef.CountElementAny ?? [])
+            elementFlags |= (int)element;
+
+        var raceFlags = 0;
+        foreach (var race in magnitudeDef.CountRaceAny ?? [])
+            raceFlags |= (int)race;
+
+        return magnitudeDef.PerCount * _partyCountQuery(elementFlags, raceFlags);
     }
 
     public static CharacterBattleInstance? TryCreate(

@@ -15,119 +15,148 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_dlg")
-_lblTitle = NodePath("Panel/VBox/Header/LblTitle")
-_btnClose = NodePath("Panel/VBox/Header/BtnClose")
-_slotTabs = NodePath("Panel/VBox/SlotTabs")
-_lblCurrentCaption = NodePath("Panel/VBox/Body/Left/LblCurrentCaption")
-_currentHolder = NodePath("Panel/VBox/Body/Left/CurrentHolder")
-_currentCharacter = NodePath("Panel/VBox/Body/Left/CurrentHolder/CurrentCharacter")
-_btnUnassign = NodePath("Panel/VBox/Body/Left/BtnUnassign")
-_lblPoolCaption = NodePath("Panel/VBox/Body/Center/LblPoolCaption")
-_poolList = NodePath("Panel/VBox/Body/Center/PoolList")
-_presenter = NodePath("Panel/VBox/Body/Right/Preview/Presenter")
-_lblName = NodePath("Panel/VBox/Body/Right/Preview/LblName")
-_lblInfo = NodePath("Panel/VBox/Body/Right/Preview/LblInfo")
-_lblAttrs = NodePath("Panel/VBox/Body/Right/Preview/LblAttrs")
-_lblDeckCaption = NodePath("Panel/VBox/Body/Right/LblDeckCaption")
-_deckStrip = NodePath("Panel/VBox/Body/Right/DeckStrip")
-_lblStatus = NodePath("Panel/VBox/LblStatus")
+_lblTitle = NodePath("Layout/Rail/Margin/VBox/LblTitle")
+_btnClose = NodePath("Layout/Rail/Margin/VBox/BtnClose")
+_slotTabs = NodePath("Layout/Content/VBox/SlotTabs")
+_lblCurrentCaption = NodePath("Layout/Rail/Margin/VBox/LblCurrentCaption")
+_currentHolder = NodePath("Layout/Rail/Margin/VBox/CurrentHolder")
+_currentCharacter = NodePath("Layout/Rail/Margin/VBox/CurrentHolder/CurrentCharacter")
+_btnUnassign = NodePath("Layout/Rail/Margin/VBox/BtnUnassign")
+_lblPoolCaption = NodePath("Layout/Content/VBox/Body/Center/LblPoolCaption")
+_poolList = NodePath("Layout/Content/VBox/Body/Center/PoolList")
+_presenter = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/Presenter")
+_lblName = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblName")
+_lblInfo = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblInfo")
+_lblAttrs = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblAttrs")
+_lblDeckCaption = NodePath("Layout/Content/VBox/Body/Right/VBox/LblDeckCaption")
+_deckStrip = NodePath("Layout/Content/VBox/Body/Right/VBox/DeckStrip")
+_lblStatus = NodePath("Layout/Rail/Margin/VBox/LblStatus")
 
-[node name="Panel" type="Panel" parent="."]
+[node name="Bg" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 60.0
-offset_top = 30.0
-offset_right = -60.0
-offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"PageBg"
 
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Layout" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = -16.0
-offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 0
 
-[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Rail" type="PanelContainer" parent="Layout"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_type_variation = &"Rail"
 
-[node name="LblTitle" type="Label" parent="Panel/VBox/Header"]
+[node name="Margin" type="MarginContainer" parent="Layout/Rail"]
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 24
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 28
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
 
-[node name="BtnClose" type="Button" parent="Panel/VBox/Header"]
-custom_minimum_size = Vector2(120, 40)
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin"]
 layout_mode = 2
-text = "UI_TEAM_CLOSE"
-script = ExtResource("2_kbtn")
+theme_override_constants/separation = 10
 
-[node name="SlotTabs" type="TabBar" parent="Panel/VBox"]
+[node name="LblTitle" type="Label" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 26
 
-[node name="Body" type="HBoxContainer" parent="Panel/VBox"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_constants/separation = 12
-
-[node name="Left" type="VBoxContainer" parent="Panel/VBox/Body"]
-custom_minimum_size = Vector2(200, 0)
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="LblCurrentCaption" type="Label" parent="Panel/VBox/Body/Left"]
+[node name="Rule" type="HSeparator" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
 
-[node name="CurrentHolder" type="Control" parent="Panel/VBox/Body/Left"]
-custom_minimum_size = Vector2(0, 200)
+[node name="LblCurrentCaption" type="Label" parent="Layout/Rail/Margin/VBox"]
 layout_mode = 2
-size_flags_vertical = 3
+theme_type_variation = &"Caption"
 
-[node name="CurrentCharacter" parent="Panel/VBox/Body/Left/CurrentHolder" instance=ExtResource("5_charitem")]
+[node name="CurrentHolder" type="Control" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 216)
+layout_mode = 2
+
+[node name="CurrentCharacter" parent="Layout/Rail/Margin/VBox/CurrentHolder" instance=ExtResource("5_charitem")]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -80.0
+offset_top = 4.0
 offset_right = 80.0
-offset_bottom = 208.0
+offset_bottom = 212.0
 grow_horizontal = 2
 
-[node name="BtnUnassign" type="Button" parent="Panel/VBox/Body/Left"]
+[node name="BtnUnassign" type="Button" parent="Layout/Rail/Margin/VBox"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "UI_TEAM_UNASSIGN"
 script = ExtResource("2_kbtn")
 
-[node name="Center" type="VBoxContainer" parent="Panel/VBox/Body"]
-custom_minimum_size = Vector2(260, 0)
+[node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LblStatus" type="Label" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="BtnClose" type="Button" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_TEAM_CLOSE"
+script = ExtResource("2_kbtn")
+
+[node name="Content" type="MarginContainer" parent="Layout"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 6
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
 
-[node name="LblPoolCaption" type="Label" parent="Panel/VBox/Body/Center"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SlotTabs" type="TabBar" parent="Layout/Content/VBox"]
 layout_mode = 2
 
-[node name="PoolList" type="Control" parent="Panel/VBox/Body/Center" node_paths=PackedStringArray("ScrollArea")]
+[node name="Body" type="HBoxContainer" parent="Layout/Content/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="Center" type="VBoxContainer" parent="Layout/Content/VBox/Body"]
+custom_minimum_size = Vector2(380, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="LblPoolCaption" type="Label" parent="Layout/Content/VBox/Body/Center"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 17
+
+[node name="PoolList" type="Control" parent="Layout/Content/VBox/Body/Center" node_paths=PackedStringArray("ScrollArea")]
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3_vlist")
 ScrollArea = NodePath("Scroll")
 ItemTemplate = ExtResource("5_charitem")
 ItemSize = 208.0
-Spacing = 2.0
+Spacing = 10.0
 
-[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Center/PoolList"]
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Center/PoolList"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -135,59 +164,63 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Right" type="VBoxContainer" parent="Panel/VBox/Body"]
-custom_minimum_size = Vector2(300, 0)
+[node name="Right" type="PanelContainer" parent="Layout/Content/VBox/Body"]
+custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 6
 
-[node name="Preview" type="VBoxContainer" parent="Panel/VBox/Body/Right"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Preview" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
-[node name="Presenter" parent="Panel/VBox/Body/Right/Preview" instance=ExtResource("4_presenter")]
+[node name="Presenter" parent="Layout/Content/VBox/Body/Right/VBox/Preview" instance=ExtResource("4_presenter")]
 custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 
-[node name="LblName" type="Label" parent="Panel/VBox/Body/Right/Preview"]
+[node name="LblName" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 20
 
-[node name="LblInfo" type="Label" parent="Panel/VBox/Body/Right/Preview"]
+[node name="LblInfo" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="LblAttrs" type="Label" parent="Panel/VBox/Body/Right/Preview"]
+[node name="Rule" type="HSeparator" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
+layout_mode = 2
+
+[node name="LblAttrs" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_vertical = 3
 autowrap_mode = 3
 
-[node name="LblDeckCaption" type="Label" parent="Panel/VBox/Body/Right"]
+[node name="LblDeckCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox"]
 layout_mode = 2
+theme_type_variation = &"Caption"
 
-[node name="DeckStrip" type="Control" parent="Panel/VBox/Body/Right" node_paths=PackedStringArray("ScrollArea")]
-custom_minimum_size = Vector2(0, 212)
+[node name="DeckStrip" type="Control" parent="Layout/Content/VBox/Body/Right/VBox" node_paths=PackedStringArray("ScrollArea")]
+custom_minimum_size = Vector2(0, 222)
 layout_mode = 2
 script = ExtResource("3_vlist")
 IsVertical = false
 ScrollArea = NodePath("Scroll")
 ItemTemplate = ExtResource("6_carditem")
 ItemSize = 160.0
-Spacing = 2.0
+Spacing = 10.0
 
-[node name="Scroll" type="ScrollContainer" parent="Panel/VBox/Body/Right/DeckStrip"]
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/VBox/DeckStrip"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="LblStatus" type="Label" parent="Panel/VBox"]
-custom_minimum_size = Vector2(600, 0)
-layout_mode = 2
-autowrap_mode = 3

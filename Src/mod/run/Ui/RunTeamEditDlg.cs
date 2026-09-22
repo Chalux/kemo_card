@@ -356,7 +356,7 @@ public partial class RunTeamEditDlg : BaseDlg
 
         if (_lblInfo != null)
         {
-            _lblInfo.Text = $"{ElementLabel(character.Element)} / {RaceLabel(character.Race)} / {character.Role}";
+            _lblInfo.Text = $"{ElementLabel(character.Element)} / {RaceLabel(character.Race)} / {RoleLabel(character.Role)}";
         }
 
         var instance = instanceId is null ? null : _service.FindCharacter(instanceId);
@@ -397,11 +397,48 @@ public partial class RunTeamEditDlg : BaseDlg
         });
     }
 
-    private static string ElementLabel(EElement element) =>
-        element == EElement.None ? "-" : element.ToString();
+    /// <summary>
+    /// 元素/种族显示名走 CodexFilterDefinitions 的本地化键（与图鉴同一套 UI_ELEMENT_* / UI_RACE_*），
+    /// 多标志按"、"连接；缺键时才回落枚举原名——否则双种族角色在这里会显示 "Animal, Dragon" 这类英文枚举名。
+    /// </summary>
+    private static string ElementLabel(EElement element)
+    {
+        var names = new List<string>();
+        foreach (var flag in Enum.GetValues<EElement>())
+        {
+            if (flag != EElement.None &&
+                (element & flag) != 0 &&
+                CodexFilterDefinitions.TryGetElementLocaleKey(flag, out var key))
+            {
+                names.Add(Localization.Tr(key));
+            }
+        }
 
-    private static string RaceLabel(ERace race) =>
-        race == ERace.None ? "-" : race.ToString();
+        return names.Count == 0 ? "-" : string.Join("、", names);
+    }
+
+    private static string RaceLabel(ERace race)
+    {
+        var names = new List<string>();
+        foreach (var flag in Enum.GetValues<ERace>())
+        {
+            if (flag != ERace.None &&
+                (race & flag) != 0 &&
+                CodexFilterDefinitions.TryGetRaceLocaleKey(flag, out var key))
+            {
+                names.Add(Localization.Tr(key));
+            }
+        }
+
+        return names.Count == 0 ? "-" : string.Join("、", names);
+    }
+
+    /// <summary>
+    /// 职业显示名走与图鉴同一套 <c>UI_ROLE_*</c> 键；缺键时才回落枚举原名。
+    /// 与元素/种族同理——直接插 <c>character.Role</c> 会在界面露出 <c>SwordMan</c> 这类英文枚举名。
+    /// </summary>
+    private static string RoleLabel(ERole role) =>
+        CodexFilterDefinitions.TryGetRoleLocaleKey(role, out var key) ? Localization.Tr(key) : role.ToString();
 
     /// <summary>属性显示名：内容侧键 <c>attr.&lt;snake_case&gt;.name</c>；缺失时回落原始 id。</summary>
     private static string AttributeLabel(string attributeId)

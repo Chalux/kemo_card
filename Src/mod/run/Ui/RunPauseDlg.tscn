@@ -1,0 +1,141 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/RunPauseDlg.cs" id="1_pause"]
+[ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_basedlg"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
+
+[node name="RunPauseDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_lblHint", "_btnResume", "_btnSettings", "_btnCodex", "_btnGlossary", "_btnSaveExit", "_lblSaveExitBlocked", "_btnQuitDesktop")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_pause")
+_lblTitle = NodePath("BaseDlgComp/LblTitle")
+_lblHint = NodePath("BaseDlgComp/LblHint")
+_btnResume = NodePath("BaseDlgComp/VBox/BtnResume")
+_btnSettings = NodePath("BaseDlgComp/VBox/BtnSettings")
+_btnCodex = NodePath("BaseDlgComp/VBox/BtnCodex")
+_btnGlossary = NodePath("BaseDlgComp/VBox/BtnGlossary")
+_btnSaveExit = NodePath("BaseDlgComp/VBox/BtnSaveExit")
+_lblSaveExitBlocked = NodePath("BaseDlgComp/VBox/LblSaveExitBlocked")
+_btnQuitDesktop = NodePath("BaseDlgComp/VBox/BtnQuitDesktop")
+
+[node name="Scrim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.227, 0.18, 0.145, 0.38)
+
+[node name="BaseDlgComp" parent="." instance=ExtResource("2_basedlg")]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -310.0
+offset_top = -290.0
+offset_right = 310.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LblTitle" type="Label" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 40.0
+offset_right = -84.0
+offset_bottom = 88.0
+grow_horizontal = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 30
+text = "UI_PAUSE_TITLE"
+vertical_alignment = 1
+
+[node name="LblHint" type="Label" parent="BaseDlgComp"]
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 92.0
+offset_right = -40.0
+offset_bottom = 136.0
+grow_horizontal = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = "UI_PAUSE_HINT"
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="VBox" type="VBoxContainer" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 148.0
+offset_right = -40.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="BtnResume" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_RESUME"
+script = ExtResource("3_kbtn")
+Primary = true
+
+[node name="BtnSettings" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_SETTINGS"
+script = ExtResource("3_kbtn")
+
+[node name="BtnCodex" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_CODEX"
+script = ExtResource("3_kbtn")
+
+[node name="BtnGlossary" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_GLOSSARY"
+script = ExtResource("3_kbtn")
+
+[node name="BtnSaveExit" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_SAVE_EXIT"
+script = ExtResource("3_kbtn")
+
+[node name="LblSaveExitBlocked" type="Label" parent="BaseDlgComp/VBox"]
+visible = false
+custom_minimum_size = Vector2(440, 0)
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="BtnQuitDesktop" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_QUIT_DESKTOP"
+script = ExtResource("3_kbtn")

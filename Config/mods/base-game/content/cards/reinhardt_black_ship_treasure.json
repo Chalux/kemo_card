@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.reinhardt_treasure.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "reinhardt_black_ship_treasure" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalAttack": 2
+    }
+  },
+  "role": "SwordMan",
+  "priority": 50,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

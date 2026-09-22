@@ -51,7 +51,7 @@ public sealed class BaseGameActiveSkillChainContentTests
 
     /// <summary>
     /// 档位技能若缺 <c>targetOverride</c>,按 §5.4 决议会被当成 Self 单体,
-    /// 伤害类主动技会打到施法者自己身上——这正是 kemo_dash 迁移时踩过的坑。
+    /// 伤害类主动技会打到施法者自己身上（迁移主动技链时踩过的坑）。
     /// </summary>
     [Test]
     public void Every_active_skill_chain_tier_declares_an_explicit_target_override()
@@ -71,19 +71,22 @@ public sealed class BaseGameActiveSkillChainContentTests
         }
     }
 
+    /// <summary>
+    /// 出货角色的档位顺序与冷却下限：cooldown 必须 ≥ 1，否则累计阈值不单调递增
+    /// （要么永远放不出主动技，要么每回合都满档）。
+    /// </summary>
     [Test]
-    public void Kemo_chain_is_ordered_low_to_high_with_a_charged_tier()
+    public void Chalux_chain_tiers_declare_positive_cooldowns()
     {
         var definitions = LoadBaseGame();
 
-        Assert.That(definitions.Characters.TryGetValue("kemo", out var kemo), Is.True);
-        Assert.That(kemo!.ActiveSkillChain, Has.Count.EqualTo(2), "kemo 应有基础档 + 蓄力档");
-        Assert.That(kemo.ActiveSkillChain[0].SkillId, Is.EqualTo("kemo_dash"));
-        Assert.That(kemo.ActiveSkillChain[1].SkillId, Is.EqualTo("kemo_dash_charged"));
+        Assert.That(definitions.Characters.TryGetValue("chalux", out var chalux), Is.True);
+        Assert.That(chalux!.ActiveSkillChain, Is.Not.Empty, "chalux 至少应有一档主动技");
+        Assert.That(chalux.ActiveSkillChain[0].SkillId, Is.EqualTo("chalux_glacial_overflow"));
         Assert.That(
-            kemo.ActiveSkillChain.Select(tier => tier.Cooldown),
+            chalux.ActiveSkillChain.Select(tier => tier.Cooldown),
             Is.All.GreaterThanOrEqualTo(1),
-            "每档 cooldown 必须 ≥ 1,否则累计阈值不单调递增");
+            "每档 cooldown 必须 ≥ 1，否则累计阈值不单调递增");
     }
 
     /// <summary>

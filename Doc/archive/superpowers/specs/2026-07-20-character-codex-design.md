@@ -2,7 +2,7 @@
 
 **日期：** 2026-07-20  
 **状态：** 已确认  
-**关联：** [图鉴卡牌过滤](2026-07-10-codex-card-filter-design.md)、[角色 DTO](2026-06-16-character-battle-event-item-dto-design.md)、[总项目说明](2026-05-11-kemo-card-design.md)
+**关联：** [图鉴卡牌过滤](../../../superpowers/specs/2026-07-10-codex-card-filter-design.md)、[角色 DTO](../../../superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md)、[总项目说明](../../../superpowers/specs/2026-05-11-kemo-card-design.md)
 
 ## 1. 目标
 

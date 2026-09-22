@@ -7,8 +7,15 @@ namespace KemoCard.Mod.Combat.Buffs;
 /// <summary>
 /// 连携（乖离性 MA 式）：结算阶段开始时按出牌队列一次性统计各属性的"不同角色数"定档，
 /// 档位作用于本回合全部该属性伤害/治疗卡——无次序、无首角色惩罚、无回溯。
-/// 仅卡牌类型 Physics/Magical/Healing 适用；加成与 DamageDealtScale 同桶加算。
+/// 加成与 DamageDealtScale 同桶加算。
 /// </summary>
+/// <remarks>
+/// 统计侧与加成侧口径<b>不同</b>（2026-09-21 修正）：统计侧统计队列里的**所有**卡，
+/// Support / Curse 等非输出卡同样把它打出的角色计入人头（否则队友一张增益卡就白出，
+/// 档位无法反映"这一回合有多少人参与了该属性"）；加成侧仍只作用于
+/// Physics / Magical / Healing —— 见 <see cref="AppliesToCard"/>，它只被
+/// <see cref="BonusForCard"/> 使用，<see cref="CountDistinctCharacters"/> 不再用它过滤。
+/// </remarks>
 public static class ChainCalculator
 {
     public const float TwoChainScale = 0.25f;
@@ -17,14 +24,19 @@ public static class ChainCalculator
 
     private static readonly EElement[] Elements = [EElement.Red, EElement.Blue, EElement.Green, EElement.Yellow];
 
+    /// <summary>
+    /// 连携加成是否作用于该卡（<b>加成侧</b>规则，只被 <see cref="BonusForCard"/> 使用）：
+    /// 只有 Physics / Magical / Healing 吃加成，控制/诅咒等非输出卡即使人头堆到了档位也不吃。
+    /// </summary>
     public static bool AppliesToCard(CardDto card) =>
         card.CardType is ECardType.Physics or ECardType.Magical or ECardType.Healing;
 
     /// <summary>
-    /// 按结算队列统计各属性的不同角色数。只有连携适用的卡牌类型（Physics/Magical/Healing）
-    /// 参与统计：控制/诅咒等非输出卡不把人头数堆进档位。chalux 被动2（连携注入红）：持有
-    /// <see cref="BuiltinBuffTags.TraitChainInjectRed"/> 的角色打出的卡在统计上额外计入红属性
-    /// （双属性卡 = 各属性 + 红各自计入）。
+    /// 按结算队列统计各属性的不同角色数。<b>队列里的每一张卡都参与统计</b>（与卡牌类型无关）：
+    /// 只要该卡带某属性，打出它的角色就为该属性贡献 1 人头（同一角色多张只计 1 人）。
+    /// chalux 被动2（连携注入红）：持有 <see cref="BuiltinBuffTags.TraitChainInjectRed"/> 的角色
+    /// 打出的卡在统计上额外计入红属性（双属性卡 = 各属性 + 红各自计入）。
+    /// 加成是否真的落到某张卡上由 <see cref="BonusForCard"/> 判定。
     /// </summary>
     public static Dictionary<EElement, int> CountDistinctCharacters(CombatSimulation simulation)
     {
@@ -32,9 +44,6 @@ public static class ChainCalculator
         foreach (var queued in simulation.CardQueue.PeekAllOrdered())
         {
             if (!simulation.Definitions.Store.TryGetCard(queued.CardId, out var card))
-                continue;
-
-            if (!AppliesToCard(card))
                 continue;
 
             var flags = CardElementFlagsForCount(simulation, card, queued.CharacterIndex);

@@ -70,13 +70,6 @@ public static class CharacterCodexQuery
             return true;
         }
 
-        if (!string.IsNullOrEmpty(character.DescId)
-            && (ContainsIgnoreCase(translate(character.DescId), query)
-                || ContainsIgnoreCase(character.DescId, query)))
-        {
-            return true;
-        }
-
         foreach (var skillRef in character.SkillRefs)
         {
             var skill = tryGetSkill(skillRef.SkillId);

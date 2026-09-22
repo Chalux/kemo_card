@@ -1,4 +1,4 @@
 {
   "kind": "GainResource",
-  "params": { "resource": "skillcounter", "amount": 4 }
+  "params": { "resource": "skillcounter", "amount": 3 }
 }

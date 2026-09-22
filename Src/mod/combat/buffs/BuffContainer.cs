@@ -14,15 +14,21 @@ public sealed class BuffContainer
     private readonly AbilitySystemComponent? _asc;
     private readonly Func<EElement>? _elementProvider;
     private readonly Func<ERace>? _raceProvider;
+    private readonly Func<MagnitudeDefDto, float>? _magnitudeResolver;
+    private readonly Func<int, int, int>? _partyCountQuery;
 
     public BuffContainer(
         AbilitySystemComponent? asc = null,
         Func<EElement>? elementProvider = null,
-        Func<ERace>? raceProvider = null)
+        Func<ERace>? raceProvider = null,
+        Func<MagnitudeDefDto, float>? magnitudeResolver = null,
+        Func<int, int, int>? partyCountQuery = null)
     {
         _asc = asc;
         _elementProvider = elementProvider;
         _raceProvider = raceProvider;
+        _magnitudeResolver = magnitudeResolver;
+        _partyCountQuery = partyCountQuery;
     }
 
     public IReadOnlyList<BuffInstance> All => _instances;
@@ -42,7 +48,7 @@ public sealed class BuffContainer
     /// <summary>新建实例并入容器（不做叠层/互斥判定——那属于 <see cref="BuffRuntime"/> 的编排职责）。</summary>
     public BuffInstance Add(BuffDto def, IReadOnlyDictionary<string, object>? parameters)
     {
-        var instance = new BuffInstance(def, parameters);
+        var instance = new BuffInstance(def, parameters, _magnitudeResolver);
         EvaluateDormancy(instance);
         _instances.Add(instance);
         instance.RegisterModifiers(_asc);
@@ -109,10 +115,36 @@ public sealed class BuffContainer
             condition.ElementAny.Any(flag => flag != EElement.None && (element & flag) != 0);
         var raceMatched = condition.RaceAny is { Count: > 0 } &&
             condition.RaceAny.Any(flag => flag != ERace.None && (race & flag) != 0);
+        var hasHolderDimension = condition.ElementAny is { Count: > 0 } || condition.RaceAny is { Count: > 0 };
 
-        // 未配置的维度视为不命中；跨维度默认"或"，matchAll: true 时取"且"（此时要求两个维度都配置且命中）。
-        return condition.MatchAll
+        // 持有者维度：跨维度默认"或"，matchAll: true 时取"且"。
+        var holderMatched = hasHolderDimension && (condition.MatchAll
             ? elementMatched && raceMatched
-            : elementMatched || raceMatched;
+            : elementMatched || raceMatched);
+
+        // 队伍人数门闩（2026-09-21）：与持有者维度取"且"；只配人数时完全由人数决定。
+        if (condition.PartyMinCount > 0)
+        {
+            var partyMatched = CountPartyMatches(condition) >= condition.PartyMinCount;
+            return partyMatched && (!hasHolderDimension || holderMatched);
+        }
+
+        return holderMatched;
+    }
+
+    private int CountPartyMatches(BuffConditionDto condition)
+    {
+        if (_partyCountQuery is null)
+            return 0;
+
+        var elementFlags = 0;
+        foreach (var flag in condition.PartyElementAny ?? [])
+            elementFlags |= (int)flag;
+
+        var raceFlags = 0;
+        foreach (var flag in condition.PartyRaceAny ?? [])
+            raceFlags |= (int)flag;
+
+        return _partyCountQuery(elementFlags, raceFlags);
     }
 }

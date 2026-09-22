@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.reinhardt_blade.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 3,
+  "skillRefs": [{ "skillId": "reinhardt_radiant_blade" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "PhysicalAttack": 1
+    }
+  },
+  "role": "SwordMan",
+  "priority": 4,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

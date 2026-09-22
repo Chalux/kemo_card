@@ -1,9 +1,11 @@
 using System.Text.Json;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Gas;
 using KemoCard.Frame.Gas.Executions;
 using KemoCard.Mod.Combat.Buffs;
+using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Combat.Gas;
 using KemoCard.Mod.Combat.Runtime;
 
@@ -72,8 +74,43 @@ public sealed class CombatEffectExecutor
         if (!_registry.Store.TryGetEffect(effectRef.EffectId, out var effect))
             return;
 
+        // 效果级条件（EffectDto.conditions）：战斗域求值，不通过则整条效果不执行。
+        if (!ConditionsPass(effect, simulation, source))
+            return;
+
         var mergedParams = MergeParams(effect.Params, effectRef.Params);
         ExecuteKind(effect.Kind, mergedParams, effect, simulation, source, targets, depth);
+    }
+
+    /// <summary>
+    /// 求值效果的全部 <c>conditions</c>（AND）。未知 CondType / 参数非法 = 不通过：
+    /// 运行期保守失败，内容准入阶段由 <c>ContentDefinitionValidator</c> 提前拦下。
+    /// </summary>
+    private static bool ConditionsPass(
+        EffectDto effect,
+        CombatSimulation simulation,
+        CombatTargetRef source)
+    {
+        if (effect.Conditions.Count == 0)
+            return true;
+
+        var context = new CombatCondContext(simulation, source.Index);
+        foreach (var condition in effect.Conditions)
+        {
+            if (!ConditionDomains.Combat.TryGet(condition.Kind, out var handler) || handler is null)
+                return false;
+
+            var args = JsonSerializer.SerializeToElement(
+                condition.Params ?? new Dictionary<string, object>(StringComparer.Ordinal));
+            var sourcePath = $"effect:{effect.Id}:conditions.{condition.Kind}";
+            if (!handler.TryParse(args, sourcePath, out var parsedArgs, out _) || parsedArgs is null)
+                return false;
+
+            if (!handler.Check(parsedArgs, context).Passed)
+                return false;
+        }
+
+        return true;
     }
 
     public void ExecuteSkillActionRef(
@@ -107,6 +144,7 @@ public sealed class CombatEffectExecutor
             case EEffectKind.GainResource:
             case EEffectKind.ExecuteScript:
             case EEffectKind.ChainEffects:
+            case EEffectKind.AttachSlotBuff:
                 _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets, depth);
                 break;
             case EEffectKind.ApplyBuff:
@@ -117,6 +155,12 @@ public sealed class CombatEffectExecutor
                 break;
             case EEffectKind.GainOrb:
                 ApplyGainOrb(simulation, source, mergedParams);
+                break;
+            case EEffectKind.GainOrbPerPlayedCard:
+                ApplyGainOrbPerPlayedCard(simulation, source, mergedParams);
+                break;
+            case EEffectKind.GainOrbByDeckCount:
+                ApplyGainOrbByDeckCount(simulation, source, mergedParams);
                 break;
             case EEffectKind.ModifyStat:
                 break;
@@ -159,6 +203,96 @@ public sealed class CombatEffectExecutor
         simulation.Orbs.Grant(simulation, orbTypeId, BuffActionParams.ResolveProducerIndex(source), count);
     }
 
+    /// <summary>
+    /// 按本回合出牌数授予充能球：数量 = <c>max(0, 出牌数 × perCard + offset)</c>（缺省 perCard 1 / offset 0）。
+    /// </summary>
+    private static void ApplyGainOrbPerPlayedCard(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (!BuffActionParams.TryGetString(parameters, "orbTypeId", out var orbTypeId))
+            return;
+
+        var perCard = BuffActionParams.ReadInt(parameters, "perCard", 1);
+        var offset = BuffActionParams.ReadInt(parameters, "offset", 0);
+        var played = simulation.CountCardsPlayedThisTurn(source.Index, 0);
+        var count = Math.Max(0, (played * perCard) + offset);
+        if (count == 0)
+            return;
+
+        simulation.Orbs.Grant(simulation, orbTypeId, BuffActionParams.ResolveProducerIndex(source), count);
+    }
+
+    /// <summary>
+    /// 按"自身卡组内命中筛选项的卡牌数"分档授予充能球：
+    /// 取 <c>params.tiers</c>（<c>[[最小张数, 球数], …]</c>）中满足条件的最高档，没有命中则不发球。
+    /// </summary>
+    private void ApplyGainOrbByDeckCount(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (!BuffActionParams.TryGetString(parameters, "orbTypeId", out var orbTypeId))
+            return;
+        if (source.Side != ECombatSide.Player ||
+            source.Index < 0 ||
+            source.Index >= simulation.PlayerTeam.Characters.Count)
+        {
+            return;
+        }
+
+        var tiers = ReadTiers(parameters);
+        if (tiers.Count == 0)
+            return;
+
+        var elementMask = BuffActionParams.ReadInt(parameters, "elementMask", 0);
+        var character = simulation.PlayerTeam.Characters[source.Index];
+        var cardCount = 0;
+        foreach (var cardId in character.OwnedCardIds)
+        {
+            if (!_registry.Store.TryGetCard(cardId, out var card))
+                continue;
+            if (elementMask == 0 || (card.Element & elementMask) != 0)
+                cardCount++;
+        }
+
+        var orbCount = 0;
+        foreach (var (minCount, count) in tiers)
+        {
+            if (cardCount >= minCount && count > orbCount)
+                orbCount = count;
+        }
+
+        if (orbCount <= 0)
+            return;
+
+        simulation.Orbs.Grant(simulation, orbTypeId, BuffActionParams.ResolveProducerIndex(source), orbCount);
+    }
+
+    /// <summary>解析 <c>params.tiers</c>：形如 <c>[[0,2],[4,3]]</c> 的 [最小张数, 球数] 列表。</summary>
+    private static List<(int MinCount, int OrbCount)> ReadTiers(IReadOnlyDictionary<string, object> parameters)
+    {
+        var tiers = new List<(int, int)>();
+        if (!parameters.TryGetValue("tiers", out var value) || value is null)
+            return tiers;
+
+        if (value is not JsonElement element || element.ValueKind != JsonValueKind.Array)
+            return tiers;
+
+        foreach (var item in element.EnumerateArray())
+        {
+            if (item.ValueKind != JsonValueKind.Array || item.GetArrayLength() != 2)
+                continue;
+            if (!item[0].TryGetInt32(out var minCount) || !item[1].TryGetInt32(out var orbCount))
+                continue;
+
+            tiers.Add((minCount, orbCount));
+        }
+
+        return tiers;
+    }
+
     /// <summary>驱散：params.buffId 精确匹配或 params.withTags 列表匹配；不可驱散 tag 自动跳过。</summary>
     private void RemoveBuffEffect(
         CombatSimulation simulation,
@@ -195,20 +329,22 @@ public sealed class CombatEffectExecutor
                 setByCaller[key] = value;
             if (sim.CurrentChainBonus > 0f)
                 setByCaller[DamageExecution.SetByCallerChainBonusScale] = sim.CurrentChainBonus;
+            // 动态攻击系数（如"本回合每触发 1 个绿球 +100% 魔攻，最多 +300%"）：算好后覆盖 GE 的静态 attackScale。
+            DamageScaling.ApplyAttackScaleOverride(sim, parameters, setByCaller);
             if (_gameplayEffectApplicator.ApplyToTargets(sim, source, targets, gameplayEffectId, setByCaller))
                 return;
         }
 
-        // 走 GAS 的伤害在 DamageExecution 里乘连携与受伤倍率；直伤路径在此按同一口径缩放。
-        // 规格 §3：连携与源侧 DamageDealtScale 同桶加算（伤害 ×(1 + DamageDealtScale + 连携)），
-        // 目标受伤倍率逐目标单独相乘。
+        // 直伤路径与 GAS 通道同口径（见 DamageScaling）：增伤 + 目标受伤增加同桶加算，连携单独乘算。
         var sourceDealtScale =
             CombatGasBridge.ResolveTargetAsc(sim, source)?.GetCurrentValue(AttributeIds.DamageDealtScale) ?? 0f;
-        var baseAmount = amount * MathF.Max(0f, 1f + sourceDealtScale + sim.CurrentChainBonus);
+        var chainMultiplier = DamageScaling.ChainMultiplier(sim.CurrentChainBonus);
 
         foreach (var target in targets)
         {
-            var dealt = baseAmount * MathF.Max(0f, 1f + DamagePipeline.ResolveTakenScale(sim, target));
+            var dealt = amount *
+                DamageScaling.CombineBonuses(sourceDealtScale, DamagePipeline.ResolveTakenScale(sim, target)) *
+                chainMultiplier;
 
             // 规格 §1.3：Team 直伤对账本只结算一次（不分槽逐次）。伤害包仍过规则管线，
             // 但目标不是槽位，分槽护盾类规则按 target.Index < 0 自然不匹配。

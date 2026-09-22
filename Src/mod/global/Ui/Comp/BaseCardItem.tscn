@@ -1,23 +1,22 @@
 [gd_scene format=4 uid="uid://c4e8o1dsbyc7e"]
 
-[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseCardItem.cs" id="1_o0l0o"]
+[ext_resource type="Script" uid="uid://bajxoml2ov0pu" path="res://Src/mod/global/Ui/Comp/BaseCardItem.cs" id="1_o0l0o"]
 [ext_resource type="Shader" uid="uid://bfvoqgxj4vsvf" path="res://Src/mod/global/Ui/Comp/BaseCardItem.gdshader" id="2_vsqsq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ytd70"]
+resource_local_to_scene = true
 shader = ExtResource("2_vsqsq")
 shader_parameter/colors = PackedVector4Array(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/color_count = 1
 shader_parameter/rotation = 0.0
 shader_parameter/radius = 0.5
 
-[node name="BaseCardItem" type="Control" unique_id=1269321399 node_paths=PackedStringArray("_trArt", "_trCardFrame", "_txtCardCost", "_txtCardType", "_txtCardVal", "_crAttr")]
+[node name="BaseCardItem" type="Control" unique_id=1277819813 node_paths=PackedStringArray("_trArt", "_trCardFrame", "_txtCardCost", "_txtCardType", "_txtCardVal", "_crAttr", "_overlayMask", "_overlayLabel")]
 custom_minimum_size = Vector2(160, 208)
 layout_mode = 3
-anchor_right = 0.1388889
-anchor_bottom = 0.32098764
-offset_bottom = 1.5258789e-05
-grow_horizontal = 2
-grow_vertical = 2
+anchors_preset = 0
+offset_right = 160.0
+offset_bottom = 208.0
 script = ExtResource("1_o0l0o")
 _trArt = NodePath("CArtRoot/TRArt")
 _trCardFrame = NodePath("TRCardFrame")
@@ -25,83 +24,141 @@ _txtCardCost = NodePath("TCost")
 _txtCardType = NodePath("TType")
 _txtCardVal = NodePath("TCardVal")
 _crAttr = NodePath("CRAttr")
-metadata/_edit_use_anchors_ = true
+_overlayMask = NodePath("OverlayMask")
+_overlayLabel = NodePath("OverlayMask/OverlayLabel")
 
-[node name="CRPlaceholder" type="ColorRect" parent="." unique_id=1632414068]
+[node name="CardFace" type="Panel" parent="." unique_id=1423389437]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
-[node name="CRBg" type="ColorRect" parent="." unique_id=166304840]
-layout_mode = 0
-anchor_left = 0.05
-anchor_top = 0.03846154
-anchor_right = 0.95
-anchor_bottom = 0.96153843
-color = Color(0.07510843, 0.1482965, 0.28160223, 0.7647059)
-metadata/_edit_use_anchors_ = true
-
-[node name="CArtRoot" type="Control" parent="." unique_id=811903462]
+[node name="CArtRoot" type="Control" parent="." unique_id=943228737]
 clip_contents = true
-anchors_preset = 0
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-metadata/_edit_use_anchors_ = true
+offset_left = 8.0
+offset_top = 34.0
+offset_right = -8.0
+offset_bottom = -34.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
-[node name="TRArt" type="TextureRect" parent="CArtRoot" unique_id=1029861998]
+[node name="ArtSunken" type="Panel" parent="CArtRoot" unique_id=740037760]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
+
+[node name="TRArt" type="TextureRect" parent="CArtRoot" unique_id=1136501796]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 expand_mode = 1
 stretch_mode = 2
 
-[node name="TRCardFrame" type="TextureRect" parent="." unique_id=178255637]
+[node name="TRCardFrame" type="TextureRect" parent="." unique_id=125929799]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
-[node name="TCost" type="Label" parent="." unique_id=895413140]
-layout_mode = 0
-anchor_left = 0.25
-anchor_top = 0.03846154
-anchor_right = 0.95
-anchor_bottom = 0.15384616
-horizontal_alignment = 1
-metadata/_edit_use_anchors_ = true
-
-[node name="TType" type="Label" parent="." unique_id=1436998973]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 0.05
-anchor_top = 0.85096157
-anchor_right = 0.2
-anchor_bottom = 0.96153843
-grow_vertical = 0
-metadata/_edit_use_anchors_ = true
-
-[node name="TCardVal" type="Label" parent="." unique_id=1976366092]
-layout_mode = 0
-anchor_left = 0.4
-anchor_top = 0.85096157
-anchor_right = 0.95
-anchor_bottom = 0.96153843
-horizontal_alignment = 2
-metadata/_edit_use_anchors_ = true
-
-[node name="CRAttr" type="ColorRect" parent="." unique_id=1587445200]
+[node name="CRAttr" type="ColorRect" parent="." unique_id=448672828]
 material = SubResource("ShaderMaterial_ytd70")
-layout_mode = 0
-anchor_left = 0.05
-anchor_top = 0.03846154
-anchor_right = 0.2
-anchor_bottom = 0.15384616
-metadata/_edit_use_anchors_ = true
+layout_mode = 1
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 32.0
+offset_bottom = 30.0
+mouse_filter = 2
+
+[node name="TCost" type="Label" parent="." unique_id=1783167384]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -70.0
+offset_top = 6.0
+offset_right = -10.0
+offset_bottom = 30.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="TType" type="Label" parent="." unique_id=35501074]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -30.0
+offset_right = 90.0
+offset_bottom = -6.0
+grow_vertical = 0
+theme_type_variation = &"Caption"
+vertical_alignment = 1
+clip_text = true
+
+[node name="TCardVal" type="Label" parent="." unique_id=472902344]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = -30.0
+offset_right = -10.0
+offset_bottom = -6.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 18
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="OverlayMask" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.827, 0.757, 0.627, 0.86)
+
+[node name="OverlayLabel" type="Label" parent="OverlayMask"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_right = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.227, 0.18, 0.145, 1)
+theme_override_font_sizes/font_size = 16
+text = ""
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+

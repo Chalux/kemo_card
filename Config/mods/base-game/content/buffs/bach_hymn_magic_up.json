@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.bach_hymn_magic.name",
+  "descId": "buff.bach_hymn_magic.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ]
+}
