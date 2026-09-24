@@ -4,6 +4,7 @@ using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Effects;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.StateMachine;
@@ -46,6 +47,7 @@ public sealed class CombatStateMachine
         ArgumentNullException.ThrowIfNull(simulation);
 
         var team = simulation.PlayerTeam;
+        simulation.Presentation.Emit(new BattleStartedEvent());
         team.SharedHpLocked = true;
         try
         {
@@ -67,8 +69,8 @@ public sealed class CombatStateMachine
 
         team.FreezeAndFillSharedHp();
 
-        foreach (var character in team.Characters)
-            character.DrawWithReshuffle(CombatConstants.HandSlotCount, simulation.DrawRng);
+        for (var i = 0; i < team.Characters.Count; i++)
+            PresentationEmitter.DrawAndEmit(simulation, i, CombatConstants.HandSlotCount);
 
         // 敌人开战 buff：内容在 EnemyDto.buffRefs 声明（木桩的"每回合回血"等）。
         // 必须在 onWaveStart / 首个 onTurnStart 之前挂载，否则第一次钩子会漏。
@@ -78,7 +80,8 @@ public sealed class CombatStateMachine
         // 阶层（波次）1 开始：开战被动已由 BattleStartSkills 挂载，onWaveStart 在此补发一次。
         simulation.Buffs.FireWaveStart(simulation);
 
-        TransitionTo(ECombatPhase.Player);
+        // 经仿真切相位：相位变化的表现事件（PhaseChanged）由 CombatSimulation.TransitionTo 统一记录。
+        simulation.TransitionTo(ECombatPhase.Player);
         simulation.DomainManager.FireTurnStartHooks();
         simulation.Buffs.FireTurnStart(simulation);
         PlayerPhasePipeline.Run(simulation, isFirstPlayerPhase: true);
@@ -249,6 +252,7 @@ public sealed class CombatStateMachine
             sequence,
             paid));
         slot.Mark(sequence);
+        PresentationEmitter.EmitEnergy(simulation, command.CharacterIndex);
         return new CombatApplyResult(true);
     }
 
@@ -493,6 +497,8 @@ public sealed class CombatStateMachine
             if (string.Equals(slot.RuntimeInstanceId, entry.RuntimeInstanceId, StringComparison.Ordinal))
                 slot.Unmark();
         }
+
+        PresentationEmitter.EmitEnergy(simulation, entry.CharacterIndex);
     }
 
     private static bool MatchesCancelCommand(QueuedCardEntry entry, CancelQueuedCardCommand command)
@@ -561,6 +567,13 @@ public sealed class CombatStateMachine
         // 充能球回合结束统计口径：牌一旦进入结算就算"本回合打出"（含随后的空放）。
         simulation.RecordPlayedCard(entry.CardId, entry.CharacterIndex);
 
+        var settleSlotIndex = FindHandSlotIndex(simulation, entry);
+        simulation.Presentation.Emit(new CardSettleStartedEvent(
+            entry.CharacterIndex,
+            settleSlotIndex,
+            entry.CardId,
+            entry.Targets));
+
         // 槽位 buff（槽位伤害 / 充能）在此手牌结算前触发（打出即触发，含后续空放）。
         FireSlotBuffsForEntry(simulation, entry);
 
@@ -598,6 +611,23 @@ public sealed class CombatStateMachine
         // 单卡连携上下文必须撑到本钩子之后：ChainTierAtLeast 读的就是"这张牌所属属性的连携人头数"。
         simulation.Buffs.FireCardSettled(simulation, entry.CharacterIndex);
         simulation.SetChainCardElementFlags(0);
+        simulation.Presentation.Emit(new CardSettleEndedEvent(entry.CharacterIndex, settleSlotIndex, entry.CardId));
+    }
+
+    /// <summary>按 RuntimeInstanceId 定位该牌当前所在手牌槽；找不到（已被弃）返回 -1。</summary>
+    private static int FindHandSlotIndex(CombatSimulation simulation, QueuedCardEntry entry)
+    {
+        var characters = simulation.PlayerTeam.Characters;
+        if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
+            return -1;
+
+        foreach (var slot in characters[entry.CharacterIndex].HandSlots)
+        {
+            if (string.Equals(slot.RuntimeInstanceId, entry.RuntimeInstanceId, StringComparison.Ordinal))
+                return slot.SlotIndex;
+        }
+
+        return -1;
     }
 
     /// <summary>按 RuntimeInstanceId 找到打出卡牌所在的槽位并触发其槽位 buff 钩子。</summary>
@@ -624,7 +654,15 @@ public sealed class CombatStateMachine
         if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
             return;
 
-        characters[entry.CharacterIndex].MoveHandCardToGraveyard(entry.RuntimeInstanceId);
+        var slotIndex = FindHandSlotIndex(simulation, entry);
+        if (characters[entry.CharacterIndex].MoveHandCardToGraveyard(entry.RuntimeInstanceId))
+        {
+            simulation.Presentation.Emit(new CardDiscardedEvent(
+                entry.CharacterIndex,
+                slotIndex,
+                entry.CardId,
+                EDiscardChannel.CardExecution));
+        }
     }
 
     private static void ExecuteEnemyPhase(CombatSimulation simulation)
@@ -649,7 +687,9 @@ public sealed class CombatStateMachine
             if (skillId is null)
                 continue;
 
+            simulation.Presentation.Emit(new EnemyActionStartedEvent(enemyIndex, skillId));
             ExecuteEnemySkill(simulation, enemyIndex, skillId);
+            simulation.Presentation.Emit(new EnemyActionEndedEvent(enemyIndex, skillId));
         }
 
         simulation.Rules.DispatchTurnEnd(simulation.CreateContext());
@@ -950,34 +990,12 @@ public sealed class CombatStateMachine
         };
     }
 
+    /// <summary>合法目标口径与界面共用一份（<see cref="CombatTargeting.CollectLegalTargets"/>）。</summary>
     private static List<CombatTargetRef> CollectLegalTargets(
         CombatSimulation simulation,
         ETargetSide side,
-        int sourceCharacterIndex)
-    {
-        var legal = new List<CombatTargetRef>();
-        if (side is ETargetSide.Self or ETargetSide.Ally or ETargetSide.Any)
-        {
-            for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
-            {
-                if (side == ETargetSide.Self && i != sourceCharacterIndex)
-                    continue;
-                legal.Add(new CombatTargetRef(ECombatSide.Player, i));
-            }
-        }
-
-        if (side is ETargetSide.Enemy or ETargetSide.Any)
-        {
-            for (var i = 0; i < simulation.EnemyTeam.Enemies.Count; i++)
-            {
-                if (!simulation.EnemyTeam.Enemies[i].IsAlive)
-                    continue;
-                legal.Add(new CombatTargetRef(ECombatSide.Enemy, i));
-            }
-        }
-
-        return legal;
-    }
+        int sourceCharacterIndex) =>
+        CombatTargeting.CollectLegalTargets(simulation, side, sourceCharacterIndex);
 
     private static bool IsValidTarget(
         CombatSimulation simulation,

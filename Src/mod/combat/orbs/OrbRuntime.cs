@@ -3,6 +3,7 @@ using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Effects;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.Orbs;
@@ -67,6 +68,7 @@ public sealed class OrbRuntime
                 break;
 
             granted = true;
+            simulation.Presentation.Emit(new OrbGainedEvent(orbTypeId, producerIndex, Queue.Count));
             if (Queue.IsFull)
                 Trigger(simulation, automatic: true);
         }
@@ -192,6 +194,11 @@ public sealed class OrbRuntime
         var drained = Queue.DrainAll();
         if (drained.Count == 0)
             return OrbTriggerResult.NotTriggered("充能球队列为空。");
+
+        // 表现事件在结算前记录：界面先播"整排闪光/清空"，其后的伤害事件按 FIFO 逐球跟随。
+        simulation.Presentation.Emit(new OrbsTriggeredEvent(
+            [.. drained.Select(orb => orb.OrbTypeId)],
+            automatic));
 
         var cleared = new Dictionary<string, int>(StringComparer.Ordinal);
         var producers = new List<int>();

@@ -1,3 +1,4 @@
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.StateMachine;
@@ -22,10 +23,11 @@ public static class PlayerPhasePipeline
                 character.RegenCurrentEnergy();
 
             character.RefillAvailableEnergy();
+            PresentationEmitter.EmitEnergy(simulation, characterIndex);
             character.TickSkillCounter();
 
             if (!isFirstPlayerPhase)
-                character.DrawWithReshuffle(character.ComputeDrawCount(), simulation.DrawRng);
+                PresentationEmitter.DrawAndEmit(simulation, characterIndex, character.ComputeDrawCount());
 
             // 抽牌数量修正只作用于本阶段的抽牌步骤，用完即弃。
             character.ClearDrawModifiers();

@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/CardPileCmp.cs" id="1_script"]
+
+[node name="CardPileCmp" type="Control" node_paths=PackedStringArray("_lblTitle", "_lblCount")]
+custom_minimum_size = Vector2(96, 130)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 96.0
+offset_bottom = 130.0
+mouse_filter = 2
+script = ExtResource("1_script")
+_lblTitle = NodePath("VBox/Title")
+_lblCount = NodePath("VBox/Count")
+
+[node name="Face" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 8.0
+offset_right = -6.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="Title" type="Label" parent="VBox"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="Count" type="Label" parent="VBox"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 28
+text = "0"
+horizontal_alignment = 1

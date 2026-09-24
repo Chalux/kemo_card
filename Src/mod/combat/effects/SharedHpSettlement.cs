@@ -1,6 +1,7 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Gas;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.Effects;
@@ -127,7 +128,10 @@ internal static class SharedHpSettlement
 
         if (delta < 0f)
         {
+            // GE 把账本写成回血：走与其它治疗相同的表现记账（写入量可能被上限截断，按实际回血量记）。
+            var before = team.SharedHpExact;
             team.HealShared(-delta);
+            PresentationEmitter.EmitHeal(simulation, source, target, team.SharedHpExact - before);
             return;
         }
 
@@ -142,6 +146,7 @@ internal static class SharedHpSettlement
     /// <summary>
     /// 敌方（及其它非玩家侧）目标：GAS 已经直接写进目标 Health，这里按写入前后的差值补一次规则管线；
     /// 规则改了数额就按最终数额回写（例如槽位护盾把伤害压到 1，或完全抵消到 0）。
+    /// 差值为负即 GE 写成了回血：补一条 <c>HealedEvent</c> 后直接返回（回血不过伤害规则）。
     /// </summary>
     private static void RunOnTarget(
         CombatSimulation simulation,
@@ -162,7 +167,14 @@ internal static class SharedHpSettlement
         var before = asc.GetCurrentValue(AttributeIds.Health);
         apply();
         var delta = before - asc.GetCurrentValue(AttributeIds.Health);
-        if (delta <= 0f)
+        if (delta < 0f)
+        {
+            // GE 把目标写成回血：补一条治疗表现事件，与其它治疗通道口径一致。
+            PresentationEmitter.EmitHeal(simulation, source, target, -delta);
+            return;
+        }
+
+        if (delta == 0f)
             return;
 
         var applied = DamagePipeline.RunBefore(simulation, source, target, delta, effectId, kind, element);

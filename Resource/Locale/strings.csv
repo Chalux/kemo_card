@@ -320,3 +320,36 @@ UI_GLOSSARY_ORB_BODY_ELEMENTAL,元素球：触发时对全部存活敌人造成�
 UI_GLOSSARY_ORB_BODY_PHYSICAL,物理球：按物理攻击计算（每球 {0} 点 + 物攻的 {1}%）；对全部存活敌人结算且不吃防御。,Physical orb. Scales with physical attack (flat {0} + {1}% of it) against every living enemy and ignores defense.
 UI_GLOSSARY_ORB_BODY_MAGICAL,魔法球：按魔法攻击计算（每球 {0} 点 + 魔攻的 {1}%）；对全部存活敌人结算且不吃防御。,Magic orb. Scales with magic attack (flat {0} + {1}% of it) against every living enemy and ignores defense.
 UI_GLOSSARY_ORB_BODY_SUPPORT,支援球：不造成伤害；触发时改为执行自身携带的效果（效果来源为该球的产球者）。,Support orb. It deals no damage and instead runs its own effects with the orb producer as the source.
+UI_COMBAT_PAUSE,暂停,Pause
+UI_COMBAT_SHARED_HP,队伍生命,Team HP
+UI_COMBAT_DECK,卡组,Deck
+UI_COMBAT_GRAVEYARD,墓地,Graveyard
+UI_COMBAT_CONFIRM,确定,Confirm
+UI_COMBAT_UNCONFIRM,取消确认,Unconfirm
+UI_COMBAT_PLAY_CONFIRM,确认出牌,Play Card
+UI_COMBAT_CARD_MARKED,已标记,Queued
+UI_COMBAT_CONFIRMED,已确认,Confirmed
+UI_COMBAT_SEALED,封印,Sealed
+UI_COMBAT_NO_CONTROL,无控制权,Not Yours
+UI_COMBAT_STAT_ATTACK,物攻·魔攻,P.ATK · M.ATK
+UI_COMBAT_STAT_DEFENSE,物防·魔防,P.DEF · M.DEF
+UI_COMBAT_STAT_HEAL,回复量,Heal Power
+UI_COMBAT_ENERGY,能量 {0} / {1}（上限 {2}）,Energy {0} / {1} (max {2})
+UI_COMBAT_SKILL_COUNTER,技能 {0} / {1},Skill {0} / {1}
+UI_COMBAT_TIP_HP,剩余生命 {0} / {1},HP {0} / {1}
+UI_COMBAT_TIP_ATTACK,物攻·魔攻 {0},P.ATK · M.ATK {0}
+UI_COMBAT_TIP_DEFENSE,物防·魔防 {0},P.DEF · M.DEF {0}
+UI_COMBAT_HINT_PICK_TARGET,请选择目标（ESC 取消）,Pick a target (ESC to cancel)
+UI_COMBAT_HINT_CONFIRM_PLAY,确认要打出这张牌吗？,Play this card?
+UI_COMBAT_HINT_PLAYING,结算中……,Resolving...
+UI_COMBAT_ALREADY_CONFIRMED,该角色已确认，请先取消确认。,This character has confirmed. Unconfirm first.
+UI_COMBAT_ILLEGAL_TARGET,不是合法目标。,Not a legal target.
+UI_COMBAT_COMMAND_FAILED,操作失败：{0},Action failed: {0}
+UI_COMBAT_PHASE_PLAYER,第 {0} 回合,Turn {0}
+UI_COMBAT_PHASE_ENEMY,敌方行动,Enemy Turn
+UI_COMBAT_PHASE_VICTORY,胜利,Victory
+UI_COMBAT_PHASE_DEFEAT,失败,Defeat
+UI_COMBAT_RESULT_VICTORY_TITLE,战斗胜利,Victory
+UI_COMBAT_RESULT_VICTORY_DESC,敌人已全部击破。,All enemies have been defeated.
+UI_COMBAT_RESULT_DEFEAT_TITLE,战斗失败,Defeat
+UI_COMBAT_RESULT_DEFEAT_DESC,队伍生命归零，将回到战前状态。,Team HP reached zero. Returning to the pre-battle state.

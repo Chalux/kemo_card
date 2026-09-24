@@ -5,6 +5,7 @@ using KemoCard.Frame.Gas;
 using KemoCard.Frame.Gas.Executions;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Gas;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.StateMachine;
 
@@ -76,7 +77,15 @@ public sealed class GameplayEffectApplicator
 
         // 吸血只对"玩家来源 → 非玩家目标"成立：账本是玩家侧的血，敌人打自己不该给玩家回血。
         if (def.LifestealScale > 0f && damageDealt > 0f && source.Side == ECombatSide.Player)
+        {
+            var before = simulation.PlayerTeam.SharedHpExact;
             simulation.PlayerTeam.HealShared(damageDealt * def.LifestealScale);
+            PresentationEmitter.EmitHeal(
+                simulation,
+                source,
+                CombatTargetRef.PlayerTeam,
+                simulation.PlayerTeam.SharedHpExact - before);
+        }
 
         return applied;
     }

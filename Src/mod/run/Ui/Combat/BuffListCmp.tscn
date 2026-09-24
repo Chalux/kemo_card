@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/BuffListCmp.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffIconCmp.tscn" id="2_icon"]
+
+[node name="BuffListCmp" type="Control" node_paths=PackedStringArray("_row")]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 120.0
+offset_bottom = 30.0
+mouse_filter = 2
+script = ExtResource("1_script")
+_row = NodePath("Row")
+_iconScene = ExtResource("2_icon")
+
+[node name="Row" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 4

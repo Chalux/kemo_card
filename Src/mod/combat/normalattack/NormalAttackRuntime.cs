@@ -2,6 +2,7 @@ using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Gas;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Rules;
 using KemoCard.Mod.Combat.Runtime;
 
@@ -150,8 +151,11 @@ public sealed class NormalAttackRuntime
             asc.GetCurrentValue(AttributeIds.NormalAttackDamageDealtScale);
         var damage = 0f;
         var hitCount = 0;
+        var targets = AliveEnemies(simulation);
+        // 表现事件先于伤害记录：界面先播"前冲"，随后的 DamageDealt 事件逐目标跟随。
+        simulation.Presentation.Emit(new NormalAttackStrikeEvent(characterIndex, kind, attacker.Element, isOwner, targets));
 
-        foreach (var target in AliveEnemies(simulation))
+        foreach (var target in targets)
         {
             var defense = ResolveDefense(simulation, target, kind);
             var baseDamage = MathF.Max(0f, (attack * percent * CombatConstants.NormalAttackScale) - defense);

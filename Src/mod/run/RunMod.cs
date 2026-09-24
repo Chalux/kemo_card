@@ -187,6 +187,11 @@ public sealed partial class RunMod : BaseMod
         yield return UIRegistration.Dialog(FeatureId, RunUiIds.PauseMenu, "Src/mod/run/Ui")
             with
         { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
+
+        // 战斗界面：随一场战斗存亡（敌人节点按当场战斗动态生成），关闭即销毁。
+        yield return UIRegistration.Window(FeatureId, RunUiIds.Combat, "Src/mod/run/Ui/Combat")
+            with
+        { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
     }
 
     public RunDto ToDto()

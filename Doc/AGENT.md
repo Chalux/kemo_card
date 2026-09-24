@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-09-21（活规格收敛为 6 份：新增 Global 规格，框架与内容域各自合并）
+**最后修订**：2026-09-24（新增硬性约定「战斗逻辑与表现分离」；Run 规格承载战斗界面）
 
 ---
 
@@ -46,6 +46,7 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 - **本地化**：面向用户的文案必须用翻译键；场景 `text` 填键；C# 用 `Localization.Tr`。新增键写入 `Resource/Locale/strings.csv`（及 mod CSV）。日志 / `GD.Print` 等可用明文。
 - **不创建 `.uid` 文件**（引擎自动生成）。
 - **Mod 脚本归属**：mod 脚本源（TS，`scripts-src/`）必须放在 mod 自己的文件夹 `Config/mods/<mod>/scripts-src/`，**不放 `Src/typescript/`**；esbuild 编译到同 mod `scripts/`，产物随仓库提交。`Src/typescript/` 只保留 agent builtins 与构建工具。
+- **战斗逻辑与表现分离**：`Src/mod/combat` 只在编排层 `simulation.Presentation.Emit(...)` 记录值事件（record，不持运行时对象引用、不引用 Godot）；动画只在 `Src/mod/run/Ui/Combat/Presentation/CombatAnimator` 内按事件编排，界面播完后以 `SyncFromState` 对账。不得让战斗逻辑直接驱动节点，也不得在界面里重算战斗结果（见战斗规格 §16、Run 规格 §14）。
 - **连续大段同业务代码**（>5 个函数）用 `#region` / `#endregion`。
 - **Git 提交说明**：简体中文；优先写清变更意图（为什么改），专有名词/路径可保留原文。  
   例：`补充音效管理器，统一 BGM 与 UI 点击音播放入口`；避免 `Add sound manager` / `fix bug`。
@@ -63,8 +64,8 @@ Godot 4.6 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 | # | 规格 | 承载 |
 |---|------|------|
 | 1 | **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md) | 产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、潜能/被动边界 |
-| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、SharedHp、能量/抽牌、标记队列、主动/蓄力、指令管线、伤害包管线、普攻（次数/追打/专项倍率）、充能球、buff 运行时、连携、槽位效果、战斗条件 |
-| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档闭环、队伍编辑、ESC 系统菜单、团体潜能实现（与总规格冲突时以总规格为准） |
+| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、SharedHp、能量/抽牌、标记队列、主动/蓄力、指令管线、伤害包管线、普攻（次数/追打/专项倍率）、充能球、buff 运行时、连携、槽位效果、战斗条件、**表现事件流（§16）** |
+| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档闭环、队伍编辑、ESC 系统菜单、**战斗界面 `CombatWin` 与表现管线（§14）**、团体潜能实现（与总规格冲突时以总规格为准） |
 | 4 | **Global** — [global-mod-design](superpowers/specs/2026-09-21-global-mod-design.md) | `Src/mod/global`：主菜单、图鉴、卡牌/角色详情、设置、词典、界面主题（羊皮纸）、Toast、关键词提示、界面清单 |
 | 5 | **内容与数据** — [content-mod-manager-design](superpowers/specs/2026-05-17-content-mod-manager-design.md) | 内容 Mod 管道 + 内容定义 DTO（卡/技能/效果/Buff + 角色/敌人/战斗/事件/道具）+ 角色与战斗实例 |
 | 6 | **UI 与运行时** — [ui-manager-design](superpowers/specs/2026-05-15-ui-manager-design.md) | `Src/frame`：UI 管理器与 BaseUI、**界面归属功能 Mod + BindingScope 统一订阅生命周期**（`BindingScope` / 框架级 `OnExitTree`）、事件分发器、条件判断（Persistent/Combat 双域 CondType、内联 JSON 组合、Explain；已接 `StoryDto.unlock` 与效果 `conditions`）、Mod 脚本运行时（PuerTS ScriptEnv） |

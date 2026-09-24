@@ -1,7 +1,7 @@
 # kemo_card：战斗系统规格
 
 **日期**：2026-07-21  
-**最后修订**：2026-09-21（战斗域下级规格合并）  
+**最后修订**：2026-09-24（新增 §16 表现事件流；充能球 UI 迁入 CombatWin）  
 **状态**：权威（grilling 冻结；战斗域下级规格已于 2026-09-21 合并归档，本文为战斗域**唯一权威文档**）  
 **范围**：战斗阶段机、共享 HP、能量与抽牌、手牌标记队列、主动/蓄力技能、封印、弃牌通道、指令与回合开始管线、玩家侧伤害/治疗模型；**并**（2026-09-21 合并）充能球（元素球）系统、普通攻击、Buff 运行时与槽位效果、连携档位、伤害维度与 `attackScale`、Combat 条件域、新增取值与槽位机制（`PartyCountScaled` / 手牌槽费用归零 / 封印免疫）  
 **非范围**（正文归其它权威规格，本文只留指针）：团体潜能模型（团队池、消费与返还、联机表决）、种族收敛、常驻天赋移除、卡组与卡牌数值预算、稀有度档名、角色简介与被动命名、正式战斗 UI 与美术  
@@ -370,7 +370,7 @@ activeSkillChain: [
 
 ## 9. 开放项
 
-- 敌人 AI / 意图 UI。
+- 敌人 AI / 意图 UI（`EnemyUnit.IntentSkillId` 已有，界面尚未展示）。
 - `costScaling` 与动态费用接入后的展示与 `paid` 规则细项。
 - 非 Energy 费用类型专项（含 Health=SharedHp 的预扣/退费细则）。
 - ~~Team/Shared 目标枚举落点~~ → 已决议（2026-07-28）：`ETargetScope` 扩展 `Team`，见 1.3。
@@ -390,6 +390,7 @@ activeSkillChain: [
 - 2026-09-19：充能球（元素球）系统、Buff 运行时 / 槽位效果 / 连携、伤害包管线统一（三条通道）——原规格已归档，正文见 §11、§13。
 - 2026-09-20：伤害维度拆成 `Kind` + `Element`；普通攻击实装（原规格已归档，正文见 §12）；「回合开始每回合只发生一次」修正（§2.1）。
 - 2026-09-21：**战斗域下级规格合并进本文**（原 4 份规格归档，映射见文首「本文承载的下级规格」）；伤害缩放统一为「增伤与受伤增加一律加算，只有连携乘算」（§1.3 / §14.11.2）；GAS 通道魔法伤害与 `attackScale` 落地（§14.5）；普攻次数 / 追打 / 专项倍率（§14.6）；Combat 条件域启用（§14.7）；`PartyCountScaled` / 手牌槽费用归零 / 封印免疫（§14.8）；充能互斥与 `OrbDamageScale` 掩码（§13.2 / §14.11.1）。
+- 2026-09-24：新增 §16 **表现事件流**（`CombatSimulation.Presentation`，逻辑只记事件、界面事后播放）；`CombatTargeting` 公开合法目标 / 自动目标解析供界面使用；充能球 UI 落位改为 `CombatWin.OrbQueueCmp`（§11.6 / §11.8）；§12.8 / §13.7 后置项清账。
 
 ---
 
@@ -469,8 +470,8 @@ activeSkillChain: [
 
 ### 11.6 UI（原 §6）
 
-- 正式战斗界面尚未实装（后置项），因此球指示器暂挂 **Run 主界面右上角**（`RunMainWin` 的 `OrbPanel`）：标题 + 各球数量（按球类型的翻译名）+ 提示（满 7 自动 / ≥3 可手动）+ 触发按钮（球数不足时禁用）。
-- 触发按钮走正式命令管线；失败弹 Toast。
+- **2026-09-24 起**球指示器位于正式战斗界面 `CombatWin` 右上角（暂停按钮下方）的 `OrbQueueCmp`：7 个球位按 FIFO 顺序上色（元素球取元素色，物理 / 魔法球取主题色）+ `n/7` + 提示（满 7 自动 / ≥3 可手动）+ 触发按钮（球数不足时禁用）。`RunMainWin` 右上角的过渡 `OrbPanel` 已移除。
+- 触发按钮走正式命令管线；失败弹 Toast。球获得 / 触发的动画由 `OrbGainedEvent` / `OrbsTriggeredEvent` 驱动（§16）。
 - 调试面板：`GrantOrb`（指定球类型 / 数量 / 产球者槽位）、`TriggerOrbs`，`InspectBattle` 输出 `充能球 n/7（各类型数量；可否主动触发）`。
 - 球无美术图标（用文字与主题配色），等美术替换。
 
@@ -504,7 +505,7 @@ activeSkillChain: [
 
 ### 11.8 明确后置项（原 §8）
 
-- 正式战斗界面（球的图标化展示与触发交互从 Run 主界面迁入）。
+- ~~正式战斗界面（球的图标化展示与触发交互从 Run 主界面迁入）~~ → 2026-09-24 已落地（`CombatWin.OrbQueueCmp`，§11.6）。
 - 球的正式美术（图标 / 特效 / 数字动画）。
 - 特殊球的正式内容（当前只有内建 6 种；注册通道已就绪）。
 - 球与"元素师"角色定位的联动（`ERole.Elementist` 目前只是角色枚举注释）。
@@ -588,7 +589,7 @@ activeSkillChain: [
 
 - 战斗层刻意不打日志（保持纯逻辑层无输出），改为在仿真上暴露状态：`simulation.NormalAttacks.LastResult`（槽位 / 角色定义 id / 类型 / 元素 / 命中数 / 总伤害）与 `ExecutionCount`。
 - Run 调试面板的「战斗检查」（`RunDebugService.InspectBattle`）输出：`普通攻击：本回合归槽位 N（累计 K 次）；上次 槽位/角色/类型/元素/命中/总伤`。
-- 正式战斗 UI（伤害飘字、回合结算摘要）仍属后置项。
+- 伤害飘字 2026-09-24 已由 `DamageDealtEvent` / `NormalAttackStrikeEvent` 驱动落地（§16）；回合结算摘要仍属后置项。
 - 2026-09-21 扩展后的结果结构（含追打与多轮明细）见 §14.6.4。
 
 ### 12.9 2026-09-21 扩展（莱因哈特套件）（原 §9）
@@ -726,7 +727,7 @@ activeSkillChain: [
 ### 13.7 明确后置项（原 §7）
 
 - 联机表决网络同步（`IPotentialProposalApprover` 联机实现）
-- 正式战斗界面（槽位 buff / 连携的玩家侧 UI；当前可视化在 RunDebugDlg"战斗检查"）
+- 正式战斗界面：槽位 buff 已在 `CombatWin.HandSlotCmp` 上以图标展示（2026-09-24）；**连携档位显示**仍后置（当前可视化在 RunDebugDlg"战斗检查"）
 - chalux 正式卡组（2026-09-21 已落地四张专属卡；占位 strike/strike_plus 已删除）
 - **潜能消费玩家 UI**：解锁/返还目前只有 RunDebugDlg 调试面板可达，正式的潜能消费界面未实装
 - **重复角色正式奖励管线**：+20 转化已接 `RunController.AddToCharacterPool`，但角色获取（战斗奖励/商店/事件）发放重复角色时的调用方接线未实装
@@ -1065,3 +1066,43 @@ mod 侧统一入口是 `Src\mod\combat\effects\DamageScaling.cs`（直伤 / 普�
 2. `turing_radix_advance_ally` —— `targetFilter{ elementAny:[Red], raceAll:[Human,Academic], excludeSelf:true }` 挂 `turing_radix_advance_mark`（1 回合 / `Refresh`，`onApply` → `GainResource{skillcounter, 1}`）。
 
 > 主动技与卡「术演算法-α」**各持一份标记**：两个来源在同一回合各自推进 1 次。卡面的"（不叠加）"只约束这张卡自己（同一张卡重复投放因 `Refresh` 不重发 `onApply` 而只推进一次）。
+
+---
+
+## 16. 表现事件流（逻辑 / 表现分离）（2026-09-24）
+
+**目的**：战斗逻辑（`Src/mod/combat`，纯 C#）与界面动画彻底分离。逻辑执行时**只记录事件**，不知道界面存在；界面事后取走事件、自行安排动画（如「角色移动到目标面前攻击再回来」），播完再与模拟器状态对账。
+
+### 16.1 逻辑侧契约
+
+- `CombatSimulation.Presentation`（`CombatPresentationLog`）**始终存在**（不是构造参数）；`Emit(event)` 追加，`Drain()` 取走并清空，`Count` 只读。
+- 事件类型全部是 `Src/mod/combat/presentation/` 下的 **不可变 record**，**只携带值**（索引、id、数值、`CombatTargetRef`、`BuffHolderRef`），**不得**持有 `EnemyUnit` / `CharacterBattleInstance` / `BuffInstance` 等运行时对象引用，也**不得**引用 Godot 类型。
+- 发射点只允许在**已有编排层**插入一行 `Emit`，不改变玩法顺序与数值；单测 `CombatPresentationLogTests` 守卫事件顺序。
+- 事件是**记账**而非回放：同一状态变化只发一次；界面按事件增量播放，播完以 `SyncFromState` 为准，事件缺漏不会导致界面与逻辑不一致。
+
+### 16.2 事件清单与发射点
+
+| 事件 | 载荷 | 发射点 |
+|---|---|---|
+| `PhaseChangedEvent` | `From, To, TurnNumber` | `CombatStateMachine.TransitionTo`（相位真的变化时） |
+| `BattleStartedEvent` | — | `RunBattleStart` 开头 |
+| `WaveStartedEvent` | `WaveIndex` | `CombatSimulation.AdvanceToNextWave` 换敌后 |
+| `CardsDrawnEvent` | `CharacterIndex, [(SlotIndex, CardId)]` | `RunBattleStart` 开局抽满、`PlayerPhasePipeline.Run` 阶段抽牌（抽前后手牌对比） |
+| `CardDiscardedEvent` | `CharacterIndex, SlotIndex, CardId, Channel` | `DiscardSettledCard`（结算弃，`Channel = CardExecution`）与 §4.6 中途弃牌通道（按当时的 `CurrentDiscardChannel`） |
+| `CardSettleStartedEvent` / `CardSettleEndedEvent` | `CharacterIndex, SlotIndex, CardId, Targets` | `SettleQueuedCard` 首 / 尾 |
+| `DamageDealtEvent` | `Source, Target, Amount, Kind, Element, EffectId, TargetHpAfter, TargetMaxHp, TargetAlive` | `DamagePipeline.NotifyAfter`（唯一伤害 choke point；Amount ≤ 0 不发） |
+| `HealedEvent` | `Source, Target, Amount, HpAfter, MaxHp` | `CombatEffectExecutor.ApplyHeal`（账本 / 敌方两支）、`GameplayEffectApplicator` 吸血分支、`SharedHpSettlement.RunOnLedger` / `RunOnTarget`（GE 写入产生回血时补记；Amount ≤ 0 不发） |
+| `BuffAppliedEvent` / `BuffStacksChangedEvent` / `BuffRemovedEvent` | `Holder(BuffHolderRef), BuffId, Stacks` | `BuffRuntime.StackOrAdd`（新建 / 叠层 / 替换）、`Dispel`、`FireTurnEnd` 到期移除 |
+| `NormalAttackStrikeEvent` | `CharacterIndex, Kind, Element, IsOwnerStrike, Targets` | `NormalAttackRuntime.Strike` 每次打击**开始**（伤害循环之前：界面先播前冲，其后的 `DamageDealtEvent` 逐目标跟随） |
+| `EnemyActionStartedEvent` / `EnemyActionEndedEvent` | `EnemyIndex, SkillId` | `ExecuteEnemyPhase` 设 `IntentSkillId` 后 / `ExecuteEnemySkill` 返回后 |
+| `OrbGainedEvent` | `OrbTypeId, ProducerIndex, QueueCount` | `OrbRuntime.Grant` 入队成功后 |
+| `OrbsTriggeredEvent` | `[OrbTypeId...], Automatic` | `OrbRuntime.Trigger` 清空队列后、**结算前**（界面先整排闪光，其后的伤害事件按 FIFO 跟随） |
+| `EnergyChangedEvent` | `CharacterIndex, Current, Available, Max` | `PlayerPhasePipeline.Run` 灌能量后；`ApplyPlayCard` 扣费后；取消标记 / 封印退费后 |
+
+`BuffHolderRef(CombatTargetRef Target, int? HandSlotIndex)`：`HandSlotIndex` 非空表示手牌槽位容器（§13.2）。
+
+### 16.3 界面侧约定（实现在 Run 域，见 Run 规格「战斗界面」）
+
+- 宿主在每次 `TryApply` 成功后调用 `CombatSimulation.AdvanceAutomaticPhases()`（状态机只切相位，卡牌执行 / 敌方相位由宿主 `AdvancePhase` 推进；该方法一路推进到回到玩家阶段或终局），随后 `Drain()` 交 `CombatPresentationDirector` 顺序播放；播放期间锁输入（暂停除外）；队列空后 `SyncFromState()` 全量对账，再判胜负相位。
+- 未被动画实现处理的事件类型必须**零时长直接完成**，新增事件不得卡住队列。
+- 战斗层**仍不打日志**（§12.8）；`Presentation` 不是调试日志，调试面板继续用 `InspectBattle` 快照。

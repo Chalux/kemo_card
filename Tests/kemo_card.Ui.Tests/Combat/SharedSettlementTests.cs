@@ -3,6 +3,7 @@ using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Commands;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Rules;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.StateMachine;
@@ -199,6 +200,41 @@ public sealed class SharedSettlementTests
         Execute(sim, "effect.heal", [new CombatTargetRef(ECombatSide.Enemy, 0)]);
 
         Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(90), "敌人维持独立 HP 结算");
+    }
+
+    /// <summary>规格 §16.2：GE 通道写进账本的回血也要记一条 <c>HealedEvent</c>（不能只有数值没有飘字）。</summary>
+    [Test]
+    public void GameplayEffect_heal_on_the_ledger_emits_a_heal_event()
+    {
+        using var sim = Build();
+        Execute(sim, "effect.slot_damage", AllSlots);
+        sim.Presentation.Clear();
+        var before = sim.PlayerTeam.SharedHp;
+
+        Execute(sim, "effect.ge_heal", [CombatTargetRef.PlayerTeam]);
+
+        var healed = sim.Presentation.Drain().OfType<HealedEvent>().Single();
+        Assert.That(healed.Target, Is.EqualTo(CombatTargetRef.PlayerTeam));
+        Assert.That(healed.Amount, Is.EqualTo(20f));
+        Assert.That(healed.HpAfter, Is.EqualTo(sim.PlayerTeam.SharedHp));
+        Assert.That(healed.HpAfter, Is.EqualTo(before + 20));
+    }
+
+    /// <summary>GE 通道写进敌方单位的回血同样要记 <c>HealedEvent</c>（<c>RunOnTarget</c> 分支）。</summary>
+    [Test]
+    public void GameplayEffect_heal_on_an_enemy_emits_a_heal_event()
+    {
+        using var sim = Build();
+        var enemy = sim.EnemyTeam.Enemies[0];
+        enemy.ApplyDamage(30);
+        sim.Presentation.Clear();
+
+        Execute(sim, "effect.ge_heal", [new CombatTargetRef(ECombatSide.Enemy, 0)]);
+
+        var healed = sim.Presentation.Drain().OfType<HealedEvent>().Single();
+        Assert.That(healed.Target, Is.EqualTo(new CombatTargetRef(ECombatSide.Enemy, 0)));
+        Assert.That(healed.Amount, Is.EqualTo(20f));
+        Assert.That(healed.HpAfter, Is.EqualTo(enemy.CurrentHp));
     }
 
     #endregion
@@ -511,6 +547,16 @@ public sealed class SharedSettlementTests
                         ["damageGameplayEffectId"] = "ge.strike",
                     },
                 },
+                ["effect.ge_heal"] = new()
+                {
+                    Id = "effect.ge_heal",
+                    Kind = EEffectKind.Heal,
+                    Params = new Dictionary<string, object>
+                    {
+                        ["amount"] = 20,
+                        ["healGameplayEffectId"] = "ge.heal",
+                    },
+                },
             },
             enemies: new Dictionary<string, EnemyDto>
             {
@@ -530,6 +576,22 @@ public sealed class SharedSettlementTests
                     StackingPolicy = EStackingPolicy.None,
                     MaxStacks = 1,
                     Executions = [new ExecutionDefDto { Kind = "Damage", DamageType = "Physical" }],
+                },
+                ["ge.heal"] = new()
+                {
+                    Id = "ge.heal",
+                    DurationPolicy = EDurationPolicy.Instant,
+                    StackingPolicy = EStackingPolicy.None,
+                    MaxStacks = 1,
+                    Modifiers =
+                    [
+                        new AttributeModifierDefDto
+                        {
+                            AttributeId = AttributeIds.Health,
+                            Operation = EAttributeModifierOp.Add,
+                            Magnitude = new MagnitudeDefDto { Kind = EMagnitudeKind.Scalar, Scalar = 20f },
+                        },
+                    ],
                 },
             });
 

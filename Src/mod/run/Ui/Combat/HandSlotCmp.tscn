@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/HandSlotCmp.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="2_card"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffListCmp.tscn" id="3_buffs"]
+
+[node name="HandSlotCmp" type="Control" node_paths=PackedStringArray("_card", "_pendingFrame", "_slotBuffs", "_emptyHint")]
+custom_minimum_size = Vector2(136, 210)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 136.0
+offset_bottom = 210.0
+mouse_filter = 2
+script = ExtResource("1_script")
+_card = NodePath("Card")
+_pendingFrame = NodePath("PendingFrame")
+_slotBuffs = NodePath("SlotBuffs")
+_emptyHint = NodePath("EmptyHint")
+
+[node name="PendingFrame" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -4.0
+offset_top = -4.0
+offset_right = 4.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="EmptyHint" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Sunken"
+
+[node name="Card" parent="." instance=ExtResource("2_card")]
+visible = false
+custom_minimum_size = Vector2(136, 178)
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_right = 0.0
+offset_bottom = 178.0
+grow_horizontal = 2
+
+[node name="SlotBuffs" parent="." instance=ExtResource("3_buffs")]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -30.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2

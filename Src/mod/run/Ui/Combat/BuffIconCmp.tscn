@@ -1,0 +1,88 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/BuffIconCmp.cs" id="1_script"]
+
+[node name="BuffIconCmp" type="Control" node_paths=PackedStringArray("_icon", "_lblShort", "_lblStacks", "_lblTurns")]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 30.0
+offset_bottom = 30.0
+mouse_filter = 0
+script = ExtResource("1_script")
+_icon = NodePath("Icon")
+_lblShort = NodePath("Short")
+_lblStacks = NodePath("Stacks")
+_lblTurns = NodePath("Turns")
+
+[node name="Frame" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"Nameplate"
+
+[node name="Icon" type="TextureRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Short" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"OnDark"
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+
+[node name="Stacks" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -16.0
+offset_top = -6.0
+offset_right = 4.0
+offset_bottom = 8.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 11
+horizontal_alignment = 2
+
+[node name="Turns" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -6.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 10
+horizontal_alignment = 1

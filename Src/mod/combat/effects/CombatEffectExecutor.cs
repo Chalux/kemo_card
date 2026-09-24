@@ -7,6 +7,7 @@ using KemoCard.Frame.Gas.Executions;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Combat.Gas;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.Effects;
@@ -479,7 +480,9 @@ public sealed class CombatEffectExecutor
         {
             if (SharedHpSettlement.IsPlayerTeamLedger(target))
             {
+                var before = sim.PlayerTeam.SharedHpExact;
                 sim.PlayerTeam.HealShared(amount);
+                PresentationEmitter.EmitHeal(sim, source, target, sim.PlayerTeam.SharedHpExact - before);
                 continue;
             }
 
@@ -491,6 +494,7 @@ public sealed class CombatEffectExecutor
             var currentHealth = targetAsc.GetCurrentValue(AttributeIds.Health);
             var updatedHealth = MathF.Min(maxHealth, currentHealth + amount);
             targetAsc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, updatedHealth));
+            PresentationEmitter.EmitHeal(sim, source, target, MathF.Max(0f, updatedHealth) - currentHealth);
         }
     }
 

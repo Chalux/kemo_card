@@ -7,6 +7,7 @@ using KemoCard.Mod.Combat.Commands;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.NormalAttack;
 using KemoCard.Mod.Combat.Orbs;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Rules;
 using KemoCard.Mod.Combat.StateMachine;
 using KemoCard.Mod.Combat.Gas;
@@ -39,6 +40,12 @@ public sealed class CombatSimulation : IDisposable
 
     /// <summary>普通攻击运行时：每回合卡牌结算完成后自动执行一次（槽位轮转）。</summary>
     public NormalAttackRuntime NormalAttacks { get; }
+
+    /// <summary>
+    /// 表现事件日志（规格 §16）：逻辑只在编排层 <c>Emit</c> 值事件，界面 <c>Drain</c> 后自行安排动画。
+    /// 始终存在（不是构造参数），逻辑层不知道是否有人消费。
+    /// </summary>
+    public CombatPresentationLog Presentation { get; } = new();
 
     public string ModId { get; }
     public BattleDto? Battle { get; }
@@ -151,9 +158,27 @@ public sealed class CombatSimulation : IDisposable
 
     public CombatContext CreateContext() => new(this, TurnNumber);
 
-    public void TransitionTo(ECombatPhase phase) => _stateMachine.TransitionTo(phase);
+    public void TransitionTo(ECombatPhase phase)
+    {
+        var previous = _stateMachine.Phase;
+        _stateMachine.TransitionTo(phase);
+        if (previous != phase)
+            Presentation.Emit(new PhaseChangedEvent(previous, phase, TurnNumber));
+    }
 
     public void AdvancePhase() => _stateMachine.Advance(this);
+
+    /// <summary>
+    /// 宿主（战斗界面）在一条玩家指令成功后调用：把不需要玩家输入的相位（卡牌执行 → 敌方）一路推进，
+    /// 直到回到玩家阶段或战斗结束。表现事件在此期间持续记入 <see cref="Presentation"/>，界面事后统一播放。
+    /// </summary>
+    public void AdvanceAutomaticPhases()
+    {
+        // 每个自动相位各推进一次即回到 Player / 终局；守卫只是防御状态机异常时的死循环。
+        var guard = 0;
+        while (Phase is ECombatPhase.CardExecution or ECombatPhase.Enemy && guard++ < 8)
+            AdvancePhase();
+    }
 
     /// <summary>执行 BattleStart 管线（规格 §6.1），结束后停在首个玩家阶段。</summary>
     public void RunBattleStart() => _stateMachine.RunBattleStart(this);
@@ -354,6 +379,7 @@ public sealed class CombatSimulation : IDisposable
 
         EnemyTeam.ReplaceEnemies(enemies);
         TurnsIntoWave = 0;
+        Presentation.Emit(new WaveStartedEvent(CurrentWaveIndex));
         // 新波次的敌人是全新的实例（buff 容器为空）：必须重新挂载内容声明的开战 buff，
         // 否则 EnemyDto.buffRefs 只在第一波生效。顺序与 BattleStart 一致——先挂 buff 再发阶层钩子。
         ApplyEnemyInitialBuffs();

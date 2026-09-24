@@ -3,6 +3,7 @@ using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Ui;
+using KemoCard.Mod.Run.Ui.CombatUi;
 
 namespace KemoCard.Mod.Run.Ui;
 
@@ -43,6 +44,29 @@ public static class RunUiController
                 new RunCharacterDeckDlgPayload { InstanceId = instanceId, SlotIndex = slotIndex })
             ?? Task.FromResult<UIVo?>(null));
     }
+
+    #region 战斗界面
+
+    /// <summary>战斗界面是否已打开（含"正在创建"的窗口期）。</summary>
+    public static bool IsCombatOpen() =>
+        UIManager.Instance?.GetUIVo(RunUiIds.Combat) is { IsOpen: true };
+
+    /// <summary>
+    /// 打开战斗界面（Run 规格 §14.1）。只在阶段确实处于战斗且模拟器存在时打开；已打开则不重复。
+    /// </summary>
+    public static async Task<UIVo?> OpenCombatAsync()
+    {
+        var run = RunRuntime.Current;
+        if (run is null || run.Simulation is null || !run.State.Phase.IsCombatPhase() || IsCombatOpen())
+        {
+            return null;
+        }
+
+        return await (UIManager.Instance?.OpenAsync<CombatWin>(new UiId<CombatWin>(RunUiIds.Combat), default, null)
+            ?? Task.FromResult<UIVo?>(null));
+    }
+
+    #endregion
 
     #region ESC 系统菜单
 

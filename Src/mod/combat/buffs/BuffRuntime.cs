@@ -3,6 +3,7 @@ using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Effects;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.Buffs;
@@ -81,7 +82,13 @@ public sealed class BuffRuntime
             return new BuffApplyResult(false, Error: $"Unknown buffId '{buffId}'.");
 
         var container = character.HandSlots[slotIndex].Buffs;
-        var instance = StackOrAdd(simulation, container, new CombatTargetRef(ECombatSide.Player, characterIndex), def, parameters);
+        var instance = StackOrAdd(
+            simulation,
+            container,
+            new CombatTargetRef(ECombatSide.Player, characterIndex),
+            def,
+            parameters,
+            slotIndex);
         return new BuffApplyResult(true, instance);
     }
 
@@ -105,15 +112,21 @@ public sealed class BuffRuntime
         BuffContainer container,
         CombatTargetRef holder,
         BuffDto def,
-        IReadOnlyDictionary<string, object>? parameters)
+        IReadOnlyDictionary<string, object>? parameters,
+        int? slotIndex = null)
     {
+        var holderRef = new BuffHolderRef(holder, slotIndex);
+
         // 充能互斥优先于一切：同一槽位只允许 1 个充能，新充能无条件覆盖旧的并重置进度。
-        RemoveExistingCharges(simulation, container, holder, def);
+        RemoveExistingCharges(simulation, container, holder, def, holderRef);
 
         if (!string.IsNullOrWhiteSpace(def.ExclusiveGroup))
         {
             foreach (var removed in container.RemoveExclusiveGroup(def.ExclusiveGroup))
+            {
                 FireHook(simulation, holder, removed, removed.Def.Hooks.OnRemove);
+                simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, removed.Def.Id));
+            }
         }
 
         var existing = container.Find(def.Id);
@@ -127,6 +140,7 @@ public sealed class BuffRuntime
                     if (existing.Stacks != stacksBefore)
                     {
                         existing.RegisterModifiers(GetAsc(simulation, holder));
+                        simulation.Presentation.Emit(new BuffStacksChangedEvent(holderRef, def.Id, existing.Stacks));
                         FireHook(simulation, holder, existing, def.Hooks.OnStackChanged);
                     }
                     return existing;
@@ -136,11 +150,13 @@ public sealed class BuffRuntime
                 case EBuffStackRule.Replace:
                     FireHook(simulation, holder, existing, def.Hooks.OnRemove);
                     container.Remove(existing);
+                    simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, def.Id));
                     break;
             }
         }
 
         var instance = container.Add(def, FilterInstanceParams(parameters));
+        simulation.Presentation.Emit(new BuffAppliedEvent(holderRef, def.Id, instance.Stacks));
         FireHook(simulation, holder, instance, def.Hooks.OnApply);
         return instance;
     }
@@ -155,7 +171,8 @@ public sealed class BuffRuntime
         CombatSimulation simulation,
         BuffContainer container,
         CombatTargetRef holder,
-        BuffDto def)
+        BuffDto def,
+        BuffHolderRef holderRef)
     {
         if (!def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal))
             return;
@@ -167,6 +184,7 @@ public sealed class BuffRuntime
         {
             FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
             container.Remove(instance);
+            simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, instance.Def.Id));
         }
     }
 
@@ -186,6 +204,7 @@ public sealed class BuffRuntime
         {
             FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
             container.Remove(instance);
+            simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder), instance.Def.Id));
         }
 
         return toRemove.Count;
@@ -214,7 +233,7 @@ public sealed class BuffRuntime
     /// <summary>回合开始：重估休眠 + 触发 onTurnStart（支持 per-effect <c>turnInterval</c> 按波内回合计数分档触发）。</summary>
     public void FireTurnStart(CombatSimulation simulation)
     {
-        foreach (var (holder, container) in EnumerateContainers(simulation))
+        foreach (var (holder, container, _) in EnumerateContainers(simulation))
         {
             container.EvaluateDormancy();
             // 钩子可能对自己容器挂/删 buff，必须快照枚举（活列表枚举中修改会抛异常）。
@@ -280,8 +299,9 @@ public sealed class BuffRuntime
     /// <summary>回合结束：先触发 onTurnEnd，再递减时长，到期者触发 onRemove 并移除。</summary>
     public void FireTurnEnd(CombatSimulation simulation)
     {
-        foreach (var (holder, container) in EnumerateContainers(simulation))
+        foreach (var (holder, container, slotIndex) in EnumerateContainers(simulation))
         {
+            var holderRef = new BuffHolderRef(holder, slotIndex);
             // 以触发前的快照为本回合基准：钩子期间新增的 buff 本回合不 tick（刚挂上不应立刻扣时长）。
             var instances = container.All.ToArray();
 
@@ -299,7 +319,11 @@ public sealed class BuffRuntime
                 var stacksBefore = instance.Stacks;
                 instance.TickTurnEnd();
                 if (instance.Stacks != stacksBefore)
+                {
                     instance.RegisterModifiers(GetAsc(simulation, holder));
+                    if (!instance.IsExpired)
+                        simulation.Presentation.Emit(new BuffStacksChangedEvent(holderRef, instance.Def.Id, instance.Stacks));
+                }
             }
 
             var expired = instances.Where(instance => instance.IsExpired).ToList();
@@ -311,6 +335,7 @@ public sealed class BuffRuntime
 
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
                 container.Remove(instance);
+                simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, instance.Def.Id));
             }
         }
     }
@@ -318,7 +343,7 @@ public sealed class BuffRuntime
     /// <summary>波次（阶层）开始：触发 onWaveStart。第一波在 RunBattleStart 由状态机补发。</summary>
     public void FireWaveStart(CombatSimulation simulation)
     {
-        foreach (var (holder, container) in EnumerateContainers(simulation))
+        foreach (var (holder, container, _) in EnumerateContainers(simulation))
         {
             foreach (var instance in container.All.ToArray())
             {
@@ -515,19 +540,20 @@ public sealed class BuffRuntime
         return null;
     }
 
-    private IEnumerable<(CombatTargetRef Holder, BuffContainer Container)> EnumerateContainers(
+    /// <summary>全部 buff 容器：角色 / 该角色各手牌槽（带槽位索引，供表现事件定位）/ 敌人。</summary>
+    private IEnumerable<(CombatTargetRef Holder, BuffContainer Container, int? SlotIndex)> EnumerateContainers(
         CombatSimulation simulation)
     {
         for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
         {
             var character = simulation.PlayerTeam.Characters[i];
-            yield return (new CombatTargetRef(ECombatSide.Player, i), character.Buffs);
+            yield return (new CombatTargetRef(ECombatSide.Player, i), character.Buffs, null);
             foreach (var slot in character.HandSlots)
-                yield return (new CombatTargetRef(ECombatSide.Player, i), slot.Buffs);
+                yield return (new CombatTargetRef(ECombatSide.Player, i), slot.Buffs, slot.SlotIndex);
         }
 
         for (var i = 0; i < simulation.EnemyTeam.Enemies.Count; i++)
-            yield return (new CombatTargetRef(ECombatSide.Enemy, i), simulation.EnemyTeam.Enemies[i].Buffs);
+            yield return (new CombatTargetRef(ECombatSide.Enemy, i), simulation.EnemyTeam.Enemies[i].Buffs, null);
     }
 
     private static bool TryGetCharacter(

@@ -1,8 +1,6 @@
 using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.UI.Base;
-using KemoCard.Mod.Combat.Commands;
-using KemoCard.Mod.Combat.Orbs;
 using KemoCard.Mod.Global;
 using KemoCard.Mod.Global.Ui;
 using KemoCard.Mod.Global.Ui.Toast;
@@ -22,10 +20,6 @@ public partial class RunMainWin : BaseWin
     [Export] private Button? _btnAbandon;
     [Export] private Button? _btnDebug;
     [Export] private Button? _btnTeam;
-    [Export] private Control? _orbPanel;
-    [Export] private Label? _lblOrbs;
-    [Export] private Label? _lblOrbHint;
-    [Export] private Button? _btnTriggerOrbs;
 
     public override string UIId => RunUiIds.RunMain;
     public override string UIDir => "Src/mod/run/Ui";
@@ -62,11 +56,6 @@ public partial class RunMainWin : BaseWin
             }
         }
 
-        if (_btnTriggerOrbs != null)
-        {
-            OnClicks(_btnTriggerOrbs, OnTriggerOrbs);
-        }
-
         if (_btnTeam != null)
         {
             OnClicks(_btnTeam, OnTeamEdit);
@@ -76,13 +65,12 @@ public partial class RunMainWin : BaseWin
     }
 
     /// <summary>
-    /// 订阅 Run 阶段变化，让本界面在开战 / 结算 / 进入下一环后重新取数。
+    /// 订阅 Run 阶段变化，让本界面在开战 / 结算 / 进入下一环后重新取数，并在进入战斗时打开战斗界面。
     /// </summary>
     /// <remarks>
     /// 本界面是常驻 Win（<c>CacheTime = 0</c>，随 Run 会话存亡），此前只在 <c>OnOpen</c> 刷过一次视图：
-    /// 从调试面板开战后相位标签仍是旧阶段、右上角充能球面板也不出现，
-    /// 「进了战斗但界面毫无变化」看上去就像进不去战斗。订阅经 <see cref="BaseUI.Binder"/> 登记，
-    /// 离场（或框架重新 <c>InitEvent</c>）时统一解绑。
+    /// 从调试面板开战后相位标签仍是旧阶段，「进了战斗但界面毫无变化」看上去就像进不去战斗。
+    /// 订阅经 <see cref="BaseUI.Binder"/> 登记，离场（或框架重新 <c>InitEvent</c>）时统一解绑。
     /// </remarks>
     private void BindPhaseChanges()
     {
@@ -92,13 +80,33 @@ public partial class RunMainWin : BaseWin
             return;
         }
 
-        var listener = run.State.OnRunPhaseChanged((_, _) => UpdateView(), this);
+        var listener = run.State.OnRunPhaseChanged((_, _) =>
+        {
+            UpdateView();
+            OpenCombatIfInBattle();
+        }, this);
         Binder.Add(listener.Off);
     }
 
     protected override void OnOpen()
     {
         UpdateView();
+        OpenCombatIfInBattle();
+    }
+
+    /// <summary>
+    /// Run 规格 §14.1：阶段处于战斗且模拟器存在 → 打开 <c>CombatWin</c>（已打开则不重复）。
+    /// 挂在阶段变化与 <c>OnOpen</c> 两处：调试面板开战、读档进战斗场景都能补开。
+    /// </summary>
+    private static void OpenCombatIfInBattle()
+    {
+        var run = RunRuntime.Current;
+        if (run is null || run.Simulation is null || !run.State.Phase.IsCombatPhase())
+        {
+            return;
+        }
+
+        _ = RunUiController.OpenCombatAsync();
     }
 
     /// <summary>
@@ -178,60 +186,6 @@ public partial class RunMainWin : BaseWin
         {
             _btnQuickLoad.Disabled = inCombat;
         }
-
-        RefreshOrbPanel(run);
-    }
-
-    /// <summary>
-    /// 充能球指示器（右上角，正式战斗界面落地前的过渡挂点）：显示队列里的球数与种类；
-    /// 球数达到门槛时可点击触发（走正式 <see cref="TriggerOrbsCommand"/> 管线）。
-    /// </summary>
-    private void RefreshOrbPanel(RunController run)
-    {
-        var simulation = run.Simulation;
-        var inBattle = simulation is not null && run.State.Phase.IsCombatPhase();
-        if (_orbPanel != null)
-        {
-            _orbPanel.Visible = inBattle;
-        }
-
-        if (!inBattle || simulation is null)
-        {
-            return;
-        }
-
-        var queue = simulation.Orbs.Queue;
-        if (_lblOrbs != null)
-        {
-            _lblOrbs.Text = queue.IsEmpty
-                ? Localization.Tr("UI_ORB_EMPTY")
-                : string.Join(
-                    "\n",
-                    queue.Orbs
-                        .GroupBy(orb => orb.OrbTypeId, StringComparer.Ordinal)
-                        .Select(group => $"{OrbLabel(group.Key)} ×{group.Count()}"));
-        }
-
-        if (_lblOrbHint != null)
-        {
-            _lblOrbHint.Text = string.Format(
-                Localization.Tr("UI_ORB_HINT"),
-                OrbQueue.Capacity,
-                OrbQueue.ManualTriggerThreshold);
-        }
-
-        if (_btnTriggerOrbs != null)
-        {
-            _btnTriggerOrbs.Disabled = !queue.CanTriggerManually;
-        }
-    }
-
-    private string OrbLabel(string orbTypeId)
-    {
-        var store = AppRoot.Services.ContentModPipeline.Registry.Store;
-        return store.TryGetOrbType(orbTypeId, out var orbType) && !string.IsNullOrWhiteSpace(orbType.DisplayNameId)
-            ? Localization.Tr(orbType.DisplayNameId)
-            : orbTypeId;
     }
 
     protected override void OnClose()
@@ -299,28 +253,6 @@ public partial class RunMainWin : BaseWin
         RunRuntime.Abandon();
         Close();
         _ = GlobalModController.OpenMenuAsync();
-    }
-
-    #endregion
-
-    #region 充能球
-
-    private void OnTriggerOrbs()
-    {
-        var run = RunRuntime.Current;
-        var simulation = run?.Simulation;
-        if (simulation is null)
-        {
-            return;
-        }
-
-        var result = simulation.TryApply(new TriggerOrbsCommand());
-        if (!result.Success)
-        {
-            ToastService.Show("UI_ORB_TRIGGER_FAILED");
-        }
-
-        UpdateView();
     }
 
     #endregion

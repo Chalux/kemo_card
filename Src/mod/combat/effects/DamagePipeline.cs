@@ -1,6 +1,7 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Gas;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Rules;
 using KemoCard.Mod.Combat.Runtime;
 
@@ -68,6 +69,8 @@ internal static class DamagePipeline
 
         var packet = CreatePacket(source, target, appliedAmount, effectId, kind, element);
         simulation.Rules.DispatchAfterDamage(simulation.CreateContext(), in packet);
+        // 表现事件（规格 §16）：所有生产伤害写入都经过这里，是唯一的 DamageDealt 记账点。
+        PresentationEmitter.EmitDamage(simulation, source, target, appliedAmount, kind, element, effectId);
     }
 
     private static DamagePacket CreatePacket(

@@ -1,7 +1,7 @@
 # 局内数据模块 (Run Mod) 设计规范
 
 **日期**：2026-06-22
-**最后修订**：2026-09-21（Run 域下级规格合并）
+**最后修订**：2026-09-24（新增 §14 战斗界面 `CombatWin`）
 **状态**：已实装（`Src/mod/run/`，`RunMod.FeatureId = "run"`）
 **关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md)（玩法边界权威）；战斗相关服从 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md)；内容定义见 [2026-05-17 内容 Mod 管理器规格](2026-05-17-content-mod-manager-design.md)；界面层遵循 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)、[2026-09-15 ui-mod-binding 规格](2026-05-15-ui-manager-design.md)、[2026-09-19 UI 主题规格](2026-09-21-global-mod-design.md) 与 [2026-09-21 羊皮纸重设计](2026-09-21-global-mod-design.md)。
 **范围**：Run 域功能 Mod（`Src/mod/run/`，`RunMod.FeatureId = "run"`）的**唯一权威规格** —— 模块结构与架构、生命周期与阶段流转、数据模型与存档 schema、奖励分发、控制权与联机边界、Run 界面流程、存档闭环、ESC 系统菜单、队伍编辑界面、团体潜能（团队池 + 槽位直充 + 消费流水账本）。
@@ -956,7 +956,7 @@ Run 层自身仍然不直接访问内容注册表。
 - **拖拽式编排**（当前是点击式增删）。
 - **换人门闩的"仅环间/特定事件"细分**：目前按"非战斗即可编辑"统一处理，尚未区分环内事件阶段。
 - **美术**：角色立绘缺失（如 chalux 无 `artPath`）时预览区只有名字与文本（列表项同理，只剩名字与元素底色），等美术补齐。
-- **正式战斗界面内的队伍入口**（与战斗 UI 一并设计）。
+- **正式战斗界面内的队伍入口**：战斗界面已落地（§14），但界面内不提供队伍编辑入口（战斗中禁止编辑），仍以 `RunMainWin` 的入口为准。
 - **开局的角色池**：`StorySelectDlg` 目前以空候选列表创建 Run，且 `RunController.CreateRun` 忽略 `candidates`，
   因此新开一局角色池为空（只能靠调试面板授予角色）。队伍编辑界面此时会显示"角色池为空"的显式提示；
   真正的开局选人（3 选 1 或直接入池）仍是待做的玩法决定。
@@ -1002,3 +1002,65 @@ Run 层自身仍然不直接访问内容注册表。
   - `PotentialSpendEntryDto` = `{ EntryId, Source（`pool` = 团队池 / `credit` = 本槽位直充）, Amount, CharacterInstanceId, BuffId }`，一笔流水即解锁某个角色被动，返还即重新锁定该被动。
   - `RunDto.Normalize()`：v1 → v2 补潜能默认值（池 0、槽位账本空），并对显式 `null`（如 `"playerStates": null`）容错——该方法在 `RunSaveService` 的 try 之外执行，必须自己容错，否则坏档不走「归档」路径而是把 NRE 抛给上层。
   - **高于当前版本的存档会被拒绝并归档**（`RunDto` 注释：照默认值反序列化会得到「看似合法但错」的 Run）。
+
+---
+
+## 14. 战斗界面（`CombatWin`）（2026-09-24）
+
+**归属**：Run 功能（`OwnerModId = "run"`），`UIRegistration.Window(FeatureId, RunUiIds.Combat, "Src/mod/run/Ui/Combat")`，`CacheTime = 0`（随一场战斗存亡）。战斗规则与表现事件的权威在 [战斗规格](2026-07-21-combat-system-design.md)（§16 表现事件流）；本节只定界面。
+
+### 14.1 打开 / 关闭
+
+- `RunMainWin` 订阅 `OnRunPhaseChanged`：阶段进入 `Battle` 且 `CombatWin` 未打开 → `RunUiController.OpenCombatAsync()`；`OnOpen` 时若已在战斗同样补开（调试面板开战 / 读档进战斗场景）。
+- `CombatWin` 自己订阅 `OnRunPhaseChanged`：阶段离开战斗（`!IsCombatPhase()`）→ `Close()`。
+- 胜负：播放队列排空后若 `Simulation.Phase` 为 `Victory` / `Defeat` → `AlertDlg`（胜利 / 失败）→ `RunController.EndBattle(won)`（阶段变化触发自关闭）。弹窗只弹一次（`_endHandled`），因此**确定 / 取消 / 其它关闭路径都要收尾**：任何"关掉弹窗但没结束战斗"的路径都会把界面永久留在终局（全部禁用、无法脱身）。实现上 `OkCallback` / `CancelCallback` 同指向 `EndBattle`，并设 `CallbackWhenClose = AlertClosePolicy.Ok` 兜住其它关闭方式。
+- ESC / 右上角暂停按钮 → `RunUiController.TogglePauseMenuAsync()`（同一 `RunPauseDlg`）。有待出牌态时 ESC 先取消待出牌，不开菜单；两处都 `SetInputAsHandled`，避免穿透到下层 `RunMainWin`。
+
+### 14.2 布局（场景编辑器摆放，代码只写逻辑）
+
+```
+CombatWin
+├─ Bg (PageBg)
+└─ Root (VBox)
+   ├─ ItemBanner        预留道具横幅：空 HBox `ItemSlots`，道具系统接入时填充
+   ├─ Middle (HBox)
+   │  ├─ PartyRail      HpBarCmp（队伍总血 SharedHp/MaxHp）+ 3 × PartyMemberCmp（非当前操控角色）
+   │  ├─ Stage          左：4 × AllyUnitCmp；右：EnemyUnitCmp × 敌人数（动态实例化）
+   │  └─ RightRail      BtnPause + OrbQueueCmp（充能球）
+   └─ BottomBar (HBox)  ActorInfoCmp | CardPileCmp(卡组) | 5 × HandSlotCmp | CardPileCmp(墓地) | BtnPlayConfirm / BtnConfirm
+```
+
+组件全部继承 `BaseCmp`（订阅写 `InitEvent`）：
+
+| 组件 | 显示 | 交互 |
+|---|---|---|
+| `HpBarCmp` | 当前 / 最大 + 进度条；`AnimateTo(value)` 供动画过渡 | — |
+| `BuffListCmp` / `BuffIconCmp` | `BuffContainer.Visible` 的图标（`iconPath` 缺失回落短名）、层数、剩余回合 | 悬停显示名字 / 描述（`KeywordTipService.ShowCustomTips`） |
+| `PartyMemberCmp` | 名字、物攻·魔攻、物防·魔防、回复量、已确认标记 | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用） |
+| `AllyUnitCmp` | 边框 + `CharacterPresenter`（有 `presentation` 播序列帧，否则立绘 / 空白）；当前操控 / 已确认 / 合法目标高亮 | 选目标态点击 = 选为目标；`MoveTo/ReturnHome/Play(anim)` 由动画驱动 |
+| `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + `BuffListCmp`；合法目标高亮 | 悬停：名字 / 种族·定位 / 剩余生命 / 物攻·魔攻 / 物防·魔防；点击 = 选为目标 |
+| `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮 | 触发 → `TriggerOrbsCommand` |
+| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap、四维 + 回复、buff 列表 | — |
+| `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
+| `CardPileCmp` | 标题 + 张数 | — |
+
+### 14.3 交互状态（`CombatUiState`，纯 C#）
+
+- **操控槽**：`ControlledSlot` 初始为首个有权控制的槽位；`CanControl(slot)` = `RunMod.SlotOwnership[slot] == 本地玩家 id`（本地玩家 = `PlayerControllers` 中 `IsOwner`；单人四槽皆有权）。
+- **待出牌**：`PendingMode ∈ { None, ConfirmPlay, PickTarget }` + `PendingSlot`。
+  - 点未标记手牌 → `CombatTargeting.RequiresExplicitTarget(card)`：需要 → `PickTarget`（合法单位高亮，点单位即出牌）；不需要 → `ConfirmPlay`（显示「确认出牌」按钮，点它以 `TryResolveAutoTargets` 的结果出牌）。
+  - 再点同一张 / 点别的牌 / ESC / 切换角色 → 清待出牌态。
+- **确定按钮**：当前角色未确认 → `ConfirmCharacterCommand`；已确认 → 显示「取消确认」→ `UnconfirmCharacterCommand`。
+- **播放锁**：`InputLocked` 为真时手牌 / 单位 / 确定 / 触发球全部禁用，暂停可用。
+- 命令失败（`CombatApplyResult.Error`）一律 Toast，不弹窗。
+
+### 14.4 表现管线（`Src/mod/run/Ui/Combat/Presentation/`）
+
+- `CombatPresentationDirector`（纯 C#）：`Enqueue(events)` + `PlayAsync(ICombatEventPlayer)` 顺序播放，播放中可继续追加，`IsPlaying`。
+- `CombatAnimator`（`Node`，Godot Tween）实现 `ICombatEventPlayer`，按事件类型分派；未处理类型零时长完成。时长常量集中在 `CombatAnimationTiming`。
+- **事件到达时模拟器已推进到该批次的终态**（逻辑同步跑完才播动画），因此"按状态重绘"只能画终值；凡是被后续结算覆盖掉的增量，必须由事件载荷提供。例：`OrbGainedEvent` 带 `QueueCount` / `OrbTypeId`，满员自动触发已把队列清空，界面只能用载荷单独上色这一格（`PaintOrb`），不能读队列。
+- `CombatWin` 流程：`TryApply` 成功 → `Simulation.AdvanceAutomaticPhases()`（把卡牌执行 / 敌方相位同步推进到回到玩家阶段或终局；状态机本身只切相位不自动执行）→ `Enqueue(Simulation.Presentation.Drain())` → 若未在播放则锁输入（只刷可交互态，**不对账**，否则动画没有落差可播）并 `PlayAsync` → 播完 `SyncFromState()` 全量对账 → 胜负判定。
+
+### 14.5 明确后置项
+
+- 道具横幅接数据；敌方序列帧字段与资源；敌人意图显示；回合结算摘要；动画美术化与音效；联机下「本地玩家」不再等同房主（`IsOwner`）。

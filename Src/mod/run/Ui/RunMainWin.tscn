@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://crv6nx7yteksb" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
 [ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam", "_orbPanel", "_lblOrbs", "_lblOrbHint", "_btnTriggerOrbs")]
+[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,10 +22,6 @@ _btnQuickLoad = NodePath("Layout/Rail/Margin/VBox/BtnQuickLoad")
 _btnAbandon = NodePath("Layout/Rail/Margin/VBox/BtnAbandon")
 _btnDebug = NodePath("Layout/Rail/Margin/VBox/BtnDebug")
 _btnTeam = NodePath("Layout/Rail/Margin/VBox/BtnTeam")
-_orbPanel = NodePath("Layout/Content/Table/OrbPanel")
-_lblOrbs = NodePath("Layout/Content/Table/OrbPanel/OrbVBox/OrbList")
-_lblOrbHint = NodePath("Layout/Content/Table/OrbPanel/OrbVBox/OrbHint")
-_btnTriggerOrbs = NodePath("Layout/Content/Table/OrbPanel/OrbVBox/BtnTriggerOrbs")
 
 [node name="Bg" type="Panel" parent="."]
 layout_mode = 1
@@ -188,41 +184,3 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"Sunken"
-
-[node name="OrbPanel" type="PanelContainer" parent="Layout/Content/Table"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -312.0
-offset_top = 20.0
-offset_right = -20.0
-grow_horizontal = 0
-
-[node name="OrbVBox" type="VBoxContainer" parent="Layout/Content/Table/OrbPanel"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="OrbTitle" type="Label" parent="Layout/Content/Table/OrbPanel/OrbVBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "UI_ORB_PANEL_TITLE"
-
-[node name="Rule" type="HSeparator" parent="Layout/Content/Table/OrbPanel/OrbVBox"]
-layout_mode = 2
-
-[node name="OrbList" type="Label" parent="Layout/Content/Table/OrbPanel/OrbVBox"]
-layout_mode = 2
-
-[node name="OrbHint" type="Label" parent="Layout/Content/Table/OrbPanel/OrbVBox"]
-custom_minimum_size = Vector2(240, 0)
-layout_mode = 2
-theme_type_variation = &"Caption"
-autowrap_mode = 3
-
-[node name="BtnTriggerOrbs" type="Button" parent="Layout/Content/Table/OrbPanel/OrbVBox"]
-custom_minimum_size = Vector2(0, 44)
-layout_mode = 2
-text = "UI_ORB_TRIGGER"
-script = ExtResource("2_kbtn")
-Primary = true

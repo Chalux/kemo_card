@@ -1,0 +1,257 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/CombatWin.cs" id="1_script"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/Presentation/CombatAnimator.cs" id="3_animator"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/HpBarCmp.tscn" id="4_hp"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/PartyMemberCmp.tscn" id="5_member"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/AllyUnitCmp.tscn" id="6_ally"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/EnemyUnitCmp.tscn" id="7_enemy"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/OrbQueueCmp.tscn" id="8_orbs"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/ActorInfoCmp.tscn" id="9_actor"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/CardPileCmp.tscn" id="10_pile"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/HandSlotCmp.tscn" id="11_hand"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/Presentation/DamageNumberCmp.tscn" id="12_number"]
+
+[node name="CombatWin" type="Control" node_paths=PackedStringArray("_itemSlots", "_sharedHp", "_bench", "_allyStage", "_enemyStage", "_btnPause", "_orbs", "_actor", "_deck", "_hand", "_grave", "_btnPlayConfirm", "_btnConfirm", "_lblHint", "_fxLayer", "_phaseBanner", "_animator")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+_itemSlots = NodePath("Root/ItemBanner/ItemSlots")
+_sharedHp = NodePath("Root/Middle/PartyRail/SharedHp")
+_bench = NodePath("Root/Middle/PartyRail/Bench")
+_allyStage = NodePath("Root/Middle/Stage/AllyStage")
+_enemyStage = NodePath("Root/Middle/Stage/EnemyStage")
+_enemyScene = ExtResource("7_enemy")
+_btnPause = NodePath("Root/Middle/RightRail/BtnPause")
+_orbs = NodePath("Root/Middle/RightRail/Orbs")
+_actor = NodePath("Root/BottomBar/Actor")
+_deck = NodePath("Root/BottomBar/Deck")
+_hand = NodePath("Root/BottomBar/Hand")
+_grave = NodePath("Root/BottomBar/Grave")
+_btnPlayConfirm = NodePath("Root/BottomBar/Actions/BtnPlayConfirm")
+_btnConfirm = NodePath("Root/BottomBar/Actions/BtnConfirm")
+_lblHint = NodePath("Root/BottomBar/Actions/Hint")
+_fxLayer = NodePath("FxLayer")
+_damageNumberScene = ExtResource("12_number")
+_phaseBanner = NodePath("PhaseBanner")
+_animator = NodePath("Animator")
+
+[node name="Bg" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_type_variation = &"PageBg"
+
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="ItemBanner" type="PanelContainer" parent="Root"]
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_type_variation = &"SunkenContainer"
+
+[node name="ItemSlots" type="HBoxContainer" parent="Root/ItemBanner"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Middle" type="HBoxContainer" parent="Root"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="PartyRail" type="VBoxContainer" parent="Root/Middle"]
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SharedHpLabel" type="Label" parent="Root/Middle/PartyRail"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 13
+text = "UI_COMBAT_SHARED_HP"
+
+[node name="SharedHp" parent="Root/Middle/PartyRail" instance=ExtResource("4_hp")]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+
+[node name="Rule" type="HSeparator" parent="Root/Middle/PartyRail"]
+layout_mode = 2
+
+[node name="Bench" type="VBoxContainer" parent="Root/Middle/PartyRail"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Member0" parent="Root/Middle/PartyRail/Bench" instance=ExtResource("5_member")]
+layout_mode = 2
+
+[node name="Member1" parent="Root/Middle/PartyRail/Bench" instance=ExtResource("5_member")]
+layout_mode = 2
+
+[node name="Member2" parent="Root/Middle/PartyRail/Bench" instance=ExtResource("5_member")]
+layout_mode = 2
+
+[node name="Stage" type="HBoxContainer" parent="Root/Middle"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 40
+
+[node name="AllyStage" type="HBoxContainer" parent="Root/Middle/Stage"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 12
+alignment = 0
+
+[node name="Ally0" parent="Root/Middle/Stage/AllyStage" instance=ExtResource("6_ally")]
+layout_mode = 2
+
+[node name="Ally1" parent="Root/Middle/Stage/AllyStage" instance=ExtResource("6_ally")]
+layout_mode = 2
+
+[node name="Ally2" parent="Root/Middle/Stage/AllyStage" instance=ExtResource("6_ally")]
+layout_mode = 2
+
+[node name="Ally3" parent="Root/Middle/Stage/AllyStage" instance=ExtResource("6_ally")]
+layout_mode = 2
+
+[node name="EnemyStage" type="HBoxContainer" parent="Root/Middle/Stage"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="RightRail" type="VBoxContainer" parent="Root/Middle"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnPause" type="Button" parent="Root/Middle/RightRail"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_type_variation = &"Ghost"
+text = "UI_COMBAT_PAUSE"
+script = ExtResource("2_kbtn")
+EnableHoverScale = false
+
+[node name="Orbs" parent="Root/Middle/RightRail" instance=ExtResource("8_orbs")]
+layout_mode = 2
+
+[node name="BottomBar" type="HBoxContainer" parent="Root"]
+custom_minimum_size = Vector2(0, 230)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Actor" parent="Root/BottomBar" instance=ExtResource("9_actor")]
+layout_mode = 2
+
+[node name="Deck" parent="Root/BottomBar" instance=ExtResource("10_pile")]
+layout_mode = 2
+size_flags_vertical = 4
+TitleKey = "UI_COMBAT_DECK"
+
+[node name="Hand" type="HBoxContainer" parent="Root/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Hand0" parent="Root/BottomBar/Hand" instance=ExtResource("11_hand")]
+layout_mode = 2
+
+[node name="Hand1" parent="Root/BottomBar/Hand" instance=ExtResource("11_hand")]
+layout_mode = 2
+
+[node name="Hand2" parent="Root/BottomBar/Hand" instance=ExtResource("11_hand")]
+layout_mode = 2
+
+[node name="Hand3" parent="Root/BottomBar/Hand" instance=ExtResource("11_hand")]
+layout_mode = 2
+
+[node name="Hand4" parent="Root/BottomBar/Hand" instance=ExtResource("11_hand")]
+layout_mode = 2
+
+[node name="Grave" parent="Root/BottomBar" instance=ExtResource("10_pile")]
+layout_mode = 2
+size_flags_vertical = 4
+TitleKey = "UI_COMBAT_GRAVEYARD"
+
+[node name="Actions" type="VBoxContainer" parent="Root/BottomBar"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="Hint" type="Label" parent="Root/BottomBar/Actions"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 13
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="BtnPlayConfirm" type="Button" parent="Root/BottomBar/Actions"]
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "UI_COMBAT_PLAY_CONFIRM"
+script = ExtResource("2_kbtn")
+
+[node name="BtnConfirm" type="Button" parent="Root/BottomBar/Actions"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "UI_COMBAT_CONFIRM"
+script = ExtResource("2_kbtn")
+Primary = true
+
+[node name="FxLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PhaseBanner" type="Label" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -240.0
+offset_top = 90.0
+offset_right = 240.0
+offset_bottom = 150.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_type_variation = &"Title"
+theme_override_font_sizes/font_size = 34
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Animator" type="Node" parent="."]
+script = ExtResource("3_animator")

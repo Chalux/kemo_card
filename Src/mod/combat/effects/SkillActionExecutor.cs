@@ -2,6 +2,7 @@ using System.Text.Json;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Combat.Buffs;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.StateMachine;
 
@@ -236,7 +237,10 @@ public sealed class SkillActionExecutor
             return;
         }
 
-        simulation.PlayerTeam.Characters[source.Index].DiscardSlotCard(slotIndex);
+        var character = simulation.PlayerTeam.Characters[source.Index];
+        var before = PresentationEmitter.SnapshotHand(character);
+        character.DiscardSlotCard(slotIndex);
+        PresentationEmitter.EmitDiscardsByDiff(simulation, source.Index, before, simulation.CurrentDiscardChannel);
     }
 
     private void ApplyExecuteScript(
@@ -504,11 +508,27 @@ public sealed class SkillActionExecutor
 
         foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
         {
+            var before = PresentationEmitter.SnapshotHand(character);
             if (simulation.CurrentDiscardChannel == EDiscardChannel.ActiveSkill)
                 DiscardViaActiveSkillChannel(simulation, character, count);
             else
                 character.DiscardRandomUnmarked(count, simulation.DiscardRng);
+
+            var characterIndex = IndexOfCharacter(simulation, character);
+            PresentationEmitter.EmitDiscardsByDiff(simulation, characterIndex, before, simulation.CurrentDiscardChannel);
         }
+    }
+
+    private static int IndexOfCharacter(CombatSimulation simulation, CharacterBattleInstance character)
+    {
+        var characters = simulation.PlayerTeam.Characters;
+        for (var i = 0; i < characters.Count; i++)
+        {
+            if (ReferenceEquals(characters[i], character))
+                return i;
+        }
+
+        return -1;
     }
 
     /// <summary>
