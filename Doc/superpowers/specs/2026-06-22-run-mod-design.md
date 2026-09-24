@@ -1058,6 +1058,7 @@ CombatWin
 
 - `CombatPresentationDirector`（纯 C#）：`Enqueue(events)` + `PlayAsync(ICombatEventPlayer)` 顺序播放，播放中可继续追加，`IsPlaying`。
 - `CombatAnimator`（`Node`，Godot Tween）实现 `ICombatEventPlayer`，按事件类型分派；未处理类型零时长完成。时长常量集中在 `CombatAnimationTiming`。
+- **舞台单位位移**：`AllyUnitCmp` 的「到目标面前再回原位」与单位受击抖动统一走 `UnitTweens` 的 Godot 4.7 **offset transform**（纯视觉偏移，不改布局、不移点击判定区域）；不要直接 tween `position` / `global_position`，否则容器重排（排序 / 尺寸变化）会覆盖位移。
 - **事件到达时模拟器已推进到该批次的终态**（逻辑同步跑完才播动画），因此"按状态重绘"只能画终值；凡是被后续结算覆盖掉的增量，必须由事件载荷提供。例：`OrbGainedEvent` 带 `QueueCount` / `OrbTypeId`，满员自动触发已把队列清空，界面只能用载荷单独上色这一格（`PaintOrb`），不能读队列。
 - `CombatWin` 流程：`TryApply` 成功 → `Simulation.AdvanceAutomaticPhases()`（把卡牌执行 / 敌方相位同步推进到回到玩家阶段或终局；状态机本身只切相位不自动执行）→ `Enqueue(Simulation.Presentation.Drain())` → 若未在播放则锁输入（只刷可交互态，**不对账**，否则动画没有落差可播）并 `PlayAsync` → 播完 `SyncFromState()` 全量对账 → 胜负判定。
 

@@ -8,14 +8,45 @@ namespace KemoCard.Mod.Run.Ui.CombatUi.Presentation;
 /// </summary>
 public static class UnitTweens
 {
+    /// <summary>
+    /// 移动到全局坐标：走 Godot 4.7 的 offset transform，位移记在布局之外的视觉偏移上，
+    /// 容器重排（排序 / 尺寸变化）不会覆盖或重置位移（直接 tween position / global_position 会）。
+    /// 目标按「目标全局坐标 − 布局原位」换算；无偏移时 <see cref="Control.GlobalPosition"/> 即布局原位。
+    /// </summary>
     public static async Task MoveToAsync(Control node, Vector2 globalPosition, float duration)
     {
         if (!GodotObject.IsInstanceValid(node) || !node.IsInsideTree())
             return;
 
+        EnsureOffsetTransform(node);
+        var targetOffset = globalPosition - node.GlobalPosition;
         var tween = node.CreateTween().SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
-        tween.TweenProperty(node, Control.PropertyName.GlobalPosition.ToString(), globalPosition, duration);
+        tween.TweenProperty(node, Control.PropertyName.OffsetTransformPosition.ToString(), targetOffset, duration);
         await node.ToSignal(tween, Tween.SignalName.Finished);
+    }
+
+    /// <summary>把视觉偏移收回 0（回到布局原位）；偏移已为 0 时立即返回。</summary>
+    public static async Task ReturnHomeAsync(Control node, float duration)
+    {
+        if (!GodotObject.IsInstanceValid(node) || !node.IsInsideTree())
+            return;
+
+        if (node.OffsetTransformPosition == Vector2.Zero)
+            return;
+
+        var tween = node.CreateTween().SetTrans(Tween.TransitionType.Quad).SetEase(Tween.EaseType.Out);
+        tween.TweenProperty(node, Control.PropertyName.OffsetTransformPosition.ToString(), Vector2.Zero, duration);
+        await node.ToSignal(tween, Tween.SignalName.Finished);
+    }
+
+    /// <summary>
+    /// 开启 offset transform 并选择「纯视觉」：只影响绘制，不动布局、不移点击判定区域。
+    /// 容器子节点的位移 / 抖动都应走这里，否则会被容器的重排冲掉。
+    /// </summary>
+    private static void EnsureOffsetTransform(Control node)
+    {
+        node.OffsetTransformVisualOnly = true;
+        node.OffsetTransformEnabled = true;
     }
 
     public static async Task PulseAsync(Control node, float scale, float duration)
@@ -36,7 +67,8 @@ public static class UnitTweens
         if (!GodotObject.IsInstanceValid(node) || !node.IsInsideTree())
             return;
 
-        var origin = node.Position;
+        EnsureOffsetTransform(node);
+        var origin = node.OffsetTransformPosition;
         var tween = node.CreateTween();
         const int steps = 4;
         for (var i = 0; i < steps; i++)
@@ -45,12 +77,12 @@ public static class UnitTweens
             var falloff = 1f - (i / (float)steps);
             tween.TweenProperty(
                 node,
-                Control.PropertyName.Position.ToString(),
+                Control.PropertyName.OffsetTransformPosition.ToString(),
                 origin + new Vector2(sign * amplitude * falloff, 0f),
                 duration / (steps + 1));
         }
 
-        tween.TweenProperty(node, Control.PropertyName.Position.ToString(), origin, duration / (steps + 1));
+        tween.TweenProperty(node, Control.PropertyName.OffsetTransformPosition.ToString(), origin, duration / (steps + 1));
         await node.ToSignal(tween, Tween.SignalName.Finished);
     }
 

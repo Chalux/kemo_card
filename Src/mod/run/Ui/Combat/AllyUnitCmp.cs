@@ -25,9 +25,7 @@ public partial class AllyUnitCmp : BaseCmp
 
     public int SlotIndex { get; private set; } = -1;
 
-    private Vector2 _homeGlobalPosition;
     private bool _targetable;
-    private bool _homeCaptured;
 
     protected override void OnReady()
     {
@@ -82,29 +80,21 @@ public partial class AllyUnitCmp : BaseCmp
         MouseDefaultCursorShape = targetable ? CursorShape.PointingHand : CursorShape.Arrow;
     }
 
-    /// <summary>回原位的基准：布局稳定后记录一次，之后动画 <see cref="MoveToAsync"/> / <see cref="ReturnHomeAsync"/> 用它。</summary>
-    private void CaptureHome()
-    {
-        _homeGlobalPosition = GlobalPosition;
-        _homeCaptured = true;
-    }
-
     public void Play(string animName) => _presenter?.Play(animName);
 
+    /// <summary>
+    /// 移动到指定的全局坐标：由 <see cref="UnitTweens.MoveToAsync"/> 走 Godot 4.7 offset transform，
+    /// 位移不写 <c>Position</c>，容器重排（排序 / 尺寸变化）不会冲掉动画。
+    /// </summary>
     public Task MoveToAsync(Vector2 globalPosition, float duration)
     {
-        if (!_homeCaptured)
-            CaptureHome();
         ZIndex = 1;
         return UnitTweens.MoveToAsync(this, globalPosition, duration);
     }
 
     public async Task ReturnHomeAsync(float duration)
     {
-        if (!_homeCaptured)
-            return;
-
-        await UnitTweens.MoveToAsync(this, _homeGlobalPosition, duration);
+        await UnitTweens.ReturnHomeAsync(this, duration);
         ZIndex = 0;
     }
 
