@@ -75,6 +75,15 @@ public abstract partial class BaseUI : Control, IUIMeta
     {
     }
 
+    /// <summary>
+    /// 清空订阅账本，供框架在重新 <see cref="IUILifecycleInvoker.InvokeInitEvent"/> 之前调用。
+    /// </summary>
+    /// <remarks>
+    /// 与离场解绑（<see cref="_ExitTree"/>）语义相同，差别只在于**调用时机**：界面已打开时被再次
+    /// Open 不会离场，此时不清账就会重复订阅。见 <see cref="IUILifecycleInvoker.InvokeResetBindings"/>。
+    /// </remarks>
+    internal void ResetBindings() => Binder.UnbindAll();
+
     #region 订阅登记（转发到 Binder）
 
     /// <summary>登记并立即订阅；离场时自动解绑。</summary>

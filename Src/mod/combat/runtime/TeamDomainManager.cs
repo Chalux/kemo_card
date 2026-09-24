@@ -7,6 +7,9 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
 {
     private readonly CombatSimulation _sim;
 
+    /// <summary>带时长的玩家领域剩余回合数（<c>null</c> = 不自动收起）；回合结束时递减，归零收起。</summary>
+    private int? _playerDomainTurnsLeft;
+
     public TeamDomainManager(CombatSimulation simulation)
     {
         ArgumentNullException.ThrowIfNull(simulation);
@@ -65,7 +68,21 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
     #endregion
 
     public bool TrySetPlayerDomain(string gameplayEffectId, IReadOnlyDictionary<string, object>? parameters = null)
-        => TrySetDomain(_sim.PlayerTeam, gameplayEffectId, parameters);
+        => TrySetPlayerDomain(gameplayEffectId, parameters, turns: null);
+
+    /// <summary>
+    /// 展开玩家领域（<paramref name="turns"/> = 持续回合数，<c>null</c> = 不自动收起）。
+    /// 「领域展开 2 回合」即 <c>turns: 2</c>：到期在回合结束时由 <see cref="FireTurnEndHooks"/> 收起。
+    /// </summary>
+    public bool TrySetPlayerDomain(
+        string gameplayEffectId,
+        IReadOnlyDictionary<string, object>? parameters,
+        int? turns)
+    {
+        var ok = TrySetDomain(_sim.PlayerTeam, gameplayEffectId, parameters);
+        _playerDomainTurnsLeft = ok && turns is > 0 ? turns : null;
+        return ok;
+    }
 
     public bool TrySetEnemyDomain(string gameplayEffectId, IReadOnlyDictionary<string, object>? parameters = null)
         => TrySetDomain(_sim.EnemyTeam, gameplayEffectId, parameters);
@@ -82,6 +99,37 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
             _sim.PlayerTeam.Asc.OnTurnEnd();
         if (_sim.EnemyTeam.ActiveDomain is not null)
             _sim.EnemyTeam.Asc.OnTurnEnd();
+
+        TickPlayerDomainDuration();
+    }
+
+    /// <summary>
+    /// 带时长的领域在回合结束时递减，归零则收起（移除 GE + 清空领域槽）。
+    /// 无时长的领域（<c>turns</c> 缺省）不受影响，直到被新领域顶替。
+    /// </summary>
+    private void TickPlayerDomainDuration()
+    {
+        if (_playerDomainTurnsLeft is not > 0 || _sim.PlayerTeam.ActiveDomain is null)
+            return;
+
+        _playerDomainTurnsLeft--;
+        if (_playerDomainTurnsLeft > 0)
+            return;
+
+        _playerDomainTurnsLeft = null;
+        ClearPlayerDomain();
+    }
+
+    /// <summary>收起当前玩家领域（移除队伍 ASC 上的域 GE 并清空领域槽）。</summary>
+    public void ClearPlayerDomain()
+    {
+        var domain = _sim.PlayerTeam.ActiveDomain;
+        if (domain is null)
+            return;
+
+        _sim.PlayerTeam.Asc.RemoveActiveEffect(domain.ActiveEffectHandle);
+        _sim.PlayerTeam.ActiveDomain = null;
+        _playerDomainTurnsLeft = null;
     }
 
     #region domain replacement

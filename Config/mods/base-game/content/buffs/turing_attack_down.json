@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.turing_attack_down.name",
+  "descId": "buff.turing_attack_down.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": -6 } }
+  ],
+  "tags": ["buff.debuff"]
+}

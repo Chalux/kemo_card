@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.von_neumann_direct_deduction.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 20,
+  "skillRefs": [{ "skillId": "von_neumann_direct_deduction" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 2
+    }
+  },
+  "role": "Healer",
+  "priority": 11,
+  "cardType": "Healing",
+  "targetSide": "Self",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "tags": ["heal", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

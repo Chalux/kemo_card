@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "turing_machine_shift_damage",
+    "Amount": 12
+  }
+}

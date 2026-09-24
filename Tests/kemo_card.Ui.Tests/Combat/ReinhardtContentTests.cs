@@ -11,8 +11,8 @@ namespace KemoCard.Ui.Tests.Combat;
 
 /// <summary>
 /// 莱因哈特（2026-09-21 出货内容）的元数据、接线与端到端效果。
-/// 六条被动全部由 buff 驱动，其中 P2 走 <c>onCardSettled</c> + <c>CardPlayedThisTurn</c> 条件、
-/// P4 走 <c>PartyCountScaled</c> 取值、P6 走"随机手牌槽费用归零"。
+/// 四条被动全部由 buff 驱动，其中 P2 走 <c>onCardSettled</c> + <c>CardPlayedThisTurn</c> 条件、
+/// P4 走 <c>PartyCountScaled</c> 取值（原 P5/P6 两档已于 2026-09-24 删除）。
 /// </summary>
 [TestFixture]
 public sealed class ReinhardtContentTests
@@ -25,7 +25,6 @@ public sealed class ReinhardtContentTests
     private const string ExtraAttackBuff = "reinhardt_extra_normal_attack";
     private const string VulnerableBuff = "reinhardt_normal_attack_vulnerable";
     private const string FollowUpBuff = "reinhardt_follow_up_4";
-    private const string FreeCostBuff = "reinhardt_free_cost";
     private const string AttackUpBuff = "reinhardt_p2_attack_up";
     private const string YellowCard = "card.test_yellow";
     private const string RedCard = "card.test_red";
@@ -97,9 +96,10 @@ public sealed class ReinhardtContentTests
         Assert.That(reinhardt.ActiveSkillChain[0].SkillId, Is.EqualTo("reinhardt_yellow_tide_command"));
         Assert.That(reinhardt.ActiveSkillChain[0].Cooldown, Is.EqualTo(10));
 
+        // 潜能被动保留 0/10/30/50 四档（70/99 档已删除）。
         Assert.That(
             reinhardt.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50, 70, 99 }));
+            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in reinhardt.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }
@@ -181,17 +181,6 @@ public sealed class ReinhardtContentTests
     }
 
     [Test]
-    public void Passive_five_boosts_normal_attack_damage_by_half()
-    {
-        using var sim = BuildPlayerPhase(TreasureCard);
-
-        sim.Buffs.Apply(sim, Player(0), "reinhardt_passive_p5");
-        sim.NormalAttacks.Execute(sim);
-
-        Assert.That(enemy(sim).Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(500f - 15f).Within(0.001f));
-    }
-
-    [Test]
     public void Passive_one_blocks_sealing()
     {
         var definitions = BaseGameContent.Load();
@@ -270,24 +259,6 @@ public sealed class ReinhardtContentTests
         twoCards.RecordPlayedCard(YellowCard, 0);
         twoCards.Buffs.FireCardSettled(twoCards, 0);
         Assert.That(twoCards.PlayerTeam.Characters[0].Buffs.Find(AttackUpBuff), Is.Not.Null, "2 张触发");
-    }
-
-    [Test]
-    public void Passive_six_zeroes_the_cost_of_a_random_hand_slot()
-    {
-        using var sim = BuildPlayerPhase(TreasureCard);
-        var caster = sim.PlayerTeam.Characters[0];
-
-        sim.Buffs.Apply(sim, Player(0), "reinhardt_passive_p6");
-        sim.Buffs.FireActiveSkillCast(sim, 0);
-
-        var slot = caster.HandSlots[0];
-        Assert.That(slot.Buffs.Find(FreeCostBuff), Is.Not.Null, "手牌槽应挂上零费 buff");
-        Assert.That(slot.CardId, Is.EqualTo(TreasureCard));
-
-        var card = BaseGameContent.Load().Cards[TreasureCard];
-        Assert.That(CardCostCalculator.Compute(sim, 0, card, slot.RuntimeInstanceId), Is.Zero, "该槽当前费用为 0");
-        Assert.That(CardCostCalculator.Compute(sim, 0, card), Is.EqualTo(card.Cost), "不带槽位标识时按原价");
     }
 
     #endregion

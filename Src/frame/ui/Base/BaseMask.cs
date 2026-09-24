@@ -82,6 +82,7 @@ public abstract partial class BaseMask : Control, IUILifecycleInvoker
     #region IUILifecycleInvoker 显式实现
     void IUILifecycleInvoker.InvokePreLoad(Action done, Action fail) => done();
     void IUILifecycleInvoker.InvokeCreate() { }
+    void IUILifecycleInvoker.InvokeResetBindings() => Binder.UnbindAll();
     void IUILifecycleInvoker.InvokeInitEvent() => InitEvent();
     void IUILifecycleInvoker.InvokeOpen() => OnOpen();
     Action? IUILifecycleInvoker.InvokeOpenAnim(Action done) => OnOpenAnim(done);

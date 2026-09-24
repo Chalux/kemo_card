@@ -398,47 +398,27 @@ public partial class RunTeamEditDlg : BaseDlg
     }
 
     /// <summary>
-    /// 元素/种族显示名走 CodexFilterDefinitions 的本地化键（与图鉴同一套 UI_ELEMENT_* / UI_RACE_*），
-    /// 多标志按"、"连接；缺键时才回落枚举原名——否则双种族角色在这里会显示 "Animal, Dragon" 这类英文枚举名。
+    /// 元素/种族/定位显示名：与角色详情、角色悬停摘要共用 <see cref="CharacterIdentityLabels"/>
+    /// 的口径（键与连接符都在那里）。本条信息行是"值 / 值 / 值"，因此空值显式回落 <c>-</c>——
+    /// 否则双种族角色会在这里显示 "Animal, Dragon" 这类英文枚举名，或者干脆留一段空白。
     /// </summary>
     private static string ElementLabel(EElement element)
     {
-        var names = new List<string>();
-        foreach (var flag in Enum.GetValues<EElement>())
-        {
-            if (flag != EElement.None &&
-                (element & flag) != 0 &&
-                CodexFilterDefinitions.TryGetElementLocaleKey(flag, out var key))
-            {
-                names.Add(Localization.Tr(key));
-            }
-        }
-
-        return names.Count == 0 ? "-" : string.Join("、", names);
+        var text = CharacterIdentityLabels.Element(element, Localization.Tr);
+        return text.Length == 0 ? "-" : text;
     }
 
     private static string RaceLabel(ERace race)
     {
-        var names = new List<string>();
-        foreach (var flag in Enum.GetValues<ERace>())
-        {
-            if (flag != ERace.None &&
-                (race & flag) != 0 &&
-                CodexFilterDefinitions.TryGetRaceLocaleKey(flag, out var key))
-            {
-                names.Add(Localization.Tr(key));
-            }
-        }
-
-        return names.Count == 0 ? "-" : string.Join("、", names);
+        var text = CharacterIdentityLabels.Race(race, Localization.Tr);
+        return text.Length == 0 ? "-" : text;
     }
 
     /// <summary>
-    /// 职业显示名走与图鉴同一套 <c>UI_ROLE_*</c> 键；缺键时才回落枚举原名。
-    /// 与元素/种族同理——直接插 <c>character.Role</c> 会在界面露出 <c>SwordMan</c> 这类英文枚举名。
+    /// 职业显示名走与图鉴同一套 <c>UI_ROLE_*</c> 键；缺键时才回落枚举原名——直接插
+    /// <c>character.Role</c> 会在界面露出 <c>SwordMan</c> 这类英文枚举名（见 <see cref="CharacterIdentityLabels.Role"/>）。
     /// </summary>
-    private static string RoleLabel(ERole role) =>
-        CodexFilterDefinitions.TryGetRoleLocaleKey(role, out var key) ? Localization.Tr(key) : role.ToString();
+    private static string RoleLabel(ERole role) => CharacterIdentityLabels.Role(role, Localization.Tr);
 
     /// <summary>属性显示名：内容侧键 <c>attr.&lt;snake_case&gt;.name</c>；缺失时回落原始 id。</summary>
     private static string AttributeLabel(string attributeId)

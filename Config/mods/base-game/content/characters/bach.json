@@ -20,9 +20,7 @@
     { "buffId": "bach_passive_p1", "requiredPotential": 0 },
     { "buffId": "bach_passive_p2", "requiredPotential": 10 },
     { "buffId": "bach_passive_p3", "requiredPotential": 30 },
-    { "buffId": "bach_passive_p4", "requiredPotential": 50 },
-    { "buffId": "bach_passive_p5", "requiredPotential": 70 },
-    { "buffId": "bach_passive_p6", "requiredPotential": 99 }
+    { "buffId": "bach_passive_p4", "requiredPotential": 50 }
   ],
   "tags": ["starter"]
 }

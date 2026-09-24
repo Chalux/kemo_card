@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.turing_algorithm_alpha.name",
+  "descId": "skill.turing_algorithm_alpha.desc",
+  "actionRefs": [
+    { "actionId": "turing_apply_algorithm_alpha" }
+  ],
+  "tags": ["support"]
+}

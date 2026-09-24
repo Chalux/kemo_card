@@ -1,0 +1,4 @@
+{
+  "kind": "SetDomain",
+  "params": { "gameplayEffectId": "von_neumann_fate_domain", "turns": 2 }
+}

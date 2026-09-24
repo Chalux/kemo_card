@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.turing_limit_energy_solution.name",
+  "descId": "skill.turing_limit_energy_solution.desc",
+  "actionRefs": [
+    { "actionId": "turing_apply_damage_taken_up" }
+  ],
+  "tags": ["debuff"]
+}

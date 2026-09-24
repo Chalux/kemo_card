@@ -18,6 +18,13 @@ public static class BuiltinCombatConditions
     /// <summary>「本回合打出过 N 张指定属性的卡」：参数 <c>{ count, elementAny? }</c>。</summary>
     public const string CardPlayedThisTurn = "CardPlayedThisTurn";
 
+    /// <summary>
+    /// 「本回合连携达到 N 档」：参数 <c>{ tier, elementAny? }</c>。
+    /// <c>tier</c> = 该属性的参与人数下限（2/3/4 = 二/三/四连携档）；
+    /// <c>elementAny</c> 缺省时按<b>当前正在结算的卡牌</b>的属性判定（冯·诺依曼被动2）。
+    /// </summary>
+    public const string ChainTierAtLeast = "ChainTierAtLeast";
+
     public static void RegisterAll(ConditionRegistry<ICombatCondContext> registry)
     {
         ArgumentNullException.ThrowIfNull(registry);
@@ -28,6 +35,13 @@ public static class BuiltinCombatConditions
             "COND_CARD_PLAYED_THIS_TURN_LONG",
             TryParseCardPlayed,
             CheckCardPlayed));
+
+        registry.Register(CondTypeHandler.Create<ICombatCondContext, ChainTierArgs>(
+            ChainTierAtLeast,
+            "COND_CHAIN_TIER_SHORT",
+            "COND_CHAIN_TIER_LONG",
+            TryParseChainTier,
+            CheckChainTier));
     }
 
     private sealed record CardPlayedArgs(int Count, int ElementFlags);
@@ -118,6 +132,67 @@ public static class BuiltinCombatConditions
             Passed = played >= args.Count,
             Fill = [played, args.Count],
             Progress = new ConditionProgress(Math.Min(played, args.Count), args.Count),
+        };
+    }
+
+    private sealed record ChainTierArgs(int Tier, int ElementFlags);
+
+    private static bool TryParseChainTier(
+        JsonElement args,
+        string sourcePath,
+        out ChainTierArgs? parsed,
+        out string? error)
+    {
+        parsed = null;
+        error = null;
+
+        if (args.ValueKind != JsonValueKind.Object)
+        {
+            error = $"{sourcePath}: 参数须为对象，例如 {{ \"tier\": 2, \"elementAny\": [\"Blue\"] }}";
+            return false;
+        }
+
+        var tier = 0;
+        var elementFlags = 0;
+        foreach (var property in args.EnumerateObject())
+        {
+            switch (property.Name)
+            {
+                case "tier":
+                    if (property.Value.ValueKind != JsonValueKind.Number ||
+                        !property.Value.TryGetInt32(out tier) ||
+                        tier < 2)
+                    {
+                        error = $"{sourcePath}.tier: 须为 ≥ 2 的整数（连携档位由参与人数决定）";
+                        return false;
+                    }
+
+                    break;
+                case "elementAny":
+                    if (!TryParseElementFlags(property.Value, sourcePath, out elementFlags, out error))
+                        return false;
+                    break;
+            }
+        }
+
+        if (tier == 0)
+        {
+            error = $"{sourcePath}.tier: 缺失（须为 ≥ 2 的整数）";
+            return false;
+        }
+
+        parsed = new ChainTierArgs(tier, elementFlags);
+        return true;
+    }
+
+    private static LeafEvalData CheckChainTier(ChainTierArgs args, ICombatCondContext context)
+    {
+        var participants = context.CountChainParticipants(args.ElementFlags);
+        return new LeafEvalData
+        {
+            Passed = participants >= args.Tier,
+            Fill = [participants, args.Tier],
+            Progress = new ConditionProgress(Math.Min(participants, args.Tier), args.Tier),
         };
     }
 }

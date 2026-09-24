@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.turing_machine_shift.name",
+  "descId": "skill.turing_machine_shift.desc",
+  "actionRefs": [
+    { "actionId": "turing_machine_shift_strike" },
+    { "actionId": "turing_apply_magic_def_down" }
+  ],
+  "tags": ["attack", "debuff"]
+}

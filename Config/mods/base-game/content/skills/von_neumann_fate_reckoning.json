@@ -1,0 +1,11 @@
+{
+  "displayNameId": "skill.von_neumann_fate_reckoning.name",
+  "descId": "skill.von_neumann_fate_reckoning.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "von_neumann_open_domain" },
+    { "actionId": "von_neumann_domain_protect_ally" },
+    { "actionId": "von_neumann_domain_protect_enemy" }
+  ],
+  "tags": ["active"]
+}

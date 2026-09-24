@@ -1,13 +1,13 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cdxu104idvcsq"]
 
-[ext_resource type="Script" path="res://Src/mod/run/Ui/RunTeamEditDlg.cs" id="1_dlg"]
-[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
-[ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
+[ext_resource type="Script" uid="uid://c4jmf0pnry3" path="res://Src/mod/run/Ui/RunTeamEditDlg.cs" id="1_dlg"]
+[ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
+[ext_resource type="Script" uid="uid://dfkgx3jci17w8" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.tscn" id="4_presenter"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
-[ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="6_carditem"]
+[ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="6_carditem"]
 
-[node name="RunTeamEditDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_lblDeckCaption", "_deckStrip", "_lblStatus")]
+[node name="RunTeamEditDlg" type="Control" unique_id=328732083 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_lblDeckCaption", "_deckStrip", "_lblStatus")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -32,7 +32,7 @@ _lblDeckCaption = NodePath("Layout/Content/VBox/Body/Right/VBox/LblDeckCaption")
 _deckStrip = NodePath("Layout/Content/VBox/Body/Right/VBox/DeckStrip")
 _lblStatus = NodePath("Layout/Rail/Margin/VBox/LblStatus")
 
-[node name="Bg" type="Panel" parent="."]
+[node name="Bg" type="Panel" parent="." unique_id=1307442161]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -42,7 +42,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_type_variation = &"PageBg"
 
-[node name="Layout" type="HBoxContainer" parent="."]
+[node name="Layout" type="HBoxContainer" parent="." unique_id=1685084383]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -51,39 +51,39 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 0
 
-[node name="Rail" type="PanelContainer" parent="Layout"]
+[node name="Rail" type="PanelContainer" parent="Layout" unique_id=1179990099]
 custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 theme_type_variation = &"Rail"
 
-[node name="Margin" type="MarginContainer" parent="Layout/Rail"]
+[node name="Margin" type="MarginContainer" parent="Layout/Rail" unique_id=2385851]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 28
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin" unique_id=1046988348]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="LblTitle" type="Label" parent="Layout/Rail/Margin/VBox"]
+[node name="LblTitle" type="Label" parent="Layout/Rail/Margin/VBox" unique_id=827995003]
 layout_mode = 2
 theme_type_variation = &"Title"
 theme_override_font_sizes/font_size = 26
 
-[node name="Rule" type="HSeparator" parent="Layout/Rail/Margin/VBox"]
+[node name="Rule" type="HSeparator" parent="Layout/Rail/Margin/VBox" unique_id=140064538]
 layout_mode = 2
 
-[node name="LblCurrentCaption" type="Label" parent="Layout/Rail/Margin/VBox"]
+[node name="LblCurrentCaption" type="Label" parent="Layout/Rail/Margin/VBox" unique_id=1351460754]
 layout_mode = 2
 theme_type_variation = &"Caption"
 
-[node name="CurrentHolder" type="Control" parent="Layout/Rail/Margin/VBox"]
+[node name="CurrentHolder" type="Control" parent="Layout/Rail/Margin/VBox" unique_id=1122973193]
 custom_minimum_size = Vector2(0, 216)
 layout_mode = 2
 
-[node name="CurrentCharacter" parent="Layout/Rail/Margin/VBox/CurrentHolder" instance=ExtResource("5_charitem")]
+[node name="CurrentCharacter" parent="Layout/Rail/Margin/VBox/CurrentHolder" unique_id=813667909 instance=ExtResource("5_charitem")]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -94,30 +94,30 @@ offset_right = 80.0
 offset_bottom = 212.0
 grow_horizontal = 2
 
-[node name="BtnUnassign" type="Button" parent="Layout/Rail/Margin/VBox"]
+[node name="BtnUnassign" type="Button" parent="Layout/Rail/Margin/VBox" unique_id=782232374]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "UI_TEAM_UNASSIGN"
 script = ExtResource("2_kbtn")
 
-[node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox"]
+[node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox" unique_id=1178559626]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="LblStatus" type="Label" parent="Layout/Rail/Margin/VBox"]
+[node name="LblStatus" type="Label" parent="Layout/Rail/Margin/VBox" unique_id=1594415807]
 custom_minimum_size = Vector2(240, 0)
 layout_mode = 2
 theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 14
 autowrap_mode = 3
 
-[node name="BtnClose" type="Button" parent="Layout/Rail/Margin/VBox"]
+[node name="BtnClose" type="Button" parent="Layout/Rail/Margin/VBox" unique_id=1676939387]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "UI_TEAM_CLOSE"
 script = ExtResource("2_kbtn")
 
-[node name="Content" type="MarginContainer" parent="Layout"]
+[node name="Content" type="MarginContainer" parent="Layout" unique_id=466628619]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/margin_left = 24
@@ -125,29 +125,29 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBox" type="VBoxContainer" parent="Layout/Content"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Content" unique_id=1206619159]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SlotTabs" type="TabBar" parent="Layout/Content/VBox"]
+[node name="SlotTabs" type="TabBar" parent="Layout/Content/VBox" unique_id=1904615791]
 layout_mode = 2
 
-[node name="Body" type="HBoxContainer" parent="Layout/Content/VBox"]
+[node name="Body" type="HBoxContainer" parent="Layout/Content/VBox" unique_id=966376850]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 16
 
-[node name="Center" type="VBoxContainer" parent="Layout/Content/VBox/Body"]
+[node name="Center" type="VBoxContainer" parent="Layout/Content/VBox/Body" unique_id=1976142163]
 custom_minimum_size = Vector2(380, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="LblPoolCaption" type="Label" parent="Layout/Content/VBox/Body/Center"]
+[node name="LblPoolCaption" type="Label" parent="Layout/Content/VBox/Body/Center" unique_id=2036215025]
 layout_mode = 2
 theme_override_font_sizes/font_size = 17
 
-[node name="PoolList" type="Control" parent="Layout/Content/VBox/Body/Center" node_paths=PackedStringArray("ScrollArea")]
+[node name="PoolList" type="Control" parent="Layout/Content/VBox/Body/Center" unique_id=1217157172 node_paths=PackedStringArray("ScrollArea")]
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("3_vlist")
@@ -155,8 +155,9 @@ ScrollArea = NodePath("Scroll")
 ItemTemplate = ExtResource("5_charitem")
 ItemSize = 208.0
 Spacing = 10.0
+FlowLayout = true
 
-[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Center/PoolList"]
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Center/PoolList" unique_id=1895894381]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -164,29 +165,29 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Right" type="PanelContainer" parent="Layout/Content/VBox/Body"]
+[node name="Right" type="PanelContainer" parent="Layout/Content/VBox/Body" unique_id=1688110307]
 custom_minimum_size = Vector2(440, 0)
 layout_mode = 2
 
-[node name="VBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right" unique_id=1109565138]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Preview" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox"]
+[node name="Preview" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox" unique_id=893271519]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 6
 
-[node name="Presenter" parent="Layout/Content/VBox/Body/Right/VBox/Preview" instance=ExtResource("4_presenter")]
+[node name="Presenter" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=162115224 instance=ExtResource("4_presenter")]
 custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 
-[node name="LblName" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
+[node name="LblName" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=566190417]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 horizontal_alignment = 1
 
-[node name="LblInfo" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
+[node name="LblInfo" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=1205366773]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 theme_type_variation = &"Caption"
@@ -194,30 +195,30 @@ theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 autowrap_mode = 3
 
-[node name="Rule" type="HSeparator" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
+[node name="Rule" type="HSeparator" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=788363965]
 layout_mode = 2
 
-[node name="LblAttrs" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
+[node name="LblAttrs" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=1663793200]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_vertical = 3
 autowrap_mode = 3
 
-[node name="LblDeckCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox"]
+[node name="LblDeckCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox" unique_id=1184252619]
 layout_mode = 2
 theme_type_variation = &"Caption"
 
-[node name="DeckStrip" type="Control" parent="Layout/Content/VBox/Body/Right/VBox" node_paths=PackedStringArray("ScrollArea")]
+[node name="DeckStrip" type="Control" parent="Layout/Content/VBox/Body/Right/VBox" unique_id=149055605 node_paths=PackedStringArray("ScrollArea")]
 custom_minimum_size = Vector2(0, 222)
 layout_mode = 2
 script = ExtResource("3_vlist")
-IsVertical = false
 ScrollArea = NodePath("Scroll")
 ItemTemplate = ExtResource("6_carditem")
 ItemSize = 160.0
 Spacing = 10.0
+IsVertical = false
 
-[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/VBox/DeckStrip"]
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/VBox/DeckStrip" unique_id=1484007277]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.turing_damage_taken_up.name",
+  "descId": "buff.turing_damage_taken_up.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "modifiers": [
+    { "attributeId": "DamageTakenScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 0.25 } }
+  ],
+  "tags": ["buff.debuff"]
+}

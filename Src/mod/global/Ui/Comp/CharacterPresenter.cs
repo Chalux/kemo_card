@@ -12,6 +12,18 @@ namespace KemoCard.Mod.Global.Ui.Comp;
 /// </summary>
 public partial class CharacterPresenter : Control
 {
+    /// <summary>
+    /// 已经报过「缺少 Neutral 立绘」的角色 id，保证同一角色只报一次。
+    /// </summary>
+    /// <remarks>
+    /// 悬停预览（<c>RunTeamEditDlg</c> 的角色池）每次鼠标移入都会重新 <see cref="Bind"/>，
+    /// 于是「立绘缺失」这个**内容侧的稳定事实**被反复记录：2026-09-24 的一局游戏里
+    /// 5 个角色共刷出 690 条警告（每条还要跟 10 行 C# 堆栈），日志被噪声淹没、真错误反而看不见。
+    /// 美术补齐前缺失不会改变，因此按 id 去重；补齐后新角色若仍缺失照样会被记下来。
+    /// </remarks>
+    private static readonly HashSet<string> MissingPortraitWarnedIds = new(StringComparer.Ordinal);
+    private static readonly object WarnGate = new();
+
     [Export] private TextureRect? _portrait;
     [Export] private AnimatedSprite2D? _animSprite;
 
@@ -120,9 +132,7 @@ public partial class CharacterPresenter : Control
 
         if (string.IsNullOrEmpty(path))
         {
-            AppLog.Warning(
-                $"CharacterPresenter: no Neutral portrait. id={character.Id}",
-                "CharacterPresenter");
+            WarnMissingPortraitOnce(character.Id);
             if (_portrait != null)
             {
                 _portrait.Texture = null;
@@ -159,6 +169,24 @@ public partial class CharacterPresenter : Control
             _animSprite.SpriteFrames = null;
             _animSprite.Visible = false;
         }
+    }
+
+    /// <summary>
+    /// 立绘缺失按角色 id 只报一次（去重表见 <see cref="MissingPortraitWarnedIds"/>）。
+    /// </summary>
+    private static void WarnMissingPortraitOnce(string characterId)
+    {
+        lock (WarnGate)
+        {
+            if (!MissingPortraitWarnedIds.Add(characterId))
+            {
+                return;
+            }
+        }
+
+        AppLog.Warning(
+            $"CharacterPresenter: no Neutral portrait. id={characterId}（同一角色只报一次）",
+            "CharacterPresenter");
     }
 
     #endregion

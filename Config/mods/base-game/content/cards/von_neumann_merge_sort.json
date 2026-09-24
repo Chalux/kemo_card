@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.von_neumann_merge_sort.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 30,
+  "skillRefs": [{ "skillId": "von_neumann_merge_sort" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 2
+    }
+  },
+  "role": "Healer",
+  "priority": 19,
+  "cardType": "Healing",
+  "targetSide": "Self",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "tags": ["heal", "buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.von_neumann_prob_collapse_amp.name",
+  "descId": "buff.von_neumann_prob_collapse_amp.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Add",
+  "maxStacks": 99,
+  "modifiers": [
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ],
+  "tags": ["buff.active"]
+}

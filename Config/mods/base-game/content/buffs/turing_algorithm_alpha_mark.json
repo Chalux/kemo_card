@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.turing_algorithm_alpha_mark.name",
+  "descId": "buff.turing_algorithm_alpha_mark.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "hooks": {
+    "onApply": [
+      { "effectId": "turing_algorithm_alpha_boost", "params": { "targetFilter": { "self": true } } }
+    ]
+  }
+}

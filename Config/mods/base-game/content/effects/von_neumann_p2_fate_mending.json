@@ -1,0 +1,7 @@
+{
+  "kind": "Heal",
+  "params": { "amount": 6 },
+  "conditions": [
+    { "kind": "ChainTierAtLeast", "params": { "tier": 2 } }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.von_neumann_merge_fusion.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 6,
+  "skillRefs": [{ "skillId": "von_neumann_merge_fusion" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "HealPower": 1
+    }
+  },
+  "role": "Healer",
+  "priority": 7,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "heal", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.turing_machine_shift.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 12,
+  "skillRefs": [{ "skillId": "turing_machine_shift" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 2
+    }
+  },
+  "role": "Controller",
+  "priority": 10,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "debuff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

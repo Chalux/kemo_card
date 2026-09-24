@@ -31,6 +31,14 @@ public sealed class GameplayEffectDefDto
     [JsonPropertyName("executions")]
     public List<ExecutionDefDto> Executions { get; init; } = [];
 
+    /// <summary>
+    /// 吸血系数（2026-09-24 新增）：&gt; 0 且**来源是玩家侧**时，本 GE 对非玩家侧目标造成的
+    /// **实际生命损失**按该比例回复**队伍共享账本**（「为己方回复 10% 伤害量」= <c>0.1</c>）。
+    /// 玩家侧目标的生命变化本就转到账本（见 <c>SharedHpSettlement</c>），不走这条。
+    /// </summary>
+    [JsonPropertyName("lifestealScale")]
+    public float LifestealScale { get; init; }
+
     [JsonPropertyName("grantedTags")]
     public List<string> GrantedTags { get; init; } = [];
 

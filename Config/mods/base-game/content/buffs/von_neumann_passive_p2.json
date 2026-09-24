@@ -1,0 +1,14 @@
+{
+  "descId": "buff.von_neumann_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onCardSettled": [
+      {
+        "effectId": "von_neumann_p2_fate_mending",
+        "params": { "hookTargets": "team" }
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.von_neumann_domain.name",
+  "descId": "buff.von_neumann_domain_ally.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "applyScope": "AllAllies",
+  "condition": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"], "matchAll": true },
+  "modifiers": [
+    { "attributeId": "DamageTakenScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": -0.5 } }
+  ],
+  "tags": ["buff.active", "buff.undispellable"]
+}

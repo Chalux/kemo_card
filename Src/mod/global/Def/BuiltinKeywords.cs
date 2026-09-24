@@ -18,6 +18,7 @@ public static class BuiltinKeywords
         catalog.Register(new KeywordEntry("retain", "KW_RETAIN_TITLE", "KW_RETAIN_DESC"));
         catalog.Register(new KeywordEntry("deal_damage", "KW_DEAL_DAMAGE_TITLE", "KW_DEAL_DAMAGE_DESC"));
         catalog.Register(new KeywordEntry("hand_slot_damage", "KW_HAND_SLOT_DAMAGE_TITLE", "KW_HAND_SLOT_DAMAGE_DESC"));
+        catalog.Register(new KeywordEntry("slot_storm", "KW_SLOT_STORM_TITLE", "KW_SLOT_STORM_DESC"));
         catalog.Register(new KeywordEntry("charge", "KW_CHARGE_TITLE", "KW_CHARGE_DESC"));
         catalog.Register(new KeywordEntry("chain", "KW_CHAIN_TITLE", "KW_CHAIN_DESC"));
         // 玩法机制词条：这些概念只有规则、没有卡面图标，词典是玩家唯一的查阅入口。
@@ -29,5 +30,7 @@ public static class BuiltinKeywords
         catalog.Register(new KeywordEntry("character_passive", "KW_CHARACTER_PASSIVE_TITLE", "KW_CHARACTER_PASSIVE_DESC"));
         catalog.Register(new KeywordEntry("follow_up", "KW_FOLLOW_UP_TITLE", "KW_FOLLOW_UP_DESC"));
         catalog.Register(new KeywordEntry("seal", "KW_SEAL_TITLE", "KW_SEAL_DESC"));
+        catalog.Register(new KeywordEntry("action_count", "KW_ACTION_COUNT_TITLE", "KW_ACTION_COUNT_DESC"));
+        catalog.Register(new KeywordEntry("domain", "KW_DOMAIN_TITLE", "KW_DOMAIN_DESC"));
     }
 }

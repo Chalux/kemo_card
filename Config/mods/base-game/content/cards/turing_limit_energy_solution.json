@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.turing_limit_energy_solution.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "turing_limit_energy_solution" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Controller",
+  "priority": 30,
+  "cardType": "Weak",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["debuff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

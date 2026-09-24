@@ -39,6 +39,11 @@ public sealed class DamageExecution : IExecutionCalculation
 
         var descriptor = DamageTypeParser.Parse(executionDef.DamageType, executionDef.Element);
         var (sourceAttack, targetDefense) = ResolveAttackAndDefense(descriptor.Kind, spec, targetAsc);
+        // 攻击力来源覆盖（2026-09-24）：内容可点名别的属性当"攻击力"（如治疗强度）；
+        // 防御侧仍按 damageType 取（魔法 → 魔防）。
+        if (!string.IsNullOrWhiteSpace(executionDef.AttackAttribute))
+            sourceAttack = spec.SourceAsc?.GetCurrentValue(executionDef.AttackAttribute) ?? 0f;
+
         // 源攻击力系数：缺省 1.0（100% 攻击力）；「3 + 25% 物攻」这类卡填 0.25。
         // 调用方也可用 SetByCaller["AttackScale"] 覆盖（内容无法静态声明的动态系数，如"按本回合触发球数提升"）。
         var attackScale = spec.SetByCaller.TryGetValue(SetByCallerAttackScale, out var scaleOverride)

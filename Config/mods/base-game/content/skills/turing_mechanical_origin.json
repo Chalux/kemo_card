@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.turing_mechanical_origin.name",
+  "descId": "skill.turing_mechanical_origin.desc",
+  "actionRefs": [
+    { "actionId": "turing_apply_attack_down" }
+  ],
+  "tags": ["debuff"]
+}

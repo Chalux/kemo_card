@@ -1,0 +1,11 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "turing_algorithm_alpha_mark",
+    "targetFilter": {
+      "elementAny": ["Red"],
+      "raceAll": ["Human", "Academic"],
+      "excludeSelf": true
+    }
+  }
+}

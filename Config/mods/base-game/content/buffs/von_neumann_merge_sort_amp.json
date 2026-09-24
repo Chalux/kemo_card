@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.von_neumann_merge_sort_amp.name",
+  "descId": "buff.von_neumann_merge_sort_amp.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "modifiers": [
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ],
+  "tags": ["buff.active"]
+}

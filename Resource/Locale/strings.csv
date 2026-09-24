@@ -97,6 +97,10 @@ UI_CODEX_CHAR_TXT_FILTER,角色名或描述,Character Name Or Desc
 UI_CODEX_ANIM,动作,Anim
 UI_CHARACTER_DETAILS_TITLE,角色详情,Character Details
 UI_CHARACTER_CARDS_TITLE,专属卡牌,Signature Cards
+UI_CHARACTER_META_FIELD,{0}：{1},{0}: {1}
+UI_CHARACTER_META_ELEMENT,元素,Element
+UI_CHARACTER_META_ROLE,定位,Role
+UI_CHARACTER_META_RACE,种族,Race
 UI_RACE_HUMAN,人族,Human
 UI_RACE_ANIMAL,动物,Animal
 UI_RACE_INSECT,昆虫,Insect
@@ -124,6 +128,8 @@ COND_HAS_ANY_ITEM_SHORT,物品不足,Not enough items
 COND_HAS_ANY_ITEM_LONG,需要任一物品,Requires any item
 COND_CARD_PLAYED_THIS_TURN_SHORT,出牌不足,Not enough cards played
 COND_CARD_PLAYED_THIS_TURN_LONG,本回合需要打出指定数量的卡牌,Requires a number of cards played this turn
+COND_CHAIN_TIER_SHORT,连携不足,Chain tier too low
+COND_CHAIN_TIER_LONG,本回合需要达到指定连携档位（按参与角色数）,Requires the chain tier to reach the listed number of participating characters this turn
 UI_RUN_STORY_SELECT_TITLE,选择故事,Select Story
 UI_STORY_LIST,故事列表,Stories
 UI_STORY_DETAILS,故事详情,Story Details
@@ -287,6 +293,12 @@ KW_FOLLOW_UP_TITLE,追打,Follow-Up
 KW_FOLLOW_UP_DESC,持有者在不是本回合[url=kw:normal_attack]普通攻击[/url]归属角色时，仍以标明的百分比攻击力参与该次普攻（目标与公式同普攻）。多个追打效果同时存在时只取最高值；归属角色自己持有追打不会重复出手。,"When the holder is not this turn's normal attacker, they still join that normal attack at the listed percentage of their attack power (same targets and formula). Only the highest follow-up value applies, and the acting character never strikes twice."
 KW_SEAL_TITLE,封印,Seal
 KW_SEAL_DESC,被封印的角色无法标记卡牌与释放主动技，已有标记会被清空并退还费用，并视作本回合已行动；封印只挡出牌，不影响普通攻击与被动的触发。免疫封印的角色完全不受该效果影响。,A sealed character cannot mark cards or cast the active skill: existing marks are cleared with their cost refunded and the character counts as having acted this turn. Sealing only blocks card play; normal attacks and passives still happen. Characters immune to seal ignore the effect entirely.
+KW_SLOT_STORM_TITLE,暴风,Storm
+KW_SLOT_STORM_DESC,挂在手牌槽上的减益：从该槽打出卡牌时，把相邻的手牌槽里的牌吹散（弃置）。相邻槽按「先左后右、由近及远」选取，数量由暴风等级决定（暴风 I = 1 个）。被吹散的是未入队的牌，已标记确认的牌不受影响；免疫暴风的角色手牌不会被吹散。,"[url=kw:hand_slot_damage]Hand slot[/url] debuff: playing a card from this slot blows away the cards in neighbouring slots (they are discarded). Neighbours are picked left-first then right, nearest first, up to the storm's level (Storm I = 1 slot). Only unqueued cards are blown away, and a character immune to storms keeps their hand."
+KW_ACTION_COUNT_TITLE,行动计数,Action Count
+KW_ACTION_COUNT_DESC,敌人每次轮到行动时会先检查行动计数：计数大于 1 时本回合只把计数减 1、不行动，计数为 1 时正常行动。因此把敌人的行动计数设为 2 就等于把它的这次行动推迟到下个回合；敌人的技能与普攻都受此约束。,"Each time an enemy's turn comes up its action count is checked first: above 1 it only decreases by one and the enemy does nothing that turn, at 1 the enemy acts normally. Setting an enemy's action count to 2 therefore pushes its action to the next turn. Both enemy skills and normal attacks are gated this way."
+KW_DOMAIN_TITLE,领域,Domain
+KW_DOMAIN_DESC,队伍级的持续场地效果，同一队伍同时只存在 1 个：新领域展开会顶替旧领域。领域可以带持续回合数（如「展开 2 回合」），到期自动收起；也可以不带时长，直到被下一个领域顶替。,"A team-wide persistent field effect. Only one domain can be active per team: opening a new one replaces the old. A domain may declare a duration in turns (for example ""lasts 2 turns"") and folds itself away when it expires, or stay until replaced."
 UI_PAUSE_TITLE,系统菜单,System Menu
 UI_PAUSE_HINT,按 ESC 可随时打开或关闭此菜单。,Press ESC anytime to toggle this menu.
 UI_PAUSE_RESUME,继续游戏,Resume

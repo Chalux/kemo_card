@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "von_neumann_prob_collapse_amp", "hookTargets": "self" }
+}

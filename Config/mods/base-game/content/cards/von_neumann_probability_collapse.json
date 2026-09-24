@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.von_neumann_probability_collapse.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "von_neumann_probability_collapse" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "HealPower": 1
+    }
+  },
+  "role": "Healer",
+  "priority": 50,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "heal", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

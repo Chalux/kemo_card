@@ -1,0 +1,7 @@
+{
+  "kind": "ChainEffects",
+  "effectRefs": [
+    { "effectId": "von_neumann_merge_sort_heal" },
+    { "effectId": "von_neumann_merge_sort_amp", "params": { "hookTargets": "self" } }
+  ]
+}

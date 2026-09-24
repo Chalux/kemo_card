@@ -26,11 +26,28 @@ public static class BuiltinBuffTags
     /// <summary>充能：该槽打出卡牌时计数递减，归零触发载荷并重置。</summary>
     public const string SlotCharge = "slot.charge";
 
+    /// <summary>
+    /// 暴风（2026-09-23）：该槽打出卡牌时，把附近手牌槽的牌吹散（弃置）。
+    /// 与"手牌槽伤害"同属槽位减益，但惩罚是手牌而非血量：槽位定义声明载荷效果与
+    /// <c>adjacentSlots</c>（向外扩散几个槽），由 <c>BuffRuntime.FireSlotCardPlayed</c> 逐槽触发。
+    /// </summary>
+    public const string SlotStorm = "slot.storm";
+
     /// <summary>特征：免疫手牌槽伤害效果（chalux 被动1）。</summary>
     public const string TraitImmuneSlotDamage = "trait.immune_slot_damage";
 
+    /// <summary>特征：免疫手牌槽暴风效果（冯·诺依曼 被动1）——自己的手牌不会被暴风吹散。</summary>
+    public const string TraitImmuneSlotStorm = "trait.immune_slot_storm";
+
     /// <summary>特征：连携统计时给该角色打出的卡牌额外注入红属性（chalux 被动2）。</summary>
     public const string TraitChainInjectRed = "trait.chain_inject_red";
+
+    /// <summary>
+    /// 特征：连携统计时，含黄属性的卡牌同时计入**蓝属性**人头（冯·诺依曼 被动5：
+    /// 「打出蓝属性时计算连携也会计入黄属性卡牌」）。与 <see cref="TraitChainInjectRed"/> 同构，
+    /// 只是注入方向固定为"黄 → 蓝"；配 <c>applyScope: AllAllies</c> 即全队生效。
+    /// </summary>
+    public const string TraitChainYellowCountsBlue = "trait.chain_yellow_counts_blue";
 
     /// <summary>
     /// 追打（2026-09-21）：持有者在<b>不是</b>本回合普攻归属角色时，仍以

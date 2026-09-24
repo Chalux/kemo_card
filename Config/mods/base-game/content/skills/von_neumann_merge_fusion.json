@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.von_neumann_merge_fusion.name",
+  "descId": "skill.von_neumann_merge_fusion.desc",
+  "actionRefs": [
+    { "actionId": "von_neumann_merge_fusion_strike" }
+  ],
+  "tags": ["attack", "healing"]
+}

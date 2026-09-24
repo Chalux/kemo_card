@@ -27,4 +27,8 @@ internal sealed class CombatCondContext : ICombatCondContext
     /// <summary>结算期间记录尚未被取走（<c>TakePlayedThisTurn</c> 在回合结束产球时才清空），此处只读。</summary>
     public int CountCardsPlayedThisTurn(int characterIndex, int elementFlags) =>
         _simulation.CountCardsPlayedThisTurn(characterIndex, elementFlags);
+
+    /// <summary>本回合连携定档的参与人数；<paramref name="elementFlags"/> 为 0 时取当前结算卡牌的属性。</summary>
+    public int CountChainParticipants(int elementFlags) =>
+        _simulation.CountChainParticipants(elementFlags);
 }

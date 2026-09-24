@@ -145,6 +145,9 @@ public sealed class CombatEffectExecutor
             case EEffectKind.ExecuteScript:
             case EEffectKind.ChainEffects:
             case EEffectKind.AttachSlotBuff:
+            case EEffectKind.SetActionCount:
+            case EEffectKind.SetDomain:
+            case EEffectKind.DiscardSlot:
                 _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets, depth);
                 break;
             case EEffectKind.ApplyBuff:

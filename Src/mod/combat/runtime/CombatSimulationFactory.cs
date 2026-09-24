@@ -145,7 +145,12 @@ public static class CombatSimulationFactory
 
             for (var i = 0; i < count; i++)
             {
-                units.Add(new EnemyUnit($"enemy-{runtimeIndex++}", spawn.EnemyId, baseAttributes));
+                units.Add(new EnemyUnit(
+                    $"enemy-{runtimeIndex++}",
+                    spawn.EnemyId,
+                    baseAttributes,
+                    enemyDef.Element,
+                    enemyDef.Race));
             }
         }
 

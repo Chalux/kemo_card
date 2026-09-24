@@ -128,6 +128,25 @@ public enum EEffectKind
     /// 「卡组内绿卡 0/4/7 张 → 2/3/4 个绿球」即 <c>tiers: [[0,2],[4,3],[7,4]]</c>。
     /// </summary>
     GainOrbByDeckCount,
+
+    /// <summary>
+    /// 设置目标敌人的<b>行动计数</b>（<c>params.count</c>，缺省 2）：计数 &gt; 1 的敌人在接下来的
+    /// 敌方阶段只递减计数、不行动，因此 2 = 把它的行动推迟到下个回合（冯·诺依曼被动6）。
+    /// </summary>
+    SetActionCount,
+
+    /// <summary>
+    /// 展开队伍<b>领域</b>（<c>params.gameplayEffectId</c> 必填 + <c>params.turns</c> 可选 = 持续回合数）：
+    /// 领域是队伍 ASC 上的单例增益，新领域顶替旧的；带 <c>turns</c> 时到期自动收起。
+    /// </summary>
+    SetDomain,
+
+    /// <summary>
+    /// 弃置来源角色指定手牌槽的牌（<c>params.slotIndex</c>，0 起）。
+    /// 只弃未标记的牌——已入队/已确认的牌不动（规格 §2.2"其它通道"口径）。
+    /// 暴风（<c>slot.storm</c>）逐相邻槽触发本效果。
+    /// </summary>
+    DiscardSlot,
 }
 
 public enum ESkillActionKind
@@ -149,6 +168,12 @@ public enum ESkillActionKind
     AttachSlotBuff,
     /// <summary>授予充能球（params.orbTypeId + 可选 params.count，默认 1；产球者 = 来源角色）。</summary>
     GainOrb,
+    /// <summary>设置目标敌人的行动计数（params.count，缺省 2，下限 1）。</summary>
+    SetActionCount,
+    /// <summary>展开队伍领域（params.gameplayEffectId + 可选 params.turns = 持续回合数）。</summary>
+    SetDomain,
+    /// <summary>弃置来源角色指定手牌槽的牌（params.slotIndex，0 起；只弃未标记的牌）。</summary>
+    DiscardSlot,
 }
 
 [Flags]

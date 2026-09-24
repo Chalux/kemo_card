@@ -1,0 +1,20 @@
+{
+  "descId": "buff.von_neumann_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onWaveStart": [
+      { "effectId": "von_neumann_p3_boost_self", "params": { "targetFilter": { "self": true } } },
+      { "effectId": "von_neumann_p3_boost_red", "params": { "targetFilter": { "elementAny": ["Red"] } } },
+      { "effectId": "von_neumann_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] } } },
+      { "effectId": "von_neumann_p3_boost_academic", "params": { "targetFilter": { "raceAny": ["Academic"] } } }
+    ],
+    "onTurnStart": [
+      { "effectId": "von_neumann_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 10 } },
+      { "effectId": "von_neumann_p3_boost_red", "params": { "targetFilter": { "elementAny": ["Red"] }, "turnInterval": 10 } },
+      { "effectId": "von_neumann_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] }, "turnInterval": 10 } },
+      { "effectId": "von_neumann_p3_boost_academic", "params": { "targetFilter": { "raceAny": ["Academic"] }, "turnInterval": 10 } }
+    ]
+  }
+}

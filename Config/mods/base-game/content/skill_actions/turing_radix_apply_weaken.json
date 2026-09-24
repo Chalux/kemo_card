@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "turing_radix_weaken", "hookTargets": "allEnemies" }
+}

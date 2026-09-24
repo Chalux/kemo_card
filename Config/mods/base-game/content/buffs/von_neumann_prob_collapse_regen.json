@@ -1,0 +1,14 @@
+{
+  "displayNameId": "buff.von_neumann_prob_collapse_regen.name",
+  "descId": "buff.von_neumann_prob_collapse_regen.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "maxStacks": 1,
+  "tags": ["buff.active"],
+  "hooks": {
+    "onTurnStart": [
+      { "effectId": "von_neumann_prob_collapse_regen_tick", "params": { "hookTargets": "team" } }
+    ]
+  }
+}

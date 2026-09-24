@@ -115,6 +115,14 @@ public sealed class ExecutionDefDto
     /// </summary>
     [JsonPropertyName("attackScale")]
     public float AttackScale { get; init; } = 1f;
+
+    /// <summary>
+    /// 攻击力来源属性覆盖（2026-09-24 新增）：非空时用它作为"源攻击力"，而不是按 <see cref="DamageType"/>
+    /// 取物攻/魔攻——「6 + 100% 回复量的魔法伤害」即 <c>attackAttribute: "HealPower"</c>；
+    /// 防御侧仍按 <see cref="DamageType"/> 取（魔法 → 魔防），元素维度不变。属性 id 取自 <c>content/attributes/</c>。
+    /// </summary>
+    [JsonPropertyName("attackAttribute")]
+    public string AttackAttribute { get; init; } = "";
 }
 
 public sealed class GameplayEffectHooksDto

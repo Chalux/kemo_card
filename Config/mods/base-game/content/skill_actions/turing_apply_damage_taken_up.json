@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "turing_damage_taken_up" }
+}

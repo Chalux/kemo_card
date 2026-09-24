@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "von_neumann_fate_domain_protect_enemy", "hookTargets": "allEnemies" }
+}

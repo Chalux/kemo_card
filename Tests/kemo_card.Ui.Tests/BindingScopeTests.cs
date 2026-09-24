@@ -132,4 +132,39 @@ public sealed class BindingScopeTests
         Assert.Throws<ArgumentNullException>(() => scope.Bind(() => { }, null!));
         Assert.Throws<ArgumentNullException>(() => scope.Add(null!));
     }
+
+    /// <summary>
+    /// 框架契约（<c>UIOpenStateHandler</c>）：**界面已经打开时被再次 Open 不经过 <c>_ExitTree</c>**，
+    /// 旧订阅仍然活着，因此每次 <c>InitEvent</c> 之前必须先清账（<c>InvokeResetBindings</c> → <c>UnbindAll</c>）。
+    /// </summary>
+    /// <remarks>
+    /// 2026-09-24 实测缺陷：从 Run 退回主菜单会重新打开仍处于打开态的 <c>MenuWin</c>，
+    /// 不清账直接 <c>InitEvent</c>，Godot 报 5 条 <c>Signal 'pressed' is already connected</c>，
+    /// 账本里还多出 5 条永远解不掉的条目（进程退出时再报 5 条
+    /// <c>Attempt to disconnect a nonexistent connection</c>）。本用例固定「先解绑、再登记」这一调用约定。
+    /// </remarks>
+    [Test]
+    public void Reopening_without_leaving_the_tree_stays_flat_when_bindings_are_reset_first()
+    {
+        var scope = new BindingScope();
+        var listeners = new List<Action>();
+
+        for (var reopen = 0; reopen < 3; reopen++)
+        {
+            scope.UnbindAll();                     // ← 框架在 InitEvent 之前做的事
+            listeners.Clear();
+
+            scope.Bind(() => listeners.Add(() => { }), () => { });
+            scope.Bind(() => listeners.Add(() => { }), () => { });
+
+            Assert.That(listeners, Has.Count.EqualTo(2), $"第 {reopen + 1} 次重开：每个信号只登记一次");
+            Assert.That(scope.Count, Is.EqualTo(2), "账本条目数必须与真实订阅数一致");
+        }
+
+        // 反证：少了这一步，同一信号会被登记两次，账本随之翻倍（就是上面那条 ERROR 的成因）。
+        var withoutReset = new BindingScope();
+        withoutReset.Bind(() => { }, () => { });
+        withoutReset.Bind(() => { }, () => { });
+        Assert.That(withoutReset.Count, Is.EqualTo(2), "未清账时账本累积——故框架必须显式清账");
+    }
 }

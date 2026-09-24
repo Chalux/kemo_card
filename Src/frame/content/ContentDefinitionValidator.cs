@@ -608,6 +608,9 @@ public sealed class ContentDefinitionValidator
     /// <item><c>tiers</c> 结构写错 ⇒ 一个球都不发；</item>
     /// <item><c>perCard</c> / <c>offset</c> / <c>elementMask</c> 非数字 ⇒ 回落缺省；</item>
     /// <item><c>oncePerTurn</c> 非布尔 ⇒ 恒为 false（"每回合仅 1 次"失效，被动每张牌都触发）。</item>
+    /// <item><c>oncePerWave</c> 非布尔 ⇒ 恒为 false（"每阶层仅 1 次"失效）。</item>
+    /// <item><c>count</c>（SetActionCount）非整数 ⇒ 回落 2；<c>turns</c>（SetDomain）非整数 ⇒ 领域不自动收起。</item>
+    /// <item><c>slotIndex</c>（DiscardSlot / 暴风载荷）非整数 ⇒ 弃不掉任何牌；<c>adjacentSlots</c> 同理。</item>
     /// </list>
     /// 与 <c>damageType</c> / 效果条件的校验同口径：这类"静默失败"必须在内容准入阶段拦下。
     /// </summary>
@@ -625,7 +628,12 @@ public sealed class ContentDefinitionValidator
         ValidateIntParam(category, definitionId, parameters, "perCard", errors, allowNegative: true);
         ValidateIntParam(category, definitionId, parameters, "offset", errors, allowNegative: true);
         ValidateIntParam(category, definitionId, parameters, "elementMask", errors, allowNegative: false);
+        ValidateIntParam(category, definitionId, parameters, "count", errors, allowNegative: false);
+        ValidateIntParam(category, definitionId, parameters, "turns", errors, allowNegative: false);
+        ValidateIntParam(category, definitionId, parameters, "slotIndex", errors, allowNegative: false);
+        ValidateIntParam(category, definitionId, parameters, "adjacentSlots", errors, allowNegative: false);
         ValidateBoolParam(category, definitionId, parameters, "oncePerTurn", errors);
+        ValidateBoolParam(category, definitionId, parameters, "oncePerWave", errors);
         ValidateOrbTiers(category, definitionId, parameters, errors);
         ValidateAttackScaleFromOrbs(category, definitionId, parameters, errors);
     }

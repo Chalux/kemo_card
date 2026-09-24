@@ -22,6 +22,7 @@ public partial class CharacterDetailsDlg : BaseDlg
     [Export] private CharacterPresenter? _presenter;
     [Export] private Label? _txtTitle;
     [Export] private Label? _txtCharName;
+    [Export] private Label? _lblMeta;
     [Export] private Label? _lblCardsCaption;
     [Export] private VirtualList? _cardList;
     [Export] private RichTextLabel? _rtPassives;
@@ -96,6 +97,8 @@ public partial class CharacterDetailsDlg : BaseDlg
                 : Localization.Tr(character.DisplayNameId);
         }
 
+        BindMeta(character);
+
         BindCards(character);
 
         if (_lblCardsCaption != null)
@@ -106,6 +109,24 @@ public partial class CharacterDetailsDlg : BaseDlg
 
         BindPassives(character);
         BindAnimOptions();
+    }
+
+    /// <summary>
+    /// 身份行：元素 / 定位 / 种族（如「元素：蓝 · 定位：战士 · 种族：动物、龙族」）。
+    /// </summary>
+    /// <remarks>
+    /// 三项全在角色定义里，因此**不依赖 Run**——从图鉴点开的角色（还没进 Run 角色池）也有值；
+    /// 显示名走 <see cref="CharacterIdentityLabels"/>，与队伍编辑预览、角色悬停摘要同一套口径。
+    /// 三者皆无时 <see cref="CharacterIdentityLabels.MetaLine"/> 返回空串，标签自然不显示内容。
+    /// </remarks>
+    private void BindMeta(CharacterDto character)
+    {
+        if (_lblMeta == null)
+        {
+            return;
+        }
+
+        _lblMeta.Text = CharacterIdentityLabels.MetaLine(character, Localization.Tr);
     }
 
     /// <summary>

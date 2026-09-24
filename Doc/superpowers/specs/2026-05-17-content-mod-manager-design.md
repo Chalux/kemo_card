@@ -419,6 +419,8 @@ Skill DTO **不含** `ESkillTrigger` / `IsInstant`。
 
 `EElement` / `ERace` / `EEventKind` / `ERewardKind` 定义于同一文件，供 Character / Battle / Event 等 DTO 使用（见本文 §13.4）。
 
+> **2026-09-23 新增成员**（冯·诺依曼套件）：`EEffectKind` 与 `ESkillActionKind` 各加三个——`SetActionCount`（敌人行动计数，`params.count` 缺省 2）、`SetDomain`（展开队伍领域，`params.gameplayEffectId` + 可选 `turns`）、`DiscardSlot`（弃置指定手牌槽，`params.slotIndex`）。前者与 `Damage` 一样两条通道（效果 / 技能动作）同源，`EffectDto` 与 `SkillActionDto` 都可用。
+
 > 2026-09-21 合并：本节的 `ERace` / `ERarity` 成员清单以本文 §13.4.1 为准（`ERace` 收敛见本文 §15.1，`ERarity` 档名收敛见本文 §15.4）。
 
 ---
@@ -555,6 +557,7 @@ content/items/*.json
 | `maxHp` | int | 必须 > 0 |
 | `element` | EElement | |
 | `role` | ERole | |
+| `race` | ERace | 种族（可组合 Flags，**2026-09-23 新增**，与 `CharacterDto.race` 同口径）。此前敌人只有属性/职业，无法被「蓝属性·人类·学术」这类跨属性与种族的筛选命中；未声明时为 `ERace.None`。运行时 `EnemyUnit.Element` / `EnemyUnit.Race` 同时作为 buff 持有者条件（`condition.elementAny` / `raceAny`）的 provider |
 | `skillRefs` | SkillRefDto[] | AI 技能池（运行时规范见开放项） |
 | `buffRefs` | BuffRefDto[] | |
 | `artPath` | string | |

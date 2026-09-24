@@ -184,6 +184,7 @@
 - **触发点**：`onWaveStart` / `onTurnStart`（支持 `turnInterval: N` 按波内回合分档）/ `onActiveSkillCast` / `onSlotCardPlayed` 等，由 buff 运行时统一分发；见 [战斗规格「buff 运行时」](./2026-07-21-combat-system-design.md)。
 - **开战注入**：`RunController.StartBattle` 按各角色**已解锁被动**（槽序 + `requiredPotential` 低 → 高）构造 `BattleStartBuffEntry`，在 BattleStart 管线中于技能注入之后、冻结 SharedHp 之前挂载（总顺序见 §2.2）。
 - **阈值档位不限六档**（任意数值）；旧「六档」限制已废止。
+- **内容侧约定：每个角色 4 条潜能被动，档位统一 `0 / 10 / 30 / 50`**（2026-09-24 删除原 `70` 与 `99` 两档及其载荷，不做合并）。机制细节见 [战斗规格 §13.1.1](./2026-07-21-combat-system-design.md)。
 
 #### 4.5.4 开局 Init
 

@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.von_neumann_direct_deduction.name",
+  "descId": "skill.von_neumann_direct_deduction.desc",
+  "effectRefs": [
+    { "effectId": "von_neumann_direct_deduction_heal" }
+  ],
+  "tags": ["healing"]
+}

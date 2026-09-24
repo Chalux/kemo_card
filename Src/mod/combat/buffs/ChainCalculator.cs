@@ -106,8 +106,23 @@ public static class ChainCalculator
         return CardElementFlagsForCount(simulation.PlayerTeam.Characters[characterIndex], card);
     }
 
-    private static int CardElementFlagsForCount(CharacterBattleInstance source, CardDto card) =>
-        source.Buffs.HasTag(BuiltinBuffTags.TraitChainInjectRed)
-            ? card.Element | (int)EElement.Red
-            : card.Element;
+    /// <summary>
+    /// 该卡参与连携统计时的属性位：基础属性之外，被动可注入额外属性。
+    /// <list type="bullet">
+    /// <item><c>trait.chain_inject_red</c>（chalux 被动2）：打出的卡额外计入红属性。</item>
+    /// <item><c>trait.chain_yellow_counts_blue</c>（冯·诺依曼 被动5）：含黄属性的卡额外计入<b>蓝属性</b>
+    /// （"打出蓝属性时计算连携也会计入黄属性卡牌"，配 <c>applyScope: AllAllies</c> 即全队生效）。</item>
+    /// </list>
+    /// </summary>
+    private static int CardElementFlagsForCount(CharacterBattleInstance source, CardDto card)
+    {
+        var flags = card.Element;
+        if (source.Buffs.HasTag(BuiltinBuffTags.TraitChainInjectRed))
+            flags |= (int)EElement.Red;
+        if (source.Buffs.HasTag(BuiltinBuffTags.TraitChainYellowCountsBlue) &&
+            (card.Element & (int)EElement.Yellow) != 0)
+            flags |= (int)EElement.Blue;
+
+        return flags;
+    }
 }

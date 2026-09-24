@@ -71,6 +71,29 @@ public partial class RunMainWin : BaseWin
         {
             OnClicks(_btnTeam, OnTeamEdit);
         }
+
+        BindPhaseChanges();
+    }
+
+    /// <summary>
+    /// 订阅 Run 阶段变化，让本界面在开战 / 结算 / 进入下一环后重新取数。
+    /// </summary>
+    /// <remarks>
+    /// 本界面是常驻 Win（<c>CacheTime = 0</c>，随 Run 会话存亡），此前只在 <c>OnOpen</c> 刷过一次视图：
+    /// 从调试面板开战后相位标签仍是旧阶段、右上角充能球面板也不出现，
+    /// 「进了战斗但界面毫无变化」看上去就像进不去战斗。订阅经 <see cref="BaseUI.Binder"/> 登记，
+    /// 离场（或框架重新 <c>InitEvent</c>）时统一解绑。
+    /// </remarks>
+    private void BindPhaseChanges()
+    {
+        var run = RunRuntime.Current;
+        if (run is null)
+        {
+            return;
+        }
+
+        var listener = run.State.OnRunPhaseChanged((_, _) => UpdateView(), this);
+        Binder.Add(listener.Off);
     }
 
     protected override void OnOpen()

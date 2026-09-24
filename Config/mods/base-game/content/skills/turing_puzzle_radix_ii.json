@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.turing_puzzle_radix_ii.name",
+  "descId": "skill.turing_puzzle_radix_ii.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "turing_radix_apply_weaken" },
+    { "actionId": "turing_radix_advance_ally" }
+  ],
+  "tags": ["active"]
+}

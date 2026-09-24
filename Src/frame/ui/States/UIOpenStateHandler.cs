@@ -44,10 +44,18 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
         vo.OpenOpt.OnOpenBefore?.Invoke(vo);
         vo.OpenOpt.OnOpenBefore = null;
 
-        // 进缓存时 RemoveChild 会触发 ClearLifeCycle 卸掉 OnClicks；重开也必须重新 InitEvent
+        // 进缓存时 RemoveChild 会触发 _ExitTree → Binder.UnbindAll 卸掉 OnClicks；重开也必须重新 InitEvent。
+        // 先 ResetBindings 再 InitEvent：**已打开状态下的再次 Open** 不经过离场，旧订阅还活着，
+        // 不清账就会重复订阅（Godot: "Signal 'pressed' is already connected"，账本还会留下解不掉的条目）。
         if (vo.Runtime.Mask is IUILifecycleInvoker maskInvoker)
+        {
+            maskInvoker.InvokeResetBindings();
             maskInvoker.InvokeInitEvent();
-        ((IUILifecycleInvoker)win).InvokeInitEvent();
+        }
+
+        IUILifecycleInvoker winInvoker = (IUILifecycleInvoker)win;
+        winInvoker.InvokeResetBindings();
+        winInvoker.InvokeInitEvent();
 
         if (vo.StateMachine.CurrentState != EUIState.Open)
         {

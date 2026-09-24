@@ -1,0 +1,13 @@
+{
+  "displayNameId": "ge.von_neumann_merge_fusion.name",
+  "durationPolicy": "Instant",
+  "lifestealScale": 0.1,
+  "executions": [
+    {
+      "kind": "Damage",
+      "damageType": "Magical",
+      "element": "Red",
+      "attackAttribute": "HealPower"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.turing_radix_advance_mark.name",
+  "descId": "buff.turing_radix_advance_mark.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "hooks": {
+    "onApply": [
+      { "effectId": "turing_radix_advance_boost", "params": { "targetFilter": { "self": true } } }
+    ]
+  }
+}

@@ -48,9 +48,10 @@ public sealed class BachContentTests
         Assert.That(bach.ActiveSkillChain[1].SkillId, Is.EqualTo("bach_charge_two"));
         Assert.That(bach.ActiveSkillChain[1].Cooldown, Is.EqualTo(4));
 
+        // 潜能被动保留 0/10/30/50 四档（70/99 档已删除）。
         Assert.That(
             bach.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50, 70, 99 }));
+            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in bach.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }
@@ -128,38 +129,6 @@ public sealed class BachContentTests
         sim.Buffs.FireTurnStart(sim);
         sim.Buffs.FireOrbTriggered(sim, [0]);
         Assert.That(sim.Orbs.Queue.CountOf(ShippedGreenOrb), Is.EqualTo(4), "新回合重新可用");
-    }
-
-    #endregion
-
-    #region 卡牌执行结束钩子（P5）
-
-    [Test]
-    public void Passive_five_grants_played_cards_minus_one_orbs()
-    {
-        using var sim = Build();
-        var registry = sim.Definitions;
-        sim.Buffs.Apply(sim, Player(0), "bach_passive_p5");
-
-        for (var i = 0; i < 3; i++)
-            sim.RecordPlayedCard(YellowCard(sim), 0);
-
-        sim.Buffs.FireCardExecutionEnd(sim);
-
-        Assert.That(sim.Orbs.Queue.CountOf(ShippedGreenOrb), Is.EqualTo(2), "X=3 → X-1=2 个绿球");
-        Assert.That(registry.Store.Cards.ContainsKey(YellowCard(sim)), Is.True);
-    }
-
-    [Test]
-    public void Passive_five_grants_nothing_with_a_single_card()
-    {
-        using var sim = Build();
-        sim.Buffs.Apply(sim, Player(0), "bach_passive_p5");
-
-        sim.RecordPlayedCard(YellowCard(sim), 0);
-        sim.Buffs.FireCardExecutionEnd(sim);
-
-        Assert.That(sim.Orbs.Queue.CountOf(ShippedGreenOrb), Is.Zero, "X=1 → 0 个（不外溢为负数）");
     }
 
     #endregion

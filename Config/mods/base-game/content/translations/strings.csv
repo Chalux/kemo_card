@@ -13,6 +13,7 @@ story.base_rogue.name,肉鸽模式,Rogue Mode
 story.base_rogue.desc,标准的肉鸽循环：穿越环层，遭遇战斗与事件，不断收集卡牌强化构筑，直到通关或倒下。,"Standard rogue-lite loop: traverse the rings, face battles and events, grow your deck, until victory or defeat."
 char.chalux.name,克鲁克斯,Chalux
 buff.chalux_p1.desc,自身打出卡牌时不受[url=kw:hand_slot_damage]手牌槽伤害[/url]效果影响。,Immune to [url=kw:hand_slot_damage]hand slot damage[/url] effects when playing cards.
+buff.chalux_p2.desc,自身打出的蓝属性卡牌同时计入红属性[url=kw:chain]连携[/url]统计（多属性卡各属性均计入）。,Blue cards he plays also count toward the Red [url=kw:chain]chain[/url] (multi-element cards count for each element).
 card.chalux_orca.name,逆戟冰冲,Orca Ice Rush
 card.chalux_path.name,璨华长路,Resplendent Path
 card.chalux_sword.name,才煌的绝剑,Brilliant Absolute Sword
@@ -38,11 +39,8 @@ orb.green.name,绿属性球,Green Orb
 orb.yellow.name,黄属性球,Yellow Orb
 orb.physical.name,物理球,Physical Orb
 orb.magic.name,魔法球,Magic Orb
-buff.chalux_p2.desc,自身打出的蓝属性卡牌同时计入红属性[url=kw:chain]连携[/url]统计（多属性卡各属性均计入）。,Blue cards he plays also count toward the Red [url=kw:chain]chain[/url] (multi-element cards count for each element).
 buff.chalux_p3.desc,每个阶层开始时与阶层内每 8 回合开始时：自身技能进度 +3，蓝属性角色 +1，动物角色 +1，龙族角色 +1（可叠加）。,"At each wave start and every 8th turn within a wave: his skill progress +3, Blue characters +1, Animal characters +1, Dragon characters +1 (stacks additively)."
-buff.chalux_p4.desc,蓝属性、动物或龙族的队友（含自身）物理攻击、魔法攻击、治疗量 +6。,Allies with Blue element or Animal/Dragon race gain +6 Physical/Magic Attack and Heal Power.
-buff.chalux_p5.desc,蓝属性、动物或龙族的队友（含自身）全伤害增加 25%。,Allies with Blue element or Animal/Dragon race deal +25% all damage.
-buff.chalux_p6.desc,自身释放主动技时：敌方全体物理防御与魔法防御变为 0（1 回合），自身立即获得 3 点可用能量。,"When he casts his active skill: all enemies' defenses become 0 for 1 turn, and he immediately gains 3 available energy."
+buff.chalux_p4.desc,蓝属性、动物或龙族的队友（含自身）物理攻击、魔法攻击、回复量 +6。,Allies with Blue element or Animal/Dragon race gain +6 Physical/Magic Attack and Heal Power.
 buff.chalux_frost.name,超限增幅,Overlimit Amp
 buff.chalux_frost.desc,物理攻击 +6，持续 3 回合。,Physical Attack +6 for 3 turns.
 buff.chalux_charge.name,充能·极寒,Charge: Glacial
@@ -85,7 +83,7 @@ attr.physical_attack.name,物理攻击,Physical Attack
 attr.magic_attack.name,魔法攻击,Magic Attack
 attr.physical_defense.name,物理防御,Physical Defense
 attr.magic_defense.name,魔法防御,Magic Defense
-attr.heal_power.name,治疗强度,Heal Power
+attr.heal_power.name,回复量,Heal Power
 attr.healing.name,治疗量,Healing
 attr.damage.name,伤害,Damage
 attr.damage_dealt_scale.name,全伤害增加,Damage Dealt Scale
@@ -120,14 +118,10 @@ buff.reinhardt_extra_attack.name,连射,Extra Volley
 buff.reinhardt_extra_attack.desc,普通攻击次数 +1。,Normal attack count +1.
 buff.reinhardt_vulnerable.name,破绽,Exposed
 buff.reinhardt_vulnerable.desc,受到的普通攻击伤害增加 25%。,Takes 25% more normal attack damage.
-buff.reinhardt_free_cost.name,零费,Free Cast
-buff.reinhardt_free_cost.desc,该手牌本次行动的费用变为 0。,This hand slot's card costs 0 until end of turn.
 buff.reinhardt_p1.desc,自身不受[url=kw:seal]封印[/url]效果的影响。,Immune to [url=kw:seal]seal[/url] effects.
 buff.reinhardt_p2.desc,卡牌结算后，若本回合自身打出过 2 张以上黄属性卡牌，自身 1 回合物理攻击 +15。,"After a card settles: if he played 2+ Yellow cards this turn, gain +15 P.Atk for 1 turn."
 buff.reinhardt_p3.desc,每个阶层开始时与阶层内每 10 回合开始时：自身技能进度 +2，黄属性角色 +2，动物角色 +2（可叠加）。,"At each wave start and every 10th turn within a wave: his skill progress +2, Yellow characters +2, Animal characters +2 (stacks additively)."
 buff.reinhardt_p4.desc,队伍每有 1 名黄属性·动物角色，自身最大生命 +40（含自身，最多 4 名）。,"For each Yellow/Animal character in the team, his Max Health +40 (includes himself, up to 4)."
-buff.reinhardt_p5.desc,自身普通攻击造成的伤害 +50%。,His normal attacks deal +50% damage.
-buff.reinhardt_p6.desc,自身释放主动技时：自身随机一张手牌的费用直到回合结束前变为 0。,"When he casts his active skill, a random card in his hand costs 0 until end of turn."
 attr.orb_damage_scale.name,元素球伤害增加,Orb Damage Scale
 char.bach.name,巴赫,Bach
 skill.bach_revelation.name,天国神启,Heavenly Revelation
@@ -140,9 +134,6 @@ buff.bach_p1.desc,自身不受中毒效果的影响。,Immune to poison effects.
 buff.bach_p2.desc,每回合仅 1 次，触发元素球后获得 2 个绿属性球。,"Once per turn, after orbs trigger he gains 2 Green orbs."
 buff.bach_p3.desc,每个阶层开始时与阶层内每 6 回合开始时：自身技能进度 +2，绿属性角色 +1，人类角色 +1，神族角色 +1（可叠加）。,"At each wave start and every 6th turn within a wave: his skill progress +2, Green characters +1, Human characters +1, God characters +1 (stacks additively)."
 buff.bach_p4.desc,队伍内绿属性角色 ≥ 2 时：全队绿属性球伤害 +50%。,While the team has 2+ Green characters: all allies' Green orb damage +50%.
-buff.bach_p5.desc,本回合内自身打出 2 张以上卡牌时，卡牌执行结束后获得 X-1 个绿属性球（X = 本回合打出的卡牌数）。,"If he played 2+ cards this turn, gain X-1 Green orbs after card execution (X = cards played this turn)."
-buff.bach_p6.desc,自身释放主动技时：自身 1 回合物理攻击·魔法攻击 +30。,When he casts his active skill: his P.Atk and M.Atk +30 for 1 turn.
-buff.bach_p6_stat.desc,物理攻击与魔法攻击 +30，持续 1 回合。,Physical and Magic Attack +30 for 1 turn.
 card.bach_cantata.name,康塔塔,Cantata
 card.bach_hymn.name,赞歌,Hymn
 skill.bach_cantata.name,康塔塔,Cantata
@@ -160,3 +151,67 @@ skill.bach_fugue.name,赋格,Fugue
 skill.bach_fugue.desc,自身 1·2·3·4·5 号手牌槽获得【2 回合 / 充能I】：该槽每打出一张牌获得 1 个绿属性球。,All five of his hand slots gain Charge I for 2 turns: each card played from that slot grants 1 Green orb.
 buff.bach_fugue_charge.name,赋格·回响,Fugue Echo
 buff.bach_fugue_charge.desc,该槽每打出一张牌，获得 1 个绿属性球，持续 2 回合。,Each card played from this slot grants 1 Green orb. Lasts 2 turns.
+char.von_neumann.name,冯·诺依曼,Von Neumann
+skill.von_neumann_fate_reckoning.name,命结推算,Fate Reckoning
+skill.von_neumann_fate_reckoning.desc,展开领域【命结推算】2 回合：命中「红属性·人类·学术」的角色与敌人，受到的全伤害减少 50%。,Open the Fate Reckoning domain for 2 turns: characters and enemies matching Red · Human · Academic take 50% less damage.
+ge.von_neumann_fate_domain.name,领域·命结推算,Domain: Fate Reckoning
+ge.von_neumann_p2_magic_damage.name,命结推算·反击伤害,Fate Reckoning Counter Damage
+buff.von_neumann_domain.name,命结推算,Fate Reckoning
+buff.von_neumann_domain_ally.desc,受到的全伤害减少 50%，持续 2 回合（仅红属性·人类·学术角色）。,Take 50% less damage for 2 turns (Red · Human · Academic characters only).
+buff.von_neumann_domain_enemy.desc,受到的全伤害减少 50%，持续 2 回合（仅红属性·人类·学术敌人）。,Take 50% less damage for 2 turns (Red · Human · Academic enemies only).
+buff.von_neumann_p1.desc,自身不受[url=kw:slot_storm]暴风[/url]效果影响：从带暴风的手牌槽打出卡牌时，自己的手牌不会被吹散。,Immune to [url=kw:slot_storm]storm[/url] slot effects: playing from a storm slot never blows away his own hand.
+buff.von_neumann_p2.desc,卡牌结算后，若本回合这张牌所属属性达到 2 连携档（≥2 名不同角色参与 [url=kw:chain]连携[/url]），回复己方全体 6 + 100% 回复量的生命。,"After a card resolves, if that card's element reached 2-chain this turn (2 or more distinct characters in the [url=kw:chain]chain[/url]), heal the party for 6 + 100% Heal Power."
+buff.von_neumann_p3.desc,每个阶层开始时与阶层内每 10 回合开始时：自身技能进度 +1，红属性角色 +2，人类角色 +2，学术角色 +2（可叠加）。,"At each wave start and every 10th turn within a wave: his skill progress +1, Red characters +2, Human characters +2, Academic characters +2 (stacks additively)."
+buff.von_neumann_p4.desc,队伍内红属性·人类·学术角色：魔法攻击与回复量 +3、最大生命 +20；队伍内存在机械族角色时，效果翻倍。,Red · Human · Academic characters in the party gain +3 M.Atk and Heal Power and +20 Max HP; the effect doubles while the party holds a Machine character.
+char.turing.name,图灵,Turing
+card.turing_mechanical_origin.name,械想的起始,Mechanical Origin
+skill.turing_mechanical_origin.name,械想的起始,Mechanical Origin
+skill.turing_mechanical_origin.desc,赋予单个敌人【2 回合 / 物理攻击 -6】。,Inflict -6 P.Atk on a single enemy for 2 turns.
+buff.turing_attack_down.name,械想侵蚀,Mechanical Erosion
+buff.turing_attack_down.desc,物理攻击 -6，持续 2 回合。,Physical Attack -6 for 2 turns.
+card.turing_limit_energy_solution.name,限能算解,Limited-Energy Solution
+skill.turing_limit_energy_solution.name,限能算解,Limited-Energy Solution
+skill.turing_limit_energy_solution.desc,赋予单个敌人【2 回合 / 受到全伤害 +25%】。,Inflict +25% damage taken on a single enemy for 2 turns.
+buff.turing_damage_taken_up.name,限能破绽,Energy Limit Breach
+buff.turing_damage_taken_up.desc,受到的全伤害增加 25%，持续 2 回合。,Takes 25% more damage from all sources for 2 turns.
+card.turing_machine_shift.name,新机换转,New Machine Shift
+skill.turing_machine_shift.name,新机换转,New Machine Shift
+skill.turing_machine_shift.desc,对单个敌人造成 12 点魔法伤害；赋予其【2 回合 / 魔法防御 -6】。,Deal 12 magic damage to a single enemy; inflict -6 M.Def for 2 turns.
+ge.turing_machine_shift_damage.name,新机换转伤害,New Machine Shift Damage
+buff.turing_magic_def_down.name,机转换解,Shifted Solution
+buff.turing_magic_def_down.desc,魔法防御 -6，持续 2 回合。,Magic Defense -6 for 2 turns.
+card.turing_algorithm_alpha.name,术演算法-α,Art Algorithm α
+skill.turing_algorithm_alpha.name,术演算法-α,Art Algorithm α
+skill.turing_algorithm_alpha.desc,自身以外的红属性·人类·学术角色技能进度 +1（不叠加）。,Advance the skill progress of other Red · Human · Academic characters by 1 (does not stack).
+buff.turing_algorithm_alpha_mark.name,术演算法·推进,Art Algorithm Advance
+buff.turing_algorithm_alpha_mark.desc,技能进度已推进 +1，持续到本回合结束；同一回合内不叠加。,Skill progress advanced by 1 until end of turn; does not stack within the same turn.
+skill.turing_puzzle_radix_ii.name,谜题-进制II,Puzzle: Radix II
+skill.turing_puzzle_radix_ii.desc,敌方全体 1 回合【物理攻击 -30 / 魔法攻击 -30】；自身以外的红属性·人类·学术角色技能进度 +1。,All enemies lose 30 P.Atk and 30 M.Atk for 1 turn; advance the skill progress of other Red · Human · Academic characters by 1.
+buff.turing_radix_weaken.name,进制错乱,Radix Disarray
+buff.turing_radix_weaken.desc,物理攻击与魔法攻击 -30，持续 1 回合。,Physical and Magic Attack -30 for 1 turn.
+buff.turing_radix_advance_mark.name,谜题演算,Puzzle Computation
+buff.turing_radix_advance_mark.desc,技能进度已推进 +1，持续到本回合结束。,Skill progress advanced by 1 until end of turn.
+buff.turing_p1.desc,自身不受中毒效果的影响。,Immune to poison effects.
+buff.turing_p2.desc,每个阶层开始时：随机敌方单体的[url=kw:action_count]行动计数[/url]变为 2（把它的行动推迟到下个回合）。,At each wave start: a random enemy's [url=kw:action_count]action count[/url] becomes 2 (pushing its action to the next turn).
+buff.turing_p3.desc,每个阶层开始时与阶层内每 8 回合开始时：自身技能进度 +2，蓝属性角色 +1，人类角色 +1，学术角色 +1（可叠加）。,"At each wave start and every 8th turn within a wave: his skill progress +2, Blue characters +1, Human characters +1, Academic characters +1 (stacks additively)."
+buff.turing_p4.desc,自身释放主动技时：敌方全体的[url=kw:action_count]行动计数[/url]变为 2（把敌方阶段推迟到下个回合）。每个阶层仅 1 次。,"When he casts his active skill, all enemies' [url=kw:action_count]action count[/url] becomes 2 (pushing their actions to the next turn). Once per wave."
+card.von_neumann_direct_deduction.name,直辑结命,Direct Deduction
+skill.von_neumann_direct_deduction.name,直辑结命,Direct Deduction
+skill.von_neumann_direct_deduction.desc,己方回复 20 点生命。,Heal the party for 20 HP.
+card.von_neumann_probability_collapse.name,概率坍缩,Probability Collapse
+skill.von_neumann_probability_collapse.name,概率坍缩,Probability Collapse
+skill.von_neumann_probability_collapse.desc,自身 3 回合【回复量 +6】（可叠加，各层独立计时）；己方 3 回合内每回合开始时回复 1 点生命（不叠加，重复施放只刷新持续时间）。,"Grant self +6 Heal Power for 3 turns (stacks, each with its own timer); the party heals 1 HP at the start of each turn for 3 turns (does not stack, reapplying only refreshes the duration)."
+buff.von_neumann_prob_collapse_amp.name,概率坍缩·增幅,Collapse Amp
+buff.von_neumann_prob_collapse_amp.desc,回复量 +6，持续 3 回合（可叠加，各层独立计时）。,"Heal Power +6 for 3 turns (stacks, each with its own timer)."
+buff.von_neumann_prob_collapse_regen.name,概率坍缩·回响,Collapse Echo
+buff.von_neumann_prob_collapse_regen.desc,每回合开始时回复 1 点生命，持续 3 回合（不叠加，重复施放刷新时长）。,Heal 1 HP at the start of each turn for 3 turns (does not stack; reapplying refreshes the duration).
+card.von_neumann_merge_sort.name,确定的归并排序,Deterministic Merge Sort
+skill.von_neumann_merge_sort.name,确定的归并排序,Deterministic Merge Sort
+skill.von_neumann_merge_sort.desc,己方回复 30 点生命；自身 2 回合【回复量 +6】。,Heal the party for 30 HP; grant self +6 Heal Power for 2 turns.
+buff.von_neumann_merge_sort_amp.name,归并·增幅,Merge Amp
+buff.von_neumann_merge_sort_amp.desc,回复量 +6，持续 2 回合。,Heal Power +6 for 2 turns.
+card.von_neumann_merge_fusion.name,和谐的步进融合,Harmonious Stepwise Fusion
+skill.von_neumann_merge_fusion.name,和谐的步进融合,Harmonious Stepwise Fusion
+skill.von_neumann_merge_fusion.desc,对单个敌人造成 6 + 100% 回复量的红属性魔法伤害；为己方回复其中 10% 伤害量的生命。,Deal 6 + 100% Heal Power as Red magic damage to a single enemy; heal the party for 10% of the damage dealt.
+ge.von_neumann_merge_fusion.name,步进融合伤害,Stepwise Fusion Damage
+

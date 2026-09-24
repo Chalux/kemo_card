@@ -37,11 +37,15 @@ public sealed class GameplayEffectApplicator
         var descriptor = ResolveDamageDescriptor(def);
 
         var applied = false;
+        // 吸血（2026-09-24）：统计本 GE 对**非玩家侧**目标造成的实际生命损失，结算完再按系数回一次队伍账本。
+        var damageDealt = 0f;
         foreach (var target in targets)
         {
             var targetAsc = CombatGasBridge.ResolveTargetAsc(simulation, target);
             if (targetAsc is null)
                 continue;
+
+            var healthBefore = targetAsc.GetCurrentValue(AttributeIds.Health);
 
             // 玩家侧目标的 Health 变化在此被转到共享账本（规格 §1.2 的「应用后转移」）；
             // 扣血变化量统一过伤害规则管线（DamagePipeline），并带上该 GE 声明的伤害维度
@@ -52,6 +56,11 @@ public sealed class GameplayEffectApplicator
                     new GameplayEffectSpec(def, sourceAsc, targetAsc, setByCaller));
                 applied |= result.Success;
             }, gameplayEffectId, descriptor.Kind, descriptor.Element);
+
+            if (target.Side != ECombatSide.Player)
+            {
+                damageDealt += MathF.Max(0f, healthBefore - targetAsc.GetCurrentValue(AttributeIds.Health));
+            }
 
             // 规格 §2.5：效果挂上封印后立刻清标记并视作已行动；免疫封印 / 免疫中毒的角色先把标签摘掉。
             RemoveGrantedTagIfImmune(simulation, target, BuiltinBuffTags.TraitImmuneSeal, CombatConstants.SealedTag);
@@ -64,6 +73,10 @@ public sealed class GameplayEffectApplicator
                 CombatStateMachine.EnforceSeal(simulation, target.Index);
             }
         }
+
+        // 吸血只对"玩家来源 → 非玩家目标"成立：账本是玩家侧的血，敌人打自己不该给玩家回血。
+        if (def.LifestealScale > 0f && damageDealt > 0f && source.Side == ECombatSide.Player)
+            simulation.PlayerTeam.HealShared(damageDealt * def.LifestealScale);
 
         return applied;
     }

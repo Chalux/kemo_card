@@ -1,0 +1,25 @@
+{
+  "displayNameId": "char.turing.name",
+  "element": "Blue",
+  "role": "Controller",
+  "race": ["Human", "Academic"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "turing_puzzle_radix_ii", "cooldown": 7 }
+  ],
+  "cards": [
+    "turing_mechanical_origin",
+    "turing_limit_energy_solution",
+    "turing_machine_shift",
+    "turing_algorithm_alpha"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "turing_passive_p1", "requiredPotential": 0 },
+    { "buffId": "turing_passive_p2", "requiredPotential": 10 },
+    { "buffId": "turing_passive_p3", "requiredPotential": 30 },
+    { "buffId": "turing_passive_p4", "requiredPotential": 50 }
+  ],
+  "tags": []
+}

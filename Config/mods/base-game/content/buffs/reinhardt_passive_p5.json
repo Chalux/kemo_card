@@ -1,9 +1,0 @@
-{
-  "descId": "buff.reinhardt_p5.desc",
-  "durationType": "Permanent",
-  "stackRule": "Replace",
-  "tags": ["buff.passive", "buff.undispellable"],
-  "modifiers": [
-    { "attributeId": "NormalAttackDamageDealtScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 0.5 } }
-  ]
-}

@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.turing_radix_weaken.name",
+  "descId": "buff.turing_radix_weaken.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": -30 } },
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": -30 } }
+  ],
+  "tags": ["buff.debuff"]
+}

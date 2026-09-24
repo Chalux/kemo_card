@@ -433,6 +433,26 @@ public sealed class CharacterBattleInstance
     }
 
     /// <summary>
+    /// 弃置指定手牌槽的牌（<paramref name="slotIndex"/> 0 起；暴风 <c>slot.storm</c> 的相邻槽吹散、
+    /// 效果 <c>DiscardSlot</c> 都走这里）。规格 §2.2"其它通道"口径：<b>只弃未标记的牌</b>——
+    /// 已入队/已确认的牌保留，钩子不得借弃牌回滚确认态。
+    /// </summary>
+    /// <returns>槽位合法、有牌且未标记（即真的弃掉了一张）时返回 <c>true</c>。</returns>
+    public bool DiscardSlotCard(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= _handSlots.Length)
+            return false;
+
+        var slot = _handSlots[slotIndex];
+        if (slot.IsEmpty || slot.CardId is null || slot.RuntimeInstanceId is null || slot.IsMarked)
+            return false;
+
+        _graveyard.Add(new CardRuntimeEntry(slot.CardId, slot.RuntimeInstanceId));
+        slot.ClearCard();
+        return true;
+    }
+
+    /// <summary>
     /// 规格 §4.6：从<strong>未标记</strong>手牌中用 <paramref name="rng"/> 均匀随机弃置最多 <paramref name="count"/> 张。
     /// 未标记池空时弃 0 张（软失败），不改动已标记牌。
     /// </summary>

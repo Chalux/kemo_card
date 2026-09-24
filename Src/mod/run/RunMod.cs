@@ -3,6 +3,7 @@ using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Combat;
+using KemoCard.Mod.Run.Events;
 using KemoCard.Mod.Run.Ui;
 
 namespace KemoCard.Mod.Run;
@@ -20,10 +21,12 @@ public sealed partial class RunMod : BaseMod
     private readonly Dictionary<int, string> _slotOwnership = new();
     private readonly List<BattleRecordDto> _battleHistory = [];
 
+    /// <summary><see cref="Phase"/> 的存储；变化时广播 <c>RunPhaseChanged</c>。</summary>
+    private ERunPhase _phase = ERunPhase.Event;
+
     public RunMod() : base(FeatureId)
     {
         RunId = Guid.NewGuid().ToString("N");
-        Phase = ERunPhase.Event;
         CurrentRing = 1;
         MaxRing = RunConstants.DefaultMaxRings;
     }
@@ -32,7 +35,36 @@ public sealed partial class RunMod : BaseMod
     public string StoryId { get; set; } = "";
     public int CurrentRing { get; set; }
     public int MaxRing { get; set; }
-    public ERunPhase Phase { get; set; }
+
+    /// <summary>
+    /// 当前流程阶段。写入且**真的发生变化**时广播 <see cref="RunPhaseChangedPayload"/>。
+    /// </summary>
+    /// <remarks>
+    /// <para>此前 <c>Phase</c> 是裸自动属性、事件表里的 <c>RunPhaseChanged</c> 全仓无人发送也无人订阅，
+    /// 于是 <c>RunMainWin</c> 只在 <c>OnOpen</c> 刷过一次视图：调试面板开战后，相位标签仍停在旧阶段、
+    /// 右上角充能球面板也不出现——「进了战斗但界面毫无变化」，看上去就像进不去战斗。</para>
+    /// <para>比较后再广播：调试面板先把阶段拨到 <c>Reward</c> 再开战，重复赋值不应产生多余事件。</para>
+    /// </remarks>
+    public ERunPhase Phase
+    {
+        get => _phase;
+        set
+        {
+            if (_phase == value)
+            {
+                return;
+            }
+
+            var previous = _phase;
+            _phase = value;
+            NotifyRunPhaseChanged(new RunPhaseChangedPayload
+            {
+                PreviousPhase = previous,
+                CurrentPhase = value,
+            });
+        }
+    }
+
     public int RunSeed { get; set; }
     public bool IsMultiplayer { get; set; }
 

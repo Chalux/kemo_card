@@ -1,0 +1,7 @@
+{
+  "displayNameId": "ge.turing_machine_shift_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    { "kind": "Damage", "damageType": "Magical", "element": "Blue" }
+  ]
+}

@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="4_vlist"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="5_carditem"]
 
-[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_lblCardsCaption", "_cardList", "_rtPassives", "_lblAnim", "_optAnim")]
+[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_lblMeta", "_lblCardsCaption", "_cardList", "_rtPassives", "_lblAnim", "_optAnim")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -17,6 +17,7 @@ script = ExtResource("1_script")
 _presenter = NodePath("BaseDlgComp/CharacterPresenter")
 _txtTitle = NodePath("BaseDlgComp/TxtTitle")
 _txtCharName = NodePath("BaseDlgComp/TxtCharName")
+_lblMeta = NodePath("BaseDlgComp/LblMeta")
 _lblCardsCaption = NodePath("BaseDlgComp/LblCardsCaption")
 _cardList = NodePath("BaseDlgComp/CardList")
 _rtPassives = NodePath("BaseDlgComp/RTPassives")
@@ -98,14 +99,28 @@ text = ""
 vertical_alignment = 1
 text_overrun_behavior = 3
 
+[node name="LblMeta" type="Label" parent="BaseDlgComp"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 400.0
+offset_top = 106.0
+offset_right = -40.0
+offset_bottom = 130.0
+grow_horizontal = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = ""
+vertical_alignment = 1
+
 [node name="LblAnim" type="Label" parent="BaseDlgComp"]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 400.0
-offset_top = 112.0
+offset_top = 134.0
 offset_right = -472.0
-offset_bottom = 150.0
+offset_bottom = 172.0
 grow_horizontal = 2
 theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 14
@@ -117,9 +132,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 520.0
-offset_top = 112.0
+offset_top = 134.0
 offset_right = -40.0
-offset_bottom = 150.0
+offset_bottom = 172.0
 grow_horizontal = 2
 
 [node name="Rule" type="HSeparator" parent="BaseDlgComp"]
@@ -127,9 +142,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 400.0
-offset_top = 162.0
+offset_top = 178.0
 offset_right = -40.0
-offset_bottom = 170.0
+offset_bottom = 186.0
 grow_horizontal = 2
 
 [node name="LblCardsCaption" type="Label" parent="BaseDlgComp"]
@@ -137,9 +152,9 @@ layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
 offset_left = 400.0
-offset_top = 180.0
+offset_top = 190.0
 offset_right = -40.0
-offset_bottom = 206.0
+offset_bottom = 216.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 18
 text = "UI_CHARACTER_CARDS_TITLE"
@@ -149,9 +164,9 @@ vertical_alignment = 1
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
-anchor_bottom = 0.688
+anchor_bottom = 0.7
 offset_left = 400.0
-offset_top = 212.0
+offset_top = 222.0
 offset_right = -40.0
 grow_horizontal = 2
 grow_vertical = 2
@@ -173,9 +188,9 @@ grow_vertical = 2
 [node name="Rule2" type="HSeparator" parent="BaseDlgComp"]
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.688
+anchor_top = 0.7
 anchor_right = 1.0
-anchor_bottom = 0.688
+anchor_bottom = 0.7
 offset_left = 400.0
 offset_top = 4.0
 offset_right = -40.0
@@ -185,7 +200,7 @@ grow_horizontal = 2
 [node name="RTPassives" type="RichTextLabel" parent="BaseDlgComp"]
 layout_mode = 1
 anchors_preset = -1
-anchor_top = 0.688
+anchor_top = 0.7
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 400.0

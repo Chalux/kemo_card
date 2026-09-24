@@ -84,6 +84,9 @@ public sealed class SkillActionExecutor
                 EEffectKind.ExecuteScript => ESkillActionKind.ExecuteScript,
                 EEffectKind.ChainEffects => ESkillActionKind.ChainActions,
                 EEffectKind.AttachSlotBuff => ESkillActionKind.AttachSlotBuff,
+                EEffectKind.SetActionCount => ESkillActionKind.SetActionCount,
+                EEffectKind.SetDomain => ESkillActionKind.SetDomain,
+                EEffectKind.DiscardSlot => ESkillActionKind.DiscardSlot,
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
             },
             ScriptPath = effect.ScriptPath,
@@ -150,7 +153,90 @@ public sealed class SkillActionExecutor
             case ESkillActionKind.GainOrb:
                 GainOrb(simulation, source, mergedParams);
                 break;
+            case ESkillActionKind.SetActionCount:
+                SetActionCount(simulation, source, targets, mergedParams);
+                break;
+            case ESkillActionKind.SetDomain:
+                SetDomain(simulation, mergedParams);
+                break;
+            case ESkillActionKind.DiscardSlot:
+                DiscardSlot(simulation, source, mergedParams);
+                break;
         }
+    }
+
+    /// <summary>
+    /// 设置目标敌人的行动计数（<c>params.count</c>，缺省 2，下限 1）：计数 &gt; 1 时该敌人在接下来的
+    /// 敌方阶段只递减、不行动，因此 2 = 把它的行动推迟到下个回合。非敌方目标静默跳过。
+    /// </summary>
+    private static void SetActionCount(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        var count = ReadInt(parameters, "count", 2);
+
+        // 目标解析优先用 hookTargets / targetFilter（"随机敌方单体"这类钩子载荷），
+        // 与伤害、挂 buff 同口径；没配选择器时用调用方给的 targets。
+        var resolved = BuffActionParams.HasTargetSelector(parameters)
+            ? CombatTargetSelector.Resolve(simulation, source, parameters)
+            : targets;
+
+        foreach (var target in resolved)
+        {
+            if (target.Side != ECombatSide.Enemy ||
+                target.Index < 0 ||
+                target.Index >= simulation.EnemyTeam.Enemies.Count)
+            {
+                continue;
+            }
+
+            simulation.EnemyTeam.Enemies[target.Index].ActionCount = count;
+        }
+    }
+
+    /// <summary>
+    /// 展开队伍领域：<c>params.gameplayEffectId</c> 必填、<c>params.turns</c> 可选（&gt; 0 = 持续回合数，
+    /// 到期由 <see cref="TeamDomainManager"/> 在回合结束自动收起）。旧领域被顶替。
+    /// </summary>
+    private static void SetDomain(
+        CombatSimulation simulation,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (!BuffActionParams.TryGetString(parameters, "gameplayEffectId", out var gameplayEffectId))
+            return;
+
+        // gameplayEffectId / turns 是控制键（不是 SetByCaller 取值），不进领域实例参数。
+        var instanceParams = parameters
+            .Where(pair => pair.Key is not ("gameplayEffectId" or "turns"))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+        var turns = ReadInt(parameters, "turns", 0);
+
+        simulation.DomainManager.TrySetPlayerDomain(
+            gameplayEffectId,
+            instanceParams.Count > 0 ? instanceParams : null,
+            turns > 0 ? turns : null);
+    }
+
+    /// <summary>
+    /// 弃置来源角色指定手牌槽的牌（<c>params.slotIndex</c>，0 起）：只弃未标记的牌，
+    /// 已入队/已确认的牌不动（规格 §2.2"其它通道"不得借钩子回滚确认态）。
+    /// </summary>
+    private static void DiscardSlot(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        var slotIndex = ReadInt(parameters, "slotIndex", -1);
+        if (source.Side != ECombatSide.Player ||
+            source.Index < 0 ||
+            source.Index >= simulation.PlayerTeam.Characters.Count)
+        {
+            return;
+        }
+
+        simulation.PlayerTeam.Characters[source.Index].DiscardSlotCard(slotIndex);
     }
 
     private void ApplyExecuteScript(

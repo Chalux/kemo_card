@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "von_neumann_merge_fusion_damage",
+    "Amount": 6
+  }
+}

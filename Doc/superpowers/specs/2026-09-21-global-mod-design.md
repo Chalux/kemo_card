@@ -219,7 +219,7 @@ Root(full-rect) → Bg(PageBg)
 |---|---|
 | `AlertDlg` | 560×300 居中；标题 26 左对齐、描述 18、底部按钮右对齐（取消 `Ghost`、确定 `Primary`） |
 | `CardDetailsDlg` | 980×580；左 `BaseCardItem` 区；右：名字 30、Mod/作者 `Caption`、发丝线、描述 RichText 20 |
-| `CharacterDetailsDlg` | 980×580；左 `CharacterPresenter`；右：名字 30、动画选择行（Caption + OptionButton）、发丝线、简介 RichText 18、被动 RichText 16 |
+| `CharacterDetailsDlg` | 980×580；左 `CharacterPresenter`；右：名字 30、身份行 `Caption` 14（元素 / 定位 / 种族，见 §12.3）、动画选择行（Caption + OptionButton）、发丝线、简介 RichText 18、被动 RichText 16 |
 
 > `CharacterDetailsDlg` 的「简介」区已在同批变更中改为**专属卡牌区**（横向虚拟列表），以 §12 为准。
 
@@ -480,6 +480,7 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 - **只带键不带文案**：一是切语言不必重建模型，二是模型可在无引擎环境下单测。键查不到时 `TranslationServer.Translate` 原样返回键，因此 `TitleKey` 允许直接塞内容 id（没有显示名的球）。
 - **正文跳转**：正文里的 `[url=kw:<id>]` 与卡面描述同一格式（解析复用 `CardDescBuilder.TryParseKeywordMeta`），点击后跳词典内对应条目；目标被当前搜索挡住时先清空搜索再定位。
 - **新增词条**（`BuiltinKeywords`）：`normal_attack`（普通攻击）、`orb`（充能球）、`orb_element`（属性球）、`shared_hp`（共享血量）、`team_potential`（团体潜能）、`character_passive`（角色被动）。这些机制此前没有任何界面入口。
+  - **2026-09-23 追加**：`slot_storm`（暴风）、`action_count`（行动计数）、`domain`（领域）——冯·诺依曼套件新增的三条规则机制，词条正文分别写在 `KW_SLOT_STORM_*` / `KW_ACTION_COUNT_*` / `KW_DOMAIN_*`。
 - **入口**：Run 的 ESC 菜单；`GlobalModController.OpenGlossaryAsync()` 是唯一打开入口（主菜单后续要加入口时直接复用）。
 
 ### 11.2 文案与导入（原 §4）
@@ -501,7 +502,7 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 
 ---
 
-## 12. 角色详细界面：专属卡牌区（原 2026-09-21 莱因哈特规格 §12.2 的 UI 部分）
+## 12. 角色详细界面：专属卡牌区与身份行（原 2026-09-21 莱因哈特规格 §12.2 的 UI 部分）
 
 > 来源（原规格）：`2026-09-21-reinhardt-and-normal-attack-extensions.md` §12.2「角色简介移除」。本节只并入其 **UI 部分**；`CharacterDto.descId` 删除属 **DTO/内容**事实，归内容规格，本文仅存目不展开（原句保留如下）。
 
@@ -518,18 +519,43 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 
 | 事实 | 值 | 依据（文件:行） |
 |---|---|---|
-| 列表方向 | `IsVertical = false`（横向滚动） | `Src/mod/global/Ui/CharacterDetailsDlg.tscn:163` |
-| 步长 / 间距 | `ItemSize = 160.0`、`Spacing = 10.0` | 同上 `:161-162` |
-| 条目模板 | `BaseCardItem.tscn`（`ItemTemplate = ExtResource("5_carditem")`，`ScrollArea = NodePath("Scroll")`） | 同上 `:159-160`、`:7` |
+| 列表方向 | `IsVertical = false`（横向滚动） | `Src/mod/global/Ui/CharacterDetailsDlg.tscn:178` |
+| 步长 / 间距 | `ItemSize = 160.0`、`Spacing = 10.0` | 同上 `:176-177` |
+| 条目模板 | `BaseCardItem.tscn`（`ItemTemplate = ExtResource("5_carditem")`，`ScrollArea = NodePath("Scroll")`） | 同上 `:174-175`、`:7` |
 | 卡面尺寸固定 | 预制体 `custom_minimum_size = Vector2(160, 208)`、`offset_right = 160.0`、`offset_bottom = 208.0` | `Src/mod/global/Ui/Comp/BaseCardItem.tscn:15,18-19` |
 | **列表不拉伸条目** | 条目尺寸由预制体决定；`StretchItemAcrossAxis` 默认关闭，`PositionItem` **只设位置、不改尺寸** | `Src/mod/global/Ui/VirtualList.cs:27-36,49-56,523-566` |
-| 数据来源 | 角色的 `Cards` 中 `store.TryGetCard(...) && card.IsExclusive` 才入列 | `Src/mod/global/Ui/CharacterDetailsDlg.cs:132-145` |
-| 单击行为 | 渲染回调每次显式重置交互契约后设 `ClickAction = ECardClickAction.OpenDetails` + `EnableHoverTip = true` | `Src/mod/global/Ui/CharacterDetailsDlg.cs:147-161` |
+| 数据来源 | 角色的 `Cards` 中 `store.TryGetCard(...) && card.IsExclusive` 才入列 | `Src/mod/global/Ui/CharacterDetailsDlg.cs:140-152` |
+| 单击行为 | 渲染回调每次显式重置交互契约后设 `ClickAction = ECardClickAction.OpenDetails` + `EnableHoverTip = true` | `Src/mod/global/Ui/CharacterDetailsDlg.cs:155-169` |
 | 打开卡牌详情 | `ECardClickAction.OpenDetails` → `BaseCardItem.TryOpenDetails()` → `UIManager.OpenAsync(UiId<CardDetailsDlgPayload>(GlobalUiIds.CardDetails), …)` | `Src/mod/global/Ui/Comp/BaseCardItem.cs:143-153,188-209` |
-| 无专属卡时收起标题 | `_lblCardsCaption.Visible = _cardIds.Count > 0`（不显示空标题） | `Src/mod/global/Ui/CharacterDetailsDlg.cs:114-118` |
-| 标题键 | 场景 `text = "UI_CHARACTER_CARDS_TITLE"` | `Src/mod/global/Ui/CharacterDetailsDlg.tscn:145` |
+| 无专属卡时收起标题 | `_lblCardsCaption.Visible = _cardIds.Count > 0`（不显示空标题） | `Src/mod/global/Ui/CharacterDetailsDlg.cs:104-108` |
+| 标题键 | 场景 `text = "UI_CHARACTER_CARDS_TITLE"` | `Src/mod/global/Ui/CharacterDetailsDlg.tscn:160` |
 
-> 对象池提醒：列表条目是**复用**的（`VirtualList` 对象池），因此交互契约（`Clicked` / `LongPressed` / `EnableLongPress` / `ClickAction` / `EnableHoverTip`）必须**每次渲染显式重置**，不能让上一张牌留下的闭包或开关生效（`CharacterDetailsDlg.cs:154-159`）。
+> 对象池提醒：列表条目是**复用**的（`VirtualList` 对象池），因此交互契约（`Clicked` / `LongPressed` / `EnableLongPress` / `ClickAction` / `EnableHoverTip`）必须**每次渲染显式重置**，不能让上一张牌留下的闭包或开关生效（`CharacterDetailsDlg.cs:155-169`）。
+
+### 12.3 身份行：元素 / 定位 / 种族（2026-09-23 新增）
+
+> 段号提醒：本节号是本文新分配的；§13.5 对照表里的「§12.2」指的是**被并入的原规格段号**（角色简介移除），不是本节。
+
+角色详情的名称下方固定一行身份信息（`LblMeta`，Caption 14），文案形如
+「元素：蓝 · 定位：战士 · 种族：动物、龙族」——**三项全取自角色定义、不依赖 Run**，
+因此从图鉴点开的角色（尚未进 Run 角色池）与队伍编辑预览显示同一套值。
+
+| 事实 | 值 | 依据（文件:行） |
+|---|---|---|
+| 唯一拼接口径 | `CharacterIdentityLabels`（`Element` / `Race` / `Role` / `MetaLine`），角色详情、队伍编辑信息行、角色悬停摘要三处共用 | `Src/mod/global/Ui/CharacterIdentityLabels.cs:17-108` |
+| 字段标签键 | `UI_CHARACTER_META_ELEMENT` / `UI_CHARACTER_META_ROLE` / `UI_CHARACTER_META_RACE` | `Resource/Locale/strings.csv:101-103` |
+| 整行模板键 | `UI_CHARACTER_META_FIELD` = `{0}：{1}`（zh）/ `{0}: {1}`（en）；**必须带两个占位符** | `Resource/Locale/strings.csv:100`；守卫 `Tests/kemo_card.Ui.Tests/LocaleIntegrityTests.cs:168-204` |
+| 显示名来源 | 元素 / 定位 / 种族一律走 `CodexFilterDefinitions` 的 `UI_ELEMENT_*` / `UI_ROLE_*` / `UI_RACE_*`（与图鉴筛选同一套键），缺键才回落枚举原名 | `Src/mod/global/Def/CodexFilterDefinitions.cs:30-113` |
+| 多标志 | 元素与种族是 Flags，按**枚举声明顺序**以 `、` 连接（与内容 JSON 的书写顺序无关） | `CharacterIdentityLabels.cs:29-62` |
+| 空值口径 | 无元素/无种族 → 整段省略；`ERole.None` 在 `MetaLine` 里同样省略，但 `Role()` 本身返回「无」——队伍编辑的信息行是「值 / 值 / 值」，仍要显示「无」与 `-` | `CharacterIdentityLabels.cs:71-97`；`Src/mod/run/Ui/RunTeamEditDlg.cs:400-421` |
+| 绑定点 | `BindCharacter` 在名字之后调 `BindMeta`（`_lblMeta.Text = MetaLine(...)`） | `Src/mod/global/Ui/CharacterDetailsDlg.cs:100,122-130` |
+| 场景节点 | `BaseDlgComp/LblMeta`，右侧栏 y 106..130（名字 60..104 之下、动画选择行 134..172 之上） | `Src/mod/global/Ui/CharacterDetailsDlg.tscn:102-114` |
+| 右侧栏分隔点 | 专属卡牌区下沿 / 被动区上沿用 `anchor = 0.7`（原 `0.688`）：身份行占去 10px，从被动区挪回，卡牌列表净高维持 226（卡面 208 + 横向滚动条） | `CharacterDetailsDlg.tscn:163-220` |
+
+> 场景断链守卫（2026-09-23 新增）：`node_paths` 里登记了属性名却没有 `NodePath` 赋值行、或路径指向不存在的节点，
+> Godot 都**不报错**（该字段静默为 `null`，界面上什么都不显示；`--headless` 加载场景同样静默通过）。
+> `Tests/kemo_card.Ui.Tests/UiSceneNodePathTests.cs:35` 因此在纯文本层面扫全仓 `.tscn` 兜住这两类断链——
+> 手改场景后请跑 `dotnet test`，不要只依赖「能打开编辑器」。
 
 ---
 

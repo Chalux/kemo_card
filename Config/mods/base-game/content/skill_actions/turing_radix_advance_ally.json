@@ -1,0 +1,11 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "turing_radix_advance_mark",
+    "targetFilter": {
+      "elementAny": ["Red"],
+      "raceAll": ["Human", "Academic"],
+      "excludeSelf": true
+    }
+  }
+}

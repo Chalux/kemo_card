@@ -512,6 +512,9 @@ public sealed class CombatStateMachine
         simulation.SetDiscardChannel(EDiscardChannel.CardExecution);
         // 连携按完整出牌队列一次性定档：结算循环会逐张出队，统计必须在出队前完成。
         var chainCounts = ChainCalculator.CountDistinctCharacters(simulation);
+        // 定档快照同时留在仿真上：效果条件 ChainTierAtLeast 在单卡结算区间内读它
+        // （"这张牌所属属性够不够 2 连携档"这类判定在效果求值时没有别的通道能拿到人头数）。
+        simulation.SetChainCounts(chainCounts);
         try
         {
             while (simulation.CardQueue.TryDequeue(out var dequeued) && dequeued is not null)
@@ -523,6 +526,9 @@ public sealed class CombatStateMachine
         finally
         {
             simulation.SetChainBonus(0f);
+            simulation.SetChainCardElementFlags(0);
+            // 连携定档快照只在本回合执行阶段有效：离开区间后条件不应再读到旧人头数。
+            simulation.SetChainCounts(new Dictionary<EElement, int>());
             simulation.SetDiscardChannel(EDiscardChannel.Other);
         }
 
@@ -562,6 +568,8 @@ public sealed class CombatStateMachine
         // 既不回落到 0 号角色（口径与实际来源不一致），也不索引越界。
         var characters = simulation.PlayerTeam.Characters;
         var sourceIndexValid = entry.CharacterIndex >= 0 && entry.CharacterIndex < characters.Count;
+        // 单卡结算区间：连携条件（ChainTierAtLeast）用"这张牌的属性"取人头数。
+        simulation.SetChainCardElementFlags(card.Element);
         simulation.SetChainBonus(sourceIndexValid
             ? ChainCalculator.BonusForCard(chainCounts, card, characters[entry.CharacterIndex])
             : 0f);
@@ -587,7 +595,9 @@ public sealed class CombatStateMachine
         // 结算后钩子（onCardSettled）：本回合出牌表此时已含该卡，判定"打出过 N 张某属性卡"才准确。
         // 空放同样补发——RecordPlayedCard 已把空放计入"本回合打出"（见上方注释），
         // 若这里跳过，莱因哈特被动2 这类"第 N 张牌触发"的判定会与出牌统计口径不一致（延迟到下一张牌）。
+        // 单卡连携上下文必须撑到本钩子之后：ChainTierAtLeast 读的就是"这张牌所属属性的连携人头数"。
         simulation.Buffs.FireCardSettled(simulation, entry.CharacterIndex);
+        simulation.SetChainCardElementFlags(0);
     }
 
     /// <summary>按 RuntimeInstanceId 找到打出卡牌所在的槽位并触发其槽位 buff 钩子。</summary>
@@ -625,6 +635,14 @@ public sealed class CombatStateMachine
             var enemy = simulation.EnemyTeam.Enemies[enemyIndex];
             if (!enemy.IsAlive)
                 continue;
+
+            // 行动计数（2026-09-23）：> 1 时本回合只递减、不行动——把它设为 2 即"推迟到下个回合"。
+            if (enemy.ActionCount > 1)
+            {
+                enemy.ActionCount--;
+                enemy.IntentSkillId = null;
+                continue;
+            }
 
             var skillId = simulation.EnemyAi.ChooseSkill(enemy, simulation.EnemyAiRng);
             enemy.IntentSkillId = skillId;

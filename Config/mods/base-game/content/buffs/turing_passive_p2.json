@@ -1,0 +1,11 @@
+{
+  "descId": "buff.turing_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onWaveStart": [
+      { "effectId": "turing_p2_halt", "params": { "hookTargets": "randomEnemy" } }
+    ]
+  }
+}

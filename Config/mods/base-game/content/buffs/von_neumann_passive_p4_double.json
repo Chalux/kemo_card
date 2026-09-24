@@ -1,0 +1,19 @@
+{
+  "descId": "buff.von_neumann_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "condition": {
+    "elementAny": ["Red"],
+    "raceAny": ["Human", "Academic"],
+    "matchAll": true,
+    "partyMinCount": 1,
+    "partyRaceAny": ["Machine"]
+  },
+  "modifiers": [
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 3 } },
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 3 } },
+    { "attributeId": "MaxHealth", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 20 } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"]
+}

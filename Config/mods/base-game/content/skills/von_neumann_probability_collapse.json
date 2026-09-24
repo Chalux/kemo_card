@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.von_neumann_probability_collapse.name",
+  "descId": "skill.von_neumann_probability_collapse.desc",
+  "actionRefs": [
+    { "actionId": "von_neumann_apply_prob_collapse_amp" },
+    { "actionId": "von_neumann_apply_prob_collapse_regen" }
+  ],
+  "tags": ["buff"]
+}

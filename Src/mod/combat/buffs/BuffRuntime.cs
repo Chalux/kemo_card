@@ -293,7 +293,14 @@ public sealed class BuffRuntime
             }
 
             foreach (var instance in instances)
+            {
+                // 独立计时的层会随时间逐层脱落（2026-09-24）：层数变了必须重算属性修正，
+                // 否则聚合器里还留着旧层数的幅度（例：两层 +6 掉成一层后仍按 +12 结算）。
+                var stacksBefore = instance.Stacks;
                 instance.TickTurnEnd();
+                if (instance.Stacks != stacksBefore)
+                    instance.RegisterModifiers(GetAsc(simulation, holder));
+            }
 
             var expired = instances.Where(instance => instance.IsExpired).ToList();
             foreach (var instance in expired)
@@ -317,6 +324,8 @@ public sealed class BuffRuntime
             {
                 if (instance.IsDormant)
                     continue;
+                // 阶层记账在触发前清空：本阶层的"仅 1 次"从这一刻重新计数。
+                instance.ResetWaveFlags();
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnWaveStart);
             }
         }
@@ -400,8 +409,83 @@ public sealed class BuffRuntime
                 continue;
             }
 
+            if (tags.Contains(BuiltinBuffTags.SlotStorm))
+            {
+                // 暴风：自己的手牌不会被吹散（免疫特征只抵消暴风本身）。
+                if (character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotStorm))
+                    continue;
+
+                FireStorm(simulation, source, instance, hooks, slot, character.HandSlots.Count);
+                continue;
+            }
+
             FireHookList(simulation, source, instance, hooks, [source]);
         }
+    }
+
+    /// <summary>
+    /// 暴风（<see cref="BuiltinBuffTags.SlotStorm"/>）：对该槽<b>附近的手牌槽</b>逐槽触发一次钩子，
+    /// 每次把目标槽索引并进效果参数 <c>slotIndex</c>（载荷通常是 <c>DiscardSlot</c>，
+    /// 由 <c>CharacterBattleInstance.DiscardSlotCard</c> 只弃未标记的牌）。
+    /// </summary>
+    /// <remarks>
+    /// 扩散范围取首个效果引用的 <c>adjacentSlots</c>（缺省 1）；选槽顺序"先左后右、由近及远"——
+    /// 5 槽下手牌槽 2 的 2 个相邻槽 = 1、3，3 个 = 1、3、0。该槽自身不算相邻。
+    /// </remarks>
+    private void FireStorm(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        BuffInstance instance,
+        IReadOnlyList<EffectRefDto> hooks,
+        HandSlot slot,
+        int slotCount)
+    {
+        var spread = BuffActionParams.ReadInt(
+            MergeEffectParams(hooks[0], instance.Params).Params ?? new Dictionary<string, object>(),
+            "adjacentSlots",
+            1);
+        if (spread <= 0)
+            return;
+
+        foreach (var neighbor in StormNeighborSlots(slot.SlotIndex, spread, slotCount))
+        {
+            foreach (var effectRef in hooks)
+            {
+                var merged = MergeEffectParams(effectRef, instance.Params);
+                var withSlot = merged.Params is { Count: > 0 }
+                    ? new Dictionary<string, object>(merged.Params, StringComparer.Ordinal)
+                    : new Dictionary<string, object>(StringComparer.Ordinal);
+                withSlot["slotIndex"] = neighbor;
+
+                _executor.ExecuteEffectRef(
+                    new EffectRefDto { EffectId = effectRef.EffectId, Params = withSlot },
+                    simulation,
+                    source,
+                    [source]);
+            }
+        }
+    }
+
+    /// <summary>暴风相邻槽选择：先左后右、由近及远，最多 <paramref name="spread"/> 个（不含自身）。</summary>
+    internal static IReadOnlyList<int> StormNeighborSlots(int slotIndex, int spread, int slotCount)
+    {
+        var neighbors = new List<int>(Math.Max(0, spread));
+        for (var distance = 1; distance < slotCount && neighbors.Count < spread; distance++)
+        {
+            var left = slotIndex - distance;
+            if (left >= 0 && left < slotCount)
+            {
+                neighbors.Add(left);
+                if (neighbors.Count >= spread)
+                    break;
+            }
+
+            var right = slotIndex + distance;
+            if (right >= 0 && right < slotCount)
+                neighbors.Add(right);
+        }
+
+        return neighbors;
     }
 
     #endregion
@@ -498,14 +582,25 @@ public sealed class BuffRuntime
             if (IsOncePerTurn(merged.Params) && !instance.TryMarkHookFiredThisTurn(effectRef.EffectId))
                 continue;
 
+            // oncePerWave：记账周期为整个阶层（"每个阶层仅 1 次"，冯·诺依曼被动6）。
+            if (IsOncePerWave(merged.Params) && !instance.TryMarkHookFiredThisWave(effectRef.EffectId))
+                continue;
+
             _executor.ExecuteEffectRef(merged, simulation, holder, ResolveHookTargets(simulation, holder, merged.Params));
         }
     }
 
     /// <summary>钩子参数 <c>oncePerTurn: true</c> 判定（记账键用 effectId，同 buff 的不同效果互不影响）。</summary>
-    private static bool IsOncePerTurn(IReadOnlyDictionary<string, object>? parameters)
+    private static bool IsOncePerTurn(IReadOnlyDictionary<string, object>? parameters) =>
+        IsTrueFlag(parameters, "oncePerTurn");
+
+    /// <summary>钩子参数 <c>oncePerWave: true</c> 判定（记账周期 = 整个阶层）。</summary>
+    private static bool IsOncePerWave(IReadOnlyDictionary<string, object>? parameters) =>
+        IsTrueFlag(parameters, "oncePerWave");
+
+    private static bool IsTrueFlag(IReadOnlyDictionary<string, object>? parameters, string key)
     {
-        if (parameters is null || !parameters.TryGetValue("oncePerTurn", out var value) || value is null)
+        if (parameters is null || !parameters.TryGetValue(key, out var value) || value is null)
             return false;
 
         return value is bool flag
@@ -574,7 +669,7 @@ public sealed class BuffRuntime
             return null;
 
         var filtered = parameters
-            .Where(pair => pair.Key is not ("hookTargets" or "targetFilter" or "turnInterval" or "oncePerTurn"))
+            .Where(pair => pair.Key is not ("hookTargets" or "targetFilter" or "turnInterval" or "oncePerTurn" or "oncePerWave"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         return filtered.Count > 0 ? filtered : null;
     }

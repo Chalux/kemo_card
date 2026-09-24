@@ -165,6 +165,43 @@ public sealed class LocaleIntegrityTests
             + Environment.NewLine + string.Join(Environment.NewLine, missing.Distinct()));
     }
 
+    [Test]
+    public void Character_identity_label_keys_exist_in_resource_csv()
+    {
+        // 角色身份行（元素 / 定位 / 种族）的键写在 CharacterIdentityLabels 的常量里，
+        // 再交给传入的 translate 委托——通用扫描只认 Tr("KEY") 字面量，漏一个键
+        // 就只会在界面上显示原始键名，因此这里按"字面 UI_ 键"单独扫一遍。
+        var csvPath = ResourceCsvPath();
+        var keys = ReadCsvKeys(csvPath);
+        var source = File.ReadAllText(LocateRepoFile(Path.Combine(
+            "Src", "mod", "global", "Ui", "CharacterIdentityLabels.cs")));
+
+        var missing = new List<string>();
+        var referenced = new HashSet<string>(StringComparer.Ordinal);
+        foreach (Match match in new Regex("\"(UI_[A-Z0-9_]+)\"").Matches(source))
+        {
+            var key = match.Groups[1].Value;
+            referenced.Add(key);
+            if (!keys.Contains(key))
+                missing.Add(key);
+        }
+
+        Assert.That(referenced, Is.Not.Empty, "CharacterIdentityLabels 未引用任何 UI_ 键，本用例需同步");
+        Assert.That(missing, Is.Empty,
+            "CharacterIdentityLabels 引用的键必须写进 Resource/Locale/strings.csv："
+            + Environment.NewLine + string.Join(Environment.NewLine, missing));
+
+        // 整行模板必须带两个占位符：字段名与字段值（少了 {1} 会直接丢掉值，
+        // 少了 {0} 则 string.Format 抛 FormatException）。
+        var fieldFormatRow = File.ReadAllLines(csvPath)
+            .First(line => SplitCsvLine(line)[0] == "UI_CHARACTER_META_FIELD");
+        var fieldFormatCells = SplitCsvLine(fieldFormatRow);
+        Assert.That(fieldFormatCells[1], Does.Contain("{0}").And.Contain("{1}"),
+            "UI_CHARACTER_META_FIELD 的 zh_CN 文案必须同时带 {0}（字段名）与 {1}（字段值）");
+        Assert.That(fieldFormatCells[2], Does.Contain("{0}").And.Contain("{1}"),
+            "UI_CHARACTER_META_FIELD 的 en 文案必须同时带 {0}（字段名）与 {1}（字段值）");
+    }
+
     #region 装配
 
     private static string ResourceCsvPath() => LocateRepoFile(Path.Combine("Resource", "Locale", "strings.csv"));

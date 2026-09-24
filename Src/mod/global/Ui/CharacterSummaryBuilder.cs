@@ -1,6 +1,5 @@
 using System.Text;
 using KemoCard.Frame.Content.Definitions;
-using KemoCard.Mod.Global.Def;
 
 namespace KemoCard.Mod.Global.Ui;
 
@@ -38,87 +37,32 @@ public static class CharacterSummaryBuilder
         return new CharacterSummaryTip(title, string.Join("\n", lines));
     }
 
+    /// <summary>
+    /// 身份三元组（元素 / 定位 / 种族）的显示名口径与角色详情一致
+    /// （<see cref="CharacterIdentityLabels"/>）；摘要行只列值、不列字段名。
+    /// </summary>
     private static string BuildMetaLine(CharacterDto character, Func<string, string> translate)
     {
         var parts = new List<string>();
 
-        var elements = FormatElements(character.Element, translate);
+        var elements = CharacterIdentityLabels.Element(character.Element, translate);
         if (!string.IsNullOrEmpty(elements))
         {
             parts.Add(elements);
         }
 
-        if (character.Role != ERole.None
-            && CodexFilterDefinitions.TryGetRoleLocaleKey(character.Role, out var roleKey))
+        if (character.Role != ERole.None)
         {
-            parts.Add(translate(roleKey));
+            parts.Add(CharacterIdentityLabels.Role(character.Role, translate));
         }
 
-        var races = FormatRaces(character.Race, translate);
+        var races = CharacterIdentityLabels.Race(character.Race, translate);
         if (!string.IsNullOrEmpty(races))
         {
             parts.Add(races);
         }
 
         return string.Join(" ", parts);
-    }
-
-    private static string FormatElements(EElement elementFlags, Func<string, string> translate)
-    {
-        if (elementFlags == EElement.None)
-        {
-            return "";
-        }
-
-        var names = new List<string>();
-        foreach (EElement element in Enum.GetValues<EElement>())
-        {
-            if (element == EElement.None)
-            {
-                continue;
-            }
-
-            if ((elementFlags & element) == 0)
-            {
-                continue;
-            }
-
-            if (CodexFilterDefinitions.TryGetElementLocaleKey(element, out var key))
-            {
-                names.Add(translate(key));
-            }
-        }
-
-        return names.Count == 0 ? "" : string.Join("、", names);
-    }
-
-    private static string FormatRaces(ERace raceFlags, Func<string, string> translate)
-    {
-        if (raceFlags == ERace.None)
-        {
-            return "";
-        }
-
-        var names = new List<string>();
-        foreach (ERace race in Enum.GetValues<ERace>())
-        {
-            if (race == ERace.None)
-            {
-                continue;
-            }
-
-            if ((raceFlags & race) == 0)
-            {
-                continue;
-            }
-
-            if (CodexFilterDefinitions.TryGetRaceLocaleKey(race, out var key))
-            {
-                names.Add(translate(key));
-            }
-        }
-
-        return names.Count == 0 ? "" : string.Join("、", names);
     }
 
     private static string BuildSkillText(

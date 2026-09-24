@@ -24,4 +24,11 @@ public interface ICombatCondContext
     /// （<paramref name="elementFlags"/> 为 0 时不筛属性）。含空放——牌离开手牌即算打出。
     /// </summary>
     int CountCardsPlayedThisTurn(int characterIndex, int elementFlags);
+
+    /// <summary>
+    /// 本回合连携定档的参与人数（不同角色数）：<paramref name="elementFlags"/> 为 0 时取
+    /// <b>当前正在结算的卡牌</b>的属性；取这些属性里人头数的最大值（多属性卡取最优）。
+    /// 结算区间之外返回 0（"这张牌够不够 N 连携档"类条件读它）。
+    /// </summary>
+    int CountChainParticipants(int elementFlags);
 }

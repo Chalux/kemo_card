@@ -1,0 +1,25 @@
+{
+  "displayNameId": "char.von_neumann.name",
+  "element": "Red",
+  "role": "Healer",
+  "race": ["Human", "Academic"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "von_neumann_fate_reckoning", "cooldown": 10 }
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "von_neumann_passive_p1", "requiredPotential": 0 },
+    { "buffId": "von_neumann_passive_p2", "requiredPotential": 10 },
+    { "buffId": "von_neumann_passive_p3", "requiredPotential": 30 },
+    { "buffId": "von_neumann_passive_p4", "requiredPotential": 50 }
+  ],
+  "cards": [
+    "von_neumann_direct_deduction",
+    "von_neumann_probability_collapse",
+    "von_neumann_merge_sort",
+    "von_neumann_merge_fusion"
+  ],
+  "tags": []
+}

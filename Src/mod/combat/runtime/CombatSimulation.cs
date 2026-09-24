@@ -71,6 +71,15 @@ public sealed class CombatSimulation : IDisposable
     /// </summary>
     public float CurrentChainBonus { get; private set; }
 
+    /// <summary>本回合结算区间内各属性的连携人头数快照（结算开始前一次性定档）；区间之外为空。</summary>
+    public IReadOnlyDictionary<EElement, int> CurrentChainCounts => _currentChainCounts;
+
+    /// <summary>当前正在结算的卡牌属性位（0 = 不在单卡结算区间内）；连携条件按它取"这张牌的属性"。</summary>
+    public int CurrentChainCardElementFlags { get; private set; }
+
+    private IReadOnlyDictionary<EElement, int> _currentChainCounts =
+        new Dictionary<EElement, int>();
+
     /// <summary>规格 §4.3：战斗中途即时抽牌被拒绝的次数（诊断计数器，禁止 GD.Print）。</summary>
     public int BlockedMidDrawCount { get; private set; }
 
@@ -162,6 +171,38 @@ public sealed class CombatSimulation : IDisposable
 
     /// <summary>状态机专用：设置/清零当前结算卡牌的连携加成（结算区间之外恒为 0）。</summary>
     internal void SetChainBonus(float bonus) => CurrentChainBonus = bonus;
+
+    /// <summary>状态机专用：登记本回合连携定档快照（结算阶段开始时一次性写入）。</summary>
+    internal void SetChainCounts(IReadOnlyDictionary<EElement, int> counts) =>
+        _currentChainCounts = counts ?? new Dictionary<EElement, int>();
+
+    /// <summary>状态机专用：登记当前正在结算的卡牌属性位（0 = 离开单卡结算区间）。</summary>
+    internal void SetChainCardElementFlags(int elementFlags) => CurrentChainCardElementFlags = elementFlags;
+
+    /// <summary>
+    /// 连携人头数查询（战斗条件 <c>ChainTierAtLeast</c> 读它）：
+    /// <paramref name="elementFlags"/> 为 0 时用**当前结算卡**的属性位；
+    /// 取这些属性里参与人数（不同角色数）的<b>最大值</b>，多属性卡取最优。
+    /// 结算区间之外（或该属性无人参与）返回 0。
+    /// </summary>
+    public int CountChainParticipants(int elementFlags)
+    {
+        var flags = elementFlags != 0 ? elementFlags : CurrentChainCardElementFlags;
+        if (flags == 0)
+            return 0;
+
+        var best = 0;
+        foreach (var element in Enum.GetValues<EElement>())
+        {
+            if (element == EElement.None || (flags & (int)element) == 0)
+                continue;
+
+            if (_currentChainCounts.TryGetValue(element, out var count))
+                best = Math.Max(best, count);
+        }
+
+        return best;
+    }
 
     internal void CountBlockedMidDraw() => BlockedMidDrawCount++;
 

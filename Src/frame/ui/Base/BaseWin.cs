@@ -101,6 +101,7 @@ public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
     #region IUILifecycleInvoker 显式实现
     void IUILifecycleInvoker.InvokePreLoad(Action done, Action fail) => OnPreLoad(done, fail);
     void IUILifecycleInvoker.InvokeCreate() => OnCreate();
+    void IUILifecycleInvoker.InvokeResetBindings() => ResetBindings();
     void IUILifecycleInvoker.InvokeInitEvent() => InitEvent();
     void IUILifecycleInvoker.InvokeOpen() => OnOpen();
     Action? IUILifecycleInvoker.InvokeOpenAnim(Action done) => OnOpenAnim(done);

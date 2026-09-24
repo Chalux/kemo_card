@@ -1,0 +1,11 @@
+{
+  "descId": "buff.turing_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onActiveSkillCast": [
+      { "effectId": "turing_p4_halt_all", "params": { "hookTargets": "allEnemies", "oncePerWave": true } }
+    ]
+  }
+}

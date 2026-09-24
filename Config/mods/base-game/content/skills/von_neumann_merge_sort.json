@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.von_neumann_merge_sort.name",
+  "descId": "skill.von_neumann_merge_sort.desc",
+  "effectRefs": [
+    { "effectId": "von_neumann_merge_sort_payload" }
+  ],
+  "tags": ["healing", "buff"]
+}
