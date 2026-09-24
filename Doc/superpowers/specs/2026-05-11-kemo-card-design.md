@@ -45,7 +45,7 @@
 - **游戏本体**：仓库内 **纯 C#**（Godot Mono）。
 - **Mod 脚本**：可使用 **Lua / TypeScript / Python** 等，由 **C# 脚本宿主**统一加载与沙箱化 API。
 - **组合优先于继承**：管理器与系统服务以组合方式拼装（不在本文展开类图）。
-- **对话系统**：叙事对话 UI 预定采用 Godot 插件 **Dialogue Manager**（[nathanhoad/godot_dialogue_manager](https://github.com/nathanhoad/godot_dialogue_manager/tree/main)，面向 Godot 4.6+）。插件以 addon 形式接入；游戏侧用 **C# 桥接**消费其运行时。Dialogue Manager 负责对话演出层；Run 上的故事脚本 / 事件选项逻辑由宿主与 Mod 脚本负责，二者分责，不互相替代。
+- **对话系统**：叙事对话 UI 预定采用 Godot 插件 **Dialogue Manager**（[nathanhoad/godot_dialogue_manager](https://github.com/nathanhoad/godot_dialogue_manager/tree/main)，面向 Godot 4.7+）。插件以 addon 形式接入；游戏侧用 **C# 桥接**消费其运行时。Dialogue Manager 负责对话演出层；Run 上的故事脚本 / 事件选项逻辑由宿主与 Mod 脚本负责，二者分责，不互相替代。
 
 ---
 
