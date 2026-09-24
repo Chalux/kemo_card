@@ -474,7 +474,13 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
             var member = _members[benchIndex++];
             member.Visible = true;
-            member.Bind(i, characters[i], ResolveCharacter(store, characters[i].DefinitionId), _ui.CanControl(i), !_ui.InputLocked);
+            member.Bind(
+                i,
+                characters[i],
+                ResolveCharacter(store, characters[i].DefinitionId),
+                _ui.CanControl(i),
+                !_ui.InputLocked,
+                CombatActionMarks.Resolve(simulation, i));
         }
 
         for (; benchIndex < _members.Count; benchIndex++)
@@ -508,7 +514,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         if (TryGetControlledCharacter(simulation, out var actor))
         {
             var canAct = inPlayerPhase && !_ui.InputLocked && _ui.CanControl(controlled) && !actor.IsSealed;
-            _actor?.Bind(actor, ResolveCharacter(store, actor.DefinitionId));
+            _actor?.Bind(actor, ResolveCharacter(store, actor.DefinitionId), CombatActionMarks.Resolve(simulation, controlled));
             _deck?.SetCount(actor.DrawPile.Count);
             _grave?.SetCount(actor.Graveyard.Count);
 

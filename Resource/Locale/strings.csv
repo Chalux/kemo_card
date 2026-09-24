@@ -353,3 +353,17 @@ UI_COMBAT_RESULT_VICTORY_TITLE,战斗胜利,Victory
 UI_COMBAT_RESULT_VICTORY_DESC,敌人已全部击破。,All enemies have been defeated.
 UI_COMBAT_RESULT_DEFEAT_TITLE,战斗失败,Defeat
 UI_COMBAT_RESULT_DEFEAT_DESC,队伍生命归零，将回到战前状态。,Team HP reached zero. Returning to the pre-battle state.
+UI_COMBAT_BUFF_TURNS,剩余 {0} 回合,{0} turns left
+UI_COMBAT_BUFF_PERMANENT,永久,Permanent
+UI_COMBAT_BUFF_COMBAT,本场战斗,Until combat ends
+UI_COMBAT_BUFF_UNTIL_DISPELLED,持续到被驱散,Until dispelled
+UI_COMBAT_BUFF_STACKS,层数 {0},Stacks {0}
+UI_COMBAT_MARK_NORMAL_ATTACK,普攻,Attack
+UI_COMBAT_MARK_FOLLOW_UP,追打,Follow-up
+UI_COMBAT_SLOT_CHARGE,{0} / {1},{0} / {1}
+UI_DEBUG_BATTLE_SEED,战斗种子,Battle Seed
+UI_DEBUG_BATTLE_SEED_PLACEHOLDER,留空用 RunSeed,Empty = RunSeed
+UI_DEBUG_BATTLE_RANDOM_SEED,随机种子,Random Seed
+UI_PAUSE_EXIT_BATTLE,退出战斗,Leave Battle
+UI_PAUSE_EXIT_BATTLE_TITLE,退出战斗,Leave Battle
+UI_PAUSE_EXIT_BATTLE_DESC,将放弃当前战斗并回到战前状态，确定退出吗？,Abandon this battle and return to the pre-battle state?

@@ -14,7 +14,8 @@ using KemoCard.Mod.Run.Ui.CombatUi.Presentation;
 namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>
-/// 手牌槽：<see cref="BaseCardItem"/>（点击 Emit / 悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标。
+/// 手牌槽：<see cref="BaseCardItem"/>（点击 Emit / 悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 +
+/// 充能指示（<see cref="SlotChargeCmp"/>：环绕光晕 + 顶部进度条）。
 /// 空槽只显示底板。
 /// </summary>
 public partial class HandSlotCmp : BaseCmp
@@ -23,6 +24,7 @@ public partial class HandSlotCmp : BaseCmp
     [Export] private Panel? _pendingFrame;
     [Export] private BuffListCmp? _slotBuffs;
     [Export] private Control? _emptyHint;
+    [Export] private SlotChargeCmp? _charge;
 
     /// <summary>点击回调，参数为槽位索引。</summary>
     public Action<int>? Clicked { get; set; }
@@ -83,6 +85,7 @@ public partial class HandSlotCmp : BaseCmp
 
         SetPending(pending);
         _slotBuffs?.Bind(slot.Buffs.Visible);
+        _charge?.Bind(slot.Buffs.FindByTag(BuiltinBuffTags.SlotCharge));
     }
 
     public void SetPending(bool pending)

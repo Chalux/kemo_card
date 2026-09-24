@@ -41,6 +41,15 @@ public static class CombatUnitFormat
     public static string DisplayName(string? displayNameId, string fallbackId) =>
         string.IsNullOrWhiteSpace(displayNameId) ? fallbackId : Localization.Tr(displayNameId);
 
+    /// <summary>「无限叠」判定阈值：maxStacks 未配置（≤ 0）或达到该值（内容里 99 = 可无限叠）都显示 ∞。</summary>
+    public const int UnlimitedStacks = 99;
+
+    public static bool IsUnlimitedStacks(int maxStacks) => maxStacks <= 0 || maxStacks >= UnlimitedStacks;
+
+    /// <summary>buff 层数文本「当前 / 上限」；无限叠时上限显示 <c>∞</c>（如 <c>3 / ∞</c>）。</summary>
+    public static string StacksText(int stacks, int maxStacks) =>
+        $"{stacks} / {(IsUnlimitedStacks(maxStacks) ? "∞" : maxStacks.ToString())}";
+
     private static string Join(string left, string right)
     {
         if (string.IsNullOrEmpty(left))

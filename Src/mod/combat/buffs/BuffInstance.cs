@@ -16,6 +16,18 @@ public sealed class BuffInstance
 
     public int Stacks { get; private set; } = 1;
 
+    /// <summary>
+    /// 充能（<see cref="BuiltinBuffTags.SlotCharge"/>）触发所需牌数：参数 <c>charge</c>，缺省 1
+    /// （即「充能 I / II」的罗马数字）。非充能 buff 无意义。
+    /// </summary>
+    public int ChargeRequired => Math.Max(1, ReadIntParam("charge") ?? 1);
+
+    /// <summary>充能进度：已打出的牌数（触发所需 − 剩余计数）；触发并重置后回到 0。</summary>
+    public int ChargePlayed => Math.Max(0, ChargeRequired - ChargeCounter);
+
+    /// <summary>充能进度比例（0..1），供进度条直接使用。</summary>
+    public float ChargeProgress => Math.Clamp(ChargePlayed / (float)ChargeRequired, 0f, 1f);
+
     /// <summary><see cref="EBuffDurationType.Turns"/> 时的剩余回合数；其余时长类型为 <c>null</c>。</summary>
     public int? RemainingTurns { get; private set; }
 
@@ -54,7 +66,7 @@ public sealed class BuffInstance
             : null;
         if (RemainingTurns is { } initial)
             _stackTurns.Add(initial);
-        ChargeCounter = Math.Max(1, ReadIntParam("charge") ?? 1);
+        ChargeCounter = ChargeRequired;
     }
 
     /// <summary>
@@ -117,7 +129,7 @@ public sealed class BuffInstance
         return ChargeCounter == 0;
     }
 
-    public void ResetCharge() => ChargeCounter = Math.Max(1, ReadIntParam("charge") ?? 1);
+    public void ResetCharge() => ChargeCounter = ChargeRequired;
 
     public void SetDormant(bool dormant) => IsDormant = dormant;
 

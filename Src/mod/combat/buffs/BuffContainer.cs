@@ -45,6 +45,10 @@ public sealed class BuffContainer
     public bool HasTag(string tag) => _instances.Any(instance =>
         !instance.IsDormant && instance.Def.EffectiveTags.Contains(tag, StringComparer.Ordinal));
 
+    /// <summary>按机制 tag 找第一个非休眠实例（如手牌槽充能 <c>slot.charge</c>）；找不到返回 null。</summary>
+    public BuffInstance? FindByTag(string tag) => _instances.FirstOrDefault(instance =>
+        !instance.IsDormant && instance.Def.EffectiveTags.Contains(tag, StringComparer.Ordinal));
+
     /// <summary>新建实例并入容器（不做叠层/互斥判定——那属于 <see cref="BuffRuntime"/> 的编排职责）。</summary>
     public BuffInstance Add(BuffDto def, IReadOnlyDictionary<string, object>? parameters)
     {

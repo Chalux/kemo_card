@@ -820,7 +820,7 @@ UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
 ### 11.1 目标（原 §1 目标 1–2）
 
 1. **Run 内随时按 ESC** 打开一个系统菜单；再按一次关闭（切换语义，不做"按 ESC 一定关掉最上层"的隐式栈操作）。
-2. 菜单提供五个入口：**打开设置 / 打开图鉴 / 打开词典 / 保存并退出到主菜单 / 退出到桌面**。
+2. 菜单提供五个固定入口：**打开设置 / 打开图鉴 / 打开词典 / 保存并退出到主菜单 / 退出到桌面**；战斗中额外显示 **退出战斗**（回滚到战前快照并返回 Run 界面）。
 
 > 原 §1 目标 3（词典汇总充能、属性球、共享血量、团体潜能等关键词的查阅界面）归 Global 功能规格，不并入本文。
 
@@ -836,9 +836,10 @@ UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
 | 继续游戏 | 关闭菜单（`BaseWin.Close`） |
 | 打开设置 / 打开图鉴 / 打开词典 | `GlobalModController.OpenSettingAsync / OpenCodexAsync / OpenGlossaryAsync`——三者都叠在菜单之上，关掉后回到菜单 |
 | 保存并退出到主菜单 | `RunUiController.SaveAndExitToMenuAsync`：落盘 → `CloseByOwner(run, destroy: true)`（连菜单一起关）→ 回主菜单 |
+| 退出战斗（仅战斗阶段显示） | 先 `AlertDlg` 二次确认（说明"放弃当前战斗、回到战前状态"）；确认后 `RunController.EndBattle(won: false)`：回滚到战前快照 → 阶段离开战斗 → `CombatWin` 随阶段自关闭 → `Close()` 本菜单，回到 Run 界面 |
 | 退出到桌面 | 先 `AlertDlg` 确认（说明"最近一次自动保存之后的进度会丢失"），确认后 `GetTree().Quit()` |
 
-- **战斗阶段禁用「保存并退出」**并说明原因：战斗态（模拟器、手牌、充能球队列）不在 Run 存档模型里，中途落盘得到的是读不回来的档。判定统一走 `ERunPhaseExtensions.IsCombatPhase()`（与 `RunMainWin` 的保存按钮同一处定义）。
+- **战斗阶段禁用「保存并退出」**并说明原因：战斗态（模拟器、手牌、充能球队列）不在 Run 存档模型里，中途落盘得到的是读不回来的档。判定统一走 `ERunPhaseExtensions.IsCombatPhase()`（与 `RunMainWin` 的保存按钮、以及「退出战斗」按钮的显示条件同一处定义）。
 - **跨功能调用**：Run 的界面直接调 Global 的静态打开入口。这与 `MenuWin`（Global）调 `RunUiController.OpenStorySelectAsync` 是对称的既有做法；本轮不引入新的门面层，避免为 3 个入口造一套路由。
 
 > **与本文既有段落的关系**：「保存并退出到主菜单」是 §10.5.2 中「保存并返回主菜单」（`BtnSaveExit`：`SaveCurrent()` → `Close()` → 打开主菜单）的 ESC 菜单版入口，两者共用同一次落盘语义；战斗阶段禁用与 §10.5.3「保存系按钮禁用」同源（`ERunPhaseExtensions.IsCombatPhase()`），无冲突。
@@ -1035,14 +1036,16 @@ CombatWin
 | 组件 | 显示 | 交互 |
 |---|---|---|
 | `HpBarCmp` | 当前 / 最大 + 进度条；`AnimateTo(value)` 供动画过渡 | — |
-| `BuffListCmp` / `BuffIconCmp` | `BuffContainer.Visible` 的图标（`iconPath` 缺失回落短名）、层数、剩余回合 | 悬停显示名字 / 描述（`KeywordTipService.ShowCustomTips`） |
-| `PartyMemberCmp` | 名字、物攻·魔攻、物防·魔防、回复量、已确认标记 | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用） |
+| `BuffListCmp` / `BuffIconCmp` | `BuffContainer.Visible` 的图标（`iconPath` 缺失回落短名）、层数、剩余回合 | 悬停显示名字 / 描述（BBCode 渲染，`[url=kw:id]` 关键词高亮）/ 剩余时间（按 `durationType` 分派文案）/ 层数「当前 / 上限」（无上限或可无限叠显示 ∞）；描述引用的关键词效果以附加块列在下方（`KeywordTipService.BuildKeywordEffectTips`）（`ShowCustomTips`） |
+| `PartyMemberCmp` | 名字、物攻·魔攻、物防·魔防、回复量、已确认标记、本回合普攻/追打标识 | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用） |
 | `AllyUnitCmp` | 边框 + `CharacterPresenter`（有 `presentation` 播序列帧，否则立绘 / 空白）；当前操控 / 已确认 / 合法目标高亮 | 选目标态点击 = 选为目标；`MoveTo/ReturnHome/Play(anim)` 由动画驱动 |
 | `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + `BuffListCmp`；合法目标高亮 | 悬停：名字 / 种族·定位 / 剩余生命 / 物攻·魔攻 / 物防·魔防；点击 = 选为目标 |
 | `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮 | 触发 → `TriggerOrbsCommand` |
-| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap、四维 + 回复、buff 列表 | — |
-| `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
+| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap、四维 + 回复、buff 列表、本回合普攻/追打标识 | — |
+| `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 + 充能指示（`SlotChargeCmp`：光晕框包住「X / N」进度条与卡牌，不含 buff 列表；无充能时隐藏） | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
 | `CardPileCmp` | 标题 + 张数 | — |
+
+> **普攻标识**（2026-09-25）：本回合普攻归属者（`(回合-1) % 队伍人数`）显示「普攻」；持有 `trait.follow_up` 的**非归属者**显示「追打」（归属者持有追打也不重复出手，故归属者恒为「普攻」）。队友卡与当前操控角色卡各一处；判定在 `CombatActionMarks.Resolve`（纯函数，有单测），文案 / 配色由 `CombatActionMarks.Apply` 统一下发。
 
 ### 14.3 交互状态（`CombatUiState`，纯 C#）
 

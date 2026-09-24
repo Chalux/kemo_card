@@ -19,12 +19,19 @@ public partial class OrbQueueCmp : BaseCmp
     [Export] private Label? _lblCount;
     [Export] private Label? _lblHint;
     [Export] private Button? _btnTrigger;
+    [Export] private Control? _margin;
 
     /// <summary>触发按钮回调。</summary>
     public Action? TriggerRequested { get; set; }
 
     private readonly List<ColorRect> _orbRects = [];
     private bool _inputLocked;
+
+    /// <summary>
+    /// 高度跟随内容：右栏是 VBoxContainer，按子节点最小尺寸排版；根是普通 <see cref="Control"/>，
+    /// 不聚合子节点最小尺寸，不上报就会拿到 0 高度、内容（grow=both）向上溢出压到暂停按钮上。
+    /// </summary>
+    public override Vector2 _GetMinimumSize() => _margin?.GetCombinedMinimumSize() ?? base._GetMinimumSize();
 
     protected override void OnReady()
     {

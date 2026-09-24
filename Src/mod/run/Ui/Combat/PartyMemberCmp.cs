@@ -16,6 +16,7 @@ public partial class PartyMemberCmp : BaseCmp
     [Export] private Label? _lblDefense;
     [Export] private Label? _lblHeal;
     [Export] private Label? _lblState;
+    [Export] private Label? _lblMark;
 
     /// <summary>点击回调，参数为该卡片绑定的槽位索引。</summary>
     public Action<int>? Clicked { get; set; }
@@ -43,7 +44,8 @@ public partial class PartyMemberCmp : BaseCmp
         CharacterBattleInstance character,
         CharacterDto? definition,
         bool canControl,
-        bool interactable)
+        bool interactable,
+        ECombatActionMark mark)
     {
         SlotIndex = slotIndex;
         _interactable = interactable && canControl;
@@ -69,6 +71,8 @@ public partial class PartyMemberCmp : BaseCmp
             _lblState.Visible = stateKey.Length > 0;
             _lblState.Text = stateKey.Length > 0 ? Localization.Tr(stateKey) : "";
         }
+
+        CombatActionMarks.Apply(_lblMark, mark);
 
         Modulate = Modulate with { A = _interactable ? 1f : 0.6f };
         MouseDefaultCursorShape = _interactable ? CursorShape.PointingHand : CursorShape.Arrow;

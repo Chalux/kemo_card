@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/OrbQueueCmp.cs" id="1_script"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="OrbQueueCmp" type="Control" node_paths=PackedStringArray("_slots", "_lblCount", "_lblHint", "_btnTrigger")]
+[node name="OrbQueueCmp" type="Control" node_paths=PackedStringArray("_slots", "_lblCount", "_lblHint", "_btnTrigger", "_margin")]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 3
 anchors_preset = 0
@@ -15,6 +15,7 @@ _slots = NodePath("Margin/VBox/Slots")
 _lblCount = NodePath("Margin/VBox/Header/Count")
 _lblHint = NodePath("Margin/VBox/Hint")
 _btnTrigger = NodePath("Margin/VBox/BtnTrigger")
+_margin = NodePath("Margin")
 
 [node name="Face" type="Panel" parent="."]
 layout_mode = 1

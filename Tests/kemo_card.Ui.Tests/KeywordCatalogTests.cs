@@ -83,4 +83,32 @@ public sealed class KeywordTextFormatterTests
     {
         Assert.That(KeywordTextFormatter.ApplyParams("无参数", null), Is.EqualTo("无参数"));
     }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("没有任何标记的普通描述。")]
+    public void ExtractKeywordIds_without_markup_returns_empty(string? text)
+    {
+        Assert.That(KeywordTextFormatter.ExtractKeywordIds(text), Is.Empty);
+    }
+
+    [Test]
+    public void ExtractKeywordIds_returns_ids_in_order_and_dedupes()
+    {
+        const string text =
+            "受 [url=kw:hand_slot_damage]手牌槽伤害[/url] 影响，并计入 [url=kw:chain]连携[/url]；"
+            + "再次出现 [url=kw:hand_slot_damage]手牌槽伤害[/url] 时不再重复。";
+
+        Assert.That(
+            KeywordTextFormatter.ExtractKeywordIds(text),
+            Is.EqualTo(new[] { "hand_slot_damage", "chain" }));
+    }
+
+    [Test]
+    public void ExtractKeywordIds_ignores_non_keyword_urls_and_placeholders()
+    {
+        const string text = "[url=https://example.com]外链[/url] {percent} [url=kw:seal]封印[/url]";
+
+        Assert.That(KeywordTextFormatter.ExtractKeywordIds(text), Is.EqualTo(new[] { "seal" }));
+    }
 }

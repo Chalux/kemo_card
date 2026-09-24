@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/PartyMemberCmp.cs" id="1_script"]
 
-[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState")]
+[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState", "_lblMark")]
 custom_minimum_size = Vector2(0, 118)
 layout_mode = 3
 anchors_preset = 0
@@ -14,6 +14,7 @@ _lblAttack = NodePath("Margin/VBox/Grid/AttackValue")
 _lblDefense = NodePath("Margin/VBox/Grid/DefenseValue")
 _lblHeal = NodePath("Margin/VBox/Grid/HealValue")
 _lblState = NodePath("Margin/VBox/Header/State")
+_lblMark = NodePath("Margin/VBox/Header/Mark")
 
 [node name="Face" type="Panel" parent="."]
 layout_mode = 1
@@ -52,6 +53,14 @@ size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_font_sizes/font_size = 16
 clip_text = true
+
+[node name="Mark" type="Label" parent="Margin/VBox/Header"]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 2
 
 [node name="State" type="Label" parent="Margin/VBox/Header"]
 visible = false

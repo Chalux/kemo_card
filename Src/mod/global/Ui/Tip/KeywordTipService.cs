@@ -79,6 +79,30 @@ public partial class KeywordTipService : CanvasLayer
         ShowPanels(anchor, panels, preferSide);
     }
 
+    /// <summary>
+    /// 把文本里 <c>[url=kw:id]…[/url]</c> 引用的词条展开成效果块（标题 + 描述，按首次出现去重）。
+    /// buff 预览等把它附加在当前内容下方，让玩家不用悬停也能看到关键词效果；词条描述保持原始 BBCode。
+    /// </summary>
+    public static List<(string Title, string Desc)> BuildKeywordEffectTips(
+        string? text,
+        KeywordCatalog catalog,
+        Func<string, string> translate)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(translate);
+
+        var tips = new List<(string Title, string Desc)>();
+        foreach (var keywordId in KeywordTextFormatter.ExtractKeywordIds(text))
+        {
+            if (catalog.TryGet(keywordId, out var entry) && entry != null)
+            {
+                tips.Add((translate(entry.TitleKey), translate(entry.DescKey)));
+            }
+        }
+
+        return tips;
+    }
+
     public void ShowCustomTips(
         Control anchor,
         IReadOnlyList<(string Title, string Desc)> tips,

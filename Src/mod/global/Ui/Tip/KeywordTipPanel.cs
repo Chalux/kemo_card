@@ -5,7 +5,7 @@ namespace KemoCard.Mod.Global.Ui.Tip;
 public partial class KeywordTipPanel : PanelContainer
 {
     [Export] private Label? _txtTitle;
-    [Export] private Label? _txtDesc;
+    [Export] private RichTextLabel? _txtDesc;
 
     public void SetContent(string title, string description)
     {

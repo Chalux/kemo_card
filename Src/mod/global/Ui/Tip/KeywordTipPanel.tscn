@@ -46,10 +46,17 @@ theme_override_font_sizes/font_size = 16
 text = "Title"
 autowrap_mode = 3
 
-[node name="Desc" type="Label" parent="Margin/VBox"]
+[node name="Desc" type="RichTextLabel" parent="Margin/VBox"]
 custom_minimum_size = Vector2(176, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.804, 0.749, 0.651, 1)
-theme_override_font_sizes/font_size = 13
-text = "Description"
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.804, 0.749, 0.651, 1)
+theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/bold_font_size = 13
+theme_override_font_sizes/italics_font_size = 13
+theme_override_font_sizes/bold_italics_font_size = 13
+theme_override_font_sizes/mono_font_size = 13
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 3

@@ -20,11 +20,12 @@ public partial class ActorInfoCmp : BaseCmp
     [Export] private Label? _lblDefense;
     [Export] private Label? _lblHeal;
     [Export] private Label? _lblState;
+    [Export] private Label? _lblMark;
     [Export] private BuffListCmp? _buffs;
 
     public BuffListCmp? BuffList => _buffs;
 
-    public void Bind(CharacterBattleInstance character, CharacterDto? definition)
+    public void Bind(CharacterBattleInstance character, CharacterDto? definition, ECombatActionMark mark)
     {
         if (_lblName != null)
             _lblName.Text = CombatUnitFormat.DisplayName(definition?.DisplayNameId, character.DefinitionId);
@@ -60,6 +61,8 @@ public partial class ActorInfoCmp : BaseCmp
             _lblState.Visible = key.Length > 0;
             _lblState.Text = key.Length > 0 ? Localization.Tr(key) : "";
         }
+
+        CombatActionMarks.Apply(_lblMark, mark);
 
         _buffs?.Bind(character.Buffs.Visible);
     }
