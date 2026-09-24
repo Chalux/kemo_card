@@ -38,6 +38,8 @@ public partial class RunDebugDlg : BaseDlg
     [Export] private Button? _btnFillParty;
 
     [Export] private ItemList? _battleList;
+    [Export] private LineEdit? _battleSeedInput;
+    [Export] private CheckBox? _battleRandomSeedCheck;
     [Export] private Button? _btnStartBattle;
     [Export] private Button? _btnEndWin;
     [Export] private Button? _btnEndLose;
@@ -602,9 +604,31 @@ public partial class RunDebugDlg : BaseDlg
 
     private void OnStartBattle()
     {
-        if (TryGetSelected(_battleView, _selectedBattle, out var id))
+        if (!TryGetSelected(_battleView, _selectedBattle, out var id))
         {
-            Run(service => service.StartBattle(id));
+            return;
+        }
+
+        // 种子：填了就用它；留空时看「随机种子」勾选 —— 勾选取随机值，否则沿用 RunSeed（run_debug 流）。
+        int? seed = null;
+        var raw = _battleSeedInput?.Text?.Trim();
+        if (!string.IsNullOrEmpty(raw))
+        {
+            if (!int.TryParse(raw, out var parsed))
+            {
+                SetStatus(false, Localization.Tr("UI_DEBUG_INVALID_NUMBER"));
+                return;
+            }
+
+            seed = parsed;
+        }
+
+        var useRandomSeed = _battleRandomSeedCheck?.ButtonPressed ?? false;
+
+        // 开战成功后关闭调试面板，直接回到 Run 界面（战斗窗由阶段监听打开）；失败保留面板显示原因。
+        if (Run(service => service.StartBattle(id, seed, useRandomSeed)).Ok)
+        {
+            Close();
         }
     }
 
@@ -734,13 +758,13 @@ public partial class RunDebugDlg : BaseDlg
 
     #endregion
 
-    /// <summary>统一执行入口：捕获异常、写状态行与日志，并刷新依赖状态的列表着色。</summary>
-    private void Run(Func<RunDebugService, RunDebugResult> action)
+    /// <summary>统一执行入口：捕获异常、写状态行与日志，并刷新依赖状态的列表着色；返回本次操作结果。</summary>
+    private RunDebugResult Run(Func<RunDebugService, RunDebugResult> action)
     {
         if (_service is null)
         {
             SetStatus(false, Localization.Tr("UI_DEBUG_NO_RUN"));
-            return;
+            return RunDebugResult.Failure(Localization.Tr("UI_DEBUG_NO_RUN"));
         }
 
         RunDebugResult result;
@@ -766,6 +790,7 @@ public partial class RunDebugDlg : BaseDlg
 
         // 此处**不能**再 RefreshStatus()：它无条件重写 _statusLabel.Text，会把刚写的操作结果
         // 换成阶段摘要，只留下成败颜色与内容不符。摘要由 OnOpen / UpdateView 负责显示。
+        return result;
     }
 
     private static bool TryParsePositive(string? text, out int value)

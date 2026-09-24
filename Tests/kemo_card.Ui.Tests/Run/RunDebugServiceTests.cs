@@ -240,6 +240,43 @@ public sealed class RunDebugServiceTests
     }
 
     [Test]
+    public void StartBattle_uses_the_supplied_seed()
+    {
+        var (service, controller, _) = Build();
+        foreach (var hero in HeroIds)
+        {
+            service.GrantCharacter(hero);
+        }
+
+        Assert.That(service.StartBattle(BattleId, seed: 424242).Ok, Is.True);
+
+        Assert.That(controller.Simulation!.RunSeed, Is.EqualTo(424242));
+    }
+
+    [Test]
+    public void StartBattle_defaults_to_run_seed_and_randomizes_when_checked()
+    {
+        var (service, controller, _) = Build();
+        foreach (var hero in HeroIds)
+        {
+            service.GrantCharacter(hero);
+        }
+
+        Assert.That(service.StartBattle(BattleId).Ok, Is.True);
+        Assert.That(
+            controller.Simulation!.RunSeed,
+            Is.EqualTo(controller.State.RunSeed),
+            "种子留空且未勾选：沿用 RunSeed + run_debug 流");
+
+        Assert.That(service.EndBattle(won: false).Ok, Is.True);
+        Assert.That(service.StartBattle(BattleId, seed: null, useRandomSeed: true).Ok, Is.True);
+        Assert.That(
+            controller.Simulation!.RunSeed,
+            Is.Not.EqualTo(controller.State.RunSeed),
+            "种子留空但勾选随机种子：换一局随机流");
+    }
+
+    [Test]
     public void StartBattle_rejects_unknown_battle()
     {
         var (service, controller, _) = Build();

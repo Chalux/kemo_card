@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/RunDebugDlg.cs" id="1_rundebug"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunDebugDlg" type="Control" node_paths=PackedStringArray("_tabs", "_btnClose", "_slotOption", "_cardFilter", "_cardList", "_btnGrantCard", "_btnCardToDeck", "_btnRevokeCard", "_charFilter", "_charList", "_btnGrantCharacter", "_btnDeployCharacter", "_btnFillParty", "_battleList", "_btnStartBattle", "_btnEndWin", "_btnEndLose", "_eventList", "_btnTriggerEvent", "_goldInput", "_btnAddGold", "_ringInput", "_btnSetRing", "_phaseOption", "_btnSetPhase", "_statusLabel", "_log", "_potentialInput", "_btnPotentialPool", "_btnPotentialSlot", "_btnUnlockPassive", "_btnRefundPotential", "_btnInspectBattle", "_orbOption", "_orbCountInput", "_btnGrantOrb", "_btnTriggerOrbs")]
+[node name="RunDebugDlg" type="Control" node_paths=PackedStringArray("_tabs", "_btnClose", "_slotOption", "_cardFilter", "_cardList", "_btnGrantCard", "_btnCardToDeck", "_btnRevokeCard", "_charFilter", "_charList", "_btnGrantCharacter", "_btnDeployCharacter", "_btnFillParty", "_battleList", "_battleSeedInput", "_battleRandomSeedCheck", "_btnStartBattle", "_btnEndWin", "_btnEndLose", "_eventList", "_btnTriggerEvent", "_goldInput", "_btnAddGold", "_ringInput", "_btnSetRing", "_phaseOption", "_btnSetPhase", "_statusLabel", "_log", "_potentialInput", "_btnPotentialPool", "_btnPotentialSlot", "_btnUnlockPassive", "_btnRefundPotential", "_btnInspectBattle", "_orbOption", "_orbCountInput", "_btnGrantOrb", "_btnTriggerOrbs")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,43 +11,45 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_rundebug")
-_tabs = NodePath("Panel/VBox/Tabs")
-_btnClose = NodePath("Panel/VBox/Header/BtnClose")
-_slotOption = NodePath("Panel/VBox/Header/SlotOption")
-_cardFilter = NodePath("Panel/VBox/Tabs/Cards/CardFilter")
-_cardList = NodePath("Panel/VBox/Tabs/Cards/CardList")
-_btnGrantCard = NodePath("Panel/VBox/Tabs/Cards/CardActions/BtnGrantCard")
-_btnCardToDeck = NodePath("Panel/VBox/Tabs/Cards/CardActions/BtnCardToDeck")
-_btnRevokeCard = NodePath("Panel/VBox/Tabs/Cards/CardActions/BtnRevokeCard")
-_charFilter = NodePath("Panel/VBox/Tabs/Characters/CharFilter")
-_charList = NodePath("Panel/VBox/Tabs/Characters/CharList")
-_btnGrantCharacter = NodePath("Panel/VBox/Tabs/Characters/CharActions/BtnGrantCharacter")
-_btnDeployCharacter = NodePath("Panel/VBox/Tabs/Characters/CharActions/BtnDeployCharacter")
-_btnFillParty = NodePath("Panel/VBox/Tabs/Characters/CharActions/BtnFillParty")
-_battleList = NodePath("Panel/VBox/Tabs/Battles/BattleList")
-_btnStartBattle = NodePath("Panel/VBox/Tabs/Battles/BattleActions/BtnStartBattle")
-_btnEndWin = NodePath("Panel/VBox/Tabs/Battles/BattleActions/BtnEndWin")
-_btnEndLose = NodePath("Panel/VBox/Tabs/Battles/BattleActions/BtnEndLose")
-_eventList = NodePath("Panel/VBox/Tabs/Events/EventList")
-_btnTriggerEvent = NodePath("Panel/VBox/Tabs/Events/EventActions/BtnTriggerEvent")
-_goldInput = NodePath("Panel/VBox/Tabs/Tools/GoldRow/GoldInput")
-_btnAddGold = NodePath("Panel/VBox/Tabs/Tools/GoldRow/BtnAddGold")
-_ringInput = NodePath("Panel/VBox/Tabs/Tools/RingRow/RingInput")
-_btnSetRing = NodePath("Panel/VBox/Tabs/Tools/RingRow/BtnSetRing")
-_phaseOption = NodePath("Panel/VBox/Tabs/Tools/PhaseRow/PhaseOption")
-_btnSetPhase = NodePath("Panel/VBox/Tabs/Tools/PhaseRow/BtnSetPhase")
-_statusLabel = NodePath("Panel/VBox/StatusLabel")
-_log = NodePath("Panel/VBox/Log")
-_potentialInput = NodePath("Panel/VBox/Tabs/Tools/PotentialRow/PotentialInput")
-_btnPotentialPool = NodePath("Panel/VBox/Tabs/Tools/PotentialRow/BtnPotentialPool")
-_btnPotentialSlot = NodePath("Panel/VBox/Tabs/Tools/PotentialRow/BtnPotentialSlot")
-_btnUnlockPassive = NodePath("Panel/VBox/Tabs/Tools/PotentialActions/BtnUnlockPassive")
-_btnRefundPotential = NodePath("Panel/VBox/Tabs/Tools/PotentialActions/BtnRefundPotential")
-_btnInspectBattle = NodePath("Panel/VBox/Tabs/Tools/PotentialActions/BtnInspectBattle")
-_orbOption = NodePath("Panel/VBox/Tabs/Tools/OrbRow/OrbOption")
-_orbCountInput = NodePath("Panel/VBox/Tabs/Tools/OrbRow/OrbCountInput")
-_btnGrantOrb = NodePath("Panel/VBox/Tabs/Tools/OrbRow/BtnGrantOrb")
-_btnTriggerOrbs = NodePath("Panel/VBox/Tabs/Tools/OrbRow/BtnTriggerOrbs")
+_tabs = NodePath("Panel/Margin/VBox/Tabs")
+_btnClose = NodePath("Panel/Margin/VBox/Header/BtnClose")
+_slotOption = NodePath("Panel/Margin/VBox/Header/SlotOption")
+_cardFilter = NodePath("Panel/Margin/VBox/Tabs/Cards/CardFilter")
+_cardList = NodePath("Panel/Margin/VBox/Tabs/Cards/CardList")
+_btnGrantCard = NodePath("Panel/Margin/VBox/Tabs/Cards/CardActions/BtnGrantCard")
+_btnCardToDeck = NodePath("Panel/Margin/VBox/Tabs/Cards/CardActions/BtnCardToDeck")
+_btnRevokeCard = NodePath("Panel/Margin/VBox/Tabs/Cards/CardActions/BtnRevokeCard")
+_charFilter = NodePath("Panel/Margin/VBox/Tabs/Characters/CharFilter")
+_charList = NodePath("Panel/Margin/VBox/Tabs/Characters/CharList")
+_btnGrantCharacter = NodePath("Panel/Margin/VBox/Tabs/Characters/CharActions/BtnGrantCharacter")
+_btnDeployCharacter = NodePath("Panel/Margin/VBox/Tabs/Characters/CharActions/BtnDeployCharacter")
+_btnFillParty = NodePath("Panel/Margin/VBox/Tabs/Characters/CharActions/BtnFillParty")
+_battleList = NodePath("Panel/Margin/VBox/Tabs/Battles/BattleList")
+_battleSeedInput = NodePath("Panel/Margin/VBox/Tabs/Battles/BattleSeedRow/SeedInput")
+_battleRandomSeedCheck = NodePath("Panel/Margin/VBox/Tabs/Battles/BattleSeedRow/RandomSeedCheck")
+_btnStartBattle = NodePath("Panel/Margin/VBox/Tabs/Battles/BattleActions/BtnStartBattle")
+_btnEndWin = NodePath("Panel/Margin/VBox/Tabs/Battles/BattleActions/BtnEndWin")
+_btnEndLose = NodePath("Panel/Margin/VBox/Tabs/Battles/BattleActions/BtnEndLose")
+_eventList = NodePath("Panel/Margin/VBox/Tabs/Events/EventList")
+_btnTriggerEvent = NodePath("Panel/Margin/VBox/Tabs/Events/EventActions/BtnTriggerEvent")
+_goldInput = NodePath("Panel/Margin/VBox/Tabs/Tools/GoldRow/GoldInput")
+_btnAddGold = NodePath("Panel/Margin/VBox/Tabs/Tools/GoldRow/BtnAddGold")
+_ringInput = NodePath("Panel/Margin/VBox/Tabs/Tools/RingRow/RingInput")
+_btnSetRing = NodePath("Panel/Margin/VBox/Tabs/Tools/RingRow/BtnSetRing")
+_phaseOption = NodePath("Panel/Margin/VBox/Tabs/Tools/PhaseRow/PhaseOption")
+_btnSetPhase = NodePath("Panel/Margin/VBox/Tabs/Tools/PhaseRow/BtnSetPhase")
+_statusLabel = NodePath("Panel/Margin/VBox/StatusLabel")
+_log = NodePath("Panel/Margin/VBox/Log")
+_potentialInput = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/PotentialInput")
+_btnPotentialPool = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/BtnPotentialPool")
+_btnPotentialSlot = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/BtnPotentialSlot")
+_btnUnlockPassive = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnUnlockPassive")
+_btnRefundPotential = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnRefundPotential")
+_btnInspectBattle = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnInspectBattle")
+_orbOption = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/OrbOption")
+_orbCountInput = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/OrbCountInput")
+_btnGrantOrb = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/BtnGrantOrb")
+_btnTriggerOrbs = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/BtnTriggerOrbs")
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
@@ -61,311 +63,335 @@ offset_bottom = -60.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="Panel"]
+[node name="Margin" type="MarginContainer" parent="Panel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 14
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+[node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Panel/VBox/Header"]
+[node name="Title" type="Label" parent="Panel/Margin/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 28
 text = "UI_DEBUG_TITLE"
 
-[node name="SlotLabel" type="Label" parent="Panel/VBox/Header"]
+[node name="SlotLabel" type="Label" parent="Panel/Margin/VBox/Header"]
 layout_mode = 2
 text = "UI_DEBUG_SLOT"
 
-[node name="SlotOption" type="OptionButton" parent="Panel/VBox/Header"]
+[node name="SlotOption" type="OptionButton" parent="Panel/Margin/VBox/Header"]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 
-[node name="BtnClose" type="Button" parent="Panel/VBox/Header"]
+[node name="BtnClose" type="Button" parent="Panel/Margin/VBox/Header"]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 text = "UI_DEBUG_CLOSE"
 script = ExtResource("2_kbtn")
 
-[node name="Tabs" type="TabContainer" parent="Panel/VBox"]
+[node name="Tabs" type="TabContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="Cards" type="VBoxContainer" parent="Panel/VBox/Tabs"]
+[node name="Cards" type="VBoxContainer" parent="Panel/Margin/VBox/Tabs"]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="CardFilter" type="LineEdit" parent="Panel/VBox/Tabs/Cards"]
+[node name="CardFilter" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Cards"]
 layout_mode = 2
 placeholder_text = "UI_DEBUG_FILTER"
 
-[node name="CardList" type="ItemList" parent="Panel/VBox/Tabs/Cards"]
+[node name="CardList" type="ItemList" parent="Panel/Margin/VBox/Tabs/Cards"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CardActions" type="HBoxContainer" parent="Panel/VBox/Tabs/Cards"]
+[node name="CardActions" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Cards"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnGrantCard" type="Button" parent="Panel/VBox/Tabs/Cards/CardActions"]
+[node name="BtnGrantCard" type="Button" parent="Panel/Margin/VBox/Tabs/Cards/CardActions"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_GRANT_CARD"
 script = ExtResource("2_kbtn")
 
-[node name="BtnCardToDeck" type="Button" parent="Panel/VBox/Tabs/Cards/CardActions"]
+[node name="BtnCardToDeck" type="Button" parent="Panel/Margin/VBox/Tabs/Cards/CardActions"]
 custom_minimum_size = Vector2(200, 40)
 layout_mode = 2
 text = "UI_DEBUG_CARD_TO_DECK"
 script = ExtResource("2_kbtn")
 
-[node name="BtnRevokeCard" type="Button" parent="Panel/VBox/Tabs/Cards/CardActions"]
+[node name="BtnRevokeCard" type="Button" parent="Panel/Margin/VBox/Tabs/Cards/CardActions"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_REVOKE_CARD"
 script = ExtResource("2_kbtn")
 
-[node name="Characters" type="VBoxContainer" parent="Panel/VBox/Tabs"]
+[node name="Characters" type="VBoxContainer" parent="Panel/Margin/VBox/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="CharFilter" type="LineEdit" parent="Panel/VBox/Tabs/Characters"]
+[node name="CharFilter" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Characters"]
 layout_mode = 2
 placeholder_text = "UI_DEBUG_FILTER"
 
-[node name="CharList" type="ItemList" parent="Panel/VBox/Tabs/Characters"]
+[node name="CharList" type="ItemList" parent="Panel/Margin/VBox/Tabs/Characters"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CharActions" type="HBoxContainer" parent="Panel/VBox/Tabs/Characters"]
+[node name="CharActions" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Characters"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnGrantCharacter" type="Button" parent="Panel/VBox/Tabs/Characters/CharActions"]
+[node name="BtnGrantCharacter" type="Button" parent="Panel/Margin/VBox/Tabs/Characters/CharActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_GRANT_CHARACTER"
 script = ExtResource("2_kbtn")
 
-[node name="BtnDeployCharacter" type="Button" parent="Panel/VBox/Tabs/Characters/CharActions"]
+[node name="BtnDeployCharacter" type="Button" parent="Panel/Margin/VBox/Tabs/Characters/CharActions"]
 custom_minimum_size = Vector2(200, 40)
 layout_mode = 2
 text = "UI_DEBUG_DEPLOY_CHARACTER"
 script = ExtResource("2_kbtn")
 
-[node name="BtnFillParty" type="Button" parent="Panel/VBox/Tabs/Characters/CharActions"]
+[node name="BtnFillParty" type="Button" parent="Panel/Margin/VBox/Tabs/Characters/CharActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_FILL_PARTY"
 script = ExtResource("2_kbtn")
 
-[node name="Battles" type="VBoxContainer" parent="Panel/VBox/Tabs"]
+[node name="Battles" type="VBoxContainer" parent="Panel/Margin/VBox/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="BattleList" type="ItemList" parent="Panel/VBox/Tabs/Battles"]
+[node name="BattleList" type="ItemList" parent="Panel/Margin/VBox/Tabs/Battles"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="BattleActions" type="HBoxContainer" parent="Panel/VBox/Tabs/Battles"]
+[node name="BattleSeedRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Battles"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SeedLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Battles/BattleSeedRow"]
+layout_mode = 2
+text = "UI_DEBUG_BATTLE_SEED"
+
+[node name="SeedInput" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Battles/BattleSeedRow"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+placeholder_text = "UI_DEBUG_BATTLE_SEED_PLACEHOLDER"
+
+[node name="RandomSeedCheck" type="CheckBox" parent="Panel/Margin/VBox/Tabs/Battles/BattleSeedRow"]
+layout_mode = 2
+text = "UI_DEBUG_BATTLE_RANDOM_SEED"
+
+[node name="BattleActions" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Battles"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnStartBattle" type="Button" parent="Panel/VBox/Tabs/Battles/BattleActions"]
+[node name="BtnStartBattle" type="Button" parent="Panel/Margin/VBox/Tabs/Battles/BattleActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_START_BATTLE"
 script = ExtResource("2_kbtn")
 
-[node name="BtnEndWin" type="Button" parent="Panel/VBox/Tabs/Battles/BattleActions"]
+[node name="BtnEndWin" type="Button" parent="Panel/Margin/VBox/Tabs/Battles/BattleActions"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_END_BATTLE_WIN"
 script = ExtResource("2_kbtn")
 
-[node name="BtnEndLose" type="Button" parent="Panel/VBox/Tabs/Battles/BattleActions"]
+[node name="BtnEndLose" type="Button" parent="Panel/Margin/VBox/Tabs/Battles/BattleActions"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_END_BATTLE_LOSE"
 script = ExtResource("2_kbtn")
 
-[node name="Events" type="VBoxContainer" parent="Panel/VBox/Tabs"]
+[node name="Events" type="VBoxContainer" parent="Panel/Margin/VBox/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="EventList" type="ItemList" parent="Panel/VBox/Tabs/Events"]
+[node name="EventList" type="ItemList" parent="Panel/Margin/VBox/Tabs/Events"]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="EventActions" type="HBoxContainer" parent="Panel/VBox/Tabs/Events"]
+[node name="EventActions" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Events"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnTriggerEvent" type="Button" parent="Panel/VBox/Tabs/Events/EventActions"]
+[node name="BtnTriggerEvent" type="Button" parent="Panel/Margin/VBox/Tabs/Events/EventActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_TRIGGER_EVENT"
 script = ExtResource("2_kbtn")
 
-[node name="Tools" type="VBoxContainer" parent="Panel/VBox/Tabs"]
+[node name="Tools" type="VBoxContainer" parent="Panel/Margin/VBox/Tabs"]
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="GoldRow" type="HBoxContainer" parent="Panel/VBox/Tabs/Tools"]
+[node name="GoldRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="GoldLabel" type="Label" parent="Panel/VBox/Tabs/Tools/GoldRow"]
+[node name="GoldLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Tools/GoldRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "UI_DEBUG_GOLD_INPUT"
 
-[node name="GoldInput" type="LineEdit" parent="Panel/VBox/Tabs/Tools/GoldRow"]
+[node name="GoldInput" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Tools/GoldRow"]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 text = "100"
 
-[node name="BtnAddGold" type="Button" parent="Panel/VBox/Tabs/Tools/GoldRow"]
+[node name="BtnAddGold" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/GoldRow"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_ADD_GOLD"
 script = ExtResource("2_kbtn")
 
-[node name="RingRow" type="HBoxContainer" parent="Panel/VBox/Tabs/Tools"]
+[node name="RingRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="RingLabel" type="Label" parent="Panel/VBox/Tabs/Tools/RingRow"]
+[node name="RingLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Tools/RingRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "UI_DEBUG_RING_INPUT"
 
-[node name="RingInput" type="LineEdit" parent="Panel/VBox/Tabs/Tools/RingRow"]
+[node name="RingInput" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Tools/RingRow"]
 custom_minimum_size = Vector2(160, 0)
 layout_mode = 2
 text = "1"
 
-[node name="BtnSetRing" type="Button" parent="Panel/VBox/Tabs/Tools/RingRow"]
+[node name="BtnSetRing" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/RingRow"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_SET_RING"
 script = ExtResource("2_kbtn")
 
-[node name="PhaseRow" type="HBoxContainer" parent="Panel/VBox/Tabs/Tools"]
+[node name="PhaseRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PhaseLabel" type="Label" parent="Panel/VBox/Tabs/Tools/PhaseRow"]
+[node name="PhaseLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Tools/PhaseRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "UI_DEBUG_PHASE"
 
-[node name="PhaseOption" type="OptionButton" parent="Panel/VBox/Tabs/Tools/PhaseRow"]
+[node name="PhaseOption" type="OptionButton" parent="Panel/Margin/VBox/Tabs/Tools/PhaseRow"]
 custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
 
-[node name="BtnSetPhase" type="Button" parent="Panel/VBox/Tabs/Tools/PhaseRow"]
+[node name="BtnSetPhase" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PhaseRow"]
 custom_minimum_size = Vector2(160, 40)
 layout_mode = 2
 text = "UI_DEBUG_SET_PHASE"
 script = ExtResource("2_kbtn")
 
-[node name="PotentialRow" type="HBoxContainer" parent="Panel/VBox/Tabs/Tools"]
+[node name="PotentialRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="PotentialLabel" type="Label" parent="Panel/VBox/Tabs/Tools/PotentialRow"]
+[node name="PotentialLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "UI_DEBUG_POTENTIAL_INPUT"
 
-[node name="PotentialInput" type="LineEdit" parent="Panel/VBox/Tabs/Tools/PotentialRow"]
+[node name="PotentialInput" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 text = "20"
 
-[node name="BtnPotentialPool" type="Button" parent="Panel/VBox/Tabs/Tools/PotentialRow"]
+[node name="BtnPotentialPool" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_POTENTIAL_POOL"
 script = ExtResource("2_kbtn")
 
-[node name="BtnPotentialSlot" type="Button" parent="Panel/VBox/Tabs/Tools/PotentialRow"]
+[node name="BtnPotentialSlot" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_POTENTIAL_SLOT"
 script = ExtResource("2_kbtn")
 
-[node name="PotentialActions" type="HBoxContainer" parent="Panel/VBox/Tabs/Tools"]
+[node name="PotentialActions" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnUnlockPassive" type="Button" parent="Panel/VBox/Tabs/Tools/PotentialActions"]
+[node name="BtnUnlockPassive" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_UNLOCK_PASSIVE"
 script = ExtResource("2_kbtn")
 
-[node name="BtnRefundPotential" type="Button" parent="Panel/VBox/Tabs/Tools/PotentialActions"]
+[node name="BtnRefundPotential" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_REFUND_POTENTIAL"
 script = ExtResource("2_kbtn")
 
-[node name="BtnInspectBattle" type="Button" parent="Panel/VBox/Tabs/Tools/PotentialActions"]
+[node name="BtnInspectBattle" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_INSPECT_BATTLE"
 script = ExtResource("2_kbtn")
 
-[node name="OrbRow" type="HBoxContainer" parent="Panel/VBox/Tabs/Tools"]
+[node name="OrbRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="OrbLabel" type="Label" parent="Panel/VBox/Tabs/Tools/OrbRow"]
+[node name="OrbLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Tools/OrbRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "UI_DEBUG_ORB_LABEL"
 
-[node name="OrbOption" type="OptionButton" parent="Panel/VBox/Tabs/Tools/OrbRow"]
+[node name="OrbOption" type="OptionButton" parent="Panel/Margin/VBox/Tabs/Tools/OrbRow"]
 custom_minimum_size = Vector2(220, 0)
 layout_mode = 2
 
-[node name="OrbCountInput" type="LineEdit" parent="Panel/VBox/Tabs/Tools/OrbRow"]
+[node name="OrbCountInput" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Tools/OrbRow"]
 custom_minimum_size = Vector2(80, 0)
 layout_mode = 2
 text = "1"
 
-[node name="BtnGrantOrb" type="Button" parent="Panel/VBox/Tabs/Tools/OrbRow"]
+[node name="BtnGrantOrb" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/OrbRow"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_GRANT_ORB"
 script = ExtResource("2_kbtn")
 
-[node name="BtnTriggerOrbs" type="Button" parent="Panel/VBox/Tabs/Tools/OrbRow"]
+[node name="BtnTriggerOrbs" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/OrbRow"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_TRIGGER_ORBS"
 script = ExtResource("2_kbtn")
 
-[node name="StatusLabel" type="Label" parent="Panel/VBox"]
+[node name="StatusLabel" type="Label" parent="Panel/Margin/VBox"]
 custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 autowrap_mode = 3
 
-[node name="Log" type="RichTextLabel" parent="Panel/VBox"]
+[node name="Log" type="RichTextLabel" parent="Panel/Margin/VBox"]
 custom_minimum_size = Vector2(0, 140)
 layout_mode = 2
 bbcode_enabled = true

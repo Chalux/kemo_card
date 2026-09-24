@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://dnod4h20yq5su" path="res://Src/mod/global/Ui/Comp/BaseDlgComp.tscn" id="2_basedlg"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
 
-[node name="RunPauseDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_lblHint", "_btnResume", "_btnSettings", "_btnCodex", "_btnGlossary", "_btnSaveExit", "_lblSaveExitBlocked", "_btnQuitDesktop")]
+[node name="RunPauseDlg" type="Control" node_paths=PackedStringArray("_lblTitle", "_lblHint", "_btnResume", "_btnSettings", "_btnCodex", "_btnGlossary", "_btnExitBattle", "_btnSaveExit", "_lblSaveExitBlocked", "_btnQuitDesktop")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -18,6 +18,7 @@ _btnResume = NodePath("BaseDlgComp/VBox/BtnResume")
 _btnSettings = NodePath("BaseDlgComp/VBox/BtnSettings")
 _btnCodex = NodePath("BaseDlgComp/VBox/BtnCodex")
 _btnGlossary = NodePath("BaseDlgComp/VBox/BtnGlossary")
+_btnExitBattle = NodePath("BaseDlgComp/VBox/BtnExitBattle")
 _btnSaveExit = NodePath("BaseDlgComp/VBox/BtnSaveExit")
 _lblSaveExitBlocked = NodePath("BaseDlgComp/VBox/LblSaveExitBlocked")
 _btnQuitDesktop = NodePath("BaseDlgComp/VBox/BtnQuitDesktop")
@@ -115,6 +116,13 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 text = "UI_PAUSE_GLOSSARY"
+script = ExtResource("3_kbtn")
+
+[node name="BtnExitBattle" type="Button" parent="BaseDlgComp/VBox"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "UI_PAUSE_EXIT_BATTLE"
 script = ExtResource("3_kbtn")
 
 [node name="BtnSaveExit" type="Button" parent="BaseDlgComp/VBox"]

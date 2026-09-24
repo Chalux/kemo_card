@@ -352,12 +352,18 @@ public sealed class RunDebugService
     /// <summary>
     /// 用指定战斗定义开一场战斗。
     /// </summary>
+    /// <param name="battleId">战斗定义 id。</param>
+    /// <param name="seed">
+    /// 指定战斗随机种子（同时作为洗牌流与战斗内随机流的种子）；<c>null</c> 时看
+    /// <paramref name="useRandomSeed"/>：勾选取随机值，否则用 RunSeed（默认 <c>run_debug</c> 流）。
+    /// </param>
+    /// <param name="useRandomSeed">种子留空时的兜底：勾选"随机种子"即每次开战换一局。</param>
     /// <remarks>
     /// 无战斗界面：这里只把战斗跑起来（<see cref="RunController.StartBattle"/> 会走内容定义 +
     /// BattleStart 管线并停在首个玩家阶段），调试者据此确认战斗接线是否成立，
     /// 再用 <see cref="EndBattle"/> 判定胜负退出战斗阶段。
     /// </remarks>
-    public RunDebugResult StartBattle(string battleId)
+    public RunDebugResult StartBattle(string battleId, int? seed = null, bool useRandomSeed = false)
     {
         if (string.IsNullOrWhiteSpace(battleId))
         {
@@ -386,11 +392,13 @@ public sealed class RunDebugService
 
         try
         {
-            var seed = State.RunSeed;
+            // 种子：显式传入优先；留空时勾选「随机种子」→ 随机，否则默认 RunSeed + "run_debug" 流。
+            var runSeed = State.RunSeed == 0 ? 1 : State.RunSeed;
+            var battleSeed = seed ?? (useRandomSeed ? Random.Shared.Next(1, int.MaxValue) : runSeed);
             var simulation = _run.StartBattle(
                 _definitions,
-                new HostRng(seed == 0 ? 1 : seed, "run_debug"),
-                seed == 0 ? 1 : seed,
+                new HostRng(battleSeed, "run_debug"),
+                battleSeed,
                 battleId);
 
             return RunDebugResult.Success(
