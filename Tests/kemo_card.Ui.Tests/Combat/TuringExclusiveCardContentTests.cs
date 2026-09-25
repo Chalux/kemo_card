@@ -34,7 +34,7 @@ public sealed class TuringExclusiveCardContentTests
 
     [TestCase(OriginCard, 2, "Weak", 30, 0, 30, "PhysicalDefense", 1)]
     [TestCase(LimitCard, 2, "Weak", 30, 0, 40, "", 0)]
-    [TestCase(ShiftCard, 3, "Magical", 10, 12, 20, "MagicAttack", 2)]
+    [TestCase(ShiftCard, 3, "Magical", 10, 12, 20, "PhysicalDefense", 2)]
     [TestCase(AlgorithmCard, 1, "Support", 20, 0, 40, "", 0)]
     public void Exclusive_cards_match_the_design(
         string cardId,
@@ -244,11 +244,11 @@ public sealed class TuringExclusiveCardContentTests
     }
 
     /// <summary>
-    /// 术演算法-α：只推进"自身以外的蓝属性·人类·学术"角色，且同一回合内不叠加。
-    /// 槽位 2（蓝·人类，非学术）与槽位 3（红·人类·学术）都必须被排除。
+    /// 术演算法-α：推进"自身以外的红属性·人类·学术"角色（描述 `·` = 或：红 或 人类 或 学术），
+    /// 且同一回合内不叠加。队伍里 1/2/3 号槽分别命中红/人类/学术，0 号槽是自身（被 excludeSelf 剔除）。
     /// </summary>
     [Test]
-    public void Algorithm_alpha_advances_only_other_blue_human_academic_characters()
+    public void Algorithm_alpha_advances_other_red_human_or_academic_characters()
     {
         using var sim = BuildAlgorithmParty();
 
@@ -256,14 +256,15 @@ public sealed class TuringExclusiveCardContentTests
 
         Assert.That(sim.PlayerTeam.Characters[0].SkillCounter, Is.Zero, "自身不在范围内");
         Assert.That(sim.PlayerTeam.Characters[1].SkillCounter, Is.EqualTo(1), "红·人类·学术的队友 +1");
-        Assert.That(sim.PlayerTeam.Characters[2].SkillCounter, Is.Zero, "红·人类的角色不满足学术");
-        Assert.That(sim.PlayerTeam.Characters[3].SkillCounter, Is.Zero, "红·动物角色不在范围内");
+        Assert.That(sim.PlayerTeam.Characters[2].SkillCounter, Is.EqualTo(1), "红·人类命中红与人类");
+        Assert.That(sim.PlayerTeam.Characters[3].SkillCounter, Is.EqualTo(1), "红·动物命中红");
 
         var mark = sim.PlayerTeam.Characters[1].Buffs.Find(AlgorithmMarkBuff);
         Assert.That(mark, Is.Not.Null, "推进标记落在受影响的队友身上");
         Assert.That(mark!.RemainingTurns, Is.EqualTo(1));
         Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(AlgorithmMarkBuff), Is.Null);
-        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(AlgorithmMarkBuff), Is.Null);
+        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(AlgorithmMarkBuff), Is.Not.Null);
+        Assert.That(sim.PlayerTeam.Characters[3].Buffs.Find(AlgorithmMarkBuff), Is.Not.Null);
     }
 
     [Test]
@@ -394,7 +395,7 @@ public sealed class TuringExclusiveCardContentTests
     }
 
     [Test]
-    public void Puzzle_radix_ii_advances_only_other_blue_human_academic_allies()
+    public void Puzzle_radix_ii_advances_other_red_human_or_academic_allies()
     {
         using var sim = BuildActiveSkillParty();
         sim.PlayerTeam.Characters[0].GainSkillCounter(7);
@@ -403,9 +404,10 @@ public sealed class TuringExclusiveCardContentTests
         Assert.That(cast.Success, Is.True, cast.Error);
 
         Assert.That(sim.PlayerTeam.Characters[1].SkillCounter, Is.EqualTo(1), "红·人类·学术的队友 +1");
-        Assert.That(sim.PlayerTeam.Characters[2].SkillCounter, Is.Zero, "红·人类的角色不满足学术");
-        Assert.That(sim.PlayerTeam.Characters[3].SkillCounter, Is.Zero, "红·动物角色不在范围内");
+        Assert.That(sim.PlayerTeam.Characters[2].SkillCounter, Is.EqualTo(1), "红·人类命中红与人类");
+        Assert.That(sim.PlayerTeam.Characters[3].SkillCounter, Is.EqualTo(1), "红·动物命中红");
         Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(RadixAdvanceBuff), Is.Not.Null);
+        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(RadixAdvanceBuff), Is.Not.Null);
     }
 
     /// <summary>

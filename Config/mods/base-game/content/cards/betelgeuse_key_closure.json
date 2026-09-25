@@ -1,0 +1,22 @@
+{
+  "displayNameId": "card.betelgeuse_key_closure.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "betelgeuse_key_closure" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Guard",
+  "priority": 21,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

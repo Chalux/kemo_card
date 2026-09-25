@@ -1,0 +1,11 @@
+{
+  "displayNameId": "skill.betelgeuse_charge_three.name",
+  "descId": "skill.betelgeuse_charge_three.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "betelgeuse_charge_three_self" },
+    { "actionId": "betelgeuse_charge_three_draw" },
+    { "actionId": "betelgeuse_charge_three_guard" }
+  ],
+  "tags": ["active"]
+}

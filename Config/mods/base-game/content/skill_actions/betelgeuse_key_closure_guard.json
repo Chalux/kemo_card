@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "betelgeuse_key_closure_guard", "hookTargets": "allies" }
+}

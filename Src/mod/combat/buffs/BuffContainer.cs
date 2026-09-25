@@ -15,14 +15,14 @@ public sealed class BuffContainer
     private readonly Func<EElement>? _elementProvider;
     private readonly Func<ERace>? _raceProvider;
     private readonly Func<MagnitudeDefDto, float>? _magnitudeResolver;
-    private readonly Func<int, int, int>? _partyCountQuery;
+    private readonly Func<int, int, bool, int>? _partyCountQuery;
 
     public BuffContainer(
         AbilitySystemComponent? asc = null,
         Func<EElement>? elementProvider = null,
         Func<ERace>? raceProvider = null,
         Func<MagnitudeDefDto, float>? magnitudeResolver = null,
-        Func<int, int, int>? partyCountQuery = null)
+        Func<int, int, bool, int>? partyCountQuery = null)
     {
         _asc = asc;
         _elementProvider = elementProvider;
@@ -115,22 +115,34 @@ public sealed class BuffContainer
         var element = _elementProvider?.Invoke() ?? EElement.None;
         var race = _raceProvider?.Invoke() ?? ERace.None;
 
-        var elementMatched = condition.ElementAny is { Count: > 0 } &&
-            condition.ElementAny.Any(flag => flag != EElement.None && (element & flag) != 0);
-        var raceMatched = condition.RaceAny is { Count: > 0 } &&
-            condition.RaceAny.Any(flag => flag != ERace.None && (race & flag) != 0);
-        var hasHolderDimension = condition.ElementAny is { Count: > 0 } || condition.RaceAny is { Count: > 0 };
+        // 只把**已配置**的维度纳入判定：matchAll 是"跨配置维度取且"，未配置的维度不参与
+        // （旧实现用固定两个布尔，只配一项时 matchAll 恒不满足）。
+        var dimensions = new List<bool>(3);
+        if (condition.ElementAny is { Count: > 0 })
+        {
+            dimensions.Add(condition.ElementAny.Any(flag => flag != EElement.None && (element & flag) != 0));
+        }
 
-        // 持有者维度：跨维度默认"或"，matchAll: true 时取"且"。
-        var holderMatched = hasHolderDimension && (condition.MatchAll
-            ? elementMatched && raceMatched
-            : elementMatched || raceMatched);
+        if (condition.RaceAny is { Count: > 0 })
+        {
+            dimensions.Add(condition.RaceAny.Any(flag => flag != ERace.None && (race & flag) != 0));
+        }
+
+        // raceAll（2026-09-25）：列表内取"且"——描述显式写「人类且学术」这类"同时具备多种族"时才用它。
+        if (condition.RaceAll is { Count: > 0 })
+        {
+            dimensions.Add(condition.RaceAll.All(flag => flag != ERace.None && (race & flag) != 0));
+        }
+
+        // 持有者维度：默认"或"（任一维度命中即满足），matchAll: true 时取"且"。
+        var holderMatched = dimensions.Count > 0 &&
+            (condition.MatchAll ? dimensions.All(matched => matched) : dimensions.Any(matched => matched));
 
         // 队伍人数门闩（2026-09-21）：与持有者维度取"且"；只配人数时完全由人数决定。
         if (condition.PartyMinCount > 0)
         {
             var partyMatched = CountPartyMatches(condition) >= condition.PartyMinCount;
-            return partyMatched && (!hasHolderDimension || holderMatched);
+            return partyMatched && (dimensions.Count == 0 || holderMatched);
         }
 
         return holderMatched;
@@ -149,6 +161,7 @@ public sealed class BuffContainer
         foreach (var flag in condition.PartyRaceAny ?? [])
             raceFlags |= (int)flag;
 
-        return _partyCountQuery(elementFlags, raceFlags);
+        // 描述约定（2026-09-25）：`·` = 或——队伍人数筛选与持有者维度共用同一个 matchAll 开关。
+        return _partyCountQuery(elementFlags, raceFlags, condition.MatchAll);
     }
 }

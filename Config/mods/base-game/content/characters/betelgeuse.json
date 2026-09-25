@@ -1,0 +1,26 @@
+{
+  "displayNameId": "char.betelgeuse.name",
+  "element": "Red",
+  "role": "Guard",
+  "race": ["Astronomy", "Unknown"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "betelgeuse_orion_alpha", "cooldown": 6 },
+    { "skillId": "betelgeuse_charge_two", "cooldown": 4 },
+    { "skillId": "betelgeuse_charge_three", "cooldown": 6 }
+  ],
+  "cards": [
+    "betelgeuse_crimson_matrix",
+    "betelgeuse_occulation",
+    "betelgeuse_devour_the_heavens",
+    "betelgeuse_key_closure"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "betelgeuse_passive_p1", "requiredPotential": 0 },
+    { "buffId": "betelgeuse_passive_p2", "requiredPotential": 10 },
+    { "buffId": "betelgeuse_passive_p3", "requiredPotential": 30 },
+    { "buffId": "betelgeuse_passive_p4", "requiredPotential": 50 }
+  ]
+}

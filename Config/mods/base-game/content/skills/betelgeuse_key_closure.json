@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.betelgeuse_key_closure.name",
+  "descId": "skill.betelgeuse_key_closure.desc",
+  "actionRefs": [
+    { "actionId": "betelgeuse_key_closure_guard" }
+  ],
+  "tags": ["buff"]
+}

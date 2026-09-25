@@ -15,7 +15,8 @@ public sealed class CharacterBattleInstance
     private readonly List<int> _drawModifiers = [];
     private readonly ActiveSkillTier[] _activeSkillChain;
     private bool _phaseShuffleUsed;
-    private Func<int, int, int>? _partyCountQuery;
+    private Func<int, int, bool, int>? _partyCountQuery;
+    private Func<float>? _teamMaxHealthQuery;
 
     public string SourceInstanceId { get; }
     public string DefinitionId { get; }
@@ -116,35 +117,58 @@ public sealed class CharacterBattleInstance
     /// <summary>
     /// 绑定"队伍匹配人数"查询（由 <see cref="KemoCard.Mod.Combat.Runtime.PlayerTeamState"/> 在组队时注入）。
     /// 注入前 <c>PartyCountScaled</c> 取 0、<c>partyMinCount</c> 条件恒不满足。
+    /// 参数为 (元素掩码, 种族掩码, matchAll)：两个维度都配置时默认取"或"，matchAll 取"且"。
     /// </summary>
-    public void BindPartyCountQuery(Func<int, int, int> query)
+    public void BindPartyCountQuery(Func<int, int, bool, int> query)
     {
         ArgumentNullException.ThrowIfNull(query);
         _partyCountQuery = query;
     }
 
-    /// <summary>队伍中同时命中元素/种族筛选的角色数（未注入查询时为 0）。</summary>
-    private int CountPartyMembers(int elementFlags, int raceFlags) =>
-        _partyCountQuery?.Invoke(elementFlags, raceFlags) ?? 0;
+    /// <summary>
+    /// 绑定"队伍生命上限"查询（同由 <see cref="KemoCard.Mod.Combat.Runtime.PlayerTeamState"/> 注入），
+    /// 供 <see cref="EMagnitudeKind.TeamMaxHealthScaled"/> 在 buff 创建时取快照；注入前取 0。
+    /// </summary>
+    public void BindTeamMaxHealthQuery(Func<float> query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        _teamMaxHealthQuery = query;
+    }
+
+    /// <summary>队伍中命中元素/种族筛选的角色数（未注入查询时为 0）。</summary>
+    private int CountPartyMembers(int elementFlags, int raceFlags, bool matchAll) =>
+        _partyCountQuery?.Invoke(elementFlags, raceFlags, matchAll) ?? 0;
 
     /// <summary>
-    /// buff 修正的自定义取值：<see cref="EMagnitudeKind.PartyCountScaled"/> =
-    /// <c>perCount × 队伍中同时命中元素与种族筛选的角色数</c>（含自己、不封顶）。
+    /// buff 修正的自定义取值：
+    /// <list type="bullet">
+    /// <item><see cref="EMagnitudeKind.PartyCountScaled"/> = <c>perCount × 队伍中命中元素/种族筛选的角色数</c>（含自己、不封顶；两维度都配时默认取或，<c>matchAll</c> 取且）；</item>
+    /// <item><see cref="EMagnitudeKind.TeamMaxHealthScaled"/> = <c>flat + floor(队伍生命上限 × ratio)</c>（向下取整，取快照）。</item>
+    /// </list>
     /// </summary>
     private float ResolveCustomMagnitude(MagnitudeDefDto magnitudeDef)
     {
-        if (magnitudeDef.Kind != EMagnitudeKind.PartyCountScaled || _partyCountQuery is null)
-            return 0f;
+        switch (magnitudeDef.Kind)
+        {
+            case EMagnitudeKind.PartyCountScaled when _partyCountQuery is not null:
+                {
+                    var elementFlags = 0;
+                    foreach (var element in magnitudeDef.CountElementAny ?? [])
+                        elementFlags |= (int)element;
 
-        var elementFlags = 0;
-        foreach (var element in magnitudeDef.CountElementAny ?? [])
-            elementFlags |= (int)element;
+                    var raceFlags = 0;
+                    foreach (var race in magnitudeDef.CountRaceAny ?? [])
+                        raceFlags |= (int)race;
 
-        var raceFlags = 0;
-        foreach (var race in magnitudeDef.CountRaceAny ?? [])
-            raceFlags |= (int)race;
+                    return magnitudeDef.PerCount * _partyCountQuery(elementFlags, raceFlags, magnitudeDef.MatchAll);
+                }
 
-        return magnitudeDef.PerCount * _partyCountQuery(elementFlags, raceFlags);
+            case EMagnitudeKind.TeamMaxHealthScaled:
+                return magnitudeDef.Flat + MathF.Floor((_teamMaxHealthQuery?.Invoke() ?? 0f) * magnitudeDef.Ratio);
+
+            default:
+                return 0f;
+        }
     }
 
     public static CharacterBattleInstance? TryCreate(

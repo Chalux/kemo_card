@@ -3,7 +3,7 @@
   "durationType": "Permanent",
   "stackRule": "Replace",
   "applyScope": "AllAllies",
-  "condition": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"], "matchAll": true },
+  "condition": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"] },
   "modifiers": [
     { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 3 } },
     { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 3 } },

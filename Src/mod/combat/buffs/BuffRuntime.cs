@@ -394,6 +394,29 @@ public sealed class BuffRuntime
     }
 
     /// <summary>
+    /// 持有者本批次被命中 <paramref name="hits"/> 次后逐次触发其 onDamaged
+    /// （2026-09-25 新增；批次与记账见 <see cref="CombatSimulation.FlushOnDamagedHits"/>）。
+    /// 每次触发独立走 <c>oncePerTurn</c> 门闩——"每次受击回复"应保持默认（不设门闩）。
+    /// </summary>
+    public void FireOnDamagedHits(CombatSimulation simulation, int characterIndex, int hits)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
+        if (hits <= 0 || !TryGetCharacter(simulation, characterIndex, out var character, out _))
+            return;
+
+        var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
+        foreach (var instance in character.Buffs.All.ToArray())
+        {
+            if (instance.IsDormant || instance.Def.Hooks.OnDamaged.Count == 0)
+                continue;
+
+            // 逐次触发：`oncePerTurn` 之类的门闩由 FireHook 按实例自行处理。
+            for (var hit = 0; hit < hits; hit++)
+                FireHook(simulation, holder, instance, instance.Def.Hooks.OnDamaged);
+        }
+    }
+
+    /// <summary>
     /// 该槽打出卡牌（结算前）：触发槽位 buff 的 onSlotCardPlayed。
     /// 槽位伤害（slot.damage）目标为打出者（走共享血量账本），打出者持有免疫特征 tag 时跳过；
     /// 充能（slot.charge）计数递减，归零触发载荷并重置计数。

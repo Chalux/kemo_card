@@ -4,7 +4,7 @@
   "durationType": "Turns",
   "duration": 2,
   "stackRule": "Refresh",
-  "condition": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"], "matchAll": true },
+  "condition": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"] },
   "modifiers": [
     { "attributeId": "DamageTakenScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": -0.5 } }
   ],

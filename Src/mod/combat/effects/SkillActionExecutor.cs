@@ -127,7 +127,7 @@ public sealed class SkillActionExecutor
                 ApplyGainResource(simulation, source, targets, mergedParams);
                 break;
             case ESkillActionKind.ModifyDrawCount:
-                ApplyModifyDrawCount(simulation, source, targets, ReadInt(mergedParams, "amount", 0));
+                ApplyModifyDrawCount(simulation, source, targets, mergedParams, ReadInt(mergedParams, "amount", 0));
                 break;
             case ESkillActionKind.ExecuteScript:
                 ApplyExecuteScript(action, mergedParams, simulation, source, targets);
@@ -562,16 +562,26 @@ public sealed class SkillActionExecutor
     }
 
     /// <summary>规格 §4.3：投放抽牌数量修正，供阶段开始公式取最大 ±N。</summary>
+    /// <remarks>
+    /// 带 <c>hookTargets</c> / <c>targetFilter</c> 时按目标选择器重解析（<c>hookTargets: "allies"</c>
+    /// = 己方全体逐个投放，2026-09-25 参宿四的「己方全体抽卡 +N」用它）；
+    /// 缺省沿用卡牌/技能解析出的目标。
+    /// </remarks>
     private static void ApplyModifyDrawCount(
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters,
         int amount)
     {
         if (amount == 0)
             return;
 
-        foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
+        var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
+            ? CombatTargetSelector.Resolve(simulation, source, parameters)
+            : targets;
+
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets))
             character.AddDrawModifier(amount);
     }
 

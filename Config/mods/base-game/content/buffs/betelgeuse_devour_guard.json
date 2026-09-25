@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.betelgeuse_devour.name",
+  "descId": "buff.betelgeuse_devour.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "Taunt", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 3 } },
+    { "attributeId": "PhysicalDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 30 } },
+    { "attributeId": "MagicDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 30 } }
+  ]
+}

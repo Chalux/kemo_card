@@ -1,0 +1,15 @@
+{
+  "displayNameId": "buff.betelgeuse_key_closure.name",
+  "descId": "buff.betelgeuse_key_closure.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Add",
+      "magnitude": { "kind": "TeamMaxHealthScaled", "flat": 1, "ratio": 0.03 }
+    }
+  ]
+}

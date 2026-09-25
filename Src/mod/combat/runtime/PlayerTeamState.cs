@@ -55,25 +55,41 @@ public sealed class PlayerTeamState
 
         // PartyCountScaled 取值（「队伍每有 1 名 X 角色 → 自身 +N」）需要队伍视角：
         // 上阵名单在战斗内固定，因此这里一次性把查询函数绑给每个角色，buff 修正按回合重估时自动刷新。
+        // TeamMaxHealthScaled（2026-09-25）同样需要队伍视角，但取快照：只在 buff 创建时读一次。
         foreach (var character in _characters)
+        {
             character.BindPartyCountQuery(CountMatchingMembers);
+            character.BindTeamMaxHealthQuery(() => MaxHp);
+        }
     }
 
     /// <summary>
-    /// 统计上阵名单中同时命中元素与种族筛选的角色数（未配置的维度不参与筛选；
-    /// 两个维度都配置时取"且"，与 <c>targetFilter</c> 口径一致）。含调用者自己、不封顶。
+    /// 统计上阵名单中命中元素/种族筛选的角色数（未配置的维度不参与筛选）。
+    /// 描述约定（2026-09-25）：两个维度都配置时**默认取"或"**（「黄属性·动物」= 黄 或 动物），
+    /// 只有显式写「且」时才由 <paramref name="matchAll"/> 取且。含调用者自己、不封顶。
     /// </summary>
-    public int CountMatchingMembers(int elementFlags, int raceFlags)
+    public int CountMatchingMembers(int elementFlags, int raceFlags, bool matchAll)
     {
+        var hasElementFilter = elementFlags != 0;
+        var hasRaceFilter = raceFlags != 0;
         var count = 0;
         foreach (var character in _characters)
         {
-            if (elementFlags != 0 && (character.Element & (EElement)elementFlags) == EElement.None)
-                continue;
-            if (raceFlags != 0 && (character.Race & (ERace)raceFlags) == ERace.None)
-                continue;
+            var elementMatched = hasElementFilter &&
+                (character.Element & (EElement)elementFlags) != EElement.None;
+            var raceMatched = hasRaceFilter &&
+                (character.Race & (ERace)raceFlags) != ERace.None;
 
-            count++;
+            // 只把**已配置**的维度纳入判定（未配置的维度不参与，单维度时两种组合都只看该维度）。
+            var matched = (hasElementFilter, hasRaceFilter) switch
+            {
+                (false, false) => true,
+                (true, false) => elementMatched,
+                (false, true) => raceMatched,
+                _ => matchAll ? elementMatched && raceMatched : elementMatched || raceMatched,
+            };
+            if (matched)
+                count++;
         }
 
         return count;

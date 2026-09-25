@@ -1,0 +1,4 @@
+{
+  "kind": "ModifyDrawCount",
+  "params": { "amount": 2, "hookTargets": "allies" }
+}

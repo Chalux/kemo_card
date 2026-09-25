@@ -1,0 +1,22 @@
+{
+  "displayNameId": "card.betelgeuse_devour_the_heavens.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "betelgeuse_devour_the_heavens" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Guard",
+  "priority": 30,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

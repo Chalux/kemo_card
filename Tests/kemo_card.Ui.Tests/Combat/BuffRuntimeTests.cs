@@ -179,6 +179,150 @@ public sealed class BuffRuntimeTests
         Assert.That(redHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack), Is.EqualTo(attackBeforeRed), "休眠 buff 不参与聚合");
     }
 
+    /// <summary>描述约定（2026-09-25）：元素/种族维度**默认取"或"**（`·` = 或）。</summary>
+    [Test]
+    public void Condition_dimensions_default_to_or()
+    {
+        var buff = ConditionalAttackBuff(
+            "buff.or",
+            new BuffConditionDto
+            {
+                ElementAny = [EElement.Blue],
+                RaceAny = [ERace.Animal],
+            });
+        var blueHuman = CharacterBattleInstance.CreateForTests("blue_human", BaseAttrs, element: EElement.Blue, race: ERace.Human);
+        var redAnimal = CharacterBattleInstance.CreateForTests("red_animal", BaseAttrs, element: EElement.Red, race: ERace.Animal);
+        var blueAnimal = CharacterBattleInstance.CreateForTests("blue_animal", BaseAttrs, element: EElement.Blue, race: ERace.Animal);
+        var redHuman = CharacterBattleInstance.CreateForTests("red_human", BaseAttrs, element: EElement.Red, race: ERace.Human);
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }),
+            [blueHuman, redAnimal, blueAnimal, redHuman]);
+
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id)!.IsDormant, Is.False, "蓝·人类：命中元素");
+        Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(buff.Id)!.IsDormant, Is.False, "红·动物：命中种族");
+        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(buff.Id)!.IsDormant, Is.False, "蓝·动物：两项都命中");
+        Assert.That(sim.PlayerTeam.Characters[3].Buffs.Find(buff.Id)!.IsDormant, Is.True, "红·人类：两项都不命中");
+    }
+
+    /// <summary>描述里显式写「且」时才用 `matchAll: true`：每个已配置维度都必须命中。</summary>
+    [Test]
+    public void Condition_match_all_requires_every_configured_dimension()
+    {
+        var buff = ConditionalAttackBuff(
+            "buff.match_all",
+            new BuffConditionDto
+            {
+                ElementAny = [EElement.Blue],
+                RaceAny = [ERace.Animal],
+                MatchAll = true,
+            });
+        var blueAnimal = CharacterBattleInstance.CreateForTests("blue_animal", BaseAttrs, element: EElement.Blue, race: ERace.Animal);
+        var blueHuman = CharacterBattleInstance.CreateForTests("blue_human", BaseAttrs, element: EElement.Blue, race: ERace.Human);
+        var redAnimal = CharacterBattleInstance.CreateForTests("red_animal", BaseAttrs, element: EElement.Red, race: ERace.Animal);
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }),
+            [blueAnimal, blueHuman, redAnimal]);
+
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id)!.IsDormant, Is.False, "蓝·动物：两项都命中");
+        Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(buff.Id)!.IsDormant, Is.True, "蓝·人类：缺动物 → 休眠");
+        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(buff.Id)!.IsDormant, Is.True, "红·动物：缺蓝 → 休眠");
+    }
+
+    /// <summary>`raceAll` = 显式「人类且学术」：列表内取且，只带其一不命中。</summary>
+    [Test]
+    public void Condition_race_all_requires_every_listed_race()
+    {
+        var buff = ConditionalAttackBuff(
+            "buff.race_all",
+            new BuffConditionDto { RaceAll = [ERace.Human, ERace.Academic] });
+        var both = CharacterBattleInstance.CreateForTests("both", BaseAttrs, race: ERace.Human | ERace.Academic);
+        var humanOnly = CharacterBattleInstance.CreateForTests("human", BaseAttrs, race: ERace.Human);
+        var academicOnly = CharacterBattleInstance.CreateForTests("academic", BaseAttrs, race: ERace.Academic);
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }),
+            [both, humanOnly, academicOnly]);
+
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id)!.IsDormant, Is.False, "人类·学术：两个都带");
+        Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(buff.Id)!.IsDormant, Is.True, "只带人类 → 休眠");
+        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(buff.Id)!.IsDormant, Is.True, "只带学术 → 休眠");
+    }
+
+    /// <summary>
+    /// `PartyCountScaled` 的人数筛选同样遵守描述约定：两个维度默认取"或"，
+    /// `matchAll: true` 时只数两项都命中的角色。
+    /// </summary>
+    [Test]
+    public void Party_count_scaled_defaults_to_or_and_match_all_counts_intersection()
+    {
+        var orBuff = PartyCountBuff("buff.count_or", matchAll: false);
+        var andBuff = PartyCountBuff("buff.count_and", matchAll: true);
+        var blueHuman = CharacterBattleInstance.CreateForTests("blue_human", BaseAttrs, element: EElement.Blue, race: ERace.Human);
+        var redAnimal = CharacterBattleInstance.CreateForTests("red_animal", BaseAttrs, element: EElement.Red, race: ERace.Animal);
+        var blueAnimal = CharacterBattleInstance.CreateForTests("blue_animal", BaseAttrs, element: EElement.Blue, race: ERace.Animal);
+        var redHuman = CharacterBattleInstance.CreateForTests("red_human", BaseAttrs, element: EElement.Red, race: ERace.Human);
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [orBuff.Id] = orBuff, [andBuff.Id] = andBuff }),
+            [blueHuman, redAnimal, blueAnimal, redHuman]);
+
+        var attackBefore = blueHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), orBuff.Id);
+        Assert.That(
+            blueHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack),
+            Is.EqualTo(attackBefore + 9),
+            "默认取或：蓝·人类 + 红·动物 + 蓝·动物 = 3 人 × 3");
+
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), andBuff.Id);
+        Assert.That(
+            blueHuman.Asc.GetCurrentValue(AttributeIds.PhysicalAttack),
+            Is.EqualTo(attackBefore + 12),
+            "matchAll 取且：只有蓝·动物命中 = 1 人 × 3（叠加在 9 之上）");
+    }
+
+    private static BuffDto ConditionalAttackBuff(string id, BuffConditionDto condition) => new()
+    {
+        Id = id,
+        DurationType = EBuffDurationType.Permanent,
+        ApplyScope = EBuffApplyScope.AllAllies,
+        Condition = condition,
+        Modifiers = StatBuff().Modifiers,
+    };
+
+    private static BuffDto PartyCountBuff(string id, bool matchAll) => new()
+    {
+        Id = id,
+        DurationType = EBuffDurationType.Permanent,
+        Modifiers =
+        [
+            new AttributeModifierDefDto
+            {
+                AttributeId = AttributeIds.PhysicalAttack,
+                Operation = EAttributeModifierOp.Add,
+                Magnitude = new MagnitudeDefDto
+                {
+                    Kind = EMagnitudeKind.PartyCountScaled,
+                    PerCount = 3,
+                    CountElementAny = [EElement.Blue],
+                    CountRaceAny = [ERace.Animal],
+                    MatchAll = matchAll,
+                },
+            },
+        ],
+    };
+
     #endregion
 
     #region 驱散 tag 规则

@@ -97,10 +97,10 @@ public sealed class VonNeumannContentTests
             Assert.That(((JsonElement)hook.Params!["turnInterval"]).GetInt32(), Is.EqualTo(10));
         }
 
-        // P4：红·人类·学术（且）+ 机械族在场时翻倍（队伍人数门闩）。
+        // P4：红·人类·学术（`·` = 或）+ 机械族在场时翻倍（队伍人数门闩）。
         var p4 = definitions.Buffs["von_neumann_passive_p4"];
         Assert.That(p4.ApplyScope, Is.EqualTo(EBuffApplyScope.AllAllies));
-        Assert.That(p4.Condition!.MatchAll, Is.True, "跨维度必须取且");
+        Assert.That(p4.Condition!.MatchAll, Is.False, "描述里的 `·` = 或（跨维度默认取或）");
         Assert.That(p4.Condition.ElementAny, Is.EqualTo(new[] { EElement.Red }), "2026-09-24 起由蓝改红");
         Assert.That(p4.Condition.RaceAny, Is.EqualTo(new[] { ERace.Human, ERace.Academic }));
         Assert.That(p4.Condition.PartyMinCount, Is.Zero, "基础档不筛队伍人数");
@@ -264,28 +264,40 @@ public sealed class VonNeumannContentTests
     #region P4：队伍增益与机械族翻倍
 
     [Test]
-    public void Passive_four_buffs_blue_human_academic_allies_only()
+    public void Passive_four_buffs_red_human_or_academic_allies()
     {
         BaseGameContent.RegisterBuiltinConditions();
         var definitions = BaseGameContent.Load();
-        using var sim = PartySimulation(RegistryWith(
+        var registry = RegistryWith(
             definitions,
             buffs: Pick(definitions.Buffs, "von_neumann_passive_p4", "von_neumann_passive_p4_double"),
-            effects: Pick(definitions.Effects, "von_neumann_p4_double_layer")));
+            effects: Pick(definitions.Effects, "von_neumann_p4_double_layer"));
+        var attrs = Attributes();
+        // 描述 `·` = 或：红 / 人类 / 学术 任一命中即生效；蓝·动物三项都不命中。
+        using var sim = NewSimulation(registry, [
+            CharacterBattleInstance.CreateForTests("c0", attrs, element: EElement.Red, race: ERace.Human | ERace.Academic),
+            CharacterBattleInstance.CreateForTests("c1", attrs, element: EElement.Blue, race: ERace.Human),
+            CharacterBattleInstance.CreateForTests("c2", attrs, element: EElement.Red, race: ERace.Animal),
+            CharacterBattleInstance.CreateForTests("c3", attrs, element: EElement.Blue, race: ERace.Animal),
+        ], [new EnemyUnit("e0", "slime", 500)]);
 
         sim.Buffs.Apply(sim, Player(0), "von_neumann_passive_p4");
 
-        var matching = sim.PlayerTeam.Characters[0];
-        Assert.That(matching.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(33f));
-        Assert.That(matching.Asc.GetCurrentValue(AttributeIds.HealPower), Is.EqualTo(3f));
-        Assert.That(matching.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(70f));
+        var allThree = sim.PlayerTeam.Characters[0];
+        Assert.That(allThree.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(33f), "红·人类·学术：三项全中");
+        Assert.That(allThree.Asc.GetCurrentValue(AttributeIds.HealPower), Is.EqualTo(3f));
+        Assert.That(allThree.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(70f));
 
-        var wrongElement = sim.PlayerTeam.Characters[1];
-        Assert.That(wrongElement.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(30f), "蓝·人类·学术不受影响（元素不命中）");
-        Assert.That(wrongElement.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(50f));
+        var humanOnly = sim.PlayerTeam.Characters[1];
+        Assert.That(humanOnly.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(33f), "蓝·人类：命中人类");
+        Assert.That(humanOnly.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(70f));
 
-        var wrongRace = sim.PlayerTeam.Characters[2];
-        Assert.That(wrongRace.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(30f), "红·动物不受影响（种族不命中）");
+        var redOnly = sim.PlayerTeam.Characters[2];
+        Assert.That(redOnly.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(33f), "红·动物：命中红");
+
+        var none = sim.PlayerTeam.Characters[3];
+        Assert.That(none.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(30f), "蓝·动物：三项都不命中");
+        Assert.That(none.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(50f));
     }
 
     /// <summary>

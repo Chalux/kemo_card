@@ -1,5 +1,6 @@
 using KemoCard.Mod.Combat.Commands;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Buffs;
@@ -733,6 +734,8 @@ public sealed class CombatStateMachine
         var source = new CombatTargetRef(ECombatSide.Enemy, enemyIndex);
         var targets = ResolveEnemySkillTargets(simulation, skill, enemyIndex);
         ExecuteSkillPayload(simulation, skill, source, targets, skillRef?.Params);
+        // 受击钩子（onDamaged）：一次敌方技能的全部伤害先结算完，再按受击次数补触发。
+        simulation.FlushOnDamagedHits();
     }
 
     private static void ExecuteSkillPayload(
@@ -788,6 +791,11 @@ public sealed class CombatStateMachine
         if (legal.Count == 0)
             return [];
 
+        // 嘲讽（2026-09-25）：指向玩家角色的单体 / 随机挑选只从"嘲讽值最高"的合法目标里取；
+        // 范围（All）与账本（Team）不受影响——嘲讽吸引的是点名攻击。
+        if (spec.Scope is not ETargetScope.All)
+            legal = ApplyTauntPriority(simulation, legal);
+
         return spec.Scope switch
         {
             ETargetScope.All => legal,
@@ -796,6 +804,49 @@ public sealed class CombatStateMachine
                 ? [legal[0]]
                 : legal.Take(spec.TargetCount).ToList(),
         };
+    }
+
+    /// <summary>
+    /// 嘲讽优先（2026-09-25，见战斗规格「嘲讽」）：合法目标里存在嘲讽值 &gt; 0 的角色时，
+    /// 只保留嘲讽值最高的那些（并列时保持原顺序）；没有嘲讽者时原样返回。
+    /// </summary>
+    private static List<CombatTargetRef> ApplyTauntPriority(
+        CombatSimulation simulation,
+        List<CombatTargetRef> legal)
+    {
+        var highest = 0f;
+        foreach (var target in legal)
+        {
+            if (target.Side != ECombatSide.Player || target.Index < 0 ||
+                target.Index >= simulation.PlayerTeam.Characters.Count)
+            {
+                continue;
+            }
+
+            var taunt = simulation.PlayerTeam.Characters[target.Index].Asc.GetCurrentValue(AttributeIds.Taunt);
+            if (taunt > highest)
+                highest = taunt;
+        }
+
+        if (highest <= 0f)
+            return legal;
+
+        var filtered = new List<CombatTargetRef>(legal.Count);
+        foreach (var target in legal)
+        {
+            if (target.Side != ECombatSide.Player || target.Index < 0 ||
+                target.Index >= simulation.PlayerTeam.Characters.Count)
+            {
+                // 非玩家侧目标（如敌方自身指向）不参与嘲讽筛选。
+                filtered.Add(target);
+                continue;
+            }
+
+            if (Math.Abs(simulation.PlayerTeam.Characters[target.Index].Asc.GetCurrentValue(AttributeIds.Taunt) - highest) <= 0.0001f)
+                filtered.Add(target);
+        }
+
+        return filtered.Count > 0 ? filtered : legal;
     }
 
     /// <summary>

@@ -1,0 +1,11 @@
+{
+  "descId": "buff.betelgeuse_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onDamaged": [
+      { "effectId": "betelgeuse_p4_mending", "params": { "hookTargets": "team" } }
+    ]
+  }
+}

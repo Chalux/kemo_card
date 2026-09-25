@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.betelgeuse_crimson_matrix.name",
+  "descId": "buff.betelgeuse_crimson_matrix.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } }
+  ]
+}

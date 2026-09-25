@@ -173,7 +173,7 @@ public sealed class ReinhardtContentTests
 
         sim.Buffs.Apply(sim, Player(0), "reinhardt_passive_p4");
 
-        // 4 名黄属性·动物角色（含自己）→ +160，且队伍账本上限同步抬高。
+        // 4 名黄·动物角色（描述 `·` = 或：黄 或 动物，这里两者都命中）→ +160，且队伍账本上限同步抬高。
         Assert.That(
             sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.MaxHealth),
             Is.EqualTo(210f).Within(0.001f));
@@ -259,6 +259,42 @@ public sealed class ReinhardtContentTests
         twoCards.RecordPlayedCard(YellowCard, 0);
         twoCards.Buffs.FireCardSettled(twoCards, 0);
         Assert.That(twoCards.PlayerTeam.Characters[0].Buffs.Find(AttackUpBuff), Is.Not.Null, "2 张触发");
+    }
+
+    #endregion
+
+    #region 主动技（目标筛选按描述约定取"或"）
+
+    /// <summary>
+    /// 「黄潮号令」的目标筛选按描述约定取"或"：黄属性·动物 = 黄 **或** 动物——
+    /// 蓝·动物与黄·人类都命中，只有蓝·人类不命中。
+    /// </summary>
+    [Test]
+    public void Active_skill_buffs_yellow_or_animal_allies()
+    {
+        var registry = BaseGameContent.BuildRegistry();
+        var attrs = CharacterAttributes();
+        var characters = new[]
+        {
+            CharacterBattleInstance.CreateForTests(
+                "reinhardt",
+                attrs,
+                activeSkillChain: [new ActiveSkillChainEntryDto { SkillId = "reinhardt_yellow_tide_command", Cooldown = 10 }],
+                element: EElement.Yellow,
+                race: ERace.Animal),
+            CharacterBattleInstance.CreateForTests("c1", attrs, element: EElement.Blue, race: ERace.Animal),
+            CharacterBattleInstance.CreateForTests("c2", attrs, element: EElement.Yellow, race: ERace.Human),
+            CharacterBattleInstance.CreateForTests("c3", attrs, element: EElement.Blue, race: ERace.Human),
+        };
+        characters[0].GainSkillCounter(10);
+        using var sim = NewSimulation(registry, characters, enemyHp: 500);
+
+        var cast = sim.TryApply(new CastActiveSkillCommand(0, []));
+        Assert.That(cast.Success, Is.True, cast.Error);
+
+        Assert.That(characters[1].Buffs.Find("reinhardt_command_attack_up"), Is.Not.Null, "蓝·动物命中动物");
+        Assert.That(characters[2].Buffs.Find("reinhardt_command_attack_up"), Is.Not.Null, "黄·人类命中黄");
+        Assert.That(characters[3].Buffs.Find("reinhardt_command_attack_up"), Is.Null, "蓝·人类两项都不命中");
     }
 
     #endregion

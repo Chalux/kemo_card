@@ -29,6 +29,13 @@ public enum EMagnitudeKind
     /// 用于「队伍每有 1 名黄属性·动物角色，自身最大生命 +40」这类被动。
     /// </summary>
     PartyCountScaled,
+
+    /// <summary>
+    /// 按<b>队伍生命上限</b>缩放（2026-09-25 新增）：<c>flat + floor(队伍生命上限 × ratio)</c>。
+    /// 在 buff 实例创建（卡牌/技能结算）时取值一次并缓存，之后不随队伍生命上限变化——
+    /// 「+1 物防，叠加 3% 队伍生命上限的数值（向下取整，仅在卡牌执行时取数值）」。
+    /// </summary>
+    TeamMaxHealthScaled,
 }
 
 public enum EAttributeCapture
@@ -68,6 +75,21 @@ public sealed class MagnitudeDefDto
     /// <summary><see cref="EMagnitudeKind.PartyCountScaled"/>：人数统计的种族筛选（空 = 不筛）。</summary>
     [JsonPropertyName("countRaceAny")]
     public List<ERace>? CountRaceAny { get; init; }
+
+    /// <summary><see cref="EMagnitudeKind.TeamMaxHealthScaled"/>：队伍生命上限的换算比例。</summary>
+    [JsonPropertyName("ratio")]
+    public float Ratio { get; init; }
+
+    /// <summary><see cref="EMagnitudeKind.TeamMaxHealthScaled"/>：在比例换算结果上再加的固定值。</summary>
+    [JsonPropertyName("flat")]
+    public float Flat { get; init; }
+
+    /// <summary>
+    /// <see cref="EMagnitudeKind.PartyCountScaled"/>：元素与种族筛选之间的关系。
+    /// 缺省 <c>false</c> = 取"或"（描述里的 `·`）；只有显式写「且」时才置 <c>true</c>。
+    /// </summary>
+    [JsonPropertyName("matchAll")]
+    public bool MatchAll { get; init; }
 }
 
 public sealed class AttributeModifierDefDto

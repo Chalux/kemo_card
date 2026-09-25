@@ -1,0 +1,8 @@
+{
+  "displayNameId": "skill.betelgeuse_devour_the_heavens.name",
+  "descId": "skill.betelgeuse_devour_the_heavens.desc",
+  "actionRefs": [
+    { "actionId": "betelgeuse_devour_guard" }
+  ],
+  "tags": ["buff"]
+}

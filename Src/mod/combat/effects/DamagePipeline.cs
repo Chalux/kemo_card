@@ -69,6 +69,16 @@ internal static class DamagePipeline
 
         var packet = CreatePacket(source, target, appliedAmount, effectId, kind, element);
         simulation.Rules.DispatchAfterDamage(simulation.CreateContext(), in packet);
+        // 受击钩子（onDamaged，2026-09-25）：玩家角色被**敌方来源**命中时记一次。
+        // 同一批次先累计、批次结束统一触发（见 CombatSimulation.FlushOnDamagedHits）；
+        // 中毒 / 手牌槽伤害等由持有者自身结算（source == target），不计入。
+        if (SharedHpSettlement.IsPlayerSlot(target) &&
+            source.Side == ECombatSide.Enemy &&
+            source != target)
+        {
+            simulation.RecordDamagedPlayerHit(target.Index);
+        }
+
         // 表现事件（规格 §16）：所有生产伤害写入都经过这里，是唯一的 DamageDealt 记账点。
         PresentationEmitter.EmitDamage(simulation, source, target, appliedAmount, kind, element, effectId);
     }

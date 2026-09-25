@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.betelgeuse_orion_guard_15.name",
+  "descId": "buff.betelgeuse_orion_guard_15.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 15 } },
+    { "attributeId": "MagicDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 15 } }
+  ]
+}

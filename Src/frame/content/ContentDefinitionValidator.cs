@@ -457,6 +457,8 @@ public sealed class ContentDefinitionValidator
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardSettled, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardExecutionEnd, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbTriggered, store, errors);
+            // 2026-09-25 受击钩子（参宿四被动4）：悬空 effectId 会让"受击回血"完全静默。
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnDamaged, store, errors);
         }
     }
 
@@ -632,10 +634,58 @@ public sealed class ContentDefinitionValidator
         ValidateIntParam(category, definitionId, parameters, "turns", errors, allowNegative: false);
         ValidateIntParam(category, definitionId, parameters, "slotIndex", errors, allowNegative: false);
         ValidateIntParam(category, definitionId, parameters, "adjacentSlots", errors, allowNegative: false);
+        ValidateNumberParam(category, definitionId, parameters, "healPowerScale", errors, allowNegative: false);
         ValidateBoolParam(category, definitionId, parameters, "oncePerTurn", errors);
         ValidateBoolParam(category, definitionId, parameters, "oncePerWave", errors);
         ValidateOrbTiers(category, definitionId, parameters, errors);
         ValidateAttackScaleFromOrbs(category, definitionId, parameters, errors);
+    }
+
+    /// <summary>
+    /// 浮点参数校验（<c>healPowerScale</c> 等）：非数字 ⇒ 运行期静默回落缺省，
+    /// 与整数参数同口径必须在内容准入阶段拦下。
+    /// </summary>
+    private static void ValidateNumberParam(
+        EContentCategory category,
+        string definitionId,
+        Dictionary<string, object> parameters,
+        string key,
+        List<ContentDefinitionValidationError> errors,
+        bool allowNegative)
+    {
+        if (!parameters.TryGetValue(key, out var value) || value is null)
+        {
+            return;
+        }
+
+        double? parsed = value switch
+        {
+            double d => d,
+            float f => f,
+            int i => i,
+            long l => l,
+            JsonElement { ValueKind: JsonValueKind.Number } element when element.TryGetDouble(out var number) => number,
+            _ => double.TryParse(
+                value.ToString(),
+                System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var fallback)
+                ? fallback
+                : null,
+        };
+
+        if (parsed is null)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, $"params.{key} must be a number."));
+            return;
+        }
+
+        if (!allowNegative && parsed < 0)
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category, definitionId, $"params.{key} must be >= 0."));
+        }
     }
 
     private static void ValidateIntParam(

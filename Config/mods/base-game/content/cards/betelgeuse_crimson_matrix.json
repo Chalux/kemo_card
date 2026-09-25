@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.betelgeuse_crimson_matrix.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "betelgeuse_crimson_matrix" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "PhysicalDefense": 1
+    }
+  },
+  "role": "Guard",
+  "priority": 30,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

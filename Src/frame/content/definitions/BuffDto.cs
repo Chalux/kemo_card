@@ -84,6 +84,13 @@ public sealed class BuffConditionDto
     [JsonPropertyName("raceAny")]
     public List<ERace>? RaceAny { get; init; }
 
+    /// <summary>
+    /// 种族"全含"筛选（2026-09-25 新增，镜像 <c>targetFilter.raceAll</c>）：
+    /// 持有者必须**同时**带列表中全部种族（「红属性·天文·未知角色」= elementAny[Red] + raceAll[Astronomy, Unknown]）。
+    /// </summary>
+    [JsonPropertyName("raceAll")]
+    public List<ERace>? RaceAll { get; init; }
+
     /// <summary>true 时跨列表取"且"（同时满足属性与种族）；缺省"或"（任一列表命中即满足）。</summary>
     [JsonPropertyName("matchAll")]
     public bool MatchAll { get; init; }
@@ -148,6 +155,14 @@ public sealed class BuffEffectHooksDto
     /// <summary>充能球触发结算后触发（每个参与产球的角色各一次；2026-09-21 新增）。</summary>
     [JsonPropertyName("onOrbTriggered")]
     public List<EffectRefDto> OnOrbTriggered { get; init; } = [];
+
+    /// <summary>
+    /// 持有者<b>受到一次敌方来源伤害</b>后触发（2026-09-25 新增）。
+    /// 同一批次（一次敌方技能）内的全部伤害先结算完，再按受击次数逐次触发——
+    /// 中毒 / 手牌槽伤害等由持有者自身结算的来源不计入（见战斗规格「受击钩子」）。
+    /// </summary>
+    [JsonPropertyName("onDamaged")]
+    public List<EffectRefDto> OnDamaged { get; init; } = [];
 }
 
 public sealed class BuffDto

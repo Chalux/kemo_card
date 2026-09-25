@@ -1,6 +1,7 @@
 {
   "displayNameId": "skill.slime_tackle.name",
   "descId": "skill.slime_tackle.desc",
+  "targetOverride": { "side": "Enemy", "scope": "Single" },
   "actionRefs": [
     {
       "actionId": "apply_slime_damage",

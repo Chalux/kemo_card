@@ -16,6 +16,12 @@ public static class AttributeIds
     public const string DamageTakenScale = "DamageTakenScale";
 
     /// <summary>
+    /// 嘲讽值（2026-09-25 新增）：敌方<b>单体 / 随机</b>攻击优先选中嘲讽值最高的友方角色
+    /// （见战斗规格「嘲讽」）；0 = 不嘲讽。范围/全体攻击不受影响。
+    /// </summary>
+    public const string Taunt = "Taunt";
+
+    /// <summary>
     /// 全伤害增加：与受伤增加同桶加算，连携单独乘算——
     /// <c>伤害 × (1 + 本属性 + Σ受伤增加) × (1 + 连携加成)</c>（战斗规格 §1.3）。
     /// </summary>

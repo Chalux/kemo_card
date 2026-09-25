@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "betelgeuse_orion_guard_40", "hookTargets": "allies" }
+}

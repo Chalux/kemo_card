@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.betelgeuse_orion.name",
+  "descId": "skill.betelgeuse_orion.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "betelgeuse_orion_draw" }
+  ],
+  "tags": ["active"]
+}

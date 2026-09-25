@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.betelgeuse_occulation.name",
+  "descId": "skill.betelgeuse_occulation.desc",
+  "actionRefs": [
+    { "actionId": "betelgeuse_occulation_draw" },
+    { "actionId": "betelgeuse_occulation_guard" }
+  ],
+  "tags": ["buff"]
+}

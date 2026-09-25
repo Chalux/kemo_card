@@ -1,0 +1,9 @@
+{
+  "descId": "buff.betelgeuse_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "modifiers": [
+    { "attributeId": "Taunt", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 5 } }
+  ]
+}

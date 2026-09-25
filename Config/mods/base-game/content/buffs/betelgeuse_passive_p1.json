@@ -1,0 +1,6 @@
+{
+  "descId": "buff.betelgeuse_p1.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable", "trait.immune_seal"]
+}

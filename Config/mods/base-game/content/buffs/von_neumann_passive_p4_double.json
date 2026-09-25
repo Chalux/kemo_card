@@ -6,7 +6,6 @@
   "condition": {
     "elementAny": ["Red"],
     "raceAny": ["Human", "Academic"],
-    "matchAll": true,
     "partyMinCount": 1,
     "partyRaceAny": ["Machine"]
   },

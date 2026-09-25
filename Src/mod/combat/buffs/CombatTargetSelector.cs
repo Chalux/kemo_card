@@ -6,19 +6,19 @@ namespace KemoCard.Mod.Combat.Buffs;
 
 /// <summary>
 /// 效果/钩子的目标选择器：按效果参数解析目标集。
-/// <c>hookTargets</c> 支持 <c>self</c>（缺省）/ <c>team</c> / <c>randomEnemy</c> / <c>allEnemies</c>；
-/// <c>targetFilter</c>（<c>self</c> / <c>excludeSelf</c> / <c>elementAny</c> / <c>raceAny</c> / <c>raceAll</c>）
+/// <c>hookTargets</c> 支持 <c>self</c>（缺省）/ <c>team</c> / <c>allies</c> / <c>randomEnemy</c> / <c>allEnemies</c>；
+/// <c>targetFilter</c>（<c>self</c> / <c>excludeSelf</c> / <c>elementAny</c> / <c>raceAny</c> / <c>raceAll</c> / <c>matchAll</c>）
 /// 筛选玩家角色。
 /// </summary>
 /// <remarks>
-/// 筛选维度之间的关系：<c>elementAny</c> 与 <c>race*</c> 命中即保留（维度间取"且"，列表内取"或"）。
-/// <c>raceAll</c> 与 <c>raceAny</c> 的区别是列表内取"且"——「蓝属性·人类·学术」这类同时要求多个种族
-/// 的写法必须用 <c>raceAll</c>，用 <c>raceAny</c> 会命中"蓝属性且（人类或学术）"的角色。
-/// <c>excludeSelf</c> 剔除来源自身（「自身以外的…角色」）。
-/// <c>hookTargets: "team"</c> 解析为**队伍共享账本**（<see cref="CombatTargetRef.PlayerTeam"/>）：
-/// 规格 §1.3 的玩家侧治疗只认账本目标（点名槽位会被软失败剔除），队伍级效果必须走这条。
+/// <para>筛选维度之间的关系（2026-09-25 起）：**默认取"或"**——效果描述里的「·」表示或，
+/// 只有显式写「且」时才用 <c>matchAll: true</c> 取"且"；<c>raceAll</c> 仍是列表内取"且"
+/// （"同时具备多种族"的显式且）。<c>self</c> / <c>excludeSelf</c> 是硬约束，永远与筛选维度取"且"。</para>
+/// <para><c>hookTargets: "team"</c> 解析为**队伍共享账本**（<see cref="CombatTargetRef.PlayerTeam"/>）：
+/// 规格 §1.3 的玩家侧治疗只认账本目标（点名槽位会被软失败剔除），队伍级效果必须走这条；
+/// <c>hookTargets: "allies"</c> 解析为全部玩家角色（逐槽位，"己方全体"的抽取/增益用它）。
 /// 三处共用同一语义：buff 钩子分发、<c>ApplyBuff</c> 的"给自己/给队友"投放、充能球触发效果。
-/// 参数缺省一律回退到 [来源]（self）。
+/// 参数缺省一律回退到 [来源]（self）。</para>
 /// </remarks>
 internal static class CombatTargetSelector
 {
@@ -42,6 +42,10 @@ internal static class CombatTargetSelector
                     return [pick];
                 case "allEnemies":
                     return AliveEnemies(simulation);
+                case "allies":
+                    // 全部玩家角色（逐个槽位，不是队伍账本）："己方全体"的抽取/增益类效果用它。
+                    // 与 team 的区别：team = 共享账本（治疗 / 队伍级效果），allies = 每个角色。
+                    return ResolveAllAllies(simulation);
                 case "team":
                     // 队伍共享账本：玩家侧治疗 / 队伍级效果的唯一合法落点（规格 §1.3）。
                     return [CombatTargetRef.PlayerTeam];
@@ -58,19 +62,28 @@ internal static class CombatTargetSelector
             for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
             {
                 var candidate = simulation.PlayerTeam.Characters[i];
+
+                // self / excludeSelf 是硬约束（永远取"且"）。
                 if (filter.SelfOnly && i != source.Index)
                     continue;
                 if (filter.ExcludeSelf && i == source.Index)
                     continue;
-                if (filter.ElementAny is { Count: > 0 } &&
-                    !filter.ElementAny.Any(flag => (candidate.Element & flag) != 0))
+
+                // 描述约定（2026-09-25）：效果描述里的「·」= 或——筛选维度默认取"或"，
+                // 只有显式写「且」时才用 matchAll: true（raceAll 仍是"同时具备多种族"的显式且）。
+                var dimensions = new List<bool>(3);
+                if (filter.ElementAny is { Count: > 0 })
+                    dimensions.Add(filter.ElementAny.Any(flag => (candidate.Element & flag) != 0));
+                if (filter.RaceAny is { Count: > 0 })
+                    dimensions.Add(filter.RaceAny.Any(flag => (candidate.Race & flag) != 0));
+                if (filter.RaceAll is { Count: > 0 })
+                    dimensions.Add(filter.RaceAll.All(flag => (candidate.Race & flag) != 0));
+
+                var dimensionMatched = dimensions.Count == 0 ||
+                    (filter.MatchAll ? dimensions.All(value => value) : dimensions.Any(value => value));
+                if (!dimensionMatched)
                     continue;
-                if (filter.RaceAny is { Count: > 0 } &&
-                    !filter.RaceAny.Any(flag => (candidate.Race & flag) != 0))
-                    continue;
-                if (filter.RaceAll is { Count: > 0 } &&
-                    !filter.RaceAll.All(flag => (candidate.Race & flag) != 0))
-                    continue;
+
                 matched.Add(new CombatTargetRef(ECombatSide.Player, i));
             }
 
@@ -92,9 +105,20 @@ internal static class CombatTargetSelector
         return alive;
     }
 
+    /// <summary>全部玩家角色（逐槽位引用；"己方全体"效果用，<c>hookTargets: "allies"</c>）。</summary>
+    private static List<CombatTargetRef> ResolveAllAllies(CombatSimulation simulation)
+    {
+        var allies = new List<CombatTargetRef>(simulation.PlayerTeam.Characters.Count);
+        for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
+            allies.Add(new CombatTargetRef(ECombatSide.Player, i));
+
+        return allies;
+    }
+
     private sealed record TargetFilter(
         bool SelfOnly,
         bool ExcludeSelf,
+        bool MatchAll,
         List<EElement>? ElementAny,
         List<ERace>? RaceAny,
         List<ERace>? RaceAll);
@@ -118,10 +142,12 @@ internal static class CombatTargetSelector
             string.Equals(selfValue.ToString(), "true", StringComparison.OrdinalIgnoreCase);
         var excludeSelf = dict.TryGetValue("excludeSelf", out var excludeValue) &&
             string.Equals(excludeValue.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+        var matchAll = dict.TryGetValue("matchAll", out var matchAllValue) &&
+            string.Equals(matchAllValue.ToString(), "true", StringComparison.OrdinalIgnoreCase);
         List<EElement>? elementAny = ParseEnumList<EElement>(dict, "elementAny");
         List<ERace>? raceAny = ParseEnumList<ERace>(dict, "raceAny");
         List<ERace>? raceAll = ParseEnumList<ERace>(dict, "raceAll");
-        return new TargetFilter(selfOnly, excludeSelf, elementAny, raceAny, raceAll);
+        return new TargetFilter(selfOnly, excludeSelf, matchAll, elementAny, raceAny, raceAll);
     }
 
     private static List<TEnum>? ParseEnumList<TEnum>(Dictionary<string, object> dict, string key)

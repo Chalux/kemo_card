@@ -231,6 +231,37 @@ public sealed class CombatSimulation : IDisposable
 
     internal void CountBlockedMidDraw() => BlockedMidDrawCount++;
 
+    /// <summary>当前批次内每个角色被敌方攻击命中的次数（一次敌方技能 = 一个批次）。</summary>
+    private readonly Dictionary<int, int> _pendingDamagedHits = [];
+
+    /// <summary>
+    /// 记一次玩家角色的受击。调用点是伤害统一落点 <c>DamagePipeline.NotifyAfter</c>，
+    /// 只在"玩家槽位 + 敌方来源 + 非自我结算"时计入；同一批次里先累计，
+    /// 由 <see cref="FlushOnDamagedHits"/> 在批次结束时按次数逐次触发 onDamaged——
+    /// 「先结算完全部伤害，再按受击次数回复生命」。
+    /// </summary>
+    internal void RecordDamagedPlayerHit(int characterIndex)
+    {
+        if (characterIndex < 0 || characterIndex >= PlayerTeam.Characters.Count)
+            return;
+
+        _pendingDamagedHits.TryGetValue(characterIndex, out var count);
+        _pendingDamagedHits[characterIndex] = count + 1;
+    }
+
+    /// <summary>批次结束：逐角色按其受击次数触发 onDamaged 钩子并清账（无待处理时零操作）。</summary>
+    internal void FlushOnDamagedHits()
+    {
+        if (_pendingDamagedHits.Count == 0)
+            return;
+
+        // 快照后清账：钩子（回血等）自身不会再产生受击，但保持防御性。
+        var pending = _pendingDamagedHits.ToArray();
+        _pendingDamagedHits.Clear();
+        foreach (var (characterIndex, hits) in pending)
+            Buffs.FireOnDamagedHits(this, characterIndex, hits);
+    }
+
     /// <summary>本回合已打出的卡牌登记（充能球回合结束统计口径；含空放——牌已离手即算打出）。</summary>
     internal void RecordPlayedCard(string cardId, int characterIndex) =>
         _playedThisTurn.Add(new PlayedCardRecord(cardId, characterIndex));

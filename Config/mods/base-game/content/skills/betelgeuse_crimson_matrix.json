@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.betelgeuse_crimson_matrix.name",
+  "descId": "skill.betelgeuse_crimson_matrix.desc",
+  "actionRefs": [
+    { "actionId": "betelgeuse_crimson_matrix_draw" },
+    { "actionId": "betelgeuse_crimson_matrix_guard" }
+  ],
+  "tags": ["buff"]
+}

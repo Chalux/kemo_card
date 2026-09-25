@@ -623,12 +623,21 @@ activeSkillChain: [
 #### 13.1.1 数据（BuffDto 扩展）（原 §1.1）
 
 - `modifiers`: 属性修正列表（镜像 GE modifier：attributeId / op(Add|Multiply|Divide|Override) / magnitude(Scalar|SetByCaller)），幅度 × 层数。
-- `condition`: 持有者条件 `{elementAny, raceAny, matchAll}`。列表内"或"、跨列表默认"或"、`matchAll: true` 取"且"。
+- `condition`: 持有者条件 `{elementAny, raceAny, raceAll, matchAll}`。列表内"或"、跨列表默认"或"、`matchAll: true` 取"且"。
+  **描述约定（2026-09-25）**：效果描述里的 `·` 一律表示**或**（`raceAny` / `elementAny` 列表内取或，跨维度默认也取或）；
+  只有描述里**显式写「且」**时才用 `matchAll: true` / `raceAll`。
+  `raceAll` 在列表内取**"且"**（持有者必须同时带全部列出的种族），`matchAll` 只对**已配置**的维度取"且"
+  （未配置的维度不参与判定）。
 - `applyScope`: `Self`（默认）/ `AllAllies`（团队型被动挂到每个队友）。
-- 钩子节点：`onApply / onTurnStart / onTurnEnd / onStackChanged / onRemove / onWaveStart / onActiveSkillCast / onSlotCardPlayed`。
+- 钩子节点：`onApply / onTurnStart / onTurnEnd / onStackChanged / onRemove / onWaveStart / onActiveSkillCast / onSlotCardPlayed`，
+  以及后批扩展的 `onCardSettled / onCardExecutionEnd / onOrbTriggered`（§14.11.1）与 `onDamaged`（§14.8.5，2026-09-25）。
 - `onTurnStart` 效果参数支持 `turnInterval: N`：按**波内回合计数**每 N 回合触发一次。
-- 钩子效果目标解析：`hookTargets`（self 缺省 / team / randomEnemy / allEnemies）与 `targetFilter`（self / excludeSelf / elementAny / raceAny / raceAll 筛选玩家角色），按**单个效果引用**的合并参数（效果参数 + 实例挂载参数）解析。
-  - 维度间取"且"（`elementAny` 命中即保留、`race*` 命中即保留），**列表内**：`raceAny` 取"或"、`raceAll` 取"且"。同时要求多个种族（如「蓝属性·人类·学术」）必须用 `raceAll`——用 `raceAny` 会命中"蓝属性且（人类或学术）"的角色。
+- 钩子效果目标解析：`hookTargets`（self 缺省 / team / allies / randomEnemy / allEnemies）与 `targetFilter`（self / excludeSelf / elementAny / raceAny / raceAll 筛选玩家角色），按**单个效果引用**的合并参数（效果参数 + 实例挂载参数）解析。
+  `hookTargets: "allies"`（2026-09-25 新增）= **全部玩家角色逐个**（与 `team` 的区别：`team` 是队伍共享账本，
+  只用于治疗/队伍级效果；`allies` 是逐槽位，用于"己方全体"的抽取/增益类投放）。
+  - **描述约定（2026-09-25）**：筛选维度**默认取"或"**——效果描述里的 `·` 表示或（如「红属性·人类·学术」= 红 或 人类 或 学术），
+    `elementAny` / `raceAny` 列表内取"或"、跨维度也取"或"；只有描述里**显式写「且」**时才用 `matchAll: true` 取"且"。
+    `raceAll` 仍是**列表内取"且"**（"同时具备多种族"的显式且，如「人类且学术」）。
   - `excludeSelf: true` 剔除来源自身（「自身以外的…角色」）。两键缺省关闭，缺省行为与旧内容完全一致。
   - **`hookTargets: "team"`（2026-09-24 新增）** 解析为队伍共享账本 `CombatTargetRef.PlayerTeam`：规格 §1.3 的**玩家侧治疗只认账本目标**（点名槽位会被 `RejectSlotHealTargets` 软失败剔除），因此"钩子/被动给全队回血"必须用它；队伍级（账本口径）的其它效果同理。
 
@@ -681,7 +690,7 @@ activeSkillChain: [
 - 出牌是"标记 → CardExecution 统一结算"批处理：**结算阶段开始**按完整出牌队列一次性统计各属性的**不同角色数**（同一角色多张只计 1 人），档位作用于**本回合全部**该属性伤害/治疗卡——无次序、无首角色惩罚、无回溯。**统计侧与加成侧口径不同（2026-09-21 修正）**：统计侧统计队列里的**所有**卡——Support / Curse 等非输出卡同样把打出它们的角色计入人头；加成侧只作用于连携适用的卡牌类型（Physics/Magical/Healing），即非输出卡堆人头但不吃加成。
 - 档位：**2 人 +25% / 3 人 +50% / 4 人 +100%**（1 人无增益；数值由 `ChainCalculator.TwoChainScale / ThreeChainScale / FourChainScale` 三个常量控制，2026-09-20 调档后写死在这三处，改档只改常量）。加成仅对卡牌类型 Physics/Magical/Healing 生效；多属性卡取各属性最高档。
 - 加成注入：结算单卡时设 `simulation.CurrentChainBonus`（try/finally 归零，卡牌上下文之外恒 0）；GAS 路径经 SetByCaller `ChainBonusScale`，直伤/治疗路径直接缩放。
-- **加算规则（2026-09-21 修订）**：`伤害 = base × (1 + Σ增伤 + Σ受到伤害增加) × (1 + 连携)`——**增伤与受伤增加一律加算，只有连携乘算**（权威表述见本文 §1.3）。**三条伤害通道（GAS 公式 / 直伤定值 / 充能球）共用同一套缩放与伤害包管线**（2026-09-19 统一），通道差异只在 `base` 怎么算。治疗 = `(amount + 源 HealPower) × (1 + 连携)`，不受增伤影响。`MagicAttack` / `MagicDefense` 的消费公式已于 2026-09-21 落地（GAS 通道 `damageType: "Magical"` → `魔攻 − 魔防`，见 §14.5）。
+- **加算规则（2026-09-21 修订）**：`伤害 = base × (1 + Σ增伤 + Σ受到伤害增加) × (1 + 连携)`——**增伤与受伤增加一律加算，只有连携乘算**（权威表述见本文 §1.3）。**三条伤害通道（GAS 公式 / 直伤定值 / 充能球）共用同一套缩放与伤害包管线**（2026-09-19 统一），通道差异只在 `base` 怎么算。治疗 = `(amount + 源 HealPower × healPowerScale) × (1 + 连携)`，不受增伤影响；`healPowerScale`（2026-09-25）控制源回复量占比，缺省 1（全额），`0` = 不吃回复量（「回复 12 + 0% 回复量」）。`MagicAttack` / `MagicDefense` 的消费公式已于 2026-09-21 落地（GAS 通道 `damageType: "Magical"` → `魔攻 − 魔防`，见 §14.5）。
 - 注入红（chalux 被动2）：持有 `trait.chain_inject_red` 的角色打出的卡在统计上额外计入红属性（双属性卡 = 各属性 + 红各自计入）。
 - **黄计入蓝（冯·诺依曼 被动5，2026-09-23）**：持有 `trait.chain_yellow_counts_blue` 的角色打出**含黄属性**的卡牌时，在统计上额外计入**蓝属性**人头（"统计蓝属性时把黄属性牌也算进蓝属性"）。配 `applyScope: AllAllies` 即全队生效；两条注入（红 / 黄→蓝）在 `ChainCalculator.CardElementFlagsForCount` 内合并，**只影响人头统计**，加成侧仍按卡牌自身属性取档。
 
@@ -839,7 +848,7 @@ activeSkillChain: [
 
 #### 14.8.1 `PartyCountScaled`（`EMagnitudeKind`）（原 §8.1）
 
-`perCount × 队伍中命中筛选项的角色数`，筛选项为 `countElementAny`（元素）与 `countRaceAny`（种族），两者都配时取"且"。
+`perCount × 队伍中命中筛选项的角色数`，筛选项为 `countElementAny`（元素）与 `countRaceAny`（种族）；两者都配时**默认取"或"**（描述 `·` = 或），需要"且"时写 `matchAll: true`。
 
 - 人数统计**含自己**、**不封顶**、只算**已上阵**角色（队伍名单战斗内固定 → 最多 4 人）。
 - 实现：`BuffContainer` 接受一个自定义取值委托（`CharacterBattleInstance.ResolveCustomMagnitude`），队伍查询由 `PlayerTeamState` 在组队时注入；buff 修正随回合开始的重估自动刷新。
@@ -858,6 +867,31 @@ activeSkillChain: [
 - 新特征 **`trait.immune_seal`**（与 `trait.immune_slot_damage` 同模式）。
 - 实现：GE 挂上后 `GameplayEffectApplicator` 立刻摘掉授予 `combat.state.sealed` 的 Gameplay Effect——只抵消封印本身，同一 GE 的其它修饰/标签照常生效。
 
+#### 14.8.4 嘲讽（`Taunt`）（2026-09-25 新增）
+
+- 新属性 **`Taunt`**（内容侧 `attributes/Taunt.json`；buff 用 `Add` 叠加，数值越高越优先）。
+- 判定：敌方技能解析目标时，若合法目标里存在嘲讽值 > 0 的玩家角色，则**单体与随机**目标只从
+  "嘲讽值最高"的那些角色里取（并列时按槽位序）；没有嘲讽者时按原规则（槽位序 / 随机）。
+- 范围（`scope: All`）与队伍账本（`scope: Team`）**不受影响**——嘲讽吸引的是点名攻击，AOE 照常覆盖全队。
+- 配套内容约定：**敌方攻击技能必须声明 `targetOverride: { side: "Enemy", scope: "Single" }`**
+  （敌方视角的 `Enemy` = 玩家侧）。不写 `targetOverride` 会落到队伍账本（规格 §1.3 默认），
+  没有具体受击角色，嘲讽与受击钩子都无从判定；`slime_tackle` 已按此补齐。
+
+#### 14.8.5 受击钩子（`onDamaged`）（2026-09-25 新增）
+
+- 新钩子节点 **`onDamaged`**：持有者受到**敌方来源**的伤害时触发；中毒、手牌槽伤害等由持有者
+  自身结算（`source == target`）的来源不计入。
+- **批次语义**：一次敌方技能（`ExecuteEnemySkill`）为一个批次——批次内每次受击先记数
+  （`DamagePipeline.NotifyAfter` → `CombatSimulation.RecordDamagedPlayerHit`），**全部伤害结算完**
+  后按受击次数逐次触发钩子（`FlushOnDamagedHits`）。「受到 N 次伤害回复 N 次」即由此保证。
+- 治疗落点：玩家侧治疗只认队伍账本（§1.3），因此"受击回血"的钩子引用必须写 `hookTargets: "team"`。
+
+#### 14.8.6 队伍生命上限缩放（`TeamMaxHealthScaled`）（2026-09-25 新增）
+
+- 新 `EMagnitudeKind`：`flat + floor(队伍生命上限 × ratio)`，**在 buff 实例创建时取值一次并缓存**
+  （快照语义）：卡牌结算当场取数值，之后队伍生命上限变化不影响本实例（`BuffInstance._snapshotMagnitudes`）。
+- 用于「物理防御 +1，并叠加队伍生命上限 3% 的数值（向下取整，仅在卡牌结算时取值）」。
+
 ### 14.9 （空号：卡组属性预算）
 
 原扩展规格 §9「卡组属性预算」（一张卡 `stats.attributes` 折算总值 = 40 最大生命、1 点物攻 = 10 生命、对齐方式为保留最大生命削减物攻、chalux / 莱因哈特各卡数值）归「内容与数据规格」。本文只在 §11.7 保留 充能球规格 §7 的原文表述，**数值预算单由内容规格维护**。
@@ -875,7 +909,7 @@ activeSkillChain: [
 
 > 原表的 费 / 类型 / 属性贡献 / 优先级 四列属卡牌数值预算，归「内容与数据规格」（原 §9）；本节只保留与战斗机制直接相关的效果描述。
 
-主动技「黄潮号令」`reinhardt_yellow_tide_command`：黄属性·动物的友方角色 2 回合物攻 +15（`targetFilter` 双筛选取"且"）；自身 2 回合 100% 追打。
+主动技「黄潮号令」`reinhardt_yellow_tide_command`：黄属性·动物的友方角色 2 回合物攻 +15（`targetFilter` 双筛选按描述约定取"或"：黄 或 动物）；自身 2 回合 100% 追打。
 
 **四条潜能被动（0 / 10 / 30 / 50）**（2026-09-24 删除原 P5「群猎本能」普攻伤害 +50% 与 P6「一掷千金」主动技后随机手牌费用 0）：
 
@@ -937,7 +971,7 @@ activeSkillChain: [
 | 机制 | 说明 |
 |---|---|
 | `OrbDamageScale` + `elementMask` | 球伤害增加的**两参数**写法：掩码 0 = 所有球（含物理/魔法球），否则为 `EElement` 位掩码（15 = 四色属性球，4 = 仅绿球）。带掩码的修正按元素拆成 `OrbDamageScale:<Element>` 分别记账，球结算时只吃自己那一份 |
-| `condition.partyMinCount` + `partyElementAny` / `partyRaceAny` | 队伍人数门闩：命中筛选的上阵角色数 ≥ 阈值时满足；与持有者维度取"且"，只配人数时完全由人数决定 |
+| `condition.partyMinCount` + `partyElementAny` / `partyRaceAny` | 队伍人数门闩：命中筛选的上阵角色数 ≥ 阈值时满足；与持有者维度取"且"，只配人数时完全由人数决定。**人数筛选自身的元素/种族维度默认取"或"**（描述 `·` = 或；`matchAll: true` 取且，与持有者维度共用同一开关） |
 | `onOrbTriggered` | 充能球触发结算后，对参与产球的角色（去重）各触发一次 |
 | `oncePerTurn`（钩子参数） | 同一 buff 实例的同一效果每回合只触发一次，回合开始清账 |
 | `onCardExecutionEnd` | 本回合全部卡牌结算结束后触发一次（普攻之前） |
@@ -1023,15 +1057,16 @@ mod 侧统一入口是 `Src\mod\combat\effects\DamageScaling.cs`（直伤 / 普�
 | P1 | `trait.immune_slot_storm`（免疫暴风，见 §13.2） |
 | P2 | **连携治愈（2026-09-24 改版，原「连携反击伤害」）**：`onCardSettled` + 钩子引用 `hookTargets: "team"` → 效果 `von_neumann_p2_fate_mending`（`kind: Heal`，`amount: 6`，`conditions: ChainTierAtLeast{tier:2}`）——条件成立时按**队伍共享账本**回 6 + 100% 自身治疗量（`ApplyHeal` 本就加算源 `HealPower`；proc 在单卡结算区间之外，因此不吃连携缩放） |
 | P3 | `onWaveStart` + `onTurnStart(turnInterval:10)`：技能进度 +1（自身）/ **+2（红属性角色）** / +2（人类）/ +2（学术），走 `GainResource resource:skillcounter` + `targetFilter`（2026-09-24 元素维度由蓝改红，与其红属性身份一致） |
-| P4 | `AllAllies` + 条件 `{ elementAny:[Red], raceAny:[Human,Academic], matchAll:true }`：魔攻 +3 / 治疗 +3 / 最大生命 +20。**翻倍层已接通（2026-09-24）**：载体的 `onApply` 钩子经效果 `von_neumann_p4_double_layer` 投放 `von_neumann_passive_p4_double`（同条件 + `partyMinCount: 1` + `partyRaceAny: [Machine]`）——队伍里出现机械族时该层自动醒来 → 效果翻倍（魔攻 +6 / 治疗 +6 / 最大生命 +40）；没有机械族时它照常挂着但休眠（不参与聚合、不显示图标）。 |
+| P4 | `AllAllies` + 条件 `{ elementAny:[Red], raceAny:[Human,Academic] }`（描述 `·` = 或：红 或 人类 或 学术）：魔攻 +3 / 治疗 +3 / 最大生命 +20。**翻倍层已接通（2026-09-24）**：载体的 `onApply` 钩子经效果 `von_neumann_p4_double_layer` 投放 `von_neumann_passive_p4_double`（同条件 + `partyMinCount: 1` + `partyRaceAny: [Machine]`）——队伍里出现机械族时该层自动醒来 → 效果翻倍（魔攻 +6 / 治疗 +6 / 最大生命 +40）；没有机械族时它照常挂着但休眠（不参与聚合、不显示图标）。 |
 
 > **家族筛选口径＝「红属性·人类·学术」（2026-09-24 定案）**：冯·诺依曼改红属性后，本节涉及的四处筛选（P4 载体、翻倍层、领域的两份 protect buff）与**图灵**的两处（`turing_apply_algorithm_alpha`、`turing_radix_advance_ally`，见 §15.3）统一由「蓝属性·人类·学术」改为「红属性·人类·学术」。
+> **2026-09-25 补充**：描述里的 `·` = 或，因此这些筛选一律按「红 **或** 人类 **或** 学术」判定（跨维度默认取或；需要"且"必须显式写 `matchAll: true`）。
 > 现在的相互覆盖关系：冯·诺依曼（红·人类·学术）**吃自己的 P4 光环与领域减伤**；图灵的「术演算法-α / 谜题-进制II」推进的是**红·人类·学术**队友（即冯·诺依曼）。冯·诺依曼 P3 的元素档也一并由"蓝属性角色 +2"改为**"红属性角色 +2"**（效果 `von_neumann_p3_boost_red`）；仍按蓝属性筛选的只剩**图灵 P3** 的"蓝属性角色 +1"——那是图灵自己的逐维度进度泵（与其蓝属性身份一致），不属家族筛选。
 
 主动技「命结推算」`von_neumann_fate_reckoning`（`targetOverride: Self/Self`，标签 `active`）三段动作：
 
 1. `von_neumann_open_domain` —— `SetDomain{gameplayEffectId: von_neumann_fate_domain, turns: 2}`；
-2. `von_neumann_domain_protect_ally` —— 给自身挂 `von_neumann_fate_domain_protect_ally`（`AllAllies` + 蓝·人类·学术条件，`DamageTakenScale -0.5`，2 回合）；
+2. `von_neumann_domain_protect_ally` —— 给自身挂 `von_neumann_fate_domain_protect_ally`（`AllAllies` + 红·人类·学术条件（描述 `·` = 或），`DamageTakenScale -0.5`，2 回合）；
 3. `von_neumann_domain_protect_enemy` —— `hookTargets: "allEnemies"` 挂 `von_neumann_fate_domain_protect_enemy`（同条件，敌人侧按 `EnemyDto.race` 判定）。
 
 > 世界观/数值口径：`DamageTakenScale -0.5` 在"增伤与受伤增加一律加算"的桶里就是**受到全伤害减半**（§1.3 / §14.11.2），会与其它增伤/减伤线性叠加。
@@ -1054,18 +1089,52 @@ mod 侧统一入口是 `Src\mod\combat\effects\DamageScaling.cs`（直伤 / 普�
 | 械想的起始 `turing_mechanical_origin` | Weak | 2 / 30 | `ApplyBuff` → `turing_attack_down`（`PhysicalAttack Add -6`，2 回合，敌方单体） |
 | 限能算解 `turing_limit_energy_solution` | Weak | 2 / 30 | `ApplyBuff` → `turing_damage_taken_up`（`DamageTakenScale Add +0.25`，2 回合；"受到全伤害 +25%"即加算桶里的 +25%） |
 | 新机换转 `turing_machine_shift` | Magical | 3 / 10 | `ApplyGameplayEffect` → `turing_machine_shift_damage`（`Amount: 12` + `damageType: Magical` + `element: Blue`，即 12 + 100% 魔攻 − 目标魔防），随后 `ApplyBuff` → `turing_magic_def_down`（`MagicDefense Add -6`，2 回合） |
-| 术演算法-α `turing_algorithm_alpha` | Support | 1 / 20 | `ApplyBuff` → `turing_algorithm_alpha_mark`，目标由 `targetFilter{ elementAny:[Red], raceAll:[Human,Academic], excludeSelf:true }` 重解析（卡面 targetSide 仍是 Self/Self）；标记的 `onApply` 钩子跑 `GainResource{resource: skillcounter, amount: 1}` |
+| 术演算法-α `turing_algorithm_alpha` | Support | 1 / 20 | `ApplyBuff` → `turing_algorithm_alpha_mark`，目标由 `targetFilter{ elementAny:[Red], raceAny:[Human,Academic], excludeSelf:true }` 重解析（描述 `·` = 或：红 或 人类 或 学术；卡面 targetSide 仍是 Self/Self）；标记的 `onApply` 钩子跑 `GainResource{resource: skillcounter, amount: 1}` |
 
 - **"不叠加"的实现**：标记 buff 写 `durationType: Turns` / `duration: 1` / `stackRule: Refresh`。`Refresh` 命中已有实例时只重置时长、**不重发 `onApply`**（§13.1.3 叠层），因此同一回合内重复投放只推进一次技能进度；回合结束标记到期移除，下个回合可再次推进。
-- 承接本轮的通用机制：`targetFilter` 的两个新键 `excludeSelf` / `raceAll` 见 §13.1.1；`GainResource{resource: skillcounter}` 与"经 buff 钩子投放给匹配队友"沿用 §15.2 P3 的口径（技能动作的 `GainResource` 不吃 `targetFilter`）。
+- 承接本轮的通用机制：`targetFilter` 的两个键 `excludeSelf` / `raceAny` 见 §13.1.1（描述 `·` = 或，跨维度默认取或）；`GainResource{resource: skillcounter}` 与"经 buff 钩子投放给匹配队友"沿用 §15.2 P3 的口径（技能动作的 `GainResource` 不吃 `targetFilter`）。
 - 技能进度口径：`SkillCounterCap` = 主动链各档 cooldown 之和（无主动链为 0），因此"推进"只对队伍里**有主动技**的角色可见收益（§5.1）。
 
 主动技「谜题-进制II」`turing_puzzle_radix_ii`（`targetOverride: Self/Self`，标签 `active`）两段动作：
 
 1. `turing_radix_apply_weaken` —— `hookTargets: "allEnemies"` 挂 `turing_radix_weaken`（`PhysicalAttack -30` + `MagicAttack -30`，1 回合）；
-2. `turing_radix_advance_ally` —— `targetFilter{ elementAny:[Red], raceAll:[Human,Academic], excludeSelf:true }` 挂 `turing_radix_advance_mark`（1 回合 / `Refresh`，`onApply` → `GainResource{skillcounter, 1}`）。
+2. `turing_radix_advance_ally` —— `targetFilter{ elementAny:[Red], raceAny:[Human,Academic], excludeSelf:true }` 挂 `turing_radix_advance_mark`（1 回合 / `Refresh`，`onApply` → `GainResource{skillcounter, 1}`）。
 
 > 主动技与卡「术演算法-α」**各持一份标记**：两个来源在同一回合各自推进 1 次。卡面的"（不叠加）"只约束这张卡自己（同一张卡重复投放因 `Refresh` 不重发 `onApply` 而只推进一次）。
+
+### 15.4 角色内容（`betelgeuse` 参宿四）（2026-09-25）
+
+红 / **Guard**（守护者）/ **天文·未知**（双种族位标志）；能量 8/3；`cards` = 四张专属卡（初始卡组即这四张）；
+主动技**三档**蓄力链 `[猎户座α ×6, 充能II ×4, 充能III ×6]`（Cap = 16）。
+
+**四条潜能被动（0 / 10 / 30 / 50）**：
+
+| 被动 | 实现 |
+|---|---|
+| P1 免疫封印 | `trait.immune_seal`（§14.8.3） |
+| P2 星穹庇护 | `applyScope: AllAllies` + 条件 `{elementAny:[Red], raceAny:[Astronomy, Unknown]}`（描述 `·` = 或：**红 或 天文 或 未知**，含自身）：物防/魔防 +15 |
+| P3 引力牵引 | `Taunt Add +5`（自身；敌方点名攻击优先命中，§14.8.4） |
+| P4 受击回响 | `onDamaged`（§14.8.5）→ `Heal{amount:12, healPowerScale:0, hookTargets:"team"}`：本批次每受击 1 次回复 12 点（不吃回复量） |
+
+**主动技三档**（`targetOverride: Self/Self`，标签 `active`；"己方全体"的抽取/增益走 `hookTargets: "allies"`，§13.1.1）：
+
+| 档 | 技能 | CD | 效果 |
+|---|---|---|---|
+| 1 | 猎户座α `betelgeuse_orion_alpha` | 6 | 己方全体 1 回合【抽卡 +3】（`ModifyDrawCount{amount:3}`） |
+| 2 | 猎户座α·充能II `betelgeuse_charge_two` | 4 | 己方全体 1 回合【抽卡 +3，物防·魔防 +15】 |
+| 3 | 猎户座α·充能III `betelgeuse_charge_three` | 6 | 自身技能进度 +6（`GainResource{resource:skillcounter}`）；己方全体 1 回合【抽卡 +4，物防·魔防 +40】 |
+
+**四张专属卡**（费 / 优先级 / 效果；卡组属性贡献见内容规格 §15.3）：
+
+| 卡 | 费 / 优先 | 效果 |
+|---|---|---|
+| 干涉·赤红矩阵 `betelgeuse_crimson_matrix` | 2 / 30 | 己方全体 2 回合【物防 +12，抽卡 +1】 |
+| 掩星·不可预知 `betelgeuse_occulation` | 3 / 30 | 己方全体 2 回合【物防·魔防 +15，抽卡 +2】 |
+| 真见·吞食天地 `betelgeuse_devour_the_heavens` | 3 / 30 | 自身 3 回合【嘲讽 +3，物防·魔防 +30】 |
+| 操控·键闭 `betelgeuse_key_closure` | 1 / 21 | 己方全体 2 回合【物防 +1，并叠加队伍生命上限 3% 的数值（向下取整，结算时取快照，§14.8.6）】 |
+
+> 抽卡口径沿用 §4.2/§4.3：`ModifyDrawCount` 只投放"下一次抽牌步骤"的修正（同向取最大、不叠加），
+> 卡面的"N 回合"约束的是防御类 buff 的时长。
 
 ---
 

@@ -44,6 +44,12 @@ public sealed class BuffInstance
     private readonly HashSet<string> _firedThisWave = new(StringComparer.Ordinal);
 
     /// <summary>
+    /// <see cref="EMagnitudeKind.TeamMaxHealthScaled"/> 的快照值（按 MagnitudeDefDto 实例缓存）：
+    /// 首次求值即结算当场，之后不随队伍生命上限变化。
+    /// </summary>
+    private readonly Dictionary<MagnitudeDefDto, float> _snapshotMagnitudes = [];
+
+    /// <summary>
     /// <see cref="EBuffDurationType.Turns"/> 下**每层各自的剩余回合**（2026-09-24）：
     /// <c>stackRule: Add</c> 叠层时新层从完整时长起算、旧层不受影响（"持续时间各自独立计算"），
     /// 层随时间逐层脱落；<see cref="RemainingTurns"/> 取其最大值供 UI 显示。
@@ -210,18 +216,35 @@ public sealed class BuffInstance
 
     /// <summary>
     /// buff 修正幅度支持 Scalar / SetByCaller（取自挂载参数）/ PartyCountScaled（走容器的自定义取值，
-    /// 需要队伍视角）；AttributeBased 与其余 Custom 按 0 处理。
+    /// 需要队伍视角）/ TeamMaxHealthScaled（创建时取一次队伍生命上限并缓存，之后不随变）；
+    /// AttributeBased 与其余 Custom 按 0 处理。
     /// </summary>
-    private float EvaluateMagnitude(MagnitudeDefDto magnitudeDef) => magnitudeDef.Kind switch
+    private float EvaluateMagnitude(MagnitudeDefDto magnitudeDef)
     {
-        EMagnitudeKind.Scalar => magnitudeDef.Scalar,
-        EMagnitudeKind.SetByCaller when Params is not null &&
-            !string.IsNullOrWhiteSpace(magnitudeDef.CallerName) &&
-            Params.TryGetValue(magnitudeDef.CallerName, out var value) &&
-            float.TryParse(value.ToString(), out var parsed) => parsed,
-        EMagnitudeKind.PartyCountScaled => _magnitudeResolver?.Invoke(magnitudeDef) ?? 0f,
-        _ => 0f,
-    };
+        switch (magnitudeDef.Kind)
+        {
+            case EMagnitudeKind.Scalar:
+                return magnitudeDef.Scalar;
+            case EMagnitudeKind.SetByCaller when Params is not null &&
+                !string.IsNullOrWhiteSpace(magnitudeDef.CallerName) &&
+                Params.TryGetValue(magnitudeDef.CallerName, out var value) &&
+                float.TryParse(value.ToString(), out var parsed):
+                return parsed;
+            case EMagnitudeKind.PartyCountScaled:
+                return _magnitudeResolver?.Invoke(magnitudeDef) ?? 0f;
+            case EMagnitudeKind.TeamMaxHealthScaled:
+                // 快照语义：第一次求值（挂载/结算当场）取值一次，之后队伍生命上限变化不影响本实例。
+                if (!_snapshotMagnitudes.TryGetValue(magnitudeDef, out var snapshot))
+                {
+                    snapshot = _magnitudeResolver?.Invoke(magnitudeDef) ?? 0f;
+                    _snapshotMagnitudes[magnitudeDef] = snapshot;
+                }
+
+                return snapshot;
+            default:
+                return 0f;
+        }
+    }
 
     private int? ReadIntParam(string key)
     {

@@ -455,9 +455,11 @@ public sealed class CombatEffectExecutor
     {
         var amount = ReadFloat(parameters, "amount", 0f);
         // 治疗吃源侧治疗强度（与伤害加 100% 源物攻同构），再吃连携加成；DamageDealtScale 不影响治疗。
+        // healPowerScale（2026-09-25）：治疗强度占比，缺省 1（全额）；0 = 不吃回复量（「回复 12 + 0% 回复量」）。
+        var healPowerScale = MathF.Max(0f, ReadFloat(parameters, "healPowerScale", 1f));
         var sourceHealPower =
             CombatGasBridge.ResolveTargetAsc(sim, source)?.GetCurrentValue(AttributeIds.HealPower) ?? 0f;
-        amount = MathF.Max(0f, amount + sourceHealPower);
+        amount = MathF.Max(0f, amount + sourceHealPower * healPowerScale);
         if (sim.CurrentChainBonus > 0f)
             amount *= 1f + sim.CurrentChainBonus;
         var healableTargets = RejectSlotHealTargets(sim, targets);

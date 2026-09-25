@@ -214,4 +214,40 @@ card.von_neumann_merge_fusion.name,和谐的步进融合,Harmonious Stepwise Fus
 skill.von_neumann_merge_fusion.name,和谐的步进融合,Harmonious Stepwise Fusion
 skill.von_neumann_merge_fusion.desc,对单个敌人造成 6 + 100% 回复量的红属性魔法伤害；为己方回复其中 10% 伤害量的生命。,Deal 6 + 100% Heal Power as Red magic damage to a single enemy; heal the party for 10% of the damage dealt.
 ge.von_neumann_merge_fusion.name,步进融合伤害,Stepwise Fusion Damage
+char.betelgeuse.name,参宿四,Betelgeuse
+attr.taunt.name,嘲讽,Taunt
+card.betelgeuse_crimson_matrix.name,干涉·赤红矩阵,Interference: Crimson Matrix
+skill.betelgeuse_crimson_matrix.name,干涉·赤红矩阵,Interference: Crimson Matrix
+skill.betelgeuse_crimson_matrix.desc,己方全体 2 回合【物理防御 +12，抽卡 +1】。,Grant all allies +12 P.Def and +1 draw for 2 turns.
+buff.betelgeuse_crimson_matrix.name,赤红矩阵,Crimson Matrix
+buff.betelgeuse_crimson_matrix.desc,物理防御 +12，持续 2 回合。,P.Def +12 for 2 turns.
+card.betelgeuse_occulation.name,掩星·不可预知,Occultation: Unpredictable
+skill.betelgeuse_occulation.name,掩星·不可预知,Occultation: Unpredictable
+skill.betelgeuse_occulation.desc,己方全体 2 回合【物理防御·魔法防御 +15，抽卡 +2】。,Grant all allies +15 P.Def and M.Def and +2 draws for 2 turns.
+buff.betelgeuse_occulation.name,掩星,Occultation
+buff.betelgeuse_occulation.desc,物理防御与魔法防御 +15，持续 2 回合。,P.Def and M.Def +15 for 2 turns.
+card.betelgeuse_devour_the_heavens.name,真见·吞食天地,True Sight: Devour the Heavens
+skill.betelgeuse_devour_the_heavens.name,真见·吞食天地,True Sight: Devour the Heavens
+skill.betelgeuse_devour_the_heavens.desc,自身 3 回合【嘲讽 +3，物理防御·魔法防御 +30】。,Grant self +3 Taunt and +30 P.Def and M.Def for 3 turns.
+buff.betelgeuse_devour.name,吞食天地,Devouring Heavens
+buff.betelgeuse_devour.desc,嘲讽 +3，物理防御与魔法防御 +30，持续 3 回合。,Taunt +3 · P.Def and M.Def +30 for 3 turns.
+card.betelgeuse_key_closure.name,操控·键闭,Manipulation: Key Closure
+skill.betelgeuse_key_closure.name,操控·键闭,Manipulation: Key Closure
+skill.betelgeuse_key_closure.desc,己方全体 2 回合【物理防御 +1，并叠加队伍生命上限 3% 的数值（向下取整，仅在卡牌结算时取值）】。,Grant all allies +1 P.Def plus 3% of the party Max HP (rounded down — snapshotted when the card resolves) for 2 turns.
+buff.betelgeuse_key_closure.name,键闭,Key Closure
+buff.betelgeuse_key_closure.desc,物理防御 +1 并叠加队伍生命上限 3%（向下取整），持续 2 回合。,P.Def +1 plus 3% of the party Max HP (rounded down) for 2 turns.
+skill.betelgeuse_orion.name,猎户座α,Orion α
+skill.betelgeuse_orion.desc,己方全体 1 回合【抽卡 +3】。,Grant all allies +3 draws for 1 turn.
+skill.betelgeuse_charge_two.name,猎户座α·充能II,Orion α: Charge II
+skill.betelgeuse_charge_two.desc,己方全体 1 回合【抽卡 +3，物理防御·魔法防御 +15】。,Grant all allies +3 draws and +15 P.Def and M.Def for 1 turn.
+skill.betelgeuse_charge_three.name,猎户座α·充能III,Orion α: Charge III
+skill.betelgeuse_charge_three.desc,自身技能进度 +6；己方全体 1 回合【抽卡 +4，物理防御·魔法防御 +40】。,Gain 6 skill progress; grant all allies +4 draws and +40 P.Def and M.Def for 1 turn.
+buff.betelgeuse_orion_guard_15.name,猎户座α·充能II,Orion α: Charge II
+buff.betelgeuse_orion_guard_15.desc,物理防御与魔法防御 +15，持续 1 回合。,P.Def and M.Def +15 for 1 turn.
+buff.betelgeuse_orion_guard_40.name,猎户座α·充能III,Orion α: Charge III
+buff.betelgeuse_orion_guard_40.desc,物理防御与魔法防御 +40，持续 1 回合。,P.Def and M.Def +40 for 1 turn.
+buff.betelgeuse_p1.desc,自身免疫封印。,Immune to Seal.
+buff.betelgeuse_p2.desc,红属性·天文·未知角色的物理防御与魔法防御 +15。,Red · Astronomy · Unknown characters gain +15 P.Def and M.Def.
+buff.betelgeuse_p3.desc,自身嘲讽 +5。,Self Taunt +5.
+buff.betelgeuse_p4.desc,受到攻击后按本批次受击次数回复生命（每次 12 点，不吃回复量加成）。,After being attacked heal 12 HP per hit (damage is fully resolved first; does not scale with Heal Power).
 

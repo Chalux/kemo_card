@@ -8,7 +8,7 @@
   "stats": {
     "attributes": {
       "MaxHealth": 20,
-      "MagicAttack": 2
+      "PhysicalDefense": 2
     }
   },
   "role": "Controller",

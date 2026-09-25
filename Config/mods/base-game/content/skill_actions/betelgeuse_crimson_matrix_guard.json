@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "betelgeuse_crimson_matrix_guard", "hookTargets": "allies" }
+}
