@@ -4,10 +4,10 @@
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffListCmp.tscn" id="2_buffs"]
 
 [node name="ActorInfoCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblMeta", "_lblEnergy", "_lblSkill", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState", "_lblMark", "_buffs")]
-custom_minimum_size = Vector2(230, 0)
+custom_minimum_size = Vector2(210, 0)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 230.0
+offset_right = 210.0
 offset_bottom = 210.0
 mouse_filter = 2
 script = ExtResource("1_script")

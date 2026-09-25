@@ -4,10 +4,10 @@
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
 [node name="OrbQueueCmp" type="Control" node_paths=PackedStringArray("_slots", "_lblCount", "_lblHint", "_btnTrigger", "_margin")]
-custom_minimum_size = Vector2(200, 0)
+custom_minimum_size = Vector2(184, 0)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 200.0
+offset_right = 184.0
 offset_bottom = 170.0
 mouse_filter = 2
 script = ExtResource("1_script")
@@ -109,7 +109,7 @@ mouse_filter = 0
 color = Color(0.827, 0.757, 0.627, 1)
 
 [node name="Hint" type="Label" parent="Margin/VBox"]
-custom_minimum_size = Vector2(176, 0)
+custom_minimum_size = Vector2(150, 0)
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"Caption"

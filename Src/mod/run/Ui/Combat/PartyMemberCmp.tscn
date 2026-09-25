@@ -3,11 +3,11 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/PartyMemberCmp.cs" id="1_script"]
 
 [node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState", "_lblMark")]
-custom_minimum_size = Vector2(0, 118)
+custom_minimum_size = Vector2(0, 104)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 240.0
-offset_bottom = 118.0
+offset_bottom = 104.0
 script = ExtResource("1_script")
 _lblName = NodePath("Margin/VBox/Header/Name")
 _lblAttack = NodePath("Margin/VBox/Grid/AttackValue")

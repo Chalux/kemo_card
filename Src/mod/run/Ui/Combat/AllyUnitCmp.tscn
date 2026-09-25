@@ -4,11 +4,11 @@
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/CharacterPresenter.tscn" id="2_presenter"]
 
 [node name="AllyUnitCmp" type="Control" node_paths=PackedStringArray("_presenter", "_lblName", "_lblState", "_highlight")]
-custom_minimum_size = Vector2(120, 170)
+custom_minimum_size = Vector2(112, 160)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 120.0
-offset_bottom = 170.0
+offset_right = 112.0
+offset_bottom = 160.0
 script = ExtResource("1_script")
 _presenter = NodePath("Presenter")
 _lblName = NodePath("Name")

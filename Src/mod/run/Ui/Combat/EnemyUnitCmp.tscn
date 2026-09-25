@@ -6,11 +6,11 @@
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffListCmp.tscn" id="4_buffs"]
 
 [node name="EnemyUnitCmp" type="Control" node_paths=PackedStringArray("_presenter", "_lblName", "_hp", "_buffs", "_highlight")]
-custom_minimum_size = Vector2(140, 230)
+custom_minimum_size = Vector2(128, 212)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 140.0
-offset_bottom = 230.0
+offset_right = 128.0
+offset_bottom = 212.0
 script = ExtResource("1_script")
 _presenter = NodePath("Presenter")
 _lblName = NodePath("Name")
