@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://dfkgx3jci17w8" path="res://Src/mod/global/Ui/VirtualList.cs" id="3_vlist"]
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="4_carditem"]
 
-[node name="RunCharacterDeckDlg" type="Control" unique_id=1670807035 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_lblDeckCaption", "_deckTabs", "_btnNewDeck", "_lblDeckCount", "_deckList", "_lblPoolCaption", "_poolList", "_btnDeploy", "_lblStatus")]
+[node name="RunCharacterDeckDlg" type="Control" unique_id=1670807035 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_lblDeckCaption", "_deckTabs", "_btnNewDeck", "_lblDeckCount", "_deckList", "_lblPoolCaption", "_poolList", "_btnDeploy", "_lblStatus", "_passiveBox", "_rtPassives")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -24,6 +24,8 @@ _lblPoolCaption = NodePath("Layout/Content/VBox/Body/Right/LblPoolCaption")
 _poolList = NodePath("Layout/Content/VBox/Body/Right/PoolList")
 _btnDeploy = NodePath("Layout/Rail/Margin/VBox/BtnDeploy")
 _lblStatus = NodePath("Layout/Rail/Margin/VBox/LblStatus")
+_passiveBox = NodePath("Layout/Rail/Margin/VBox/PassiveBox")
+_rtPassives = NodePath("Layout/Rail/Margin/VBox/PassiveBox/VBox/RTPassives")
 
 [node name="Bg" type="Panel" parent="." unique_id=899097034]
 layout_mode = 1
@@ -76,6 +78,33 @@ layout_mode = 2
 theme_type_variation = &"Caption"
 text = "UI_TEAM_HINT_CLICK_OR_HOLD"
 autowrap_mode = 3
+
+[node name="PassiveBox" type="PanelContainer" parent="Layout/Rail/Margin/VBox"]
+custom_minimum_size = Vector2(0, 320)
+layout_mode = 2
+theme_type_variation = &"SunkenContainer"
+
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin/VBox/PassiveBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LblPassivesCaption" type="Label" parent="Layout/Rail/Margin/VBox/PassiveBox/VBox"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = "UI_CHARACTER_PASSIVES_TITLE"
+
+[node name="RTPassives" type="RichTextLabel" parent="Layout/Rail/Margin/VBox/PassiveBox/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 13
+theme_override_font_sizes/bold_font_size = 13
+theme_override_font_sizes/bold_italics_font_size = 13
+theme_override_font_sizes/italics_font_size = 13
+theme_override_font_sizes/mono_font_size = 13
+bbcode_enabled = true
+fit_content = false
+scroll_active = true
 
 [node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox" unique_id=643311015]
 layout_mode = 2

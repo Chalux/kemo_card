@@ -4,6 +4,7 @@ using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Run;
 using KemoCard.Mod.Run.Events;
+using KemoCard.Mod.Run.Potential;
 using KemoCard.Mod.Run.Team;
 using KemoCard.Ui.Tests.Combat;
 using NUnit.Framework;
@@ -127,6 +128,63 @@ public sealed class RunTeamEditServiceTests
         Assert.That(service.UnassignSlot(0).Ok, Is.True);
         Assert.That(service.GetSlots()[0].InstanceId, Is.Null);
         Assert.That(service.UnassignSlot(0).MessageKey, Is.EqualTo("UI_TEAM_SLOT_ALREADY_EMPTY"));
+    }
+
+    #endregion
+
+    #region 被动视图
+
+    [Test]
+    public void Passives_view_reports_thresholds_unlock_state_and_desc()
+    {
+        var registry = CombatTestHelper.CreateFullRegistry(
+            cards: new Dictionary<string, CardDto>
+            {
+                [CombatSimulationTestBuilder.PartyHpCardId] = new()
+                {
+                    Id = CombatSimulationTestBuilder.PartyHpCardId,
+                    Stats = new CardStatBlockDto { HpCap = 10 },
+                },
+            },
+            buffs: new Dictionary<string, BuffDto>(StringComparer.Ordinal)
+            {
+                ["buff.p1"] = new() { Id = "buff.p1", DescId = "buff.p1.desc" },
+                ["buff.p2"] = new() { Id = "buff.p2", DescId = "buff.p2.desc" },
+            });
+
+        var controller = new RunController(new RunMod { MaxRing = 5 });
+        controller.CreateRun(StoryId, new HostRng(20260921, "test"), [], isMultiplayer: false);
+        controller.AddToCharacterPool(new CharacterInstance(
+            new CharacterDto
+            {
+                Id = "hero_passive",
+                Cards = [CombatSimulationTestBuilder.PartyHpCardId],
+                Passives =
+                [
+                    new PassiveRefDto { BuffId = "buff.p1", RequiredPotential = 0 },
+                    new PassiveRefDto { BuffId = "buff.p2", RequiredPotential = 10 },
+                ],
+            },
+            "inst-passive"));
+
+        var service = new RunTeamEditService(controller, registry);
+
+        var passives = service.GetPassives("inst-passive");
+        Assert.That(passives, Has.Count.EqualTo(2), "展示顺序 = 定义声明顺序");
+        Assert.That(passives[0].RequiredPotential, Is.EqualTo(0));
+        Assert.That(passives[0].Unlocked, Is.True, "门槛 0 默认解锁");
+        Assert.That(passives[0].DescriptionId, Is.EqualTo("buff.p1.desc"));
+        Assert.That(passives[1].Unlocked, Is.False);
+        Assert.That(passives[1].DescriptionId, Is.EqualTo("buff.p2.desc"));
+
+        // 团队潜能入账 → 解锁第二条：解锁状态与战斗挂载共用 PotentialService 判定。
+        var potential = new PotentialService(controller.State);
+        potential.Grant(10);
+        var character = service.FindCharacter("inst-passive")!;
+        Assert.That(potential.TryUnlock(0, character, character.Definition!.Passives[1]).Success, Is.True);
+
+        Assert.That(service.GetPassives("inst-passive")[1].Unlocked, Is.True, "消费潜能后转为已解锁");
+        Assert.That(service.GetPassives("inst.missing"), Is.Empty, "未知实例返回空列表");
     }
 
     #endregion

@@ -889,12 +889,15 @@ UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
 - **顶部 4 个槽位选项卡**（`TabBar`）：标题 = 「槽位 N」+（已上阵时）角色名；点击切换当前槽位。
 - **左：当前上阵**：该槽角色的头像件（`BaseCharacterItem`）+「下阵」按钮（清空槽位；开战前由 `ValidateParty` 校验满编）。
 - **中：可上阵角色**（`VirtualList` + `BaseCharacterItem` 模板）：显示**全部**角色池实例；已在其它槽上阵的加「已在槽位 N」徽标。
-- **右：详细信息预览**：`CharacterPresenter` 立绘/动画 + 名字 + 元素/种族/职业 + **由当前卡组换算的属性**（`ComputeAttributeMap`）+ 卡组缩略（水平 `VirtualList` + `BaseCardItem`）。属性名走内容侧翻译键 `attr.<snake_case>.name`，缺键时回落原始 id。
+- **右：详细信息预览**：`CharacterPresenter` 立绘/动画 + 名字 + 元素/种族/职业 + **由当前卡组换算的属性**（`ComputeAttributeMap`）+ 卡组缩略（水平 `VirtualList` + `BaseCardItem`，**悬停显示卡牌摘要**、单击打开详情）。属性名与展示顺序走 Global 的 `AttributeLabels`（`attr.<snake_case>.name`，缺键回落原始 id；核心属性在前；2026-09-25 起与卡牌详情的「卡组属性加成」共用同一口径，见 Global 规格 §12.4）。
 - **悬停**任一角色头像刷新预览（离开时清空 -> 回落为显示当前槽位角色）；**单击**进入二级界面。
 
 ### 12.4 二级界面（角色 → 卡组 / 上阵）（原 §4）
 
 - 顶部：角色名标题 +「新建卡组」+ **卡组选项卡**（多套卡组，`CharacterInstance.Decks` ≤ 10 套 + `CurrentDeckIndex`），切页签即切换当前卡组。
+- 左栏（Rail）：角色名标题、操作提示、**潜能被动区**（2026-09-25 新增）、状态文案、上阵 / 关闭。
+  被动区取 `RunTeamEditService.GetPassives`（门槛 + 解锁状态 + 描述键），文案口径 `PassiveTextBuilder`（与角色详情共用，见 Global 规格 §12.5）；
+  固定在左栏中部、内容超高时内部滚动（`RichTextLabel.scroll_active`），**没有被动的角色整块隐藏**；解锁状态与开战挂载共用 `PotentialService.IsPassiveUnlocked`。
 - 左：当前卡组的卡片（`BaseCardItem`）——**单击移出卡组**、**长按查看卡牌详情**；显示 `n/上限` 计数与"有 N 张牌当前不可用"的校验提示。
 - 右：可加入卡牌池 = **收藏 ∪ 角色专属卡**（`GetBuildableCardIds`，与 `DeckPreset` 校验同集合）——**单击加入**、**长按看详情**。
   **已在当前卡组内的牌必须显式标出**：`RunTeamEditService.GetPoolCards` 逐条给出 `InDeck`，界面据此给卡面加
@@ -1022,14 +1025,21 @@ Run 层自身仍然不直接访问内容注册表。
 ```
 CombatWin
 ├─ Bg (PageBg)
-└─ Root (VBox)
-   ├─ ItemBanner        预留道具横幅：空 HBox `ItemSlots`，道具系统接入时填充
-   ├─ Middle (HBox)
-   │  ├─ PartyRail      HpBarCmp（队伍总血 SharedHp/MaxHp）+ 3 × PartyMemberCmp（非当前操控角色）
-   │  ├─ Stage          左：4 × AllyUnitCmp；右：EnemyUnitCmp × 敌人数（动态实例化）
-   │  └─ RightRail      BtnPause + OrbQueueCmp（充能球）
-   └─ BottomBar (HBox)  ActorInfoCmp | CardPileCmp(卡组) | 5 × HandSlotCmp | CardPileCmp(墓地) | BtnPlayConfirm / BtnConfirm
+└─ FitScale (FitScaleBox：四边 16/12 安全留白；空间不足时整体等比缩小并居中)
+   └─ Root (VBox)
+      ├─ ItemBanner        预留道具横幅：空 HBox `ItemSlots`，道具系统接入时填充
+      ├─ Middle (HBox)
+      │  ├─ PartyRail      HpBarCmp（队伍总血 SharedHp/MaxHp）+ 3 × PartyMemberCmp（非当前操控角色）
+      │  ├─ Stage          左：4 × AllyUnitCmp；右：EnemyUnitCmp × 敌人数（动态实例化）
+      │  └─ RightRail      BtnPause + OrbQueueCmp（充能球）
+      └─ BottomBar (HBox)  ActorInfoCmp | CardPileCmp(卡组) | 5 × HandSlotCmp | CardPileCmp(墓地) | BtnPlayConfirm / BtnConfirm
 ```
+
+> **设计区兜底**（2026-09-25）：`Root` 的合并最小尺寸超过 1280×720 设计区（无敌人 1264×686、
+> 3 敌人 1384×686），由 `FitScale`（`FitScaleBox`）在空间不足时整体等比缩小并居中，任何宽高比下不裁切、不错位
+> （约定见 [UI 与运行时规格](2026-05-15-ui-manager-design.md) §13.5）。组件最小尺寸按设计区预算收敛：
+> `HandSlotCmp` 128×214、`CardPileCmp` 92×126、`ActorInfoCmp` 210、`AllyUnitCmp` 112×160、
+> `EnemyUnitCmp` 128×212、`OrbQueueCmp` 184、`PartyMemberCmp` 高 104、侧栏 230 / 190；常态（≤2 敌人）缩放约 0.99。
 
 组件全部继承 `BaseCmp`（订阅写 `InitEvent`）：
 

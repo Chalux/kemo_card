@@ -3,6 +3,7 @@ using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Content.Keywords;
+using KemoCard.Frame.Gas;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod;
 using KemoCard.Mod.Global.Def;
@@ -25,6 +26,8 @@ public partial class CardDetailsDlg : BaseDlg
     [Export] private Label? _txtModName;
     [Export] private Label? _txtArtistName;
     [Export] private RichTextLabel? _rtCardDesc;
+    [Export] private Label? _lblAttrsCaption;
+    [Export] private Label? _lblAttrs;
 
     public override string UIId => GlobalUiIds.CardDetails;
     public override string UIDir => "Src/mod/global/Ui";
@@ -94,6 +97,7 @@ public partial class CardDetailsDlg : BaseDlg
 
         BindModName(card.Id);
         BindArtist(card.ArtistNameId);
+        BindDeckAttributes(card);
 
         if (_rtCardDesc != null)
         {
@@ -103,6 +107,31 @@ public partial class CardDetailsDlg : BaseDlg
                 id => store.TryGetSkill(id, out var skill) ? skill : null,
                 Localization.Tr);
         }
+    }
+
+    /// <summary>
+    /// 卡组属性加成：本卡 <c>stats</c> 折算成角色面板属性后的贡献值（与 <c>CharacterInstance.ComputeAttributeMap</c>
+    /// 的求和口径同源，见内容规格 §15.3）。无属性贡献的卡隐藏整块，不留空标题。
+    /// </summary>
+    private void BindDeckAttributes(CardDto card)
+    {
+        var contributions = AttributeContributionMapper.MapCardStats(card.Stats);
+        var hasAttributes = contributions.Count > 0;
+
+        if (_lblAttrsCaption != null)
+        {
+            _lblAttrsCaption.Visible = hasAttributes;
+        }
+
+        if (_lblAttrs == null)
+        {
+            return;
+        }
+
+        _lblAttrs.Visible = hasAttributes;
+        _lblAttrs.Text = hasAttributes
+            ? AttributeLabels.FormatContributions(contributions, Localization.Tr)
+            : "";
     }
 
     private void BindModName(string cardId)

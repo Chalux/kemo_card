@@ -38,6 +38,8 @@ public partial class RunCharacterDeckDlg : BaseDlg
     [Export] private VirtualList? _poolList;
     [Export] private Button? _btnDeploy;
     [Export] private Label? _lblStatus;
+    [Export] private Control? _passiveBox;
+    [Export] private RichTextLabel? _rtPassives;
 
     private RunTeamEditService? _service;
     private string _instanceId = "";
@@ -142,7 +144,42 @@ public partial class RunCharacterDeckDlg : BaseDlg
         RefreshDeckTabs();
         RefreshDeckList();
         RefreshPoolList();
+        RefreshPassives();
         RefreshFooter(character);
+    }
+
+    /// <summary>
+    /// 左栏被动区：角色的 4 条被动（门槛 + 解锁状态 + 描述），解锁状态取当前 Run 的实例。
+    /// 没有被动的角色整块隐藏（标题与文本一起），不留空面板。
+    /// </summary>
+    private void RefreshPassives()
+    {
+        if (_rtPassives is null)
+        {
+            return;
+        }
+
+        var passives = _service?.GetPassives(_instanceId) ?? [];
+        if (_passiveBox != null)
+        {
+            _passiveBox.Visible = passives.Count > 0;
+        }
+
+        if (passives.Count == 0)
+        {
+            _rtPassives.Text = "";
+            return;
+        }
+
+        _rtPassives.Text = string.Join(
+            "\n\n",
+            passives.Select(passive => PassiveTextBuilder.Entry(
+                passive.RequiredPotential,
+                passive.Unlocked,
+                string.IsNullOrWhiteSpace(passive.DescriptionId)
+                    ? ""
+                    : Localization.Tr(passive.DescriptionId),
+                Localization.Tr)));
     }
 
     private void RefreshDeckTabs()

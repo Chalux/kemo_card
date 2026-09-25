@@ -218,7 +218,7 @@ Root(full-rect) → Bg(PageBg)
 | 窗 | 布局 |
 |---|---|
 | `AlertDlg` | 560×300 居中；标题 26 左对齐、描述 18、底部按钮右对齐（取消 `Ghost`、确定 `Primary`） |
-| `CardDetailsDlg` | 980×580；左 `BaseCardItem` 区；右：名字 30、Mod/作者 `Caption`、发丝线、描述 RichText 20 |
+| `CardDetailsDlg` | 980×580；左 `BaseCardItem` 区；右：名字 30、Mod/作者 `Caption`、发丝线、描述 RichText 20、底部「卡组属性加成」`Caption` 13 + 属性行 15（见 §12.4） |
 | `CharacterDetailsDlg` | 980×580；左 `CharacterPresenter`；右：名字 30、身份行 `Caption` 14（元素 / 定位 / 种族，见 §12.3）、动画选择行（Caption + OptionButton）、发丝线、简介 RichText 18、被动 RichText 16 |
 
 > `CharacterDetailsDlg` 的「简介」区已在同批变更中改为**专属卡牌区**（横向虚拟列表），以 §12 为准。
@@ -556,6 +556,44 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 > Godot 都**不报错**（该字段静默为 `null`，界面上什么都不显示；`--headless` 加载场景同样静默通过）。
 > `Tests/kemo_card.Ui.Tests/UiSceneNodePathTests.cs:35` 因此在纯文本层面扫全仓 `.tscn` 兜住这两类断链——
 > 手改场景后请跑 `dotnet test`，不要只依赖「能打开编辑器」。
+
+### 12.4 卡组属性加成（卡牌详情，2026-09-25 新增）
+
+卡牌详情右栏底部展示**这张卡为卡组/角色面板贡献的属性**（内容规格 §15.3 的卡组属性预算口径：
+卡组属性 = 各卡 `stats.attributes` 逐项求和），文案形如「生命上限 +30 · 魔法攻击 +1」。
+无属性贡献的卡整块隐藏（标题 + 数值一起），不留空标题。
+
+| 事实 | 值 | 依据（文件:行） |
+|---|---|---|
+| 唯一拼接口径 | `AttributeLabels`（`Name` / `Order` / `FormatContributions` / `Separator`），卡牌详情与队伍编辑属性行共用 | `Src/mod/global/Ui/AttributeLabels.cs` |
+| 属性名 | 内容侧键 `attr.<snake_case>.name`，缺键回落原始 id | 同上（与 Run 规格 §12.3 队伍编辑属性行同口径） |
+| 展示顺序 | `PreferredOrder`：最大生命 → 物攻 → 物防 → 魔攻 → 魔防 → 回复量 → …，未知属性按 id 序排最后（与战斗面板「物攻·魔攻 / 物防·魔防 / 回复量」阅读顺序一致） | 同上 |
+| 数值口径 | 带符号（正数补 `+`，如 `+20` / `-1`；`0.##`、不变文化）；连接符 ` · ` | 同上 |
+| 数据口径 | `AttributeContributionMapper.MapCardStats(card.Stats)`，与 `CharacterInstance.ComputeAttributeMap` 同源（内容规格 §15.3） | `Src/frame/gas/AttributeContributionMapper.cs` |
+| 绑定点 | `CardDetailsDlg.BindDeckAttributes`（`OnOpen` / `UpdateView` 经 `BindCard` 调用） | `Src/mod/global/Ui/CardDetailsDlg.cs` |
+| 场景节点 | `BaseDlgComp/LblAttrsCaption`（y −108..−86）+ `BaseDlgComp/LblAttrs`（y −82..−40），描述区下沿相应收至 −116 | `Src/mod/global/Ui/CardDetailsDlg.tscn` |
+| 标题键 | `UI_CARD_DETAILS_DECK_ATTRS` = 「卡组属性加成」/「Deck Attribute Bonus」 | `Resource/Locale/strings.csv` |
+| 单测 | 取键/回落、展示顺序、带符号文案与空值 | `Tests/kemo_card.Ui.Tests/AttributeLabelsTests.cs` |
+
+> 新增/修改 `Resource/Locale/strings.csv` 后必须让 Godot 重新导入，否则运行时读到的还是旧的
+> `strings.zh_CN.translation` / `strings.en.translation`（界面上直接显示原始键名）；本地验证用
+> `Godot --headless --import`，两个 `.translation` 文件随仓库提交。
+
+### 12.5 角色被动展示（2026-09-25 新增）
+
+角色被动（`CharacterDto.passives`）在两处展示，**文案口径唯一**：卡组编辑左栏的「潜能被动」区
+（见 Run 规格 §12.4）与角色详情的被动 RichText（`CharacterDetailsDlg.RTPassives`）。每条格式为
+`[b]潜能 N[/b]【已解锁/未解锁】` 换行后接描述（描述取 buff 的 `descId`；被动没有名字）。
+
+| 事实 | 值 | 依据（文件:行） |
+|---|---|---|
+| 唯一拼接口径 | `PassiveTextBuilder.Entry`（门槛 + 可选解锁状态 + 描述）与 `TitleKey` | `Src/mod/global/Ui/PassiveTextBuilder.cs` |
+| 门槛文案 | `UI_CHARACTER_PASSIVE_THRESHOLD` = `潜能 {0}`；0 门槛走 `UI_CHARACTER_PASSIVE_THRESHOLD_ZERO` = `潜能 0` | `Resource/Locale/strings.csv` |
+| 解锁状态 | `UI_CHARACTER_PASSIVE_UNLOCKED` / `UI_CHARACTER_PASSIVE_LOCKED`；**无 Run 上下文时不显示**（图鉴里尚未入池的角色） | 同上 |
+| 解锁判定 | `PotentialService.IsPassiveUnlocked`（与开战挂载同一判定，界面不自行推断）；卡组编辑的数据入口 `RunTeamEditService.GetPassives`（纯 C#，可单测） | `Src/mod/run/potential/PotentialService.cs`、`Src/mod/run/Team/RunTeamEditService.cs` |
+| 角色详情绑定 | `BindPassives`：Run 内按 `DefinitionId` 找实例 → 附加解锁状态；标题内联在正文首行 | `Src/mod/global/Ui/CharacterDetailsDlg.cs` |
+| 卡组编辑绑定 | `RefreshPassives`：左栏 `PassiveBox`（SunkenContainer，固定高 320，内部滚动），条目之间空行分隔；无被动时整块隐藏 | `Src/mod/run/Ui/RunCharacterDeckDlg.cs`、`.tscn` |
+| 单测 | 门槛/解锁/无上下文/空描述，以及服务层视图 | `Tests/kemo_card.Ui.Tests/PassiveTextBuilderTests.cs`、`Run/RunTeamEditServiceTests.cs` |
 
 ---
 

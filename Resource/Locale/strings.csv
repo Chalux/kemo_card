@@ -276,6 +276,7 @@ UI_CHARACTER_PASSIVE_UNLOCKED,【已解锁】,[Unlocked]
 UI_CHARACTER_PASSIVE_LOCKED,【未解锁】,[Locked]
 UI_CARD_NAME,卡牌名,Card Name
 UI_CARD_DESC,卡牌描述,Card Description
+UI_CARD_DETAILS_DECK_ATTRS,卡组属性加成,Deck Attribute Bonus
 SETTING_NAME,设置项,Setting
 KW_NORMAL_ATTACK_TITLE,普通攻击,Normal Attack
 KW_NORMAL_ATTACK_DESC,每回合卡牌结算完成后自动执行一次：按（回合数-1）％队伍人数决定出手角色；对该角色的物攻与魔攻取较高者减目标对应防御后对全部敌人造成伤害。普攻次数加成会让归属角色连续执行多次，[url=kw:follow_up]追打[/url]者每次都会参与。不吃[url=kw:chain]连携[/url]也不触发手牌槽效果。,"Runs once per turn after all cards resolve. The acting character rotates by (turn - 1) % party size and strikes every enemy with the higher of physical or magic attack minus the matching defense. Extra normal attack count makes the acting character repeat it, and follow-up holders join each repetition. Ignores chain and slot effects."

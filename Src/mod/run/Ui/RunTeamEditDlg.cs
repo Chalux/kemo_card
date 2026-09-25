@@ -368,9 +368,9 @@ public partial class RunTeamEditDlg : BaseDlg
                 ? ""
                 : string.Join(
                     "\n",
-                    attributes
-                        .OrderBy(pair => pair.Key, StringComparer.Ordinal)
-                        .Select(pair => $"{AttributeLabel(pair.Key)} {pair.Value:0.##}"));
+                    AttributeLabels
+                        .Order(attributes)
+                        .Select(pair => $"{AttributeLabels.Name(pair.Key, Localization.Tr)} {pair.Value:0.##}"));
         }
 
         RefreshDeckStrip(instance);
@@ -394,6 +394,9 @@ public partial class RunTeamEditDlg : BaseDlg
 
             cardItem.SetData(_service.GetCard(cardIds[index]));
             cardItem.ClickAction = ECardClickAction.OpenDetails;
+            // 悬停摘要（CardSummaryBuilder：费用/属性/定位/技能描述）——预览卡也要能看信息，
+            // 与卡组编辑、角色详情的卡面同一交互；条目是对象池复用的，每次渲染显式打开。
+            cardItem.EnableHoverTip = true;
         });
     }
 
@@ -419,37 +422,6 @@ public partial class RunTeamEditDlg : BaseDlg
     /// <c>character.Role</c> 会在界面露出 <c>SwordMan</c> 这类英文枚举名（见 <see cref="CharacterIdentityLabels.Role"/>）。
     /// </summary>
     private static string RoleLabel(ERole role) => CharacterIdentityLabels.Role(role, Localization.Tr);
-
-    /// <summary>属性显示名：内容侧键 <c>attr.&lt;snake_case&gt;.name</c>；缺失时回落原始 id。</summary>
-    private static string AttributeLabel(string attributeId)
-    {
-        var key = $"attr.{ToSnakeCase(attributeId)}.name";
-        var text = Localization.Tr(key);
-        return string.Equals(text, key, StringComparison.Ordinal) ? attributeId : text;
-    }
-
-    private static string ToSnakeCase(string value)
-    {
-        var builder = new System.Text.StringBuilder(value.Length + 4);
-        for (var i = 0; i < value.Length; i++)
-        {
-            var c = value[i];
-            if (char.IsUpper(c))
-            {
-                if (i > 0)
-                {
-                    builder.Append('_');
-                }
-
-                builder.Append(char.ToLowerInvariant(c));
-                continue;
-            }
-
-            builder.Append(c);
-        }
-
-        return builder.ToString();
-    }
 
     #endregion
 

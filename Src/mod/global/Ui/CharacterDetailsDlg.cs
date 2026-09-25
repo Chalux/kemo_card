@@ -170,7 +170,7 @@ public partial class CharacterDetailsDlg : BaseDlg
 
     /// <summary>
     /// 被动列表：名称（潜能门槛）+ 描述；进行中的 Run 内持有该角色实例时附加解锁状态。
-    /// 词条标记（[url=kw:*]）由 RichTextLabel 的词条提示管线处理。
+    /// 文案口径在 <see cref="PassiveTextBuilder"/>（与卡组编辑左栏共用）。
     /// </summary>
     private void BindPassives(CharacterDto character)
     {
@@ -189,20 +189,11 @@ public partial class CharacterDetailsDlg : BaseDlg
         var runInstance = RunRuntime.Current?.State.CharacterPool.FirstOrDefault(instance =>
             string.Equals(instance.DefinitionId, character.Id, StringComparison.Ordinal));
 
-        var builder = new System.Text.StringBuilder();
-        builder.Append($"[b]{Localization.Tr("UI_CHARACTER_PASSIVES_TITLE")}[/b]\n");
-        foreach (var passive in character.Passives)
+        var entries = character.Passives.Select(passive =>
         {
-            var thresholdText = passive.RequiredPotential > 0
-                ? string.Format(Localization.Tr("UI_CHARACTER_PASSIVE_THRESHOLD"), passive.RequiredPotential)
-                : Localization.Tr("UI_CHARACTER_PASSIVE_THRESHOLD_ZERO");
-            var unlocked = runInstance is not null &&
-                PotentialService.IsPassiveUnlocked(RunRuntime.Current!.State, runInstance, passive);
-            var stateText = runInstance is null
-                ? ""
-                : unlocked
-                    ? Localization.Tr("UI_CHARACTER_PASSIVE_UNLOCKED")
-                    : Localization.Tr("UI_CHARACTER_PASSIVE_LOCKED");
+            bool? unlocked = runInstance is null
+                ? null
+                : PotentialService.IsPassiveUnlocked(RunRuntime.Current!.State, runInstance, passive);
 
             // 被动没有名字（2026-09-21 决议，撤销 2026-09-19 的「被动技能N」序号显示）：
             // 直接以「潜能门槛 + 描述」呈现，描述取 buff 的 descId。
@@ -211,10 +202,11 @@ public partial class CharacterDetailsDlg : BaseDlg
                     ? Localization.Tr(buff.DescId)
                     : "";
 
-            builder.Append($"[b]{thresholdText}[/b]{stateText}\n{desc}\n");
-        }
+            return PassiveTextBuilder.Entry(passive.RequiredPotential, unlocked, desc, Localization.Tr);
+        });
 
-        _rtPassives.Text = builder.ToString().TrimEnd();
+        _rtPassives.Text = $"[b]{Localization.Tr(PassiveTextBuilder.TitleKey)}[/b]\n"
+            + string.Join("\n", entries);
     }
 
     private void BindAnimOptions()
