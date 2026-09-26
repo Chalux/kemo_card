@@ -114,13 +114,15 @@ public sealed class LocaleIntegrityTests
         var literalPattern = new Regex("\"(UI_[A-Z0-9_]+)\"");
 
         // 这两处的文案键有一部分是"先存进常量/局部变量、再交给 Tr(key)"的形式
-        // （GlossaryBuilder 的分组键与正文键、RunPauseDlg 的禁用原因键），
-        // Tr("KEY") 的通用扫描匹配不到——漏一个就只会在界面上显示原始键名。
+        // （GlossaryBuilder 的分组键与正文键、RunPauseDlg 的禁用原因键、角色被动/主动技的
+        // 文案构造器），Tr("KEY") 的通用扫描匹配不到——漏一个就只会在界面上显示原始键名。
         string[] files =
         [
             Path.Combine("Src", "mod", "run", "Ui", "RunPauseDlg.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "GlossaryDlg.cs"),
             Path.Combine("Src", "mod", "global", "Glossary", "GlossaryBuilder.cs"),
+            Path.Combine("Src", "mod", "global", "Ui", "PassiveTextBuilder.cs"),
+            Path.Combine("Src", "mod", "global", "Ui", "ActiveSkillTextBuilder.cs"),
         ];
 
         foreach (var relative in files)

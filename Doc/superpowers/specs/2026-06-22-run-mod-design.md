@@ -899,7 +899,10 @@ UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
 ### 12.4 二级界面（角色 → 卡组 / 上阵）（原 §4）
 
 - 顶部：角色名标题 +「新建卡组」+ **卡组选项卡**（多套卡组，`CharacterInstance.Decks` ≤ 10 套 + `CurrentDeckIndex`），切页签即切换当前卡组。
-- 左栏（Rail）：角色名标题、操作提示、**潜能被动区**（2026-09-25 新增）、状态文案、上阵 / 关闭。
+- 左栏（Rail）：角色名标题、操作提示、**主动技区 / 潜能被动区**、状态文案、上阵 / 关闭。
+  主动技区（2026-09-26 新增）在被动区之上：技能定义经 `RunTeamEditService.GetSkill` 解析，文案口径
+  `ActiveSkillTextBuilder`（名称 + 技能门槛 + 描述，与角色详情 / 角色悬停摘要共用，见 Global 规格 §12.6）；
+  固定在左栏中部、内容超高时内部滚动（`RichTextLabel.scroll_active`），**没有主动技的角色整块隐藏**。
   被动区取 `RunTeamEditService.GetPassives`（门槛 + 解锁状态 + 描述键），文案口径 `PassiveTextBuilder`（与角色详情共用，见 Global 规格 §12.5）；
   固定在左栏中部、内容超高时内部滚动（`RichTextLabel.scroll_active`），**没有被动的角色整块隐藏**；解锁状态与开战挂载共用 `PotentialService.IsPassiveUnlocked`
   （判定 = 该角色**所在槽位**的已分配潜能 ≥ 门槛，2026-09-26 起；未上阵视为 0）。

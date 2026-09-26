@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://Src/mod/global/Ui/VirtualList.cs" id="4_vlist"]
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="5_carditem"]
 
-[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_lblMeta", "_lblCardsCaption", "_cardList", "_rtPassives", "_lblAnim", "_optAnim")]
+[node name="CharacterDetailsDlg" type="Control" node_paths=PackedStringArray("_presenter", "_txtTitle", "_txtCharName", "_lblMeta", "_lblCardsCaption", "_cardList", "_rtPassives", "_rtSkills", "_lblAnim", "_optAnim")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +20,8 @@ _txtCharName = NodePath("BaseDlgComp/TxtCharName")
 _lblMeta = NodePath("BaseDlgComp/LblMeta")
 _lblCardsCaption = NodePath("BaseDlgComp/LblCardsCaption")
 _cardList = NodePath("BaseDlgComp/CardList")
-_rtPassives = NodePath("BaseDlgComp/RTPassives")
+_rtPassives = NodePath("BaseDlgComp/SkillRow/RTPassives")
+_rtSkills = NodePath("BaseDlgComp/SkillRow/RTSkills")
 _lblAnim = NodePath("BaseDlgComp/LblAnim")
 _optAnim = NodePath("BaseDlgComp/OptAnim")
 
@@ -197,7 +198,7 @@ offset_right = -40.0
 offset_bottom = 12.0
 grow_horizontal = 2
 
-[node name="RTPassives" type="RichTextLabel" parent="BaseDlgComp"]
+[node name="SkillRow" type="HBoxContainer" parent="BaseDlgComp"]
 layout_mode = 1
 anchors_preset = -1
 anchor_top = 0.7
@@ -209,6 +210,26 @@ offset_right = -40.0
 offset_bottom = -40.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="RTSkills" type="RichTextLabel" parent="BaseDlgComp/SkillRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 0.9
+theme_override_font_sizes/normal_font_size = 15
+theme_override_font_sizes/bold_font_size = 15
+theme_override_font_sizes/bold_italics_font_size = 15
+theme_override_font_sizes/italics_font_size = 15
+theme_override_font_sizes/mono_font_size = 15
+bbcode_enabled = true
+text = ""
+fit_content = false
+scroll_active = true
+
+[node name="RTPassives" type="RichTextLabel" parent="BaseDlgComp/SkillRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.1
 theme_override_font_sizes/normal_font_size = 15
 theme_override_font_sizes/bold_font_size = 15
 theme_override_font_sizes/bold_italics_font_size = 15

@@ -592,8 +592,25 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 | 解锁状态 | `UI_CHARACTER_PASSIVE_UNLOCKED` / `UI_CHARACTER_PASSIVE_LOCKED`；**无 Run 上下文时不显示**（图鉴里尚未入池的角色） | 同上 |
 | 解锁判定 | `PotentialService.IsPassiveUnlocked`（与开战挂载同一判定，界面不自行推断）；卡组编辑的数据入口 `RunTeamEditService.GetPassives`（纯 C#，可单测） | `Src/mod/run/potential/PotentialService.cs`、`Src/mod/run/Team/RunTeamEditService.cs` |
 | 角色详情绑定 | `BindPassives`：Run 内按 `DefinitionId` 找实例 → 附加解锁状态；标题内联在正文首行 | `Src/mod/global/Ui/CharacterDetailsDlg.cs` |
-| 卡组编辑绑定 | `RefreshPassives`：左栏 `PassiveBox`（SunkenContainer，固定高 320，内部滚动），条目之间空行分隔；无被动时整块隐藏 | `Src/mod/run/Ui/RunCharacterDeckDlg.cs`、`.tscn` |
+| 卡组编辑绑定 | `RefreshPassives`：左栏 `PassiveBox`（SunkenContainer，固定高 240，内部滚动），条目之间空行分隔；无被动时整块隐藏 | `Src/mod/run/Ui/RunCharacterDeckDlg.cs`、`.tscn` |
 | 单测 | 门槛/解锁/无上下文/空描述，以及服务层视图 | `Tests/kemo_card.Ui.Tests/PassiveTextBuilderTests.cs`、`Run/RunTeamEditServiceTests.cs` |
+
+### 12.6 角色主动技展示（2026-09-26 新增）
+
+角色主动技（`CharacterDto.activeSkillChain`，战斗规格 §5.1）在三处展示，**文案口径唯一**：
+角色详情的主动技 RichText（`CharacterDetailsDlg.RTSkills`）、卡组编辑左栏的「主动技」区
+（见 Run 规格 §12.4）、角色悬停摘要（`CharacterSummaryBuilder`）。每条格式为
+`[b]名称[/b]（技能 N）` 换行后接描述（名称 / 描述取技能的 `displayNameId` / `descId`）。
+
+| 事实 | 值 | 依据（文件:行） |
+|---|---|---|
+| 唯一拼接口径 | `ActiveSkillTextBuilder.Entry` / `Entries` / `Block` 与 `TitleKey` | `Src/mod/global/Ui/ActiveSkillTextBuilder.cs` |
+| 门槛 | `UI_CHARACTER_ACTIVE_SKILL_THRESHOLD` = `（技能 {0}）`（zh）/ ` (Skill {0})`（en）；**各档门槛 = `cooldown` 累计值**（第 k 档 = ΣC0..Ck，与 `Cap = sum(cooldown)` 同口径） | `Resource/Locale/strings.csv` |
+| 区标题 | `UI_CHARACTER_ACTIVE_SKILL_TITLE` = 「主动技」；角色详情内联在正文首行，卡组编辑用 Caption 标题 | 同上 |
+| 角色详情绑定 | `BindActiveSkills`：`Block(...)`（含标题）；无主动技时整块隐藏 | `Src/mod/global/Ui/CharacterDetailsDlg.cs` |
+| 卡组编辑绑定 | `RefreshActiveSkill`：左栏 `ActiveSkillBox`（SunkenContainer，内部滚动，在 `PassiveBox` 之上），条目之间空行分隔；无主动技时整块隐藏 | `Src/mod/run/Ui/RunCharacterDeckDlg.cs`、`.tscn` |
+| 悬停摘要 | `CharacterSummaryBuilder.BuildSkillText` 先列主动技（`StripRichText` 去 BBCode），再保留扁平 `skillRefs` 的旧行为 | `Src/mod/global/Ui/CharacterSummaryBuilder.cs` |
+| 单测 | 名称/门槛/描述、逐档累计、解析不到的档位、空链、整块标题 | `Tests/kemo_card.Ui.Tests/ActiveSkillTextBuilderTests.cs`、`CharacterSummaryBuilderTests.cs` |
 
 ---
 

@@ -26,6 +26,7 @@ public partial class CharacterDetailsDlg : BaseDlg
     [Export] private Label? _lblCardsCaption;
     [Export] private VirtualList? _cardList;
     [Export] private RichTextLabel? _rtPassives;
+    [Export] private RichTextLabel? _rtSkills;
     [Export] private Label? _lblAnim;
     [Export] private OptionButton? _optAnim;
 
@@ -108,6 +109,7 @@ public partial class CharacterDetailsDlg : BaseDlg
         }
 
         BindPassives(character);
+        BindActiveSkills(character);
         BindAnimOptions();
     }
 
@@ -181,10 +183,12 @@ public partial class CharacterDetailsDlg : BaseDlg
 
         if (character.Passives.Count == 0)
         {
+            _rtPassives.Visible = false;
             _rtPassives.Text = "";
             return;
         }
 
+        _rtPassives.Visible = true;
         var store = AppRoot.Services.ContentModPipeline.Registry.Store;
         var runInstance = RunRuntime.Current?.State.CharacterPool.FirstOrDefault(instance =>
             string.Equals(instance.DefinitionId, character.Id, StringComparison.Ordinal));
@@ -207,6 +211,27 @@ public partial class CharacterDetailsDlg : BaseDlg
 
         _rtPassives.Text = $"[b]{Localization.Tr(PassiveTextBuilder.TitleKey)}[/b]\n"
             + string.Join("\n", entries);
+    }
+
+    /// <summary>
+    /// 主动技区：蓄力链各档的名称 + 门槛 + 描述（文案口径见 <see cref="ActiveSkillTextBuilder"/>，
+    /// 与卡组编辑左栏、角色悬停摘要共用）。没有主动技时整块清空。
+    /// </summary>
+    private void BindActiveSkills(CharacterDto character)
+    {
+        if (_rtSkills == null)
+        {
+            return;
+        }
+
+        var store = AppRoot.Services.ContentModPipeline.Registry.Store;
+        var text = ActiveSkillTextBuilder.Block(
+            character,
+            id => store.TryGetSkill(id, out var skill) ? skill : null,
+            Localization.Tr);
+
+        _rtSkills.Visible = text.Length > 0;
+        _rtSkills.Text = text;
     }
 
     private void BindAnimOptions()

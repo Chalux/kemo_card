@@ -71,6 +71,14 @@ public static class CharacterSummaryBuilder
         Func<string, string> translate)
     {
         var sb = new StringBuilder();
+
+        // 主动技（2026-09-26）：名称 + 蓄力门槛 + 描述；与角色详情 / 卡组编辑同一口径。
+        foreach (var entry in ActiveSkillTextBuilder.Entries(character, resolveSkill, translate))
+        {
+            AppendLine(sb, CardSummaryBuilder.StripRichText(entry));
+        }
+
+        // 扁平 skillRefs：角色旧字段（当前内容未使用），保留原有"只列描述"的行为。
         foreach (var skillRef in character.SkillRefs)
         {
             if (string.IsNullOrWhiteSpace(skillRef.SkillId))
@@ -90,14 +98,24 @@ public static class CharacterSummaryBuilder
                 continue;
             }
 
-            if (sb.Length > 0)
-            {
-                sb.Append('\n');
-            }
-
-            sb.Append(part);
+            AppendLine(sb, part);
         }
 
         return sb.ToString();
+    }
+
+    private static void AppendLine(StringBuilder sb, string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        if (sb.Length > 0)
+        {
+            sb.Append('\n');
+        }
+
+        sb.Append(text.Trim());
     }
 }

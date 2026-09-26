@@ -188,6 +188,10 @@ public sealed class RunTeamEditService
     public CardDto? GetCard(string cardId) =>
         _registry.Store.TryGetCard(cardId, out var card) ? card : null;
 
+    /// <summary>技能定义读取（主动技展示用；界面不直接访问内容注册表）。</summary>
+    public SkillDto? GetSkill(string skillId) =>
+        _registry.Store.TryGetSkill(skillId, out var skill) ? skill : null;
+
     /// <summary>
     /// "可加入卡组"列表：可构筑卡牌（收藏 ∪ 角色专属卡）按 id 排序，并标出**已在当前卡组内**的牌。
     /// </summary>

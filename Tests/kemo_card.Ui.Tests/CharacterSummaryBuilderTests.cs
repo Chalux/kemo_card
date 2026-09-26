@@ -15,6 +15,8 @@ public sealed class CharacterSummaryBuilderTests
         "UI_RACE_ANIMAL" => "动物",
         "UI_RACE_DRAGON" => "龙族",
         "char.kemo.name" => "可萝",
+        "UI_CHARACTER_ACTIVE_SKILL_THRESHOLD" => "（技能 {0}）",
+        "n1" => "冰川溢出",
         "d1" => "造成 6 点伤害。",
         "d2" => "[url=kw:exhaust]消耗[/url]",
         _ => key,
@@ -68,5 +70,29 @@ public sealed class CharacterSummaryBuilderTests
             Tr);
 
         Assert.That(tip.Body, Is.EqualTo("红\n造成 6 点伤害。"));
+    }
+
+    /// <summary>
+    /// 主动技（2026-09-26）：悬停摘要列「名称 + 蓄力门槛 + 描述」，与角色详情 / 卡组编辑同一口径；
+    /// BBCode 由 <c>StripRichText</c> 去掉后再进 tip。
+    /// </summary>
+    [Test]
+    public void Build_includes_active_skill_name_threshold_and_description()
+    {
+        var character = new CharacterDto
+        {
+            DisplayNameId = "char.kemo.name",
+            Element = EElement.Red,
+            Role = ERole.Warrior,
+            Race = ERace.Animal,
+            ActiveSkillChain = [new ActiveSkillChainEntryDto { SkillId = "s1", Cooldown = 8 }],
+        };
+
+        var tip = CharacterSummaryBuilder.Build(
+            character,
+            id => id == "s1" ? new SkillDto { Id = "s1", DisplayNameId = "n1", DescId = "d1" } : null,
+            Tr);
+
+        Assert.That(tip.Body, Is.EqualTo("红 战士 动物\n冰川溢出（技能 8）\n造成 6 点伤害。"));
     }
 }

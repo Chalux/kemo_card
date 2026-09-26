@@ -38,6 +38,8 @@ public partial class RunCharacterDeckDlg : BaseDlg
     [Export] private VirtualList? _poolList;
     [Export] private Button? _btnDeploy;
     [Export] private Label? _lblStatus;
+    [Export] private Control? _activeSkillBox;
+    [Export] private RichTextLabel? _rtActiveSkill;
     [Export] private Control? _passiveBox;
     [Export] private RichTextLabel? _rtPassives;
 
@@ -144,8 +146,33 @@ public partial class RunCharacterDeckDlg : BaseDlg
         RefreshDeckTabs();
         RefreshDeckList();
         RefreshPoolList();
+        RefreshActiveSkill();
         RefreshPassives();
         RefreshFooter(character);
+    }
+
+    /// <summary>
+    /// 左栏主动技区（2026-09-26）：蓄力链各档的名称 + 门槛 + 描述（文案口径 <see cref="ActiveSkillTextBuilder"/>，
+    /// 与角色详情 / 角色悬停摘要共用）。没有主动技的角色整块隐藏，不留空面板。
+    /// </summary>
+    private void RefreshActiveSkill()
+    {
+        if (_rtActiveSkill is null)
+        {
+            return;
+        }
+
+        var character = _service?.FindCharacter(_instanceId);
+        IReadOnlyList<string> entries = character?.Definition is { } definition && _service is not null
+            ? ActiveSkillTextBuilder.Entries(definition, _service.GetSkill, Localization.Tr)
+            : [];
+
+        if (_activeSkillBox != null)
+        {
+            _activeSkillBox.Visible = entries.Count > 0;
+        }
+
+        _rtActiveSkill.Text = string.Join("\n\n", entries);
     }
 
     /// <summary>
