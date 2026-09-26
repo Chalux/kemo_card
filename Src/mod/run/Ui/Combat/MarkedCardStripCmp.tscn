@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/MarkedCardStripCmp.cs" id="1_script"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/MarkedCardIconCmp.tscn" id="2_icon"]
+
+[node name="MarkedCardStripCmp" type="HBoxContainer"]
+modulate = Color(1, 1, 1, 0.7)
+z_index = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+script = ExtResource("1_script")
+
+[node name="Card0" parent="." instance=ExtResource("2_icon")]
+layout_mode = 2
+
+[node name="Card1" parent="." instance=ExtResource("2_icon")]
+layout_mode = 2
+
+[node name="Card2" parent="." instance=ExtResource("2_icon")]
+layout_mode = 2
+
+[node name="Card3" parent="." instance=ExtResource("2_icon")]
+layout_mode = 2
+
+[node name="Card4" parent="." instance=ExtResource("2_icon")]
+layout_mode = 2

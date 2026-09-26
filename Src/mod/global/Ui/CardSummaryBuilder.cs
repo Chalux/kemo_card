@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Global.Def;
 
@@ -71,6 +72,34 @@ public static partial class CardSummaryBuilder
         {
             return text;
         }
+    }
+
+    /// <summary>
+    /// 专属卡的持有角色显示名：按 <c>character.cards</c> 反查（内容约定：专属卡只属于一个角色）。
+    /// 找不到归属 / 角色无名时返回 <c>null</c>；取 translate 委托以便脱离 Godot 单测。
+    /// </summary>
+    public static string? ResolveExclusiveCharacterName(
+        GameDefinitionStore store,
+        string cardId,
+        Func<string, string> translate)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentException.ThrowIfNullOrWhiteSpace(cardId);
+        ArgumentNullException.ThrowIfNull(translate);
+
+        foreach (var character in store.Characters.Values)
+        {
+            if (character.Cards is not { Count: > 0 } || !character.Cards.Contains(cardId))
+            {
+                continue;
+            }
+
+            return string.IsNullOrWhiteSpace(character.DisplayNameId)
+                ? null
+                : translate(character.DisplayNameId);
+        }
+
+        return null;
     }
 
     private static string BuildMetaLine(CardDto card, Func<string, string> translate)

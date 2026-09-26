@@ -360,7 +360,7 @@ public partial class BaseCardItem : Control
             _card,
             id => store.TryGetSkill(id, out var skill) ? skill : null,
             Localization.Tr,
-            cardId => ResolveExclusiveCharacterName(store, cardId));
+            cardId => CardSummaryBuilder.ResolveExclusiveCharacterName(store, cardId, Localization.Tr));
 
         if (string.IsNullOrWhiteSpace(tip.Title) && string.IsNullOrWhiteSpace(tip.Body))
         {
@@ -368,31 +368,6 @@ public partial class BaseCardItem : Control
         }
 
         service.ShowCustomTips(this, [(tip.Title, tip.Body)], PreferTipSide);
-    }
-
-    private static string? ResolveExclusiveCharacterName(GameDefinitionStore store, string cardId)
-    {
-        foreach (var character in store.Characters.Values)
-        {
-            if (character.Cards == null || character.Cards.Count == 0)
-            {
-                continue;
-            }
-
-            if (!character.Cards.Contains(cardId))
-            {
-                continue;
-            }
-
-            if (string.IsNullOrWhiteSpace(character.DisplayNameId))
-            {
-                return null;
-            }
-
-            return Localization.Tr(character.DisplayNameId);
-        }
-
-        return null;
     }
 
     #endregion
@@ -493,7 +468,7 @@ public partial class BaseCardItem : Control
             return;
         }
 
-        var texture = TryLoadArtTexture(artPath, cardId ?? _card?.Id);
+        var texture = CardArtLoader.TryLoadTexture(artPath, cardId ?? _card?.Id);
         SetArt(texture);
     }
 
@@ -607,78 +582,6 @@ public partial class BaseCardItem : Control
 
         mat.SetShaderParameter("colors", packed);
         mat.SetShaderParameter("color_count", colors.Length);
-    }
-
-    private static Texture2D? TryLoadArtTexture(string artPath, string? cardId)
-    {
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(cardId)
-                && TryResolveModArtFile(cardId, artPath, out var modFile)
-                && File.Exists(modFile))
-            {
-                var image = Image.LoadFromFile(modFile);
-                if (image != null)
-                {
-                    return ImageTexture.CreateFromImage(image);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            AppLog.Warning($"BaseCardItem: mod art load failed: {ex.Message}", "BaseCardItem");
-        }
-
-        var resPath = $"res://Resource/Assets/{artPath.Replace('\\', '/')}";
-        try
-        {
-            if (ResourceLoader.Exists(resPath))
-            {
-                return ResourceLoader.Load<Texture2D>(resPath);
-            }
-        }
-        catch (Exception ex)
-        {
-            AppLog.Warning($"BaseCardItem: resource art load failed: {ex.Message}", "BaseCardItem");
-        }
-
-        return null;
-    }
-
-    private static bool TryResolveModArtFile(string cardId, string artPath, out string fullPath)
-    {
-        fullPath = "";
-        try
-        {
-            var pipeline = AppRoot.Services.ContentModPipeline;
-            if (!pipeline.Registry.TryGetOwnerModId(EContentCategory.Card, cardId, out var modId))
-            {
-                return false;
-            }
-
-            if (!pipeline.ScriptCatalog.TryGetContentRootPath(modId, out var contentRoot))
-            {
-                return false;
-            }
-
-            var relative = artPath.Replace('/', Path.DirectorySeparatorChar);
-            fullPath = Path.GetFullPath(Path.Combine(contentRoot, relative));
-            var rootFull = Path.GetFullPath(contentRoot);
-            if (!fullPath.StartsWith(rootFull, OperatingSystem.IsWindows()
-                    ? StringComparison.OrdinalIgnoreCase
-                    : StringComparison.Ordinal))
-            {
-                fullPath = "";
-                return false;
-            }
-
-            return true;
-        }
-        catch (InvalidOperationException)
-        {
-            // AppRoot 未初始化
-            return false;
-        }
     }
 
     #endregion

@@ -468,6 +468,11 @@ public partial class CombatWin : BaseWin, ICombatStageView
         // 嘲讽标识（Run 规格 §14.2）：全队当前嘲讽值里最高的一组打 Crosshair（判定见 CombatTauntMarks）。
         var tauntMarks = CombatTauntMarks.Resolve(simulation);
 
+        // 已标记卡牌条（Run 规格 §14.2）：按角色给出本回合已标记的卡（结算顺序）。
+        // 当前操控角色正在选目标时整条隐藏——选目标态下战场是唯一交互焦点，列表会挡住点击。
+        var markedCards = CombatMarkedCards.Resolve(simulation);
+        var hideMarkedCards = pickingTarget;
+
         // 左栏：非当前操控的角色。
         var benchIndex = 0;
         for (var i = 0; i < characters.Count && benchIndex < _members.Count; i++)
@@ -485,12 +490,15 @@ public partial class CombatWin : BaseWin, ICombatStageView
                 !_ui.InputLocked,
                 CombatActionMarks.Resolve(simulation, i));
             member.SetTauntMark(i < tauntMarks.Length && tauntMarks[i]);
+            member.SetMarkedCards(
+                hideMarkedCards ? [] : ResolveCards(store, i < markedCards.Count ? markedCards[i] : []));
         }
 
         for (; benchIndex < _members.Count; benchIndex++)
         {
             _members[benchIndex].Visible = false;
             _members[benchIndex].SetTauntMark(false);
+            _members[benchIndex].SetMarkedCards([]);
         }
 
         // 友方舞台：状态文本 + 高亮 + 嘲讽标识。
@@ -599,6 +607,21 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
     private static CharacterDto? ResolveCharacter(GameDefinitionStore store, string definitionId) =>
         store.TryGetCharacter(definitionId, out var definition) ? definition : null;
+
+    /// <summary>把已标记卡 id 列表翻译成卡定义（缺定义的 id 跳过——内容被剔除时不留空洞）。</summary>
+    private static IReadOnlyList<CardDto> ResolveCards(GameDefinitionStore store, IReadOnlyList<string> cardIds)
+    {
+        var cards = new List<CardDto>(cardIds.Count);
+        foreach (var cardId in cardIds)
+        {
+            if (store.TryGetCard(cardId, out var card))
+            {
+                cards.Add(card);
+            }
+        }
+
+        return cards;
+    }
 
     #endregion
 

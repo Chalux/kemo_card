@@ -1,3 +1,4 @@
+using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui;
@@ -17,6 +18,7 @@ public sealed class CardSummaryBuilderTests
         "UI_ELEMENT_BLUE" => "蓝",
         "UI_ROLE_WARRIOR" => "战士",
         "card.strike.name" => "打击",
+        "char.chalux.name" => "克鲁克斯",
         "d1" => "造成 6 点伤害。",
         "d2" => "[url=kw:exhaust]消耗[/url]",
         _ => key,
@@ -127,5 +129,34 @@ public sealed class CardSummaryBuilderTests
             _ => null);
 
         Assert.That(tip.Body, Is.EqualTo("消耗"));
+    }
+
+    /// <summary>专属卡归属角色反查（卡面 tip 与战斗界面的已标记卡图标共用）。</summary>
+    [Test]
+    public void ResolveExclusiveCharacterName_finds_owner_and_falls_back_to_null()
+    {
+        var store = new GameDefinitionStore();
+        store.CharactersMutable["chalux"] = new CharacterDto
+        {
+            Id = "chalux",
+            DisplayNameId = "char.chalux.name",
+            Cards = ["chalux_orca_ice_rush"],
+        };
+        store.CharactersMutable["nameless"] = new CharacterDto
+        {
+            Id = "nameless",
+            Cards = ["mystery_card"],
+        };
+
+        Assert.That(
+            CardSummaryBuilder.ResolveExclusiveCharacterName(store, "chalux_orca_ice_rush", Tr),
+            Is.EqualTo("克鲁克斯"));
+        Assert.That(
+            CardSummaryBuilder.ResolveExclusiveCharacterName(store, "mystery_card", Tr),
+            Is.Null,
+            "角色没有 displayNameId → null");
+        Assert.That(
+            CardSummaryBuilder.ResolveExclusiveCharacterName(store, "card.unknown", Tr),
+            Is.Null);
     }
 }

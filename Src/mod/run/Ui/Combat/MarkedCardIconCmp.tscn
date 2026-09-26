@@ -1,0 +1,75 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/MarkedCardIconCmp.cs" id="1_script"]
+
+[node name="MarkedCardIconCmp" type="Panel" node_paths=PackedStringArray("_art", "_attr", "_cost", "_type")]
+custom_minimum_size = Vector2(42, 56)
+offset_right = 42.0
+offset_bottom = 56.0
+mouse_filter = 0
+theme_type_variation = &"Sunken"
+script = ExtResource("1_script")
+_art = NodePath("Art")
+_attr = NodePath("Attr")
+_cost = NodePath("Cost")
+_type = NodePath("Type")
+
+[node name="Art" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Attr" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = -6.0
+offset_right = -2.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+color = Color(0.5, 0.5, 0.5, 1)
+
+[node name="Cost" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 3.0
+offset_top = 2.0
+offset_right = -3.0
+offset_bottom = 21.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 15
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="Type" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 22.0
+offset_right = -2.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+vertical_alignment = 1
+mouse_filter = 2
