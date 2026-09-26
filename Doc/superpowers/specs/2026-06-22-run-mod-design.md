@@ -1087,11 +1087,14 @@ CombatWin
 > 判定在 `CombatTauntMarks.Resolve`（纯函数，有单测），由 `CombatWin.SyncFromState` 读全队 `AttributeIds.Taunt`
 > 后统一落笔到 `AllyUnitCmp` / `PartyMemberCmp` 的 `Crosshair` 节点（两处同一口径）。
 >
-> **已标记卡牌条**（2026-09-26）：队友卡右侧的浮层显示该角色本回合**已标记（入队）**的卡
+> **已标记卡牌条**（2026-09-26，2026-09-27 改浮层）：队友卡右侧显示该角色本回合**已标记（入队）**的卡
 > （`CombatMarkedCards.Resolve` 按角色分桶，桶内顺序 = 结算顺序 priority 降序 → 入队序号升序；数据源是只读的
-> `CardExecutionQueue.PeekAllOrdered`，已结算 / 已取消的牌天然不在列表）。每张 = 小卡图标（费用 + 属性色条 + 卡面美术，
-> `MarkedCardIconCmp`）：**不可点击**（只登记悬停，不处理点击）、悬停显示卡牌摘要（与卡面同一 `CardSummaryBuilder` 口径，
-> 含关键词高亮）、整条 `modulate` 0.7 半透明、`z_index = 2` 浮在战场单位之上（不占 PartyRail / Stage 布局）。
+> `CardExecutionQueue.PeekAllOrdered`，已结算 / 已取消的牌天然不在列表）。每张 = 小卡图标（费用 + 卡牌类型单字
+> `UI_CARD_TYPE_*` + 属性色条 + 卡面美术，`MarkedCardIconCmp`）：**不可点击**（只登记悬停，不处理点击）、
+> 悬停显示卡牌摘要（与卡面同一 `CardSummaryBuilder` 口径，含关键词高亮）、整条 `modulate` 0.7 半透明。
+> 条挂在 `CombatWin` 的 `StripLayer`（FitScale 下、晚于 `Root` 的全屏浮层）里并由 `MarkedCardStripCmp.Follow`
+> 跟随队友卡定位——**不能**改挂到队友卡内部：Godot 的 GUI 拾取按树序（晚的兄弟优先）而非 `z_index`，
+> 挂左栏时战场单位会先截走悬停（2026-09-27 实测）；浮层不占 PartyRail / Stage 布局，自身 `Scale` 补偿 FitScale 缩放。
 > **空列表整条隐藏**；**当前操控角色处于选目标态时整条隐藏**（`CombatWin.SyncFromState` 传空列表——选目标时战场是唯一交互焦点）。
 >
 > **属性行「标签 + 值」成对显示**（2026-09-26）：战斗面板（`ActorInfoCmp` / `PartyMemberCmp`）与敌方悬停的属性

@@ -2,9 +2,8 @@
 
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/PartyMemberCmp.cs" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://cj3lseqeqbcvx" path="res://Resource/Asset/Icon/crosshair.svg" id="2_crosshair"]
-[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/MarkedCardStripCmp.tscn" id="3_marked"]
 
-[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair", "_markedStrip")]
+[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair")]
 custom_minimum_size = Vector2(0, 104)
 layout_mode = 3
 anchors_preset = 0
@@ -20,7 +19,6 @@ _lblHeal = NodePath("Margin/VBox/Grid/HealValue")
 _lblState = NodePath("Margin/VBox/Header/State")
 _lblMark = NodePath("Margin/VBox/Header/Mark")
 _crosshair = NodePath("Margin/VBox/Header/Crosshair")
-_markedStrip = NodePath("MarkedStrip")
 
 [node name="Face" type="Panel" parent="."]
 layout_mode = 1
@@ -153,15 +151,3 @@ text = "UI_COMBAT_STAT_HEAL"
 layout_mode = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13
-
-[node name="MarkedStrip" parent="." instance=ExtResource("3_marked")]
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 1.0
-anchor_top = 0.5
-anchor_right = 1.0
-anchor_bottom = 0.5
-offset_left = 8.0
-offset_top = -28.0
-offset_right = 238.0
-offset_bottom = 28.0

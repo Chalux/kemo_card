@@ -7,8 +7,9 @@ using KemoCard.Mod.Combat;
 namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>
-/// 左栏的非操控角色卡片：名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量、
-/// 已标记卡牌条（右侧浮层）；点击切换操控（仅有权控制的槽位）。
+/// 左栏的非操控角色卡片：名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量；点击切换操控（仅有权控制的槽位）。
+/// 已标记卡牌条不挂在本组件内（Godot GUI 拾取按树序，挂左栏会被战场单位截走悬停），
+/// 由 <see cref="CombatWin"/> 的浮层跟随本卡定位，见 <see cref="MarkedCardStripCmp"/>。
 /// </summary>
 public partial class PartyMemberCmp : BaseCmp
 {
@@ -21,7 +22,6 @@ public partial class PartyMemberCmp : BaseCmp
     [Export] private Label? _lblState;
     [Export] private Label? _lblMark;
     [Export] private TextureRect? _crosshair;
-    [Export] private MarkedCardStripCmp? _markedStrip;
 
     /// <summary>点击回调，参数为该卡片绑定的槽位索引。</summary>
     public Action<int>? Clicked { get; set; }
@@ -93,10 +93,4 @@ public partial class PartyMemberCmp : BaseCmp
         if (_crosshair != null)
             _crosshair.Visible = marked;
     }
-
-    /// <summary>
-    /// 已标记卡牌条（2026-09-26）：该角色本回合标记（入队）的卡，按结算顺序；空列表整条隐藏。
-    /// 数据由 <see cref="CombatMarkedCards"/> 按角色分桶；选目标时宿主传空列表隐藏。
-    /// </summary>
-    public void SetMarkedCards(IReadOnlyList<CardDto> cards) => _markedStrip?.Bind(cards);
 }

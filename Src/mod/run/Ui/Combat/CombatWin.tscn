@@ -13,8 +13,9 @@
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/HandSlotCmp.tscn" id="11_hand"]
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/Presentation/DamageNumberCmp.tscn" id="12_number"]
 [ext_resource type="Script" path="res://Src/frame/ui/FitScaleBox.cs" id="13_fitscale"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/MarkedCardStripCmp.tscn" id="14_marked"]
 
-[node name="CombatWin" type="Control" node_paths=PackedStringArray("_itemSlots", "_sharedHp", "_bench", "_allyStage", "_enemyStage", "_btnPause", "_orbs", "_actor", "_deck", "_hand", "_grave", "_btnPlayConfirm", "_btnConfirm", "_lblHint", "_fxLayer", "_phaseBanner", "_animator")]
+[node name="CombatWin" type="Control" node_paths=PackedStringArray("_itemSlots", "_sharedHp", "_bench", "_allyStage", "_enemyStage", "_btnPause", "_orbs", "_actor", "_deck", "_hand", "_grave", "_btnPlayConfirm", "_btnConfirm", "_lblHint", "_fxLayer", "_stripLayer", "_phaseBanner", "_animator")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -38,6 +39,7 @@ _btnPlayConfirm = NodePath("FitScale/Root/BottomBar/Actions/BtnPlayConfirm")
 _btnConfirm = NodePath("FitScale/Root/BottomBar/Actions/BtnConfirm")
 _lblHint = NodePath("FitScale/Root/BottomBar/Actions/Hint")
 _fxLayer = NodePath("FxLayer")
+_stripLayer = NodePath("FitScale/StripLayer")
 _damageNumberScene = ExtResource("12_number")
 _phaseBanner = NodePath("PhaseBanner")
 _animator = NodePath("Animator")
@@ -237,6 +239,27 @@ theme_override_font_sizes/font_size = 18
 text = "UI_COMBAT_CONFIRM"
 script = ExtResource("2_kbtn")
 Primary = true
+
+[node name="StripLayer" type="Control" parent="FitScale"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Strip0" parent="FitScale/StripLayer" instance=ExtResource("14_marked")]
+visible = false
+layout_mode = 1
+
+[node name="Strip1" parent="FitScale/StripLayer" instance=ExtResource("14_marked")]
+visible = false
+layout_mode = 1
+
+[node name="Strip2" parent="FitScale/StripLayer" instance=ExtResource("14_marked")]
+visible = false
+layout_mode = 1
 
 [node name="FxLayer" type="Control" parent="."]
 layout_mode = 1

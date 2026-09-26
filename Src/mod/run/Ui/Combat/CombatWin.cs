@@ -39,6 +39,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
     [Export] private Button? _btnConfirm;
     [Export] private Label? _lblHint;
     [Export] private Control? _fxLayer;
+    [Export] private Control? _stripLayer;
     [Export] private PackedScene? _damageNumberScene;
     [Export] private Label? _phaseBanner;
     [Export] private CombatAnimator? _animator;
@@ -48,6 +49,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
     private readonly List<AllyUnitCmp> _allies = [];
     private readonly List<HandSlotCmp> _hands = [];
     private readonly List<EnemyUnitCmp> _enemies = [];
+    private readonly List<MarkedCardStripCmp> _strips = [];
 
     private CombatUiState? _ui;
     private bool _endHandled;
@@ -64,6 +66,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         CollectChildren(_bench, _members);
         CollectChildren(_allyStage, _allies);
         CollectChildren(_hand, _hands);
+        CollectChildren(_stripLayer, _strips);
         if (_phaseBanner != null)
             _phaseBanner.Visible = false;
     }
@@ -469,6 +472,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         var tauntMarks = CombatTauntMarks.Resolve(simulation);
 
         // 已标记卡牌条（Run 规格 §14.2）：按角色给出本回合已标记的卡（结算顺序）。
+        // 条挂在 FitScale 的 StripLayer（晚于 Root → 拾取优先于战场单位）并跟随队友卡定位；
         // 当前操控角色正在选目标时整条隐藏——选目标态下战场是唯一交互焦点，列表会挡住点击。
         var markedCards = CombatMarkedCards.Resolve(simulation);
         var hideMarkedCards = pickingTarget;
@@ -480,7 +484,10 @@ public partial class CombatWin : BaseWin, ICombatStageView
             if (i == controlled)
                 continue;
 
-            var member = _members[benchIndex++];
+            var member = _members[benchIndex];
+            var strip = benchIndex < _strips.Count ? _strips[benchIndex] : null;
+            benchIndex++;
+
             member.Visible = true;
             member.Bind(
                 i,
@@ -490,15 +497,25 @@ public partial class CombatWin : BaseWin, ICombatStageView
                 !_ui.InputLocked,
                 CombatActionMarks.Resolve(simulation, i));
             member.SetTauntMark(i < tauntMarks.Length && tauntMarks[i]);
-            member.SetMarkedCards(
-                hideMarkedCards ? [] : ResolveCards(store, i < markedCards.Count ? markedCards[i] : []));
+            if (strip != null)
+            {
+                strip.Follow(member);
+                strip.Bind(
+                    hideMarkedCards ? [] : ResolveCards(store, i < markedCards.Count ? markedCards[i] : []));
+            }
         }
 
+        var boundMembers = benchIndex;
         for (; benchIndex < _members.Count; benchIndex++)
         {
             _members[benchIndex].Visible = false;
             _members[benchIndex].SetTauntMark(false);
-            _members[benchIndex].SetMarkedCards([]);
+        }
+
+        for (var i = boundMembers; i < _strips.Count; i++)
+        {
+            _strips[i].Follow(null);
+            _strips[i].Visible = false;
         }
 
         // 友方舞台：状态文本 + 高亮 + 嘲讽标识。
