@@ -4,7 +4,7 @@
 **最后修订**：2026-09-24（新增 §14 战斗界面 `CombatWin`）
 **状态**：已实装（`Src/mod/run/`，`RunMod.FeatureId = "run"`）
 **关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md)（玩法边界权威）；战斗相关服从 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md)；内容定义见 [2026-05-17 内容 Mod 管理器规格](2026-05-17-content-mod-manager-design.md)；界面层遵循 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)、[2026-09-15 ui-mod-binding 规格](2026-05-15-ui-manager-design.md)、[2026-09-19 UI 主题规格](2026-09-21-global-mod-design.md) 与 [2026-09-21 羊皮纸重设计](2026-09-21-global-mod-design.md)。
-**范围**：Run 域功能 Mod（`Src/mod/run/`，`RunMod.FeatureId = "run"`）的**唯一权威规格** —— 模块结构与架构、生命周期与阶段流转、数据模型与存档 schema、奖励分发、控制权与联机边界、Run 界面流程、存档闭环、ESC 系统菜单、队伍编辑界面、团体潜能（团队池 + 槽位直充 + 消费流水账本）。
+**范围**：Run 域功能 Mod（`Src/mod/run/`，`RunMod.FeatureId = "run"`）的**唯一权威规格** —— 模块结构与架构、生命周期与阶段流转、数据模型与存档 schema、奖励分发、控制权与联机边界、Run 界面流程、存档闭环、ESC 系统菜单、队伍编辑界面、团体潜能（团队池 + 槽位已分配进度值 + 分配/扣除）。
 **非范围**：战斗规则（阶段机 / SharedHp / 伤害与治疗公式 / 连携 / 槽位效果 / Buff 运行时）归 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md) 与 [2026-09-19 Buff 运行时规格](2026-07-21-combat-system-design.md) §1–§3、§5–§7；**词典（Glossary）**界面与词条目录归 Global 功能规格（其源规格见 `Doc/superpowers/specs/2026-09-21-pause-menu-and-glossary-design.md` 的词典章节）；UI 管理器与场景约定归 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)；Toast 组件本身归 [2026-08-04 Toast 组件规格](2026-09-21-global-mod-design.md)。
 
 ## 本文承载的下级规格（2026-09-21 合并并归档）
@@ -292,7 +292,7 @@ public sealed record DeckSnapshotDto
 }
 ```
 
-> **2026-09-21 合并（来源冲突）**：`PotentialLiberation`（整数潜能 [0,100] + 六档阈值）属**已被取代**的旧模型，实装已改为 **团队池 + 槽位直充 + 消费流水账本**，见 §13；该字段在 `Src/mod/run/RunDto.cs` 中已不存在（现行 `CharacterPoolEntryDto` 为 `DefinitionId / InstanceId / DefinitionCardIds / Decks / CurrentDeckIndex`）。
+> **2026-09-21 合并（来源冲突）**：`PotentialLiberation`（整数潜能 [0,100] + 六档阈值）属**已被取代**的旧模型，实装已改为 **团队池 + 槽位已分配潜能**（2026-09-26 起为进度值模型），见 §13；该字段在 `Src/mod/run/RunDto.cs` 中已不存在（现行 `CharacterPoolEntryDto` 为 `DefinitionId / InstanceId / DefinitionCardIds / Decks / CurrentDeckIndex`）。
 
 ### RunModifierDto
 
@@ -346,14 +346,14 @@ public static class RunConstants
 }
 ```
 
-> **2026-09-21 合并（来源冲突）**：`PotentialPerDuplicate = 20` / `MaxPotentialLiberation = 100` 属旧「整数潜能 + 六档阈值」模型的遗留常量；「重复获得角色 **+20**」的数额仍有效，但**去向**已改（入团队池，或重复的是本槽已有角色时直充该槽位），且不再有 `clamp 100` 与「满 100 移出投放池」规则，见 §13.1 / §13.2。
+> **2026-09-21 合并（来源冲突）**：`PotentialPerDuplicate = 20` / `MaxPotentialLiberation = 100` 属旧「整数潜能 + 六档阈值」模型的遗留常量；「重复获得角色 **+20**」的数额仍有效，但**去向**已改（入团队池，或重复的是本槽已有角色时直接分配到该槽位），且不再有 `clamp 100` 与「满 100 移出投放池」规则，见 §13.1 / §13.2。
 
 ### 关键设计决策
 
 - **控制权与槽位数据分离**：`SlotOwnership` 管理"谁操作这个槽位"，`PlayerRunState` 管理槽位游戏数据。一个人类玩家可控制多个槽位。
 - **CharacterPool 与 CardCollection 全队共享**：所有槽位共享同一角色池和卡牌收集。各槽位从中选择上阵角色和构建卡组。开局无预置池：由每槽角色 3 选 1（**硬去重**）与中途奖励填充（总规格 4.5）。
 - **角色定义唯一 + 潜能**：池内同一定义最多 1 实例；重复获得 → `PotentialLiberation += 20`（clamp 100）；满 100 移出随机角色投放池；满后再重复静默吞掉。被动为潜能六档解锁的自动技能，首发仅 BattleStart 触发。
-  > **2026-09-21 合并（来源冲突）**：本条的「`PotentialLiberation += 20`（clamp 100）／满 100 移出随机角色投放池／被动为潜能六档解锁」是**已被取代**的旧表述；现行模型为团队池 + 槽位直充 + 消费流水账本，被动解锁判定 = 存在匹配 `(characterInstanceId, buffId)` 的流水记录（或 `requiredPotential == 0`），见 §13.1–§13.2。「角色定义唯一（重复定义不入第二实例）」与「满后再重复静默吞掉」仍然有效。
+  > **2026-09-21 合并（来源冲突）**：本条的「`PotentialLiberation += 20`（clamp 100）／满 100 移出随机角色投放池／被动为潜能六档解锁」是**已被取代**的旧表述；现行模型为团队池 + 槽位已分配潜能（进度值），被动解锁判定 = 该角色**所在槽位**的已分配 ≥ 门槛（或 `requiredPotential == 0`），见 §13.1–§13.2。「角色定义唯一（重复定义不入第二实例）」与「满后再重复静默吞掉」仍然有效。
 - **进入战斗的硬约束**：`ActiveParty` 全部 4 个槽位的 `ActiveCharacter` 必须非 null，且所有槽位都已分配控制权（`AllSlotsAssigned() == true`）；每槽卡组须通过总规格 4.6 校验（1–10 张、专属/`ERole`、升级链最高阶、每 id≤1）。
 - **CardCollection vs Deck.CardIds**：`CardCollection` 是 **解锁/配方**（可含升级链多阶 id），不是稀缺实体库存；`Deck.CardIds` 是「编入当前卡组」且须为收集上 **可编入最高阶** 的子集。链升阶时各卡组旧 id **自动替换**为新最高阶。两者都需要存档以支持回滚。换人仅环间/事件；战斗中不可换。
 - **ActiveParty 不单独存储**：由各 PlayerRunState 的 ActiveCharacter 拼合计算得出。
@@ -462,7 +462,7 @@ public sealed class RunRewardDistributor
 | Heal | **已废除** | 非战斗无 SharedHp；开战恒满血。战前增益改用修饰或开战技能 |
 | Potion/Item | 外移商店·道具规格 | 总规格仅占位；若已实装则失败回滚含其状态 |
 
-> **2026-09-21 合并（来源冲突）**：上表 Character 行的「重复 → 潜能 +20；满 100 移出随机池」中的**去向与满值规则**已由 §13（团队池 + 槽位直充 + 消费流水账本，不再有 100 上限与移池规则）取代；「+20」数额与「重复获得同一**定义**不入第二实例」仍然有效。
+> **2026-09-21 合并（来源冲突）**：上表 Character 行的「重复 → 潜能 +20；满 100 移出随机池」中的**去向与满值规则**已由 §13（团队池 + 槽位已分配潜能，不再有 100 上限与移池规则）取代；「+20」数额与「重复获得同一**定义**不入第二实例」仍然有效。
 
 ### 分发策略（单人 / 联机分叉）
 
@@ -636,7 +636,7 @@ public sealed class RunController : BaseController<RunMod>
 | 2 | 选故事 | 列表 = `GameDefinitionStore.Stories` 全量；按 `StoryDto.unlock` + Persistent 条件求值判定可玩；**未通过可选中预览详情，但确定按钮不可用**；右侧显示故事名 / 作者 / 所属 Mod（Registry owner）/ 模式（仅单人 / 可联机）/ 描述，未满足条件时显示条件提示 |
 | 3 | 选故事 · Seed | 输入默认 `-1`（随机），`>= 0` 视为手写 seed（精确成为 `RunSeed`） |
 | 4 | 确定 | `RunRuntime.CreateNew(storyId, seed, candidates)`（单人，`candidates` 暂空）→ 关闭选故事 → 打开 Run 主界面 Window（`RunMainWin`） |
-| 5 | Run 主界面（壳） | 显示故事名、阶段、环/MaxRing、Seed、金币（单人 `SharedGold`）；右下角「保存 / 保存并返回主菜单 / 快速读取存档 / 放弃 Run」（实现修订 2026-08-04）；战斗中（Battle/BattleEnd）保存系按钮禁用；放弃 → 确认 Alert → `RunRuntime.Abandon()`（删档）→ 回主菜单 |
+| 5 | Run 主界面（壳） | 显示故事名、阶段、环/MaxRing、Seed、金币（单人 `SharedGold`）、潜能（团队池可用，2026-09-26 新增）；右下角「保存 / 保存并返回主菜单 / 快速读取存档 / 放弃 Run」（实现修订 2026-08-04）；战斗中（Battle/BattleEnd）保存系按钮禁用；放弃 → 确认 Alert → `RunRuntime.Abandon()`（删档）→ 回主菜单 |
 | 6 | 后置 | 环地图、事件 / 奖励 / 编队 / 战斗入口、开局选人：后续里程碑落地，不在本界面范围 |
 
 - `RunRuntime`（`Src/mod/run/RunRuntime.cs`）为当前 Run 会话门面：持有 `RunController` 单例，`CreateNew` 销毁旧会话并构造新 `HostRng`。
@@ -888,6 +888,10 @@ UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
 
 - **顶部 4 个槽位选项卡**（`TabBar`）：标题 = 「槽位 N」+（已上阵时）角色名；点击切换当前槽位。
 - **左：当前上阵**：该槽角色的头像件（`BaseCharacterItem`）+「下阵」按钮（清空槽位；开战前由 `ValidateParty` 校验满编）。
+- **左栏潜能区**（2026-09-26 新增）：显示「可用潜能（团队池）」与「本槽已分配」，以及数额输入框 +「分配 / 扣除」按钮；
+  分配 = 团队池 → 当前槽位（投票模式下需表决），扣除 = 当前槽位 → 团队池（被动随门槛自动重锁）。
+  成功 / 失败都经状态文案回报（原因键 `UI_TEAM_POTENTIAL_*`），划拨成功置脏（关闭界面统一保存）。
+  上阵角色的被动在「已分配 ≥ 门槛」时**自动解锁**，无需手动操作（§12.4 被动区的解锁状态随之刷新）。
 - **中：可上阵角色**（`VirtualList` + `BaseCharacterItem` 模板）：显示**全部**角色池实例；已在其它槽上阵的加「已在槽位 N」徽标。
 - **右：详细信息预览**：`CharacterPresenter` 立绘/动画 + 名字 + 元素/种族/职业 + **由当前卡组换算的属性**（`ComputeAttributeMap`）+ 卡组缩略（水平 `VirtualList` + `BaseCardItem`，**悬停显示卡牌摘要**、单击打开详情）。属性名与展示顺序走 Global 的 `AttributeLabels`（`attr.<snake_case>.name`，缺键回落原始 id；核心属性在前；2026-09-25 起与卡牌详情的「卡组属性加成」共用同一口径，见 Global 规格 §12.4）。
 - **悬停**任一角色头像刷新预览（离开时清空 -> 回落为显示当前槽位角色）；**单击**进入二级界面。
@@ -897,7 +901,8 @@ UI_RUN_LOAD_FAILED,没有可读取的存档,No save to load
 - 顶部：角色名标题 +「新建卡组」+ **卡组选项卡**（多套卡组，`CharacterInstance.Decks` ≤ 10 套 + `CurrentDeckIndex`），切页签即切换当前卡组。
 - 左栏（Rail）：角色名标题、操作提示、**潜能被动区**（2026-09-25 新增）、状态文案、上阵 / 关闭。
   被动区取 `RunTeamEditService.GetPassives`（门槛 + 解锁状态 + 描述键），文案口径 `PassiveTextBuilder`（与角色详情共用，见 Global 规格 §12.5）；
-  固定在左栏中部、内容超高时内部滚动（`RichTextLabel.scroll_active`），**没有被动的角色整块隐藏**；解锁状态与开战挂载共用 `PotentialService.IsPassiveUnlocked`。
+  固定在左栏中部、内容超高时内部滚动（`RichTextLabel.scroll_active`），**没有被动的角色整块隐藏**；解锁状态与开战挂载共用 `PotentialService.IsPassiveUnlocked`
+  （判定 = 该角色**所在槽位**的已分配潜能 ≥ 门槛，2026-09-26 起；未上阵视为 0）。
 - 左：当前卡组的卡片（`BaseCardItem`）——**单击移出卡组**、**长按查看卡牌详情**；显示 `n/上限` 计数与"有 N 张牌当前不可用"的校验提示。
 - 右：可加入卡牌池 = **收藏 ∪ 角色专属卡**（`GetBuildableCardIds`，与 `DeckPreset` 校验同集合）——**单击加入**、**长按看详情**。
   **已在当前卡组内的牌必须显式标出**：`RunTeamEditService.GetPoolCards` 逐条给出 `InDeck`，界面据此给卡面加
@@ -967,31 +972,41 @@ Run 层自身仍然不直接访问内容注册表。
 
 ---
 
-## 13. 团体潜能（团队池 + 槽位直充 + 消费流水账本）
+## 13. 团体潜能（团队池 + 槽位已分配进度值）
 
 > **来源**：并入 `2026-09-19-buff-potential-chain-system-design.md` 的 **§4 团体潜能**（含 §4.1 / §4.2 / §4.3）。原件标题「团体潜能（替代总规格 §4.5.2–4.5.3）」，状态：**已实装**（2026-09-19，chalux 角色为首个使用者）。
 > **未并入**：原件 §1 Buff 运行时 / §2 槽位效果 / §3 连携 / §5 新触发点 / §6 首个使用者 chalux / §7 明确后置项——归战斗规格（其中 §7 的两条 Run 域后置项「潜能消费玩家 UI」「重复角色正式奖励管线」仍在 `2026-09-19-buff-potential-chain-system-design.md` §7 追踪）。
 >
-> **2026-09-21 合并（来源冲突）**：本文既有旧表述——§3 关键设计决策的「重复获得 → `PotentialLiberation += 20`（clamp 100）；满 100 移出随机角色投放池；被动为潜能六档解锁的自动技能」、`CharacterPoolEntryDto.PotentialLiberation` 字段、`RunConstants.PotentialPerDuplicate` / `MaxPotentialLiberation` 常量，以及 §5「奖励类型与归属」表 Character 行的「重复 → 潜能 +20；满 100 移出随机池」——均属 **整数潜能 + 六档阈值旧模型**，已由本节（**团队池 + 槽位直充 + 消费流水账本**）取代；总规格 §4.5.2–4.5.3 的同一旧模型同样被取代。旧表述在本文中保留原文仅供历史参考，并在各处以本注记指向本节。本节为团体潜能的**唯一权威**表述。
+> **2026-09-26 模型修订（现行）**：消费流水模型废止——槽位账本改为**进度值**：上阵角色的被动按
+> 「该槽位已分配潜能 ≥ 门槛」**自动解锁**，扣除低于门槛即重新锁定；分配 = 团队池 → 槽位（投票模式下需表决），
+> 扣除 = 槽位 → 团队池（无需表决）。界面：`RunMainWin` 显示团队池可用；队伍编辑界面显示「可用 + 当前槽位已分配」
+> 并提供数额输入框 +「分配 / 扣除」按钮（§12.3）。`PotentialSpent` 字段仅为老档反序列化保留，运行态不再读写。
+>
+> **2026-09-21 合并（来源冲突）**：本文既有旧表述——§3 关键设计决策的「重复获得 → `PotentialLiberation += 20`（clamp 100）；满 100 移出随机角色投放池；被动为潜能六档解锁的自动技能」、`CharacterPoolEntryDto.PotentialLiberation` 字段、`RunConstants.PotentialPerDuplicate` / `MaxPotentialLiberation` 常量，以及 §5「奖励类型与归属」表 Character 行的「重复 → 潜能 +20；满 100 移出随机池」——均属 **整数潜能 + 六档阈值旧模型**，已由本节（**团队池 + 槽位已分配潜能**）取代；总规格 §4.5.2–4.5.3 的同一旧模型同样被取代。旧表述在本文中保留原文仅供历史参考，并在各处以本注记指向本节。本节为团体潜能的**唯一权威**表述。
 
 ### 13.1 模型（原 §4.1）
 
-- **团体资源**：`TeamPotentialPool` 全队共享；消费记到**玩家槽位**账本（切换角色不丢失数据）。
-- 槽位账本：`PotentialDirectCredit`（直充余额）+ `PotentialSpent`（消费流水，逐笔）。
-- **被动定义**：`CharacterDto.passives: [{buffId, requiredPotential}]`；`requiredPotential` 即解锁成本，**档位任意数值**（放宽旧规格的 0/20/…/100 六档限制）。0 = 默认解锁。
-- 解锁判定 = 存在匹配 (characterInstanceId, buffId) 的流水记录（或成本 0）；返还即重锁。
+- **团体资源**：`TeamPotentialPool` 全队共享；已分配潜能记到**玩家槽位**账本（切换角色不丢失数据）。
+- 槽位账本：`AllocatedPotential`（运行态）/ `PlayerRunStateDto.PotentialDirectCredit`（存档字段沿用旧名）——
+  **已分配潜能，进度值、不消费**。
+- **被动定义**：`CharacterDto.passives: [{buffId, requiredPotential}]`；`requiredPotential` 即解锁门槛，
+  **档位任意数值**。0 = 默认解锁。
+- 解锁判定 = 角色**所在槽位**的已分配潜能 ≥ 门槛（未上阵视为 0）；扣回低于门槛即重锁
+  （2026-09-26 起取代旧「存在匹配流水」判定）。
 
-### 13.2 消费与返还（PotentialService）（原 §4.2）
+### 13.2 分配与扣除（PotentialService）（原 §4.2）
 
-- 消费顺序：**先扣本槽位直充（无需表决）再扣团队池**；跨来源拆多笔记账，每笔记录来源（credit/pool）。
-- 返还：**按笔（同一角色实例 + 同一被动的全部流水）原子退回原来源**（直充回槽位、池回团队池），对应被动自动重锁。只退一部分会留下"打折解锁"漏洞（存在匹配流水即解锁），因此跨来源拆账的消费不允许部分返还（2026-09-19 评审修正）。
-- 任意数额入账走 `Potential.Grant(amount, slotIndex)`（槽位有效直充、否则入团队池）；调试通道与后置的奖励管线共用。
-- 奖励入账：重复获得角色 +20 → 团队池；若重复的是该槽位自己已有的角色 → 直充该槽位。**接线在 `RunController.AddToCharacterPool`**（角色定义唯一：重复定义不入第二实例，返回 false 表示已转化；`RunMod.AddToCharacterPool` 保持裸加入语义）。
+- **分配**（`TryAllocate`）：团队池 → 槽位已分配；投票模式下需发起提议并通过（每环每槽位提议次数受策略限制）。
+- **扣除**（`TryDeduct`）：槽位已分配 → 团队池；无需表决。
+- 失败原因以 `EPotentialFailure` 枚举回报（`InvalidSlot / InvalidAmount / PoolShort / SlotShort / VoteRejected`），
+  失败不动账；界面据此选本地化键，调试面板据此打中文日志。
+- 任意数额入账走 `Potential.Grant(amount, slotIndex)`（槽位有效直接分配到槽位、否则入团队池）；调试通道与后置的奖励管线共用。
+- 奖励入账：重复获得角色 +20 → 团队池；若重复的是该槽位自己已有的角色 → 直接分配到该槽位。**接线在 `RunController.AddToCharacterPool`**（角色定义唯一：重复定义不入第二实例，返回 false 表示已转化；`RunMod.AddToCharacterPool` 保持裸加入语义）。
 
 ### 13.3 联机设置（全局，房主同样受约束）（原 §4.3）
 
 - `multiplayer.potential.consume_mode`：free（缺省）/ vote。
-- vote 模式：消费**团队池**部分需发起提议并经团队表决（3 人同意，含提议者自己）；纯直充消费不需表决。表决网络交互走 `IPotentialProposalApprover`（单机实现直接放行；联机协议后置接入）。
+- vote 模式：**从团队池分配到槽位**需发起提议并经团队表决（3 人同意，含提议者自己）；扣除（退回团队池）不需表决。表决网络交互走 `IPotentialProposalApprover`（单机实现直接放行；联机协议后置接入）。
 - `multiplayer.potential.proposals_per_ring`：每环每槽位提议次数（默认 2）+ `multiplayer.potential.proposals_unlimited`（无限制勾选）。提议计数为运行态，换环（`NextRing`）重置。
 - Run 存档 schema **v1 → v2**：新增池与账本字段，`RunDto.Normalize()` 迁移老档补默认值。
 
@@ -1002,8 +1017,9 @@ Run 层自身仍然不直接访问内容注册表。
 - schema **v1 → v2**：新增团体潜能池与槽位账本字段（原件 §4.3 末条），`RunDto.Normalize()` 迁移老档补默认值。
 - **实现核对（2026-09-21，`Src/mod/run/RunDto.cs`）**：
   - `RunDto.CurrentSchemaVersion = 2`；`RunDto.TeamPotentialPool`（团队池，v2 新增）。
-  - `PlayerRunStateDto.PotentialDirectCredit`（该槽位直充余额）+ `PlayerRunStateDto.PotentialSpent`（`List<PotentialSpendEntryDto>`）。
-  - `PotentialSpendEntryDto` = `{ EntryId, Source（`pool` = 团队池 / `credit` = 本槽位直充）, Amount, CharacterInstanceId, BuffId }`，一笔流水即解锁某个角色被动，返还即重新锁定该被动。
+  - `PlayerRunStateDto.PotentialDirectCredit`（该槽位**已分配潜能**，进度值；字段名沿用旧「直充余额」以兼容老档）。
+  - `PlayerRunStateDto.PotentialSpent` / `PotentialSpendEntryDto`（**旧消费流水，2026-09-26 起废止**）：字段保留只为老档
+    反序列化，运行态不读写、存档也不再写出；老档的流水**不参与**解锁判定（要保留进度需把潜能重新分配到槽位）。
   - `RunDto.Normalize()`：v1 → v2 补潜能默认值（池 0、槽位账本空），并对显式 `null`（如 `"playerStates": null`）容错——该方法在 `RunSaveService` 的 try 之外执行，必须自己容错，否则坏档不走「归档」路径而是把 NRE 抛给上层。
   - **高于当前版本的存档会被拒绝并归档**（`RunDto` 注释：照默认值反序列化会得到「看似合法但错」的 Run）。
 
@@ -1038,8 +1054,14 @@ CombatWin
 > **设计区兜底**（2026-09-25）：`Root` 的合并最小尺寸超过 1280×720 设计区（无敌人 1264×686、
 > 3 敌人 1384×686），由 `FitScale`（`FitScaleBox`）在空间不足时整体等比缩小并居中，任何宽高比下不裁切、不错位
 > （约定见 [UI 与运行时规格](2026-05-15-ui-manager-design.md) §13.5）。组件最小尺寸按设计区预算收敛：
-> `HandSlotCmp` 128×214、`CardPileCmp` 92×126、`ActorInfoCmp` 210、`AllyUnitCmp` 112×160、
-> `EnemyUnitCmp` 128×212、`OrbQueueCmp` 184、`PartyMemberCmp` 高 104、侧栏 230 / 190；常态（≤2 敌人）缩放约 0.99。
+> `HandSlotCmp` 128×214、`CardPileCmp` 92×126、`ActorInfoCmp` 210×244、`AllyUnitCmp` 112×160、
+> `EnemyUnitCmp` 128×212、`OrbQueueCmp` 184、`PartyMemberCmp` 高 104、侧栏 230 / 190；常态（≤2 敌人）缩放约 0.97。
+>
+> **`ActorInfoCmp` 的最小尺寸传播（2026-09-26 修正）**：底栏最左的操控角色卡原先根节点是普通 `Control`
+> （最小尺寸只有 `custom_minimum_size`，不含子内容），内容一旦变宽就会溢出卡片——右侧文本穿出边框，
+> 内层 `MarginContainer` 按锚点对称外扩还会把整卡左移出屏。现在根节点改为 **`PanelContainer`**（同一套 `card` 样式），
+> 最小尺寸从内容向上传播、卡片随内容增长，不会再溢出；同时把「能量 / 技能」两行拆开（原先并排 228px 超出 210 预算），
+> 让卡片回到预算内。「能量 / 技能」两行拆开后底栏高度 214 → 244，整体缩放随之从 ~0.99 变为 ~0.97。
 
 组件全部继承 `BaseCmp`（订阅写 `InitEvent`）：
 
@@ -1047,15 +1069,20 @@ CombatWin
 |---|---|---|
 | `HpBarCmp` | 当前 / 最大 + 进度条；`AnimateTo(value)` 供动画过渡 | — |
 | `BuffListCmp` / `BuffIconCmp` | `BuffContainer.Visible` 的图标（`iconPath` 缺失回落短名）、层数、剩余回合 | 悬停显示名字 / 描述（BBCode 渲染，`[url=kw:id]` 关键词高亮）/ 剩余时间（按 `durationType` 分派文案）/ 层数「当前 / 上限」（无上限或可无限叠显示 ∞）；描述引用的关键词效果以附加块列在下方（`KeywordTipService.BuildKeywordEffectTips`）（`ShowCustomTips`） |
-| `PartyMemberCmp` | 名字、物攻·魔攻、物防·魔防、回复量、已确认标记、本回合普攻/追打标识 | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用） |
-| `AllyUnitCmp` | 边框 + `CharacterPresenter`（有 `presentation` 播序列帧，否则立绘 / 空白）；当前操控 / 已确认 / 合法目标高亮 | 选目标态点击 = 选为目标；`MoveTo/ReturnHome/Play(anim)` 由动画驱动 |
-| `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + `BuffListCmp`；合法目标高亮 | 悬停：名字 / 种族·定位 / 剩余生命 / 物攻·魔攻 / 物防·魔防；点击 = 选为目标 |
+| `PartyMemberCmp` | 名字、物攻·魔攻、物防·魔防、回复量、已确认标记、本回合普攻/追打标识、**嘲讽 Crosshair** | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用） |
+| `AllyUnitCmp` | 边框 + `CharacterPresenter`（有 `presentation` 播序列帧，否则立绘 / 空白）；当前操控 / 已确认 / 合法目标高亮；**嘲讽 Crosshair** | 选目标态点击 = 选为目标；`MoveTo/ReturnHome/Play(anim)` 由动画驱动 |
+| `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + `BuffListCmp`；合法目标高亮；**阵亡即退场**（淡出到全透明后隐藏，存活敌人自动重排，2026-09-26） | 悬停：名字 / 种族·定位 / 剩余生命 / 物攻·魔攻 / 物防·魔防；点击 = 选为目标 |
 | `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮 | 触发 → `TriggerOrbsCommand` |
-| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap、四维 + 回复、buff 列表、本回合普攻/追打标识 | — |
+| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap、四维 + 回复、buff 列表、本回合普攻/追打标识；根节点为 `PanelContainer`（最小尺寸随内容传播，2026-09-26） | — |
 | `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 + 充能指示（`SlotChargeCmp`：光晕框包住「X / N」进度条与卡牌，不含 buff 列表；无充能时隐藏） | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
 | `CardPileCmp` | 标题 + 张数 | — |
 
 > **普攻标识**（2026-09-25）：本回合普攻归属者（`(回合-1) % 队伍人数`）显示「普攻」；持有 `trait.follow_up` 的**非归属者**显示「追打」（归属者持有追打也不重复出手，故归属者恒为「普攻」）。队友卡与当前操控角色卡各一处；判定在 `CombatActionMarks.Resolve`（纯函数，有单测），文案 / 配色由 `CombatActionMarks.Apply` 统一下发。
+
+> **嘲讽 Crosshair**（2026-09-26）：给"当前嘲讽值最高"的队友打准星（`Resource/Asset/Icon/crosshair.svg`）——
+> 全队嘲讽值都为 0 时谁都不标；否则标出**所有等于最大嘲讽值**的槽位（并列最高全部显示；最高为 0 而有人被减成负数时标那些 0）。
+> 判定在 `CombatTauntMarks.Resolve`（纯函数，有单测），由 `CombatWin.SyncFromState` 读全队 `AttributeIds.Taunt`
+> 后统一落笔到 `AllyUnitCmp` / `PartyMemberCmp` 的 `Crosshair` 节点（两处同一口径）。
 
 ### 14.3 交互状态（`CombatUiState`，纯 C#）
 
@@ -1072,6 +1099,7 @@ CombatWin
 - `CombatPresentationDirector`（纯 C#）：`Enqueue(events)` + `PlayAsync(ICombatEventPlayer)` 顺序播放，播放中可继续追加，`IsPlaying`。
 - `CombatAnimator`（`Node`，Godot Tween）实现 `ICombatEventPlayer`，按事件类型分派；未处理类型零时长完成。时长常量集中在 `CombatAnimationTiming`。
 - **舞台单位位移**：`AllyUnitCmp` 的「到目标面前再回原位」与单位受击抖动统一走 `UnitTweens` 的 Godot 4.7 **offset transform**（纯视觉偏移，不改布局、不移点击判定区域）；不要直接 tween `position` / `global_position`，否则容器重排（排序 / 尺寸变化）会覆盖位移。
+- **敌人阵亡即退场**（2026-09-26）：`EnemyUnitCmp.Refresh` 对 `IsAlive == false` 的敌人直接 `Visible = false`（死亡表现先由 `FadeOutAsync` 淡到全透明），释放 HBox 占位、存活敌人自动重排；不再保留 35% 透明度的"幽灵"。逻辑侧同时"全灭即结算"（战斗规格 §2.1 / §12.2）。
 - **事件到达时模拟器已推进到该批次的终态**（逻辑同步跑完才播动画），因此"按状态重绘"只能画终值；凡是被后续结算覆盖掉的增量，必须由事件载荷提供。例：`OrbGainedEvent` 带 `QueueCount` / `OrbTypeId`，满员自动触发已把队列清空，界面只能用载荷单独上色这一格（`PaintOrb`），不能读队列。
 - `CombatWin` 流程：`TryApply` 成功 → `Simulation.AdvanceAutomaticPhases()`（把卡牌执行 / 敌方相位同步推进到回到玩家阶段或终局；状态机本身只切相位不自动执行）→ `Enqueue(Simulation.Presentation.Drain())` → 若未在播放则锁输入（只刷可交互态，**不对账**，否则动画没有落差可播）并 `PlayAsync` → 播完 `SyncFromState()` 全量对账 → 胜负判定。
 

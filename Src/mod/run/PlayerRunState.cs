@@ -9,11 +9,8 @@ public sealed class PlayerRunState
     public List<RunModifierDto> Modifiers { get; } = [];
     public Dictionary<string, object> EventFlags { get; } = new(StringComparer.Ordinal);
 
-    /// <summary>潜能直充余额：仅本槽位可消费、无需表决、可返还；消费先扣这里再扣团队池。</summary>
-    public int PotentialDirectCredit { get; private set; }
-
-    /// <summary>本槽位的潜能消费流水（解锁的被动），逐笔可返还。</summary>
-    public List<PotentialSpendEntryDto> PotentialSpent { get; } = [];
+    /// <summary>槽位已分配潜能（进度值，不消费）：≥ 被动门槛即自动解锁，扣除低于门槛即重新锁定。</summary>
+    public int AllocatedPotential { get; private set; }
 
     public void SetActiveCharacter(CharacterInstance? character)
     {
@@ -42,37 +39,22 @@ public sealed class PlayerRunState
         return true;
     }
 
-    public void AddPotentialDirectCredit(int amount)
+    /// <summary>分配 / 扣除的额度读写由 <c>PotentialService</c> 编排（含团队池联动与表决）。</summary>
+    public void AllocatePotential(int amount)
     {
         if (amount <= 0)
             return;
-        PotentialDirectCredit += amount;
+        AllocatedPotential += amount;
     }
 
-    /// <summary>潜能消费/返还在 <c>PotentialService</c> 编排，这里只提供最小的额度读写。</summary>
-    internal void ConsumePotentialDirectCredit(int amount)
+    /// <summary>扣除已分配潜能（退回团队池由 <c>PotentialService</c> 记账）。</summary>
+    internal void DeductPotential(int amount)
     {
-        PotentialDirectCredit = Math.Max(0, PotentialDirectCredit - amount);
+        AllocatedPotential = Math.Max(0, AllocatedPotential - amount);
     }
 
     /// <summary>存档恢复前清零（避免对既有运行态重复叠加）。</summary>
-    internal void ResetPotentialDirectCredit() => PotentialDirectCredit = 0;
-
-    internal void RestorePotentialDirectCredit(int amount)
-    {
-        PotentialDirectCredit += amount;
-    }
-
-    internal void AddPotentialSpendEntry(PotentialSpendEntryDto entry)
-    {
-        ArgumentNullException.ThrowIfNull(entry);
-        PotentialSpent.Add(entry);
-    }
-
-    internal bool RemovePotentialSpendEntry(string entryId)
-    {
-        return PotentialSpent.RemoveAll(entry => string.Equals(entry.EntryId, entryId, StringComparison.Ordinal)) > 0;
-    }
+    internal void ResetAllocatedPotential() => AllocatedPotential = 0;
 
     public void AddModifier(RunModifierDto modifier)
     {
@@ -100,8 +82,7 @@ public sealed class PlayerRunState
             Gold = Gold,
             Modifiers = [.. Modifiers],
             EventFlags = new Dictionary<string, object>(EventFlags, StringComparer.Ordinal),
-            PotentialDirectCredit = PotentialDirectCredit,
-            PotentialSpent = [.. PotentialSpent],
+            PotentialDirectCredit = AllocatedPotential,
         };
     }
 }

@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": { "gameplayEffectId": "training_dummy_strike_damage" }
+}

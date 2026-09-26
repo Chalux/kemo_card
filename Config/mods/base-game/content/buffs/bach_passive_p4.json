@@ -3,7 +3,9 @@
   "durationType": "Permanent",
   "stackRule": "Replace",
   "applyScope": "AllAllies",
-  "condition": { "partyMinCount": 2, "partyElementAny": ["Green"] },
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "partyMinCount": 2, "partyElementAny": ["Green"] } }
+  ],
   "modifiers": [
     {
       "attributeId": "OrbDamageScale",

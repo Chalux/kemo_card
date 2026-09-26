@@ -290,6 +290,61 @@ public sealed class RunTeamEditService
 
     #endregion
 
+    #region 潜能
+
+    /// <summary>团队池可用潜能（尚未分配到槽位的部分）。</summary>
+    public int AvailablePotential => _run.Potential.TeamPool;
+
+    /// <summary>指定槽位的已分配潜能（进度值；≥ 被动门槛即自动解锁）。</summary>
+    public int SlotAllocatedPotential(int slotIndex) => _run.Potential.AllocatedFor(slotIndex);
+
+    /// <summary>把 <paramref name="amount"/> 点可用潜能分配到槽位（投票模式下需表决）。</summary>
+    public TeamEditResult AllocatePotential(int slotIndex, int amount)
+    {
+        if (!CanEdit)
+            return TeamEditResult.Failure("UI_TEAM_EDIT_BLOCKED");
+        if (slotIndex < 0 || slotIndex >= RunConstants.SlotCount)
+            return TeamEditResult.Failure("UI_TEAM_SLOT_INVALID");
+        if (amount <= 0)
+            return TeamEditResult.Failure("UI_TEAM_POTENTIAL_INVALID");
+
+        var result = _run.Potential.TryAllocate(slotIndex, amount);
+        if (!result.Success)
+            return TeamEditResult.Failure(PotentialFailureKey(result.Failure));
+
+        IsDirty = true;
+        return TeamEditResult.Success("UI_TEAM_POTENTIAL_ALLOCATED");
+    }
+
+    /// <summary>从槽位扣除 <paramref name="amount"/> 点已分配潜能退回团队池（被动随门槛自动重锁）。</summary>
+    public TeamEditResult DeductPotential(int slotIndex, int amount)
+    {
+        if (!CanEdit)
+            return TeamEditResult.Failure("UI_TEAM_EDIT_BLOCKED");
+        if (slotIndex < 0 || slotIndex >= RunConstants.SlotCount)
+            return TeamEditResult.Failure("UI_TEAM_SLOT_INVALID");
+        if (amount <= 0)
+            return TeamEditResult.Failure("UI_TEAM_POTENTIAL_INVALID");
+
+        var result = _run.Potential.TryDeduct(slotIndex, amount);
+        if (!result.Success)
+            return TeamEditResult.Failure(PotentialFailureKey(result.Failure));
+
+        IsDirty = true;
+        return TeamEditResult.Success("UI_TEAM_POTENTIAL_DEDUCTED");
+    }
+
+    private static string PotentialFailureKey(EPotentialFailure failure) => failure switch
+    {
+        EPotentialFailure.InvalidAmount => "UI_TEAM_POTENTIAL_INVALID",
+        EPotentialFailure.PoolShort => "UI_TEAM_POTENTIAL_POOL_SHORT",
+        EPotentialFailure.SlotShort => "UI_TEAM_POTENTIAL_SLOT_SHORT",
+        EPotentialFailure.VoteRejected => "UI_TEAM_POTENTIAL_VOTE_FAILED",
+        _ => "UI_TEAM_SLOT_INVALID",
+    };
+
+    #endregion
+
     #region 卡组
 
     /// <summary>新建一套卡组（用角色定义卡初始化），并切为当前卡组。</summary>

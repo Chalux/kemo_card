@@ -107,21 +107,31 @@ public static class ChainCalculator
     }
 
     /// <summary>
-    /// 该卡参与连携统计时的属性位：基础属性之外，被动可注入额外属性。
-    /// <list type="bullet">
-    /// <item><c>trait.chain_inject_red</c>（chalux 被动2）：打出的卡额外计入红属性。</item>
-    /// <item><c>trait.chain_yellow_counts_blue</c>（冯·诺依曼 被动5）：含黄属性的卡额外计入<b>蓝属性</b>
-    /// （"打出蓝属性时计算连携也会计入黄属性卡牌"，配 <c>applyScope: AllAllies</c> 即全队生效）。</item>
-    /// </list>
+    /// 该卡参与连携统计时的属性位：基础属性之外，持有者可声明 <c>chainElementInject</c> 注入额外属性
+    /// （2026-09-26 参数化，取代按 tag 硬编码的两种注入）。<c>from</c> 为空 = 任意卡命中。
     /// </summary>
     private static int CardElementFlagsForCount(CharacterBattleInstance source, CardDto card)
     {
         var flags = card.Element;
-        if (source.Buffs.HasTag(BuiltinBuffTags.TraitChainInjectRed))
-            flags |= (int)EElement.Red;
-        if (source.Buffs.HasTag(BuiltinBuffTags.TraitChainYellowCountsBlue) &&
-            (card.Element & (int)EElement.Yellow) != 0)
-            flags |= (int)EElement.Blue;
+        foreach (var instance in source.Buffs.All)
+        {
+            if (instance.IsDormant)
+                continue;
+
+            foreach (var inject in instance.Def.ChainElementInject)
+            {
+                if (inject.Add.Count == 0)
+                    continue;
+                if (inject.From.Count > 0 && !inject.From.Any(element =>
+                        element != EElement.None && (card.Element & (int)element) != 0))
+                {
+                    continue;
+                }
+
+                foreach (var element in inject.Add)
+                    flags |= (int)element;
+            }
+        }
 
         return flags;
     }

@@ -16,6 +16,10 @@
 /addons/beckett/
 /.beckett/
 
+# Godot MCP toolkit plugin & local AI config (kept local, not version-controlled)
+/addons/godot_mcp_toolkit/
+/opencode.json
+
 # Git worktrees
 .worktrees/
 

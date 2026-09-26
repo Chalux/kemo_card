@@ -2,6 +2,7 @@ using System.Text.Json;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
+using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
@@ -13,8 +14,8 @@ public sealed record BuffApplyResult(bool Success, BuffInstance? Instance = null
 /// <summary>
 /// Buff 运行时编排：投放（叠层/互斥/范围展开）、钩子节点分发、时长 tick、驱散。
 /// 挂点三类：角色容器、敌人容器、手牌槽位容器；修正走 ASC 聚合器句柄，休眠=撤销句柄。
-/// 钩子效果的目标由效果参数决定：<c>hookTargets</c>（self/randomEnemy/allEnemies）与
-/// <c>targetFilter</c>（self/elementAny/raceAny 筛选玩家角色）。
+/// 钩子效果的目标由效果参数决定：<c>hookTargets</c>（self/team/allies/randomEnemy/allEnemies）与
+/// <c>targetFilter</c>（<c>self</c> / <c>excludeSelf</c> + <c>condition</c>，条件主体 = 候选）。
 /// </summary>
 public sealed class BuffRuntime
 {
@@ -155,7 +156,7 @@ public sealed class BuffRuntime
             }
         }
 
-        var instance = container.Add(def, FilterInstanceParams(parameters));
+        var instance = container.Add(def, FilterInstanceParams(parameters), BuildConditionContext(simulation, holder));
         simulation.Presentation.Emit(new BuffAppliedEvent(holderRef, def.Id, instance.Stacks));
         FireHook(simulation, holder, instance, def.Hooks.OnApply);
         return instance;
@@ -235,7 +236,7 @@ public sealed class BuffRuntime
     {
         foreach (var (holder, container, _) in EnumerateContainers(simulation))
         {
-            container.EvaluateDormancy();
+            container.EvaluateDormancy(BuildConditionContext(simulation, holder));
             // 钩子可能对自己容器挂/删 buff，必须快照枚举（活列表枚举中修改会抛异常）。
             foreach (var instance in container.All.ToArray())
             {
@@ -563,10 +564,18 @@ public sealed class BuffRuntime
         return null;
     }
 
+    /// <summary>
+    /// 持有者的条件上下文（2026-09-26）：身份类条件的主体 = 持有者；回合/出牌统计走仿真。
+    /// </summary>
+    private static CombatCondContext BuildConditionContext(CombatSimulation simulation, CombatTargetRef holder)
+    {
+        var (elementFlags, raceFlags) = CombatIdentity.Resolve(simulation, holder);
+        return new CombatCondContext(simulation, holder.Index, elementFlags, raceFlags);
+    }
+
     /// <summary>全部 buff 容器：角色 / 该角色各手牌槽（带槽位索引，供表现事件定位）/ 敌人。</summary>
     private IEnumerable<(CombatTargetRef Holder, BuffContainer Container, int? SlotIndex)> EnumerateContainers(
-        CombatSimulation simulation)
-    {
+        CombatSimulation simulation)    {
         for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
         {
             var character = simulation.PlayerTeam.Characters[i];

@@ -133,6 +133,9 @@ public sealed class CombatStateMachine
 
     private static CombatApplyResult TryApplyPlayerPhase(CombatSimulation simulation, ICombatCommand command)
     {
+        // 玩家阶段的效果（充能球 / 主动技）可能击杀敌人：先记存活集合，指令成功后统一按规格 §2.3
+        // 处理目标丢失——对目标含已阵亡敌人的已标记牌整张取消并退还 paid。
+        var aliveEnemiesBefore = SnapshotAliveEnemyIndices(simulation);
         var result = command switch
         {
             PlayCardCommand playCard => ApplyPlayCard(simulation, playCard),
@@ -149,7 +152,12 @@ public sealed class CombatStateMachine
         {
             QueuedCostReconciler.Reconcile(simulation);
             EnforceSealsOnAllCharacters(simulation);
-            AdvanceToCardExecutionIfAllActed(simulation);
+            HandleTargetLoss(simulation, aliveEnemiesBefore);
+            // 全灭即结算（2026-09-26）：玩家阶段的效果（充能球 / 主动技）打死最后一名敌人时立即判定
+            // （胜利 / 换波），不再要求玩家把本回合走完。换波会直接把回合切到下一回合，见 AdvanceToNextWave。
+            simulation.CheckEndConditions();
+            if (simulation.Phase == ECombatPhase.Player)
+                AdvanceToCardExecutionIfAllActed(simulation);
         }
 
         return result;
@@ -292,7 +300,6 @@ public sealed class CombatStateMachine
         // 先扣阈值再跑载荷：载荷里可显式 +S 做连发（规格 §5.3）。
         character.PaySkillCounter(character.GetTierThreshold(tierIndex));
 
-        var aliveEnemiesBefore = SnapshotAliveEnemyIndices(simulation);
         var source = new CombatTargetRef(ECombatSide.Player, command.CharacterIndex);
         var previousChannel = simulation.CurrentDiscardChannel;
         simulation.SetDiscardChannel(EDiscardChannel.ActiveSkill);
@@ -308,7 +315,6 @@ public sealed class CombatStateMachine
         // 被动钩子：持有者释放主动技后触发（如 chalux 被动6）。
         simulation.Buffs.FireActiveSkillCast(simulation, command.CharacterIndex);
 
-        HandleTargetLoss(simulation, aliveEnemiesBefore);
         return new CombatApplyResult(true);
     }
 
@@ -543,6 +549,12 @@ public sealed class CombatStateMachine
         // 让"本回合共打出几张卡"这类终局统计先落地（巴赫被动5）。
         simulation.Buffs.FireCardExecutionEnd(simulation);
 
+        // 全灭即结算（2026-09-26）：卡牌已经杀光敌人时立即判定（胜利 / 换波），跳过空放的普攻——
+        // 普攻已无目标，换波则让新波在"本回合不再普攻"的前提下登场（见 AdvanceToNextWave）。
+        simulation.CheckEndConditions();
+        if (simulation.Phase != ECombatPhase.CardExecution)
+            return;
+
         // 普通攻击：本回合卡牌全部结算（含弃牌、连携清零）后自动执行一次，归属槽位 = (回合-1) % 队伍人数。
         // 必须在 CheckEndConditions 之前：普攻打死最后一名敌人时本回合敌人不再行动。
         simulation.NormalAttacks.Execute(simulation);
@@ -693,13 +705,9 @@ public sealed class CombatStateMachine
             simulation.Presentation.Emit(new EnemyActionEndedEvent(enemyIndex, skillId));
         }
 
-        simulation.Rules.DispatchTurnEnd(simulation.CreateContext());
-        simulation.DomainManager.FireTurnEndHooks();
-        // buff 时长统一在回合结束 tick（角色/敌人/槽位容器全部走这里，含到期 onRemove）。
-        simulation.Buffs.FireTurnEnd(simulation);
-        // 充能球回合结束产出（固定 1 个四属性球 + 1 个物理/魔法球）：满员时会即时自动触发，
-        // 因此必须排在结束判定之前——触发伤害可能直接结束战斗。
-        simulation.Orbs.GrantTurnEndOrbs(simulation, simulation.TakePlayedThisTurn());
+        // 回合结束管线（规则 / 领域 / buff 时长 / 充能球产出）与玩家阶段清波共用 ResolveTurnEnd，
+        // 每回合只结算一次（幂等）。
+        simulation.ResolveTurnEnd();
         foreach (var character in simulation.PlayerTeam.Characters)
             character.SetHasActed(false);
 
@@ -707,15 +715,7 @@ public sealed class CombatStateMachine
         if (simulation.Phase is ECombatPhase.Victory or ECombatPhase.Defeat or ECombatPhase.Player)
             return;
 
-        simulation.IncrementTurnNumber();
-        simulation.IncrementTurnsIntoWave();
-        // "本回合已触发充能球"与回合边界对齐地清账（见 ResetOrbsTriggeredThisTurn 注释）：
-        // 上一回合结束产出并即时触发的球不得算进本回合。
-        simulation.ResetOrbsTriggeredThisTurn();
-        simulation.DomainManager.FireTurnStartHooks();
-        simulation.Buffs.FireTurnStart(simulation);
-        simulation.TransitionTo(ECombatPhase.Player);
-        PlayerPhasePipeline.Run(simulation, simulation.IsFirstPlayerPhase);
+        simulation.BeginNextTurn(incrementTurnsIntoWave: true);
     }
 
     private static void ExecuteEnemySkill(CombatSimulation simulation, int enemyIndex, string skillId)

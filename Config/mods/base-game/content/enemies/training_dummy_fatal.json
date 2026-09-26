@@ -1,0 +1,13 @@
+{
+  "displayNameId": "enemy.training_dummy_fatal.name",
+  "descId": "enemy.training_dummy_fatal.desc",
+  "maxHp": 10000,
+  "element": "None",
+  "role": "Guard",
+  "skillRefs": [{ "skillId": "training_dummy_fatal_strike" }],
+  "baseAttributes": {
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "tags": ["training", "dummy"]
+}

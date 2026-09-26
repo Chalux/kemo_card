@@ -5,6 +5,55 @@ namespace KemoCard.Ui.Tests.Combat;
 
 internal static class CombatTestHelper
 {
+    /// <summary>读 buff 的 IdentityMatch 条件参数（第一条该类型条件）；没有则返回 null。</summary>
+    public static IReadOnlyDictionary<string, object>? IdentityParams(BuffDto buff) =>
+        buff.Conditions.FirstOrDefault(condition => condition.Kind == "IdentityMatch")?.Params;
+
+    /// <summary>读参数里的枚举名列表（JSON 载入后是 JsonElement 数组，测试构造时可能是 string[]）。</summary>
+    public static string[] EnumNames(IReadOnlyDictionary<string, object>? parameters, string key)
+    {
+        if (parameters is null || !parameters.TryGetValue(key, out var value) || value is null)
+            return [];
+
+        return value switch
+        {
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Array } element =>
+                element.EnumerateArray().Select(item => item.ToString()).ToArray(),
+            IEnumerable<object> list => list.Select(item => item.ToString()!).ToArray(),
+            _ => [],
+        };
+    }
+
+    /// <summary>读参数里的布尔（JSON 载入后是 JsonElement 布尔）。</summary>
+    public static bool BoolParam(IReadOnlyDictionary<string, object>? parameters, string key)
+    {
+        if (parameters is null || !parameters.TryGetValue(key, out var value) || value is null)
+            return false;
+
+        return value switch
+        {
+            bool typed => typed,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.True } => true,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.False } => false,
+            _ => string.Equals(value.ToString(), "true", StringComparison.OrdinalIgnoreCase),
+        };
+    }
+
+    /// <summary>读参数里的整数（JSON 载入后是 JsonElement 数字）；缺失返回 0。</summary>
+    public static int IntParam(IReadOnlyDictionary<string, object>? parameters, string key)
+    {
+        if (parameters is null || !parameters.TryGetValue(key, out var value) || value is null)
+            return 0;
+
+        return value switch
+        {
+            int typed => typed,
+            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Number } element
+                when element.TryGetInt32(out var number) => number,
+            _ => int.TryParse(value.ToString(), out var parsed) ? parsed : 0,
+        };
+    }
+
     public static GameDefinitionRegistry CreateRegistry(params CardDto[] cards)
     {
         var cardDict = cards.ToDictionary(card => card.Id, StringComparer.Ordinal);

@@ -250,4 +250,17 @@ buff.betelgeuse_p1.desc,自身免疫封印。,Immune to Seal.
 buff.betelgeuse_p2.desc,红属性·天文·未知角色的物理防御与魔法防御 +15。,Red · Astronomy · Unknown characters gain +15 P.Def and M.Def.
 buff.betelgeuse_p3.desc,自身嘲讽 +5。,Self Taunt +5.
 buff.betelgeuse_p4.desc,受到攻击后按本批次受击次数回复生命（每次 12 点，不吃回复量加成）。,After being attacked heal 12 HP per hit (damage is fully resolved first; does not scale with Heal Power).
+enemy.training_dummy_fatal.name,木桩·必杀,Fatal Dummy
+enemy.training_dummy_fatal.desc,10000 生命。每回合对随机单体造成 10000 点物理伤害，用于验证战斗失败流程。,10000 HP. Strikes a random character for 10000 physical damage each turn. For testing the defeat flow.
+enemy.training_dummy_light.name,木桩·轻击,Light Dummy
+enemy.training_dummy_light.desc,100 生命。每回合对随机单体造成 50 点物理伤害，用于验证常规战斗流程。,100 HP. Strikes a random character for 50 physical damage each turn.
+skill.training_dummy_fatal_strike.name,必杀一击,Fatal Strike
+skill.training_dummy_fatal_strike.desc,对随机单体造成 10000 点物理伤害。,Deal 10000 physical damage to a random character.
+skill.training_dummy_light_strike.name,轻击,Light Strike
+skill.training_dummy_light_strike.desc,对随机单体造成 50 点物理伤害。,Deal 50 physical damage to a random character.
+ge.training_dummy_strike_damage.name,木桩攻击伤害,Dummy Strike Damage
+battle.training_dummy_fatal.name,木桩·必杀,Fatal Dummy
+battle.training_dummy_fatal.desc,单只必杀木桩：每回合随机单体 10000 点物理伤害，用于验证战斗失败流程。,One fatal dummy: a random character takes 10000 physical damage each turn. For testing the defeat flow.
+battle.training_dummy_light.name,木桩·轻击,Light Dummy
+battle.training_dummy_light.desc,单只轻击木桩：每回合随机单体 50 点物理伤害，用于验证常规战斗流程。,One light dummy: a random character takes 50 physical damage each turn.
 

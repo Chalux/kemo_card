@@ -130,6 +130,8 @@ COND_CARD_PLAYED_THIS_TURN_SHORT,出牌不足,Not enough cards played
 COND_CARD_PLAYED_THIS_TURN_LONG,本回合需要打出指定数量的卡牌,Requires a number of cards played this turn
 COND_CHAIN_TIER_SHORT,连携不足,Chain tier too low
 COND_CHAIN_TIER_LONG,本回合需要达到指定连携档位（按参与角色数）,Requires the chain tier to reach the listed number of participating characters this turn
+COND_IDENTITY_SHORT,身份不符,Identity mismatch
+COND_IDENTITY_LONG,需要满足属性与种族条件（或显式的「且」组合）,Requires the element and race conditions (or the explicit AND combination)
 UI_RUN_STORY_SELECT_TITLE,选择故事,Select Story
 UI_STORY_LIST,故事列表,Stories
 UI_STORY_DETAILS,故事详情,Story Details
@@ -149,6 +151,7 @@ UI_RUN_PHASE_LABEL,阶段,Phase
 UI_RUN_RING_LABEL,环,Ring
 UI_RUN_SEED_VALUE,种子,Seed
 UI_RUN_GOLD_LABEL,金币,Gold
+UI_RUN_POTENTIAL_LABEL,潜能,Potential
 UI_RUN_CONFIRM_ABANDON_TITLE,放弃 Run,Abandon Run
 UI_RUN_CONFIRM_ABANDON_DESC,确定要放弃本局游戏吗？,Abandon this run?
 UI_RUN_PHASE_INIT,初始,Init
@@ -179,6 +182,10 @@ UI_TEAM_ASSIGNED_SLOT_FORMAT,已在槽位 {0},Slot {0}
 UI_TEAM_DEPLOY,上阵,Deploy
 UI_TEAM_DEPLOY_TO_SLOT_FORMAT,上阵到槽位 {0},Deploy to Slot {0}
 UI_TEAM_UNASSIGN,下阵,Remove
+UI_TEAM_POTENTIAL_POOL_FORMAT,可用潜能 {0},Available {0}
+UI_TEAM_POTENTIAL_SLOT_FORMAT,本槽已分配 {0},Allocated {0}
+UI_TEAM_POTENTIAL_ALLOCATE,分配,Allocate
+UI_TEAM_POTENTIAL_DEDUCT,扣除,Deduct
 UI_TEAM_NEW_DECK,新建卡组,New Deck
 UI_TEAM_HINT_CLICK_OR_HOLD,点击增删 · 长按查看卡牌详情,Tap to edit · Hold for card details
 UI_TEAM_NO_CHARACTER,未选择角色,No character selected
@@ -206,6 +213,12 @@ UI_TEAM_DECK_CARD_ADDED,已加入卡组,Added to deck
 UI_TEAM_DECK_CARD_REMOVED,已移出卡组,Removed from deck
 UI_TEAM_DECK_CARD_MISSING,卡组中没有该牌,Card not in deck
 UI_TEAM_DECK_EMPTY,卡组至少要保留一张牌,Deck must keep at least one card
+UI_TEAM_POTENTIAL_ALLOCATED_FORMAT,已分配 {0} 点潜能,Allocated {0} potential
+UI_TEAM_POTENTIAL_DEDUCTED_FORMAT,已扣除 {0} 点潜能,Deducted {0} potential
+UI_TEAM_POTENTIAL_INVALID,请输入正整数数额,Enter a positive amount
+UI_TEAM_POTENTIAL_POOL_SHORT,可用潜能不足,Not enough available potential
+UI_TEAM_POTENTIAL_SLOT_SHORT,该槽位已分配潜能不足,Not enough allocated potential in this slot
+UI_TEAM_POTENTIAL_VOTE_FAILED,表决未通过或本环提议次数已用尽,Proposal rejected or out of proposals
 UI_TEAM_DECK_INVALID_FORMAT,卡组中有 {0} 张牌当前不可用,{0} card(s) in this deck are unavailable
 UI_TEAM_OK,完成,Done
 UI_ORB_PANEL_TITLE,充能球,Charge Orbs
@@ -264,9 +277,9 @@ UI_SETTING_MP_PROPOSALS,每环提议次数,Proposals Per Ring
 UI_SETTING_MP_PROPOSALS_UNLIMITED,提议次数无限制,Unlimited Proposals
 UI_DEBUG_POTENTIAL_INPUT,潜能,Potential
 UI_DEBUG_POTENTIAL_POOL,加到团队池,Add to Team Pool
-UI_DEBUG_POTENTIAL_SLOT,加到选中槽位直充,Add to Slot Credit
-UI_DEBUG_UNLOCK_PASSIVE,解锁槽位下一条被动,Unlock Next Passive
-UI_DEBUG_REFUND_POTENTIAL,返还最近一笔消费,Refund Latest Spend
+UI_DEBUG_POTENTIAL_SLOT,直接加到选中槽位,Add Directly to Slot
+UI_DEBUG_POTENTIAL_ALLOCATE,分配输入数额到选中槽位,Allocate Amount to Slot
+UI_DEBUG_POTENTIAL_DEDUCT,从选中槽位扣除输入数额,Deduct Amount from Slot
 UI_DEBUG_INSPECT_BATTLE,战斗检查,Inspect Battle
 UI_CHARACTER_PASSIVES_TITLE,潜能被动,Potential Passives
 UI_CHARACTER_PASSIVE_NAME,被动技能{0},Passive Skill {0}

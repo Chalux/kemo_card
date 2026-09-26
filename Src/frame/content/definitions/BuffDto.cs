@@ -39,16 +39,6 @@ public static class BuiltinBuffTags
     /// <summary>特征：免疫手牌槽暴风效果（冯·诺依曼 被动1）——自己的手牌不会被暴风吹散。</summary>
     public const string TraitImmuneSlotStorm = "trait.immune_slot_storm";
 
-    /// <summary>特征：连携统计时给该角色打出的卡牌额外注入红属性（chalux 被动2）。</summary>
-    public const string TraitChainInjectRed = "trait.chain_inject_red";
-
-    /// <summary>
-    /// 特征：连携统计时，含黄属性的卡牌同时计入**蓝属性**人头（冯·诺依曼 被动5：
-    /// 「打出蓝属性时计算连携也会计入黄属性卡牌」）。与 <see cref="TraitChainInjectRed"/> 同构，
-    /// 只是注入方向固定为"黄 → 蓝"；配 <c>applyScope: AllAllies</c> 即全队生效。
-    /// </summary>
-    public const string TraitChainYellowCountsBlue = "trait.chain_yellow_counts_blue";
-
     /// <summary>
     /// 追打（2026-09-21）：持有者在<b>不是</b>本回合普攻归属角色时，仍以
     /// <c>params.percent</c>%（缺省 100）的攻击力参与该次普攻。多个追打 buff 同时存在时取最高值。
@@ -73,43 +63,18 @@ public enum EBuffApplyScope
 }
 
 /// <summary>
-/// 持有者条件：不满足时 buff 休眠（不参与属性聚合、不显示图标、不触发钩子）但不移除，
-/// 条件随战斗中种族/属性变化自动激活/休眠。列表内为"或"，跨列表默认"或"，<c>matchAll</c> 为"且"。
+/// 连携属性注入的一条规则（2026-09-26 参数化，取代 <c>trait.chain_inject_red</c> /
+/// <c>trait.chain_yellow_counts_blue</c>）：打出 <see cref="From"/> 中任一属性的卡时，
+/// 该卡在连携统计里额外计入 <see cref="Add"/> 的属性；<see cref="From"/> 为空 = 任意卡。
+/// 配 <c>applyScope: AllAllies</c> 即全队生效。
 /// </summary>
-public sealed class BuffConditionDto
+public sealed class ChainElementInjectDto
 {
-    [JsonPropertyName("elementAny")]
-    public List<EElement>? ElementAny { get; init; }
+    [JsonPropertyName("from")]
+    public List<EElement> From { get; init; } = [];
 
-    [JsonPropertyName("raceAny")]
-    public List<ERace>? RaceAny { get; init; }
-
-    /// <summary>
-    /// 种族"全含"筛选（2026-09-25 新增，镜像 <c>targetFilter.raceAll</c>）：
-    /// 持有者必须**同时**带列表中全部种族（「红属性·天文·未知角色」= elementAny[Red] + raceAll[Astronomy, Unknown]）。
-    /// </summary>
-    [JsonPropertyName("raceAll")]
-    public List<ERace>? RaceAll { get; init; }
-
-    /// <summary>true 时跨列表取"且"（同时满足属性与种族）；缺省"或"（任一列表命中即满足）。</summary>
-    [JsonPropertyName("matchAll")]
-    public bool MatchAll { get; init; }
-
-    /// <summary>
-    /// 队伍人数门闩（2026-09-21 新增）：队伍中同时命中 <see cref="PartyElementAny"/> 与
-    /// <see cref="PartyRaceAny"/> 筛选的角色数 ≥ 本值时条件满足（"队伍内绿属性角色 ≥ 2"）。
-    /// 配置了本项时，它与上面的属性/种族维度取<b>且</b>。
-    /// </summary>
-    [JsonPropertyName("partyMinCount")]
-    public int PartyMinCount { get; init; }
-
-    /// <summary>人数门闩的元素筛选（空 = 不筛）。</summary>
-    [JsonPropertyName("partyElementAny")]
-    public List<EElement>? PartyElementAny { get; init; }
-
-    /// <summary>人数门闩的种族筛选（空 = 不筛）。</summary>
-    [JsonPropertyName("partyRaceAny")]
-    public List<ERace>? PartyRaceAny { get; init; }
+    [JsonPropertyName("add")]
+    public List<EElement> Add { get; init; } = [];
 }
 
 public sealed class BuffEffectHooksDto
@@ -208,9 +173,21 @@ public sealed class BuffDto
     [JsonPropertyName("modifiers")]
     public List<AttributeModifierDefDto> Modifiers { get; init; } = [];
 
-    /// <summary>持有者条件；null = 无条件常驻。</summary>
-    [JsonPropertyName("condition")]
-    public BuffConditionDto? Condition { get; init; }
+    /// <summary>
+    /// 持有者条件（2026-09-26 统一为战斗条件列表）：空列表 = 无条件常驻；
+    /// 不满足时 buff 休眠（不参与属性聚合、不显示图标、不触发钩子）但不移除，
+    /// 条件随战斗中种族/属性变化自动激活/休眠。主体 = 持有者。
+    /// </summary>
+    [JsonPropertyName("conditions")]
+    public List<ConditionRefDto> Conditions { get; init; } = [];
+
+    /// <summary>
+    /// 连携属性注入（2026-09-26 参数化）：打出 <c>from</c> 中任一属性的卡时，
+    /// 该卡在连携统计里额外计入 <c>add</c> 的属性；<c>from</c> 缺省 = 任意卡。
+    /// 典型：<c>[{ "add": ["Red"] }]</c>（红卡计入红）、<c>[{ "from": ["Yellow"], "add": ["Blue"] }]</c>。
+    /// </summary>
+    [JsonPropertyName("chainElementInject")]
+    public List<ChainElementInjectDto> ChainElementInject { get; init; } = [];
 
     [JsonPropertyName("applyScope")]
     public EBuffApplyScope ApplyScope { get; init; }

@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://crv6nx7yteksb" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
 [ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam")]
+[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_lblPotential", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -16,6 +16,7 @@ _lblPhase = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/PhaseValue")
 _lblRing = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/RingValue")
 _lblSeed = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/SeedValue")
 _lblGold = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/GoldValue")
+_lblPotential = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/PotentialValue")
 _btnSave = NodePath("Layout/Rail/Margin/VBox/BtnSave")
 _btnSaveExit = NodePath("Layout/Rail/Margin/VBox/BtnSaveExit")
 _btnQuickLoad = NodePath("Layout/Rail/Margin/VBox/BtnQuickLoad")
@@ -118,6 +119,17 @@ theme_override_font_sizes/font_size = 14
 text = "UI_RUN_GOLD_LABEL"
 
 [node name="GoldValue" type="Label" parent="Layout/Rail/Margin/VBox/Ledger/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_alignment = 2
+
+[node name="PotentialLabel" type="Label" parent="Layout/Rail/Margin/VBox/Ledger/Grid"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = "UI_RUN_POTENTIAL_LABEL"
+
+[node name="PotentialValue" type="Label" parent="Layout/Rail/Margin/VBox/Ledger/Grid"]
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_alignment = 2

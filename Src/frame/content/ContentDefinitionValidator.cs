@@ -459,6 +459,20 @@ public sealed class ContentDefinitionValidator
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbTriggered, store, errors);
             // 2026-09-25 受击钩子（参宿四被动4）：悬空 effectId 会让"受击回血"完全静默。
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnDamaged, store, errors);
+
+            // 持有者条件（2026-09-26 统一为战斗条件列表）与连携属性注入：
+            // 条件写错 = buff 永远休眠，注入写错 = 连携统计静默缺属性，都必须拦下。
+            ValidateCombatConditions(EContentCategory.Buff, buff.Id, buff.Conditions, errors);
+            foreach (var inject in buff.ChainElementInject)
+            {
+                if (inject.Add.Count == 0)
+                {
+                    errors.Add(new ContentDefinitionValidationError(
+                        EContentCategory.Buff,
+                        buff.Id,
+                        "chainElementInject.add 不能为空。"));
+                }
+            }
         }
     }
 
@@ -499,25 +513,31 @@ public sealed class ContentDefinitionValidator
                 ValidateAttachSlotParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
             }
 
-            ValidateEffectConditions(effect, errors);
+            ValidateCombatConditions(EContentCategory.Effect, effect.Id, effect.Conditions, errors);
+            ValidateTargetFilterCondition(EContentCategory.Effect, effect.Id, effect.Params, errors);
             ValidateScaledRuntimeParams(EContentCategory.Effect, effect.Id, effect.Params, errors);
         }
     }
 
     /// <summary>
-    /// 效果级条件（<c>EffectDto.conditions</c>）必须能在 Combat 域解析：运行期对未知 CondType / 非法参数
-    /// 是"条件不通过"的静默失败，写错类型键会让效果永远不触发，必须在内容准入阶段拦下。
+    /// 战斗条件（<c>EffectDto.conditions</c> / <c>BuffDto.conditions</c>）必须能在 Combat 域解析：
+    /// 运行期对未知 CondType / 非法参数是"条件不通过"的静默失败，写错类型键会让效果永远不触发，
+    /// 必须在内容准入阶段拦下。
     /// </summary>
-    private static void ValidateEffectConditions(EffectDto effect, List<ContentDefinitionValidationError> errors)
+    private static void ValidateCombatConditions(
+        EContentCategory category,
+        string ownerId,
+        IReadOnlyList<ConditionRefDto> conditions,
+        List<ContentDefinitionValidationError> errors)
     {
-        foreach (var condition in effect.Conditions)
+        foreach (var condition in conditions)
         {
-            var sourcePath = $"effect:{effect.Id}:conditions.{condition.Kind}";
+            var sourcePath = $"{category}:{ownerId}:conditions.{condition.Kind}";
             if (!ConditionDomains.Combat.TryGet(condition.Kind, out var handler) || handler is null)
             {
                 errors.Add(new ContentDefinitionValidationError(
-                    EContentCategory.Effect,
-                    effect.Id,
+                    category,
+                    ownerId,
                     $"Unknown condition kind '{condition.Kind}'."));
                 continue;
             }
@@ -527,10 +547,111 @@ public sealed class ContentDefinitionValidator
             if (!handler.TryParse(args, sourcePath, out _, out var conditionError))
             {
                 errors.Add(new ContentDefinitionValidationError(
-                    EContentCategory.Effect,
-                    effect.Id,
+                    category,
+                    ownerId,
                     conditionError ?? $"Invalid params for condition '{condition.Kind}'."));
             }
+        }
+    }
+
+    /// <summary>
+    /// 目标筛选（<c>params.targetFilter</c>，2026-09-26 统一）：只允许 <c>self</c> / <c>excludeSelf</c> /
+    /// <c>condition</c> 三个键。旧扁平写法（<c>elementAny</c> / <c>raceAny</c> / <c>raceAll</c> / <c>matchAll</c>）
+    /// 已删除：运行期遇到未知键会保守回退到 [来源]（旧实现会静默命中全队），必须在准入阶段拒绝，
+    /// 否则"筛选子集"会静默失效。
+    /// <c>condition</c> 写错在运行期只会让候选全部落选（静默空放），同样必须拦下。
+    /// </summary>
+    private static void ValidateTargetFilterCondition(
+        EContentCategory category,
+        string ownerId,
+        IReadOnlyDictionary<string, object>? parameters,
+        List<ContentDefinitionValidationError> errors)
+    {
+        if (parameters is null || !parameters.TryGetValue("targetFilter", out var filterValue) || filterValue is null)
+            return;
+
+        if (!TryEnumerateObjectProperties(filterValue, out var properties))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                ownerId,
+                "params.targetFilter 不是合法对象。"));
+            return;
+        }
+
+        ConditionRefDto? condition = null;
+        foreach (var (name, value) in properties)
+        {
+            switch (name)
+            {
+                case "self":
+                case "excludeSelf":
+                    break;
+                case "condition":
+                    condition = TryParseConditionRef(value);
+                    if (condition is null)
+                    {
+                        errors.Add(new ContentDefinitionValidationError(
+                            category,
+                            ownerId,
+                            "params.targetFilter.condition 不是合法对象。"));
+                    }
+
+                    break;
+                default:
+                    errors.Add(new ContentDefinitionValidationError(
+                        category,
+                        ownerId,
+                        $"params.targetFilter 未知参数 '{name}'（可用：self / excludeSelf / condition）。"));
+                    break;
+            }
+        }
+
+        if (condition is null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(condition.Kind))
+        {
+            errors.Add(new ContentDefinitionValidationError(
+                category,
+                ownerId,
+                "params.targetFilter.condition.kind 不能为空。"));
+            return;
+        }
+
+        ValidateCombatConditions(category, ownerId, [condition], errors);
+    }
+
+    /// <summary>把 <c>targetFilter</c> 的两种形态（JSON 对象 / 程序化字典）统一枚举成 (键, 值)。</summary>
+    private static bool TryEnumerateObjectProperties(
+        object value,
+        out List<(string Name, object Value)> properties)
+    {
+        switch (value)
+        {
+            case JsonElement { ValueKind: JsonValueKind.Object } element:
+                properties = [.. element.EnumerateObject().Select(property => (property.Name, (object)property.Value))];
+                return true;
+            case IReadOnlyDictionary<string, object> readOnly:
+                properties = [.. readOnly.Select(pair => (pair.Key, pair.Value))];
+                return true;
+            default:
+                properties = [];
+                return false;
+        }
+    }
+
+    /// <summary>解析单条 <c>condition</c>（对象形态原样序列化再读）；非法 JSON 返回 null。</summary>
+    private static ConditionRefDto? TryParseConditionRef(object value)
+    {
+        try
+        {
+            var json = value is JsonElement element ? element.GetRawText() : JsonSerializer.Serialize(value);
+            return JsonSerializer.Deserialize<ConditionRefDto>(json);
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 
@@ -600,6 +721,7 @@ public sealed class ContentDefinitionValidator
             }
 
             ValidateScaledRuntimeParams(EContentCategory.SkillAction, action.Id, action.Params, errors);
+            ValidateTargetFilterCondition(EContentCategory.SkillAction, action.Id, action.Params, errors);
         }
     }
 
@@ -1204,6 +1326,9 @@ public sealed class ContentDefinitionValidator
                     definitionId,
                     $"Unknown effectId '{effectRef.EffectId}'."));
             }
+
+            // 钩子 ref 的 targetFilter 也可能带条件（2026-09-26 统一）：同样在准入阶段校验。
+            ValidateTargetFilterCondition(category, definitionId, effectRef.Params, errors);
         }
     }
 

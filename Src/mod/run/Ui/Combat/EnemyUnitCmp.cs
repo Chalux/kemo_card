@@ -69,6 +69,10 @@ public partial class EnemyUnitCmp : BaseCmp
     }
 
     /// <summary>与模拟器对账：血条终值、buff 列表、阵亡态。</summary>
+    /// <remarks>
+    /// 阵亡即退场（2026-09-26）：不留在场上当幽灵——<see cref="Visible"/> 置 false 后
+    /// 所在 HBox 会让存活敌人重新排布；<see cref="FadeOutAsync"/> 先把当前实例淡出，随后这里收尾隐藏。
+    /// </remarks>
     public void Refresh()
     {
         if (_unit is null)
@@ -76,7 +80,9 @@ public partial class EnemyUnitCmp : BaseCmp
 
         _hp?.SetValue(_unit.CurrentHp, _unit.MaxHp);
         _buffs?.Bind(_unit.Buffs.Visible);
-        Modulate = Modulate with { A = _unit.IsAlive ? 1f : 0.35f };
+        Visible = _unit.IsAlive;
+        if (_unit.IsAlive)
+            Modulate = Modulate with { A = 1f };
     }
 
     /// <summary>
@@ -114,7 +120,8 @@ public partial class EnemyUnitCmp : BaseCmp
 
     public Task LungeAsync(float duration) => UnitTweens.PulseAsync(this, 1.08f, duration);
 
-    public Task FadeOutAsync(float duration) => UnitTweens.FadeAsync(this, 0.35f, duration);
+    /// <summary>阵亡退场：淡出到完全透明（随后的 <see cref="Refresh"/> 隐藏并释放占位）。</summary>
+    public Task FadeOutAsync(float duration) => UnitTweens.FadeAsync(this, 0f, duration);
 
     #region 悬停属性摘要
 

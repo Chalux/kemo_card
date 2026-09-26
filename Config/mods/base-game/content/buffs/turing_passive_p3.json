@@ -5,16 +5,16 @@
   "tags": ["buff.passive", "buff.undispellable"],
   "hooks": {
     "onWaveStart": [
-      { "effectId": "turing_p3_boost_self", "params": { "targetFilter": { "self": true } } },
-      { "effectId": "turing_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] } } },
-      { "effectId": "turing_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] } } },
-      { "effectId": "turing_p3_boost_academic", "params": { "targetFilter": { "raceAny": ["Academic"] } } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "self": true } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Blue"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Human"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Academic"] } } } } }
     ],
     "onTurnStart": [
-      { "effectId": "turing_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 8 } },
-      { "effectId": "turing_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] }, "turnInterval": 8 } },
-      { "effectId": "turing_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] }, "turnInterval": 8 } },
-      { "effectId": "turing_p3_boost_academic", "params": { "targetFilter": { "raceAny": ["Academic"] }, "turnInterval": 8 } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "self": true }, "turnInterval": 8 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Blue"] } } }, "turnInterval": 8 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Human"] } } }, "turnInterval": 8 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Academic"] } } }, "turnInterval": 8 } }
     ]
   }
 }

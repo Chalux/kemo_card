@@ -14,6 +14,7 @@ public partial class RunMainWin : BaseWin
     [Export] private Label? _lblRing;
     [Export] private Label? _lblSeed;
     [Export] private Label? _lblGold;
+    [Export] private Label? _lblPotential;
     [Export] private Button? _btnSave;
     [Export] private Button? _btnSaveExit;
     [Export] private Button? _btnQuickLoad;
@@ -169,6 +170,11 @@ public partial class RunMainWin : BaseWin
         if (_lblGold != null)
         {
             _lblGold.Text = run.GetGold().ToString();
+        }
+
+        if (_lblPotential != null)
+        {
+            _lblPotential.Text = run.Potential.TeamPool.ToString();
         }
 
         var inCombat = state.Phase.IsCombatPhase();

@@ -1,0 +1,13 @@
+{
+  "displayNameId": "enemy.training_dummy_light.name",
+  "descId": "enemy.training_dummy_light.desc",
+  "maxHp": 100,
+  "element": "None",
+  "role": "Guard",
+  "skillRefs": [{ "skillId": "training_dummy_light_strike" }],
+  "baseAttributes": {
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "tags": ["training", "dummy"]
+}

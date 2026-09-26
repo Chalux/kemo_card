@@ -1,0 +1,9 @@
+{
+  "displayNameId": "battle.training_dummy_fatal.name",
+  "descId": "battle.training_dummy_fatal.desc",
+  "waves": [
+    { "enemySpawns": [{ "enemyId": "training_dummy_fatal", "count": 1 }] }
+  ],
+  "rewards": { "entries": [] },
+  "tags": ["training", "test"]
+}

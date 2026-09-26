@@ -3,9 +3,8 @@
   "params": {
     "buffId": "turing_algorithm_alpha_mark",
     "targetFilter": {
-      "elementAny": ["Red"],
-      "raceAny": ["Human", "Academic"],
-      "excludeSelf": true
+      "excludeSelf": true,
+      "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"] } }
     }
   }
 }

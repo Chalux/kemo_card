@@ -178,7 +178,7 @@ public sealed class RunControllerTests
             new CharacterDto { Id = "test", Cards = [] }, "inst-2"), sourceSlotIndex: 2);
 
         Assert.That(result, Is.False);
-        Assert.That(controller.State.PlayerStates[2].PotentialDirectCredit, Is.EqualTo(20), "直充来源槽位");
+        Assert.That(controller.State.PlayerStates[2].AllocatedPotential, Is.EqualTo(20), "直接分配到来源槽位");
         Assert.That(controller.Potential.TeamPool, Is.EqualTo(0), "不动团队池");
     }
 

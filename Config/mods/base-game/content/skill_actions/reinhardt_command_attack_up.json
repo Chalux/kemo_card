@@ -2,6 +2,6 @@
   "kind": "ApplyBuff",
   "params": {
     "buffId": "reinhardt_command_attack_up",
-    "targetFilter": { "elementAny": ["Yellow"], "raceAny": ["Animal"] }
+    "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Yellow"], "raceAny": ["Animal"] } } }
   }
 }

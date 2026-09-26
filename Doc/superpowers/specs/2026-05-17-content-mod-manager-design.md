@@ -557,7 +557,7 @@ content/items/*.json
 | `maxHp` | int | 必须 > 0 |
 | `element` | EElement | |
 | `role` | ERole | |
-| `race` | ERace | 种族（可组合 Flags，**2026-09-23 新增**，与 `CharacterDto.race` 同口径）。此前敌人只有属性/职业，无法被「蓝属性·人类·学术」这类跨属性与种族的筛选命中；未声明时为 `ERace.None`。运行时 `EnemyUnit.Element` / `EnemyUnit.Race` 同时作为 buff 持有者条件（`condition.elementAny` / `raceAny`）的 provider |
+| `race` | ERace | 种族（可组合 Flags，**2026-09-23 新增**，与 `CharacterDto.race` 同口径）。此前敌人只有属性/职业，无法被「蓝属性·人类·学术」这类跨属性与种族的筛选命中；未声明时为 `ERace.None`。运行时 `EnemyUnit.Element` / `EnemyUnit.Race` 同时作为 buff 持有者条件（`IdentityMatch` 的主体，2026-09-26 统一）的 provider |
 | `skillRefs` | SkillRefDto[] | AI 技能池（运行时规范见开放项） |
 | `buffRefs` | BuffRefDto[] | |
 | `artPath` | string | |

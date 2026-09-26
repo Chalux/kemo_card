@@ -5,14 +5,14 @@
   "tags": ["buff.passive", "buff.undispellable"],
   "hooks": {
     "onWaveStart": [
-      { "effectId": "reinhardt_p3_boost_self", "params": { "targetFilter": { "self": true } } },
-      { "effectId": "reinhardt_p3_boost_yellow", "params": { "targetFilter": { "elementAny": ["Yellow"] } } },
-      { "effectId": "reinhardt_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] } } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "self": true } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Yellow"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Animal"] } } } } }
     ],
     "onTurnStart": [
-      { "effectId": "reinhardt_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 10 } },
-      { "effectId": "reinhardt_p3_boost_yellow", "params": { "targetFilter": { "elementAny": ["Yellow"] }, "turnInterval": 10 } },
-      { "effectId": "reinhardt_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] }, "turnInterval": 10 } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "self": true }, "turnInterval": 10 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Yellow"] } } }, "turnInterval": 10 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Animal"] } } }, "turnInterval": 10 } }
     ]
   }
 }

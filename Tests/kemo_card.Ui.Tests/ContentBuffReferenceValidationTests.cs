@@ -1,5 +1,7 @@
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Mod.Combat.Condition;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
@@ -180,6 +182,195 @@ public sealed class ContentBuffReferenceValidationTests
 
         Assert.That(errors, Is.Empty);
     }
+
+    #region 战斗条件与 targetFilter（2026-09-26 统一）
+
+    /// <summary>
+    /// 旧扁平 targetFilter（elementAny / raceAny / raceAll / matchAll）已删除：运行期会保守回退到
+    /// [来源]，准入阶段必须直接报错——否则"筛选子集"会静默失效。
+    /// </summary>
+    [TestCase("Effect")]
+    [TestCase("SkillAction")]
+    public void Validator_reports_legacy_flat_target_filter_keys(string category)
+    {
+        var legacyFilter = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            ["elementAny"] = new[] { "Green" },
+            ["matchAll"] = true,
+        };
+
+        var errors = category switch
+        {
+            "SkillAction" => new ContentDefinitionValidator().Validate(StoreWith(
+                buffs: Buffs(Buff("buff.real")),
+                skillActions: Actions(new SkillActionDto
+                {
+                    Id = "action.filtered",
+                    Kind = ESkillActionKind.ApplyBuff,
+                    Params = new Dictionary<string, object>
+                    {
+                        ["buffId"] = "buff.real",
+                        ["targetFilter"] = legacyFilter,
+                    },
+                }))),
+            _ => new ContentDefinitionValidator().Validate(StoreWith(effects: Effects(new EffectDto
+            {
+                Id = "effect.filtered",
+                Kind = EEffectKind.Damage,
+                Params = new Dictionary<string, object>
+                {
+                    ["amount"] = 1,
+                    ["targetFilter"] = legacyFilter,
+                },
+            }))),
+        };
+
+        Assert.That(errors.Any(e => e.Message.Contains("未知参数 'elementAny'")), Is.True, $"{category} 的旧扁平键必须报错");
+        Assert.That(errors.Any(e => e.Message.Contains("未知参数 'matchAll'")), Is.True, $"{category} 的旧扁平键必须报错");
+    }
+
+    /// <summary>
+    /// <c>targetFilter.condition</c> 的 kind 写错 / 留空：运行期会让候选全部落选（静默空放），准入阶段必须报错。
+    /// </summary>
+    [Test]
+    public void Validator_reports_target_filter_condition_with_unknown_or_empty_kind()
+    {
+        foreach (var (kind, expected) in new[]
+                 {
+                     ("Bogus", "Unknown condition kind 'Bogus'"),
+                     ("", "condition.kind 不能为空"),
+                 })
+        {
+            var effect = new EffectDto
+            {
+                Id = "effect.filtered",
+                Kind = EEffectKind.Damage,
+                Params = new Dictionary<string, object>
+                {
+                    ["amount"] = 1,
+                    ["targetFilter"] = new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        ["condition"] = new Dictionary<string, object>(StringComparer.Ordinal) { ["kind"] = kind },
+                    },
+                },
+            };
+
+            var errors = new ContentDefinitionValidator().Validate(StoreWith(effects: Effects(effect)));
+
+            Assert.That(errors.Any(e => e.Message.Contains(expected)), Is.True, $"kind='{kind}' 必须报错");
+        }
+    }
+
+    [Test]
+    public void Validator_reports_non_object_target_filter()
+    {
+        var effect = new EffectDto
+        {
+            Id = "effect.filtered",
+            Kind = EEffectKind.Damage,
+            Params = new Dictionary<string, object>
+            {
+                ["amount"] = 1,
+                ["targetFilter"] = "self",
+            },
+        };
+
+        var errors = new ContentDefinitionValidator().Validate(StoreWith(effects: Effects(effect)));
+
+        Assert.That(errors.Any(e => e.Message.Contains("不是合法对象")), Is.True, "非对象 targetFilter 必须报错");
+    }
+
+    /// <summary>buff 持有者条件（<c>BuffDto.conditions</c>）与效果条件共用战斗条件域：写错必须报错。</summary>
+    [Test]
+    public void Validator_reports_buff_conditions_with_unknown_kind()
+    {
+        var buff = new BuffDto
+        {
+            Id = "buff.bad_condition",
+            DurationType = EBuffDurationType.Permanent,
+            Conditions = [new ConditionRefDto { Kind = "Bogus" }],
+        };
+
+        var errors = new ContentDefinitionValidator().Validate(StoreWith(buffs: Buffs(buff)));
+
+        Assert.That(
+            errors.Any(e => e.DefinitionId == "buff.bad_condition" && e.Message.Contains("Unknown condition kind 'Bogus'")),
+            Is.True,
+            "buff 条件的未知 CondType 必须报错");
+    }
+
+    [Test]
+    public void Validator_reports_chain_element_inject_with_empty_add()
+    {
+        var buff = new BuffDto
+        {
+            Id = "buff.bad_inject",
+            DurationType = EBuffDurationType.Permanent,
+            ChainElementInject = [new ChainElementInjectDto { Add = [] }],
+        };
+
+        var errors = new ContentDefinitionValidator().Validate(StoreWith(buffs: Buffs(buff)));
+
+        Assert.That(errors.Any(e => e.Message.Contains("chainElementInject.add 不能为空")), Is.True);
+    }
+
+    [Test]
+    public void Validator_accepts_identity_match_in_buff_conditions_and_target_filter()
+    {
+        RegisterCombatConditions();
+        var buff = new BuffDto
+        {
+            Id = "buff.identity",
+            DurationType = EBuffDurationType.Permanent,
+            Conditions =
+            [
+                new ConditionRefDto
+                {
+                    Kind = "IdentityMatch",
+                    Params = new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        ["elementAny"] = new[] { "Green" },
+                    },
+                },
+            ],
+        };
+        var effect = new EffectDto
+        {
+            Id = "effect.filtered",
+            Kind = EEffectKind.Damage,
+            Params = new Dictionary<string, object>
+            {
+                ["amount"] = 1,
+                ["targetFilter"] = new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    ["excludeSelf"] = true,
+                    ["condition"] = new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        ["kind"] = "IdentityMatch",
+                        ["params"] = new Dictionary<string, object>(StringComparer.Ordinal)
+                        {
+                            ["elementAny"] = new[] { "Green" },
+                        },
+                    },
+                },
+            },
+        };
+
+        var errors = new ContentDefinitionValidator().Validate(StoreWith(
+            buffs: Buffs(buff),
+            effects: Effects(effect)));
+
+        Assert.That(errors, Is.Empty, string.Join("；", errors.Select(e => e.Message)));
+    }
+
+    /// <summary>条件域注册表是进程级静态状态：校验前显式注册内置条件，避免依赖测试执行顺序。</summary>
+    private static void RegisterCombatConditions()
+    {
+        ConditionDomains.Combat.Clear();
+        BuiltinCombatConditions.RegisterAll(ConditionDomains.Combat);
+    }
+
+    #endregion
 
     #region 装配
 

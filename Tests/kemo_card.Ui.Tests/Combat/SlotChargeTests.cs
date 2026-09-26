@@ -53,7 +53,17 @@ public sealed class SlotChargeTests
                 DurationType = EBuffDurationType.Turns,
                 Duration = 2,
                 Tags = [BuiltinBuffTags.SlotCharge],
-                Condition = new BuffConditionDto { ElementAny = [EElement.Green] },
+                Conditions =
+                [
+                    new ConditionRefDto
+                    {
+                        Kind = "IdentityMatch",
+                        Params = new Dictionary<string, object>(StringComparer.Ordinal)
+                        {
+                            ["elementAny"] = new[] { "Green" },
+                        },
+                    },
+                ],
             },
             parameters: null);
         Assert.That(dormant.IsDormant, Is.True, "容器无持有者属性，元素条件不满足 → 休眠");

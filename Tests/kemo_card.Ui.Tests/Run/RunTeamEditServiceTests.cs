@@ -177,14 +177,55 @@ public sealed class RunTeamEditServiceTests
         Assert.That(passives[1].Unlocked, Is.False);
         Assert.That(passives[1].DescriptionId, Is.EqualTo("buff.p2.desc"));
 
-        // 团队潜能入账 → 解锁第二条：解锁状态与战斗挂载共用 PotentialService 判定。
+        // 上阵 + 把潜能分配到该槽位 → 达到门槛自动解锁：解锁状态与战斗挂载共用 PotentialService 判定。
+        Assert.That(controller.SetActiveCharacter(0, 0), Is.True);
         var potential = new PotentialService(controller.State);
         potential.Grant(10);
-        var character = service.FindCharacter("inst-passive")!;
-        Assert.That(potential.TryUnlock(0, character, character.Definition!.Passives[1]).Success, Is.True);
+        Assert.That(potential.TryAllocate(0, 10).Success, Is.True);
 
-        Assert.That(service.GetPassives("inst-passive")[1].Unlocked, Is.True, "消费潜能后转为已解锁");
+        Assert.That(service.GetPassives("inst-passive")[1].Unlocked, Is.True, "槽位已分配达到门槛后自动解锁");
         Assert.That(service.GetPassives("inst.missing"), Is.Empty, "未知实例返回空列表");
+    }
+
+    #endregion
+
+    #region 潜能划拨
+
+    [Test]
+    public void Potential_allocation_moves_pool_to_slot_and_back()
+    {
+        var (service, controller, _) = Build(poolSize: 1);
+        controller.Potential.Grant(30);
+
+        Assert.That(service.AvailablePotential, Is.EqualTo(30));
+        Assert.That(service.SlotAllocatedPotential(1), Is.EqualTo(0));
+
+        var allocated = service.AllocatePotential(1, 20);
+        Assert.That(allocated.Ok, Is.True, allocated.MessageKey);
+        Assert.That(service.AvailablePotential, Is.EqualTo(10), "分配从团队池划走");
+        Assert.That(service.SlotAllocatedPotential(1), Is.EqualTo(20));
+        Assert.That(service.IsDirty, Is.True, "划拨要置脏，关闭界面时统一保存");
+
+        var deducted = service.DeductPotential(1, 5);
+        Assert.That(deducted.Ok, Is.True, deducted.MessageKey);
+        Assert.That(service.AvailablePotential, Is.EqualTo(15), "扣除退回团队池");
+        Assert.That(service.SlotAllocatedPotential(1), Is.EqualTo(15));
+    }
+
+    [Test]
+    public void Potential_allocation_reports_reason_keys()
+    {
+        var (service, controller, _) = Build(poolSize: 1);
+        controller.Potential.Grant(10);
+
+        Assert.That(service.AllocatePotential(0, 0).MessageKey, Is.EqualTo("UI_TEAM_POTENTIAL_INVALID"));
+        Assert.That(service.AllocatePotential(0, 11).MessageKey, Is.EqualTo("UI_TEAM_POTENTIAL_POOL_SHORT"));
+        Assert.That(service.DeductPotential(0, 1).MessageKey, Is.EqualTo("UI_TEAM_POTENTIAL_SLOT_SHORT"));
+        Assert.That(service.AllocatePotential(99, 5).MessageKey, Is.EqualTo("UI_TEAM_SLOT_INVALID"));
+
+        controller.State.Phase = ERunPhase.Battle;
+        Assert.That(service.AllocatePotential(0, 5).MessageKey, Is.EqualTo("UI_TEAM_EDIT_BLOCKED"));
+        Assert.That(service.DeductPotential(0, 5).MessageKey, Is.EqualTo("UI_TEAM_EDIT_BLOCKED"));
     }
 
     #endregion

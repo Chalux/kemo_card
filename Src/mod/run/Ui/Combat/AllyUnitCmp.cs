@@ -19,6 +19,7 @@ public partial class AllyUnitCmp : BaseCmp
     [Export] private Label? _lblName;
     [Export] private Label? _lblState;
     [Export] private Panel? _highlight;
+    [Export] private TextureRect? _crosshair;
 
     /// <summary>点击回调（选目标态点友方单位），参数为槽位索引。</summary>
     public Action<int>? Clicked { get; set; }
@@ -78,6 +79,13 @@ public partial class AllyUnitCmp : BaseCmp
         _highlight.Visible = controlled || targetable;
         _highlight.SelfModulate = targetable ? KemoPalette.Danger : KemoPalette.Accent;
         MouseDefaultCursorShape = targetable ? CursorShape.PointingHand : CursorShape.Arrow;
+    }
+
+    /// <summary>嘲讽标识：是否显示 Crosshair（判定见 <see cref="CombatTauntMarks"/>）。</summary>
+    public void SetTauntMark(bool marked)
+    {
+        if (_crosshair != null)
+            _crosshair.Visible = marked;
     }
 
     public void Play(string animName) => _presenter?.Play(animName);

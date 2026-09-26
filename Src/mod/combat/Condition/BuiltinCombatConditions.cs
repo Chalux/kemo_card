@@ -25,6 +25,16 @@ public static class BuiltinCombatConditions
     /// </summary>
     public const string ChainTierAtLeast = "ChainTierAtLeast";
 
+    /// <summary>
+    /// 「属性/种族身份匹配」（2026-09-26 统一）：参数
+    /// <c>{ elementAny?, raceAny?, raceAll?, matchAll?, partyMinCount?, partyElementAny?, partyRaceAny? }</c>。
+    /// 判定主体 = <see cref="ICombatCondContext.SubjectElementFlags"/> /
+    /// <see cref="ICombatCondContext.SubjectRaceFlags"/>（效果条件缺省为来源角色；目标筛选逐候选；
+    /// buff 持有者条件为持有者）。队伍人数门闩与主体维度取"且"，只配人数时完全由人数决定。
+    /// 所有「某元素/某种族特殊加成」一律走这条，不再为每个效果单写条件。
+    /// </summary>
+    public const string IdentityMatch = "IdentityMatch";
+
     public static void RegisterAll(ConditionRegistry<ICombatCondContext> registry)
     {
         ArgumentNullException.ThrowIfNull(registry);
@@ -42,6 +52,13 @@ public static class BuiltinCombatConditions
             "COND_CHAIN_TIER_LONG",
             TryParseChainTier,
             CheckChainTier));
+
+        registry.Register(CondTypeHandler.Create<ICombatCondContext, IdentityArgs>(
+            IdentityMatch,
+            "COND_IDENTITY_SHORT",
+            "COND_IDENTITY_LONG",
+            TryParseIdentity,
+            CheckIdentity));
     }
 
     private sealed record CardPlayedArgs(int Count, int ElementFlags);
@@ -195,4 +212,161 @@ public static class BuiltinCombatConditions
             Progress = new ConditionProgress(Math.Min(participants, args.Tier), args.Tier),
         };
     }
+
+    #region IdentityMatch（属性/种族身份 + 队伍人数门闩）
+
+    private sealed record IdentityArgs(IdentityFilter Filter, int PartyMinCount, IdentityFilter PartyFilter);
+
+    private static bool TryParseIdentity(
+        JsonElement args,
+        string sourcePath,
+        out IdentityArgs? parsed,
+        out string? error)
+    {
+        parsed = null;
+        error = null;
+
+        if (args.ValueKind != JsonValueKind.Object)
+        {
+            error = $"{sourcePath}: 参数须为对象，例如 {{ \"elementAny\": [\"Green\"], \"raceAny\": [\"Human\"] }}";
+            return false;
+        }
+
+        List<EElement>? elementAny = null;
+        List<ERace>? raceAny = null;
+        List<ERace>? raceAll = null;
+        var matchAll = false;
+        var partyMinCount = 0;
+        List<EElement>? partyElementAny = null;
+        List<ERace>? partyRaceAny = null;
+
+        foreach (var property in args.EnumerateObject())
+        {
+            switch (property.Name)
+            {
+                case "elementAny":
+                    if (!TryParseEnumList<EElement>(property.Value, $"{sourcePath}.elementAny", out elementAny, out error))
+                        return false;
+                    break;
+                case "raceAny":
+                    if (!TryParseEnumList<ERace>(property.Value, $"{sourcePath}.raceAny", out raceAny, out error))
+                        return false;
+                    break;
+                case "raceAll":
+                    if (!TryParseEnumList<ERace>(property.Value, $"{sourcePath}.raceAll", out raceAll, out error))
+                        return false;
+                    break;
+                case "matchAll":
+                    if (property.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+                    {
+                        error = $"{sourcePath}.matchAll: 须为布尔值";
+                        return false;
+                    }
+
+                    matchAll = property.Value.GetBoolean();
+                    break;
+                case "partyMinCount":
+                    if (property.Value.ValueKind != JsonValueKind.Number ||
+                        !property.Value.TryGetInt32(out partyMinCount) ||
+                        partyMinCount < 1)
+                    {
+                        error = $"{sourcePath}.partyMinCount: 须为 ≥ 1 的整数";
+                        return false;
+                    }
+
+                    break;
+                case "partyElementAny":
+                    if (!TryParseEnumList<EElement>(property.Value, $"{sourcePath}.partyElementAny", out partyElementAny, out error))
+                        return false;
+                    break;
+                case "partyRaceAny":
+                    if (!TryParseEnumList<ERace>(property.Value, $"{sourcePath}.partyRaceAny", out partyRaceAny, out error))
+                        return false;
+                    break;
+                default:
+                    error = $"{sourcePath}: 未知参数 '{property.Name}'"
+                        + "（可用：elementAny / raceAny / raceAll / matchAll / partyMinCount / partyElementAny / partyRaceAny）";
+                    return false;
+            }
+        }
+
+        var filter = new IdentityFilter(elementAny ?? [], raceAny ?? [], raceAll ?? [], matchAll);
+        if (filter.IsEmpty && partyMinCount <= 0)
+        {
+            error = $"{sourcePath}: 至少配置一个身份维度（elementAny / raceAny / raceAll）或队伍人数门闩（partyMinCount）";
+            return false;
+        }
+
+        var partyFilter = new IdentityFilter(partyElementAny ?? [], partyRaceAny ?? [], [], matchAll);
+        parsed = new IdentityArgs(filter, partyMinCount, partyFilter);
+        return true;
+    }
+
+    private static LeafEvalData CheckIdentity(IdentityArgs args, ICombatCondContext context)
+    {
+        var element = (EElement)context.SubjectElementFlags;
+        var race = (ERace)context.SubjectRaceFlags;
+        var holderMatched = args.Filter.Matches(element, race);
+
+        // 队伍人数门闩（2026-09-21 语义）：与主体维度取"且"；只配人数时完全由人数决定。
+        if (args.PartyMinCount > 0)
+        {
+            var partyCount = context.CountPartyIdentityMatches(
+                args.PartyFilter.ElementFlags,
+                args.PartyFilter.RaceFlags,
+                args.Filter.MatchAll);
+            return new LeafEvalData
+            {
+                Passed = partyCount >= args.PartyMinCount && (args.Filter.IsEmpty || holderMatched),
+                Fill = [partyCount, args.PartyMinCount],
+                Progress = new ConditionProgress(Math.Min(partyCount, args.PartyMinCount), args.PartyMinCount),
+            };
+        }
+
+        return new LeafEvalData { Passed = holderMatched };
+    }
+
+    /// <summary>解析枚举名数组（<c>["Green", "Blue"]</c>）；非数组/未知名/全空报错。</summary>
+    private static bool TryParseEnumList<TEnum>(
+        JsonElement value,
+        string sourcePath,
+        out List<TEnum>? parsed,
+        out string? error)
+        where TEnum : struct, Enum
+    {
+        parsed = null;
+        error = null;
+
+        if (value.ValueKind != JsonValueKind.Array)
+        {
+            error = $"{sourcePath}: 须为枚举名数组，例如 [\"Green\"]";
+            return false;
+        }
+
+        var list = new List<TEnum>();
+        foreach (var item in value.EnumerateArray())
+        {
+            var name = item.ValueKind == JsonValueKind.String ? item.GetString() : null;
+            if (string.IsNullOrWhiteSpace(name) ||
+                !Enum.TryParse<TEnum>(name, ignoreCase: true, out var flag) ||
+                Convert.ToInt64(flag) == 0)
+            {
+                error = $"{sourcePath}: 未知枚举名 '{name}'";
+                return false;
+            }
+
+            list.Add(flag);
+        }
+
+        if (list.Count == 0)
+        {
+            error = $"{sourcePath}: 列表不能为空";
+            return false;
+        }
+
+        parsed = list;
+        return true;
+    }
+
+    #endregion
 }

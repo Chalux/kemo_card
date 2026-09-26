@@ -20,6 +20,15 @@ public interface ICombatCondContext
     int SourceCharacterIndex { get; }
 
     /// <summary>
+    /// 条件主体（身份类条件用）的属性/种族位标志（2026-09-26 新增）：效果条件缺省 = 来源角色；
+    /// 目标筛选时逐候选设置；buff 持有者条件 = 持有者。未设置时为 0（<c>None</c>）。
+    /// </summary>
+    int SubjectElementFlags { get; }
+
+    /// <summary>条件主体的种族位标志（与 <see cref="SubjectElementFlags"/> 同口径）。</summary>
+    int SubjectRaceFlags { get; }
+
+    /// <summary>
     /// 本回合该角色打出的卡牌张数：只统计属性与 <paramref name="elementFlags"/> 有交集的卡
     /// （<paramref name="elementFlags"/> 为 0 时不筛属性）。含空放——牌离开手牌即算打出。
     /// </summary>
@@ -31,4 +40,11 @@ public interface ICombatCondContext
     /// 结算区间之外返回 0（"这张牌够不够 N 连携档"类条件读它）。
     /// </summary>
     int CountChainParticipants(int elementFlags);
+
+    /// <summary>
+    /// 上阵名单中同时命中 (elementFlags, raceFlags) 的角色数（0 掩码 = 不筛该维度）：
+    /// 两个维度都配置时默认取"或"，<paramref name="matchAll"/> 取"且"（与目标筛选同口径）。
+    /// 非玩家侧上下文（槽位等）返回 0。
+    /// </summary>
+    int CountPartyIdentityMatches(int elementFlags, int raceFlags, bool matchAll);
 }

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/RunDebugDlg.cs" id="1_rundebug"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunDebugDlg" type="Control" node_paths=PackedStringArray("_tabs", "_btnClose", "_slotOption", "_cardFilter", "_cardList", "_btnGrantCard", "_btnCardToDeck", "_btnRevokeCard", "_charFilter", "_charList", "_btnGrantCharacter", "_btnDeployCharacter", "_btnFillParty", "_battleList", "_battleSeedInput", "_battleRandomSeedCheck", "_btnStartBattle", "_btnEndWin", "_btnEndLose", "_eventList", "_btnTriggerEvent", "_goldInput", "_btnAddGold", "_ringInput", "_btnSetRing", "_phaseOption", "_btnSetPhase", "_statusLabel", "_log", "_potentialInput", "_btnPotentialPool", "_btnPotentialSlot", "_btnUnlockPassive", "_btnRefundPotential", "_btnInspectBattle", "_orbOption", "_orbCountInput", "_btnGrantOrb", "_btnTriggerOrbs")]
+[node name="RunDebugDlg" type="Control" node_paths=PackedStringArray("_tabs", "_btnClose", "_slotOption", "_cardFilter", "_cardList", "_btnGrantCard", "_btnCardToDeck", "_btnRevokeCard", "_charFilter", "_charList", "_btnGrantCharacter", "_btnDeployCharacter", "_btnFillParty", "_battleList", "_battleSeedInput", "_battleRandomSeedCheck", "_btnStartBattle", "_btnEndWin", "_btnEndLose", "_eventList", "_btnTriggerEvent", "_goldInput", "_btnAddGold", "_ringInput", "_btnSetRing", "_phaseOption", "_btnSetPhase", "_statusLabel", "_log", "_potentialInput", "_btnPotentialPool", "_btnPotentialSlot", "_btnAllocatePotential", "_btnDeductPotential", "_btnInspectBattle", "_orbOption", "_orbCountInput", "_btnGrantOrb", "_btnTriggerOrbs")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -43,8 +43,8 @@ _log = NodePath("Panel/Margin/VBox/Log")
 _potentialInput = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/PotentialInput")
 _btnPotentialPool = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/BtnPotentialPool")
 _btnPotentialSlot = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/BtnPotentialSlot")
-_btnUnlockPassive = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnUnlockPassive")
-_btnRefundPotential = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnRefundPotential")
+_btnAllocatePotential = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnAllocatePotential")
+_btnDeductPotential = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnDeductPotential")
 _btnInspectBattle = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnInspectBattle")
 _orbOption = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/OrbOption")
 _orbCountInput = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/OrbCountInput")
@@ -337,16 +337,16 @@ script = ExtResource("2_kbtn")
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="BtnUnlockPassive" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
+[node name="BtnAllocatePotential" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
-text = "UI_DEBUG_UNLOCK_PASSIVE"
+text = "UI_DEBUG_POTENTIAL_ALLOCATE"
 script = ExtResource("2_kbtn")
 
-[node name="BtnRefundPotential" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
+[node name="BtnDeductPotential" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
-text = "UI_DEBUG_REFUND_POTENTIAL"
+text = "UI_DEBUG_POTENTIAL_DEDUCT"
 script = ExtResource("2_kbtn")
 
 [node name="BtnInspectBattle" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]

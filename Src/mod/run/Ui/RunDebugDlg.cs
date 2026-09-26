@@ -57,8 +57,8 @@ public partial class RunDebugDlg : BaseDlg
     [Export] private LineEdit? _potentialInput;
     [Export] private Button? _btnPotentialPool;
     [Export] private Button? _btnPotentialSlot;
-    [Export] private Button? _btnUnlockPassive;
-    [Export] private Button? _btnRefundPotential;
+    [Export] private Button? _btnAllocatePotential;
+    [Export] private Button? _btnDeductPotential;
     [Export] private Button? _btnInspectBattle;
 
     [Export] private OptionButton? _orbOption;
@@ -200,14 +200,14 @@ public partial class RunDebugDlg : BaseDlg
             OnClicks(_btnPotentialSlot, OnGrantPotentialSlot);
         }
 
-        if (_btnUnlockPassive != null)
+        if (_btnAllocatePotential != null)
         {
-            OnClicks(_btnUnlockPassive, OnUnlockPassive);
+            OnClicks(_btnAllocatePotential, OnAllocatePotential);
         }
 
-        if (_btnRefundPotential != null)
+        if (_btnDeductPotential != null)
         {
-            OnClicks(_btnRefundPotential, OnRefundPotential);
+            OnClicks(_btnDeductPotential, OnDeductPotential);
         }
 
         if (_btnInspectBattle != null)
@@ -712,14 +712,24 @@ public partial class RunDebugDlg : BaseDlg
         Run(service => service.GrantPotential(amount, Slot));
     }
 
-    private void OnUnlockPassive()
+    private void OnAllocatePotential()
     {
-        Run(service => service.UnlockNextPassive(Slot));
+        if (!TryGetPotentialAmount(out var amount))
+        {
+            return;
+        }
+
+        Run(service => service.AllocatePotential(Slot, amount));
     }
 
-    private void OnRefundPotential()
+    private void OnDeductPotential()
     {
-        Run(service => service.RefundLatestPotential(Slot));
+        if (!TryGetPotentialAmount(out var amount))
+        {
+            return;
+        }
+
+        Run(service => service.DeductPotential(Slot, amount));
     }
 
     private void OnInspectBattle()
@@ -846,8 +856,8 @@ public partial class RunDebugDlg : BaseDlg
         yield return _btnSetPhase;
         yield return _btnPotentialPool;
         yield return _btnPotentialSlot;
-        yield return _btnUnlockPassive;
-        yield return _btnRefundPotential;
+        yield return _btnAllocatePotential;
+        yield return _btnDeductPotential;
         yield return _btnInspectBattle;
         yield return _btnGrantOrb;
         yield return _btnTriggerOrbs;

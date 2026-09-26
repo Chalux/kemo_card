@@ -3,10 +3,9 @@
   "durationType": "Permanent",
   "stackRule": "Replace",
   "applyScope": "AllAllies",
-  "condition": {
-    "elementAny": ["Red"],
-    "raceAny": ["Astronomy", "Unknown"]
-  },
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Red"], "raceAny": ["Astronomy", "Unknown"] } }
+  ],
   "tags": ["buff.passive", "buff.undispellable"],
   "modifiers": [
     { "attributeId": "PhysicalDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 15 } },

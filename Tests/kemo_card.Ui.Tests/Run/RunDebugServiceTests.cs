@@ -472,38 +472,37 @@ public sealed class RunDebugServiceTests
         Assert.That(pool.Ok, Is.True, pool.Message);
         Assert.That(slot.Ok, Is.True, slot.Message);
         Assert.That(controller.Potential.TeamPool, Is.EqualTo(5), "按申请数额入团队池（不得按 20 取整）");
-        Assert.That(controller.State.PlayerStates[1].PotentialDirectCredit, Is.EqualTo(7));
+        Assert.That(controller.State.PlayerStates[1].AllocatedPotential, Is.EqualTo(7));
         Assert.That(service.GrantPotential(0).Ok, Is.False, "非正数额必须拒绝");
     }
 
     [Test]
-    public void UnlockNextPassive_unlocks_then_RefundLatest_returns_whole_purchase()
+    public void AllocatePotential_moves_pool_to_slot_and_Deduct_returns_it()
     {
         var (service, controller, _) = Build();
         service.GrantCharacter(HeroIds[0], deploySlot: 0);
         service.GrantPotential(30);
 
-        var unlock = service.UnlockNextPassive(0);
-        Assert.That(unlock.Ok, Is.True, unlock.Message);
-        Assert.That(controller.Potential.TeamPool, Is.EqualTo(20), "走正式消费管线扣款");
+        var allocate = service.AllocatePotential(0, 25);
+        Assert.That(allocate.Ok, Is.True, allocate.Message);
+        Assert.That(controller.Potential.TeamPool, Is.EqualTo(5), "分配从团队池划走");
+        Assert.That(controller.State.PlayerStates[0].AllocatedPotential, Is.EqualTo(25));
 
-        var refund = service.RefundLatestPotential(0);
-        Assert.That(refund.Ok, Is.True, refund.Message);
-        Assert.That(controller.Potential.TeamPool, Is.EqualTo(30), "整笔回到团队池");
-        Assert.That(controller.State.PlayerStates[0].PotentialSpent, Is.Empty);
-        // 解锁已撤销：再次解锁应当再次扣款（而不是幂等空过）。
-        Assert.That(service.UnlockNextPassive(0).Ok, Is.True);
+        var deduct = service.DeductPotential(0, 5);
+        Assert.That(deduct.Ok, Is.True, deduct.Message);
+        Assert.That(controller.Potential.TeamPool, Is.EqualTo(10), "扣除退回团队池");
+        Assert.That(controller.State.PlayerStates[0].AllocatedPotential, Is.EqualTo(20));
     }
 
     [Test]
-    public void RefundLatestPotential_reports_when_no_spend_entries()
+    public void AllocatePotential_reports_when_pool_is_short()
     {
         var (service, _, _) = Build();
 
-        var result = service.RefundLatestPotential(0);
+        var result = service.AllocatePotential(0, 10);
 
         Assert.That(result.Ok, Is.False);
-        Assert.That(result.Message, Does.Contain("没有可返还"));
+        Assert.That(result.Message, Does.Contain("分配失败"));
     }
 
     [Test]

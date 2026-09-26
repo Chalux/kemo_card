@@ -1,0 +1,7 @@
+{
+  "displayNameId": "ge.training_dummy_strike_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    { "kind": "Damage", "damageType": "Physical", "attackScale": 0 }
+  ]
+}

@@ -22,6 +22,9 @@ public sealed class CombatSimulation : IDisposable
     private readonly Dictionary<string, int> _orbsTriggeredThisTurn = new(StringComparer.Ordinal);
     private long _nextQueueSequence = 1;
 
+    /// <summary>本回合的回合结束管线是否已结算（每回合只允许一次，见 <see cref="ResolveTurnEnd"/>）。</summary>
+    private bool _turnEndResolved;
+
     public PlayerTeamState PlayerTeam { get; }
     public EnemyTeamState EnemyTeam { get; }
     public CombatRuleEngine Rules { get; }
@@ -399,6 +402,20 @@ public sealed class CombatSimulation : IDisposable
         if (Battle is null)
             return;
 
+        // 换波即切到下一个回合（2026-09-26 定案）：新波登场后本回合直接结束——角色解除已行动、
+        // 回合数 +1、跑完整回合开始管线（能量 / S / 抽牌），玩家在下一回合行动。
+        // 回合结束管线在此补跑（2026-09-26 修正）：敌方阶段清波时 ExecuteEnemyPhase 已跑过，
+        // ResolveTurnEnd 幂等；玩家阶段 / 卡牌执行阶段清波时本回合尚未结算，必须**在生成新敌人之前**
+        // 补跑（否则回合结束产出的球会砸到新波），两条路径不会重复结算。
+        // `TurnsIntoWave` 保持换波时的 0（新波第一回合，与开战首回合同口径），由下一次回合结束再递增。
+        ResolveTurnEnd();
+        if (PlayerTeam.IsDefeated)
+        {
+            // 回合结束效果（充能球触发 / onTurnEnd）可能反噬队伍：同归于尽仍判负（规格 §1.3）。
+            TransitionTo(ECombatPhase.Defeat);
+            return;
+        }
+
         TransitionTo(ECombatPhase.WaveTransition);
         CurrentWaveIndex++;
         var enemies = CombatSimulationFactory.SpawnWaveEnemies(
@@ -416,7 +433,49 @@ public sealed class CombatSimulation : IDisposable
         ApplyEnemyInitialBuffs();
         // 阶层开始钩子（波内每 N 回合的计时基准同时归零）。
         Buffs.FireWaveStart(this);
+
+        foreach (var character in PlayerTeam.Characters)
+            character.SetHasActed(false);
+        BeginNextTurn(incrementTurnsIntoWave: false);
+    }
+
+    /// <summary>
+    /// 回合结束管线（规格 §2.1）：turn-end 规则 → 领域时长 → buff 时长 tick（含到期 onRemove）→
+    /// 充能球回合产出。每回合只结算一次（<see cref="_turnEndResolved"/> 守卫）：敌方阶段末尾正常跑，
+    /// 玩家阶段 / 卡牌执行阶段清波时由 <see cref="AdvanceToNextWave"/> 补跑，两条路径不会重复。
+    /// </summary>
+    internal void ResolveTurnEnd()
+    {
+        if (_turnEndResolved)
+            return;
+
+        _turnEndResolved = true;
+        Rules.DispatchTurnEnd(CreateContext());
+        DomainManager.FireTurnEndHooks();
+        Buffs.FireTurnEnd(this);
+        // 充能球回合结束产出（固定 1 个四属性球 + 1 个物理/魔法球）：满员时会即时自动触发，
+        // 因此必须排在结束判定之前——触发伤害可能直接结束战斗。
+        Orbs.GrantTurnEndOrbs(this, TakePlayedThisTurn());
+    }
+
+    /// <summary>
+    /// 回合开始管线（规格 §2.1）：回合数 +1（换波时波内计数保持 0，由下一次回合结束再递增）→
+    /// 清充能球回合账 → turn-start 钩子 → 进入玩家阶段并跑完整玩家阶段管线。
+    /// </summary>
+    internal void BeginNextTurn(bool incrementTurnsIntoWave)
+    {
+        _turnEndResolved = false;
+        IncrementTurnNumber();
+        if (incrementTurnsIntoWave)
+            IncrementTurnsIntoWave();
+
+        // "本回合已触发充能球"与回合边界对齐地清账（见 ResetOrbsTriggeredThisTurn 注释）：
+        // 上一回合结束产出并即时触发的球不得算进本回合。
+        ResetOrbsTriggeredThisTurn();
+        DomainManager.FireTurnStartHooks();
+        Buffs.FireTurnStart(this);
         TransitionTo(ECombatPhase.Player);
+        PlayerPhasePipeline.Run(this, IsFirstPlayerPhase);
     }
 
     /// <summary>

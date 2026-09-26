@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/ActorInfoCmp.cs" id="1_script"]
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffListCmp.tscn" id="2_buffs"]
 
-[node name="ActorInfoCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblMeta", "_lblEnergy", "_lblSkill", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState", "_lblMark", "_buffs")]
+[node name="ActorInfoCmp" type="PanelContainer" node_paths=PackedStringArray("_lblName", "_lblMeta", "_lblEnergy", "_lblSkill", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState", "_lblMark", "_buffs")]
 custom_minimum_size = Vector2(210, 0)
 layout_mode = 3
 anchors_preset = 0
@@ -22,22 +22,8 @@ _lblState = NodePath("Margin/VBox/Header/State")
 _lblMark = NodePath("Margin/VBox/Header/Mark")
 _buffs = NodePath("Margin/VBox/Buffs")
 
-[node name="Face" type="Panel" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
 [node name="Margin" type="MarginContainer" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 mouse_filter = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
@@ -84,10 +70,10 @@ theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 13
 clip_text = true
 
-[node name="Resources" type="HBoxContainer" parent="Margin/VBox"]
+[node name="Resources" type="VBoxContainer" parent="Margin/VBox"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 2
 
 [node name="Energy" type="Label" parent="Margin/VBox/Resources"]
 layout_mode = 2

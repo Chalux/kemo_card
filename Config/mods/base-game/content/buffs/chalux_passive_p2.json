@@ -2,5 +2,6 @@
   "descId": "buff.chalux_p2.desc",
   "durationType": "Permanent",
   "stackRule": "Replace",
-  "tags": ["buff.passive", "buff.undispellable", "trait.chain_inject_red"]
+  "tags": ["buff.passive", "buff.undispellable"],
+  "chainElementInject": [{ "add": ["Red"] }]
 }

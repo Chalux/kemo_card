@@ -1772,7 +1772,7 @@ LeafResult
 
 Combat 域：v1 建立空注册表与 Context 接口占位，**不注册**业务 CondType。
 
-> 2026-09-21 合并：原 condition-system 规格 的旧表述（「Combat 域 v1 …… 不注册业务 CondType」）已被 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md) §14.7 取代——Combat 域现有 `CardPlayedThisTurn`（`Src/mod/combat/Condition/BuiltinCombatConditions.cs`，参数 `{ count, elementAny? }`，短/长提示键 `COND_CARD_PLAYED_THIS_TURN_SHORT` / `..._LONG`），效果（`EffectDto.conditions`）在战斗内求值，未知类型/参数非法一律视为**不通过**。「空注册表入口 + Context 接口占位」这一机制仍然有效。
+> 2026-09-21 合并：原 condition-system 规格 的旧表述（「Combat 域 v1 …… 不注册业务 CondType」）已被 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md) §14.7 取代——Combat 域现有 `CardPlayedThisTurn`（`Src/mod/combat/Condition/BuiltinCombatConditions.cs`，参数 `{ count, elementAny? }`，短/长提示键 `COND_CARD_PLAYED_THIS_TURN_SHORT` / `..._LONG`）与 `IdentityMatch`（2026-09-26，属性/种族通用条件），效果（`EffectDto.conditions`）在战斗内求值，未知类型/参数非法一律视为**不通过**。「空注册表入口 + Context 接口占位」这一机制仍然有效。
 
 ---
 

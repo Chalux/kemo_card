@@ -139,10 +139,12 @@ public sealed class BetelgeuseContentTests
         // 因此这里是「红 或 天文 或 未知」（无 matchAll）。
         var p2 = definitions.Buffs[P2];
         Assert.That(p2.ApplyScope, Is.EqualTo(EBuffApplyScope.AllAllies));
-        Assert.That(p2.Condition?.ElementAny, Is.EquivalentTo(new[] { EElement.Red }));
-        Assert.That(p2.Condition?.RaceAny, Is.EquivalentTo(new[] { ERace.Astronomy, ERace.Unknown }));
-        Assert.That(p2.Condition?.RaceAll, Is.Null.Or.Empty);
-        Assert.That(p2.Condition?.MatchAll, Is.False, "跨维度默认取或");
+        var p2Condition = CombatTestHelper.IdentityParams(p2);
+        Assert.That(p2Condition, Is.Not.Null, "P2 持有者条件走 IdentityMatch");
+        Assert.That(CombatTestHelper.EnumNames(p2Condition, "elementAny"), Is.EquivalentTo(new[] { "Red" }));
+        Assert.That(CombatTestHelper.EnumNames(p2Condition, "raceAny"), Is.EquivalentTo(new[] { "Astronomy", "Unknown" }));
+        Assert.That(CombatTestHelper.EnumNames(p2Condition, "raceAll"), Is.Empty);
+        Assert.That(CombatTestHelper.BoolParam(p2Condition, "matchAll"), Is.False, "跨维度默认取或");
         Assert.That(Modifier(p2, "PhysicalDefense").Magnitude.Scalar, Is.EqualTo(15f));
         Assert.That(Modifier(p2, "MagicDefense").Magnitude.Scalar, Is.EqualTo(15f));
 

@@ -198,8 +198,8 @@ public sealed class RunDebugService
                     characterId,
                     StringComparison.Ordinal);
             return RunDebugResult.Success(creditedToSlot
-                ? $"重复获得角色 '{characterId}'：不入池，直充槽位 {deploySlot + 1} 潜能 +{PotentialService.DuplicateReward}"
-                    + $"（该槽位直充余额 {_run.State.PlayerStates[deploySlot].PotentialDirectCredit}）。"
+                ? $"重复获得角色 '{characterId}'：不入池，直接分配到槽位 {deploySlot + 1} 潜能 +{PotentialService.DuplicateReward}"
+                    + $"（该槽位已分配 {_run.State.PlayerStates[deploySlot].AllocatedPotential}）。"
                 : $"重复获得角色 '{characterId}'：不入池，转化为团队潜能 +{PotentialService.DuplicateReward}"
                     + $"（团队池 {_run.Potential.TeamPool}）。");
         }
@@ -557,51 +557,30 @@ public sealed class RunDebugService
         _run.Potential.Grant(amount, slotIndex);
 
         return RunDebugResult.Success(slotIndex >= 0
-            ? $"槽位 {slotIndex} 潜能直充 +{amount} → 现有 {_run.State.PlayerStates[slotIndex].PotentialDirectCredit}"
+            ? $"槽位 {slotIndex + 1} 直接分配 +{amount} → 现有 {_run.State.PlayerStates[slotIndex].AllocatedPotential}"
             : $"团队潜能池 +{amount} → 现有 {_run.Potential.TeamPool}");
     }
 
-    /// <summary>解锁选中槽位上阵角色的下一条未解锁被动（走正式潜能消费管线）。</summary>
-    public RunDebugResult UnlockNextPassive(int slotIndex)
+    /// <summary>把输入数额从团队池分配到选中槽位（走正式划拨管线，含表决）。</summary>
+    public RunDebugResult AllocatePotential(int slotIndex, int amount)
     {
-        if (!TryGetSlotCharacter(slotIndex, out var character, out var error) || character?.Definition is null)
-        {
-            return RunDebugResult.Failure(error);
-        }
-
-        var next = character.Definition.Passives
-            .Where(passive => !PotentialService.IsPassiveUnlocked(State, character, passive))
-            .OrderBy(passive => passive.RequiredPotential)
-            .FirstOrDefault();
-        if (next is null)
-        {
-            return RunDebugResult.Success($"{character.DefinitionId} 的被动已全部解锁。");
-        }
-
-        var result = _run.Potential.TryUnlock(slotIndex, character, next);
+        var result = _run.Potential.TryAllocate(slotIndex, amount);
         return result.Success
-            ? RunDebugResult.Success($"已解锁 {character.DefinitionId} 的 {next.BuffId}（成本 {next.RequiredPotential}）。")
-            : RunDebugResult.Failure($"解锁失败：{result.Error}");
+            ? RunDebugResult.Success(
+                $"槽位 {slotIndex + 1} 已分配 +{amount} → 现有 {_run.State.PlayerStates[slotIndex].AllocatedPotential}，"
+                + $"团队池 {_run.Potential.TeamPool}。")
+            : RunDebugResult.Failure($"分配失败：{result.Detail}");
     }
 
-    /// <summary>返还选中槽位最近一笔消费（同一笔解锁拆出的直充/池流水整组退回）。</summary>
-    public RunDebugResult RefundLatestPotential(int slotIndex)
+    /// <summary>从选中槽位扣除输入数额，退回团队池（无需表决）。</summary>
+    public RunDebugResult DeductPotential(int slotIndex, int amount)
     {
-        if (slotIndex < 0 || slotIndex >= RunConstants.SlotCount)
-        {
-            return RunDebugResult.Failure($"槽位 {slotIndex} 越界。");
-        }
-
-        var latest = State.PlayerStates[slotIndex].PotentialSpent.LastOrDefault();
-        if (latest is null)
-        {
-            return RunDebugResult.Failure($"槽位 {slotIndex} 没有可返还的消费记录。");
-        }
-
-        var refunded = _run.Potential.Refund(slotIndex, latest.EntryId);
-        return refunded > 0
-            ? RunDebugResult.Success($"已返还 {latest.BuffId} 的整笔消费 {refunded}，对应被动重新锁定。")
-            : RunDebugResult.Failure("返还失败：流水不存在。");
+        var result = _run.Potential.TryDeduct(slotIndex, amount);
+        return result.Success
+            ? RunDebugResult.Success(
+                $"槽位 {slotIndex + 1} 已扣除 -{amount} → 现有 {_run.State.PlayerStates[slotIndex].AllocatedPotential}，"
+                + $"团队池 {_run.Potential.TeamPool}。")
+            : RunDebugResult.Failure($"扣除失败：{result.Detail}");
     }
 
     /// <summary>战斗检查快照：波次/回合/连携档位、充能球、各角色（S/能量/buff/手牌槽与槽位buff）、敌人状态。</summary>

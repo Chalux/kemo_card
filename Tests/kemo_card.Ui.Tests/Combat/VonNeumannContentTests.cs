@@ -100,14 +100,17 @@ public sealed class VonNeumannContentTests
         // P4：红·人类·学术（`·` = 或）+ 机械族在场时翻倍（队伍人数门闩）。
         var p4 = definitions.Buffs["von_neumann_passive_p4"];
         Assert.That(p4.ApplyScope, Is.EqualTo(EBuffApplyScope.AllAllies));
-        Assert.That(p4.Condition!.MatchAll, Is.False, "描述里的 `·` = 或（跨维度默认取或）");
-        Assert.That(p4.Condition.ElementAny, Is.EqualTo(new[] { EElement.Red }), "2026-09-24 起由蓝改红");
-        Assert.That(p4.Condition.RaceAny, Is.EqualTo(new[] { ERace.Human, ERace.Academic }));
-        Assert.That(p4.Condition.PartyMinCount, Is.Zero, "基础档不筛队伍人数");
+        var p4Condition = CombatTestHelper.IdentityParams(p4);
+        Assert.That(p4Condition, Is.Not.Null, "P4 持有者条件走 IdentityMatch");
+        Assert.That(CombatTestHelper.BoolParam(p4Condition, "matchAll"), Is.False, "描述里的 `·` = 或（跨维度默认取或）");
+        Assert.That(CombatTestHelper.EnumNames(p4Condition, "elementAny"), Is.EqualTo(new[] { "Red" }), "2026-09-24 起由蓝改红");
+        Assert.That(CombatTestHelper.EnumNames(p4Condition, "raceAny"), Is.EqualTo(new[] { "Human", "Academic" }));
+        Assert.That(CombatTestHelper.IntParam(p4Condition, "partyMinCount"), Is.Zero, "基础档不筛队伍人数");
 
         var doubled = definitions.Buffs["von_neumann_passive_p4_double"];
-        Assert.That(doubled.Condition!.PartyMinCount, Is.EqualTo(1));
-        Assert.That(doubled.Condition.PartyRaceAny, Is.EqualTo(new[] { ERace.Machine }));
+        var doubledCondition = CombatTestHelper.IdentityParams(doubled);
+        Assert.That(CombatTestHelper.IntParam(doubledCondition, "partyMinCount"), Is.EqualTo(1));
+        Assert.That(CombatTestHelper.EnumNames(doubledCondition, "partyRaceAny"), Is.EqualTo(new[] { "Machine" }));
     }
 
     #endregion
@@ -230,12 +233,7 @@ public sealed class VonNeumannContentTests
         using var sim = SkillProgressSimulation(RegistryWith(
             definitions,
             buffs: Pick(definitions.Buffs, "von_neumann_passive_p3"),
-            effects: Pick(
-                definitions.Effects,
-                "von_neumann_p3_boost_self",
-                "von_neumann_p3_boost_red",
-                "von_neumann_p3_boost_human",
-                "von_neumann_p3_boost_academic")));
+            effects: Pick(definitions.Effects, "gain_skill_counter")));
 
         sim.Buffs.Apply(sim, Player(0), "von_neumann_passive_p3");
         sim.Buffs.FireWaveStart(sim);

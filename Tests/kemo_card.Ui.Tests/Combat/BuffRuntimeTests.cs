@@ -1,9 +1,11 @@
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Frame.Gas.Executions;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Buffs;
+using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Combat.Rules;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.StateMachine;
@@ -23,6 +25,17 @@ public sealed class BuffRuntimeTests
         [AttributeIds.MaxHealth] = 50,
         [AttributeIds.PhysicalAttack] = 10,
     };
+
+    /// <summary>
+    /// 条件域是进程级静态状态：显式注册内置条件，避免 IdentityMatch 等条件求值依赖其它 fixture
+    /// 的执行顺序（注册表为空时条件恒不通过）。
+    /// </summary>
+    [OneTimeSetUp]
+    public void RegisterCombatConditions()
+    {
+        ConditionDomains.Combat.Clear();
+        BuiltinCombatConditions.RegisterAll(ConditionDomains.Combat);
+    }
 
     #region 构造辅助
 
@@ -153,11 +166,7 @@ public sealed class BuffRuntimeTests
             Id = "buff.conditional",
             DurationType = EBuffDurationType.Permanent,
             ApplyScope = EBuffApplyScope.AllAllies,
-            Condition = new BuffConditionDto
-            {
-                ElementAny = [EElement.Blue],
-                RaceAny = [ERace.Animal],
-            },
+            Conditions = [IdentityMatch(elementAny: [EElement.Blue], raceAny: [ERace.Animal])],
             Modifiers = StatBuff().Modifiers,
         };
         var blueHuman = CharacterBattleInstance.CreateForTests("blue", BaseAttrs, element: EElement.Blue);
@@ -185,11 +194,7 @@ public sealed class BuffRuntimeTests
     {
         var buff = ConditionalAttackBuff(
             "buff.or",
-            new BuffConditionDto
-            {
-                ElementAny = [EElement.Blue],
-                RaceAny = [ERace.Animal],
-            });
+            IdentityMatch(elementAny: [EElement.Blue], raceAny: [ERace.Animal]));
         var blueHuman = CharacterBattleInstance.CreateForTests("blue_human", BaseAttrs, element: EElement.Blue, race: ERace.Human);
         var redAnimal = CharacterBattleInstance.CreateForTests("red_animal", BaseAttrs, element: EElement.Red, race: ERace.Animal);
         var blueAnimal = CharacterBattleInstance.CreateForTests("blue_animal", BaseAttrs, element: EElement.Blue, race: ERace.Animal);
@@ -214,12 +219,7 @@ public sealed class BuffRuntimeTests
     {
         var buff = ConditionalAttackBuff(
             "buff.match_all",
-            new BuffConditionDto
-            {
-                ElementAny = [EElement.Blue],
-                RaceAny = [ERace.Animal],
-                MatchAll = true,
-            });
+            IdentityMatch(elementAny: [EElement.Blue], raceAny: [ERace.Animal], matchAll: true));
         var blueAnimal = CharacterBattleInstance.CreateForTests("blue_animal", BaseAttrs, element: EElement.Blue, race: ERace.Animal);
         var blueHuman = CharacterBattleInstance.CreateForTests("blue_human", BaseAttrs, element: EElement.Blue, race: ERace.Human);
         var redAnimal = CharacterBattleInstance.CreateForTests("red_animal", BaseAttrs, element: EElement.Red, race: ERace.Animal);
@@ -242,7 +242,7 @@ public sealed class BuffRuntimeTests
     {
         var buff = ConditionalAttackBuff(
             "buff.race_all",
-            new BuffConditionDto { RaceAll = [ERace.Human, ERace.Academic] });
+            IdentityMatch(raceAll: [ERace.Human, ERace.Academic]));
         var both = CharacterBattleInstance.CreateForTests("both", BaseAttrs, race: ERace.Human | ERace.Academic);
         var humanOnly = CharacterBattleInstance.CreateForTests("human", BaseAttrs, race: ERace.Human);
         var academicOnly = CharacterBattleInstance.CreateForTests("academic", BaseAttrs, race: ERace.Academic);
@@ -292,14 +292,43 @@ public sealed class BuffRuntimeTests
             "matchAll 取且：只有蓝·动物命中 = 1 人 × 3（叠加在 9 之上）");
     }
 
-    private static BuffDto ConditionalAttackBuff(string id, BuffConditionDto condition) => new()
+    private static BuffDto ConditionalAttackBuff(string id, ConditionRefDto condition) => new()
     {
         Id = id,
         DurationType = EBuffDurationType.Permanent,
         ApplyScope = EBuffApplyScope.AllAllies,
-        Condition = condition,
+        Conditions = [condition],
         Modifiers = StatBuff().Modifiers,
     };
+
+    /// <summary>通用身份条件（IdentityMatch）的测试构造器：参数即内容 JSON 的同名字段。</summary>
+    private static ConditionRefDto IdentityMatch(
+        IReadOnlyList<EElement>? elementAny = null,
+        IReadOnlyList<ERace>? raceAny = null,
+        IReadOnlyList<ERace>? raceAll = null,
+        bool matchAll = false,
+        int partyMinCount = 0,
+        IReadOnlyList<EElement>? partyElementAny = null,
+        IReadOnlyList<ERace>? partyRaceAny = null)
+    {
+        var parameters = new Dictionary<string, object>(StringComparer.Ordinal);
+        if (elementAny is { Count: > 0 })
+            parameters["elementAny"] = elementAny.Select(value => value.ToString()).ToArray();
+        if (raceAny is { Count: > 0 })
+            parameters["raceAny"] = raceAny.Select(value => value.ToString()).ToArray();
+        if (raceAll is { Count: > 0 })
+            parameters["raceAll"] = raceAll.Select(value => value.ToString()).ToArray();
+        if (matchAll)
+            parameters["matchAll"] = true;
+        if (partyMinCount > 0)
+            parameters["partyMinCount"] = partyMinCount;
+        if (partyElementAny is { Count: > 0 })
+            parameters["partyElementAny"] = partyElementAny.Select(value => value.ToString()).ToArray();
+        if (partyRaceAny is { Count: > 0 })
+            parameters["partyRaceAny"] = partyRaceAny.Select(value => value.ToString()).ToArray();
+
+        return new ConditionRefDto { Kind = "IdentityMatch", Params = parameters };
+    }
 
     private static BuffDto PartyCountBuff(string id, bool matchAll) => new()
     {
@@ -704,7 +733,7 @@ public sealed class BuffRuntimeTests
     }
 
     [Test]
-    public void Chain_inject_red_tag_adds_red_counting_for_holder_cards()
+    public void Chain_element_inject_adds_red_counting_for_holder_cards()
     {
         var blueCard = ElementCard("card.blue2", EElement.Blue);
         var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
@@ -712,13 +741,13 @@ public sealed class BuffRuntimeTests
             sim.Definitions,
             cards: new Dictionary<string, CardDto> { [blueCard.Id] = blueCard });
 
-        // 手工把 StandardPlayerPhase 的角色换成带 tag 的版本不可行（team 不可变），
-        // 改用注入 tag 的 buff 走正式 Apply 通道。
+        // 手工把 StandardPlayerPhase 的角色换成带注入的角色不可行（team 不可变），
+        // 改用注入的 buff 走正式 Apply 通道（2026-09-26 参数化，取代 trait tag）。
         var inject = new BuffDto
         {
             Id = "buff.inject",
             DurationType = EBuffDurationType.Permanent,
-            Tags = [BuiltinBuffTags.TraitChainInjectRed],
+            ChainElementInject = [new ChainElementInjectDto { Add = [EElement.Red] }],
         };
         CombatTestHelper.RebuildInto(
             sim.Definitions,
@@ -739,8 +768,167 @@ public sealed class BuffRuntimeTests
     }
 
     [Test]
-    public void Chain_does_not_apply_to_non_damage_heal_card_types()
+    public void Chain_element_inject_maps_from_element_to_added_element()
     {
+        var yellowCard = ElementCard("card.yellow2", EElement.Yellow);
+        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            cards: new Dictionary<string, CardDto> { [yellowCard.Id] = yellowCard });
+
+        // 参数化注入（2026-09-26）：含黄属性的卡额外计入蓝属性（取代 trait.chain_yellow_counts_blue）。
+        var inject = new BuffDto
+        {
+            Id = "buff.inject_yellow_blue",
+            DurationType = EBuffDurationType.Permanent,
+            ChainElementInject = [new ChainElementInjectDto { From = [EElement.Yellow], Add = [EElement.Blue] }],
+        };
+        CombatTestHelper.RebuildInto(
+            sim.Definitions,
+            cards: new Dictionary<string, CardDto> { [yellowCard.Id] = yellowCard },
+            buffs: new Dictionary<string, BuffDto> { [inject.Id] = inject });
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 1), inject.Id);
+
+        sim.CardQueue.Enqueue(new QueuedCardEntry(0, yellowCard.Id, "rt-a", 1, [], sim.AllocateQueueSequence()));
+        sim.CardQueue.Enqueue(new QueuedCardEntry(1, yellowCard.Id, "rt-b", 1, [], sim.AllocateQueueSequence()));
+
+        var counts = ChainCalculator.CountDistinctCharacters(sim);
+
+        Assert.That(counts.GetValueOrDefault(EElement.Yellow), Is.EqualTo(2));
+        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(1), "from=Yellow add=Blue：只有持有者的黄卡计入蓝");
+    }
+
+    /// <summary>
+    /// IdentityMatch 的队伍人数门闩（2026-09-26 统一）：与主体维度取"且"，
+    /// 只配人数时完全由人数决定。
+    /// </summary>
+    [Test]
+    public void Identity_party_gate_requires_min_count_and_holder_match()
+    {
+        var buff = new BuffDto
+        {
+            Id = "buff.party_gate",
+            DurationType = EBuffDurationType.Permanent,
+            ApplyScope = EBuffApplyScope.AllAllies,
+            Conditions =
+            [
+                IdentityMatch(
+                    elementAny: [EElement.Blue],
+                    partyMinCount: 2,
+                    partyElementAny: [EElement.Blue]),
+            ],
+            Modifiers = StatBuff().Modifiers,
+        };
+        var blueA = CharacterBattleInstance.CreateForTests("blue_a", BaseAttrs, element: EElement.Blue);
+        var blueB = CharacterBattleInstance.CreateForTests("blue_b", BaseAttrs, element: EElement.Blue);
+        var red = CharacterBattleInstance.CreateForTests("red", BaseAttrs, element: EElement.Red);
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff }),
+            [blueA, blueB, red]);
+
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), buff.Id);
+
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id)!.IsDormant, Is.False, "蓝主体 + 队伍 2 蓝 → 激活");
+        Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(buff.Id)!.IsDormant, Is.False, "第二蓝同样激活");
+        Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(buff.Id)!.IsDormant, Is.True, "红主体不命中（人数够也没用）");
+    }
+
+    /// <summary>
+    /// 槽位容器没有 ASC 与持有者身份：经 <see cref="BuffRuntime.ApplyToSlot"/> 挂载的身份条件
+    /// <b>不按所属角色求值</b>，一律休眠（与 <c>BuffContainer</c> 类注释口径一致）。
+    /// </summary>
+    [Test]
+    public void Slot_buff_identity_condition_stays_dormant_even_when_owner_matches()
+    {
+        var slotBuff = new BuffDto
+        {
+            Id = "buff.slot_condition",
+            DurationType = EBuffDurationType.Permanent,
+            Tags = [BuiltinBuffTags.SlotCharge],
+            Conditions = [IdentityMatch(elementAny: [EElement.Green])],
+        };
+        var green = CharacterBattleInstance.CreateForTests("green", BaseAttrs, element: EElement.Green);
+        using var sim = BuildSim(
+            registry => CombatTestHelper.RebuildInto(
+                registry,
+                buffs: new Dictionary<string, BuffDto> { [slotBuff.Id] = slotBuff }),
+            [green]);
+
+        var result = sim.Buffs.ApplyToSlot(sim, characterIndex: 0, slotIndex: 0, slotBuff.Id);
+
+        Assert.That(result.Success, Is.True, result.Error);
+        var instance = green.HandSlots[0].Buffs.Find(slotBuff.Id);
+        Assert.That(instance, Is.Not.Null);
+        Assert.That(instance!.IsDormant, Is.True, "槽位 buff 的身份条件不按所属角色求值 → 休眠");
+    }
+
+    /// <summary>
+    /// 旧扁平 targetFilter（已删除）在运行期保守回退到 [来源]：绝不能静默命中全队。
+    /// </summary>
+    [Test]
+    public void Legacy_flat_target_filter_falls_back_to_source_instead_of_hitting_everyone()
+    {
+        using var sim = BuildSim(characters:
+        [
+            CharacterBattleInstance.CreateForTests("blue_a", BaseAttrs, element: EElement.Blue),
+            CharacterBattleInstance.CreateForTests("blue_b", BaseAttrs, element: EElement.Blue),
+        ]);
+        var source = new CombatTargetRef(ECombatSide.Player, 0);
+        var parameters = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            ["targetFilter"] = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                ["elementAny"] = new[] { "Blue" },
+            },
+        };
+
+        var targets = CombatTargetSelector.Resolve(sim, source, parameters);
+
+        Assert.That(targets, Has.Count.EqualTo(1), "未知键 → 回退 [来源]，不是全队");
+        Assert.That(targets[0], Is.EqualTo(source));
+    }
+
+    /// <summary>
+    /// 新写法 <c>targetFilter.condition</c> 正常筛选：IdentityMatch 逐候选判定，excludeSelf 剔除来源。
+    /// </summary>
+    [Test]
+    public void Target_filter_condition_filters_candidates_and_respects_exclude_self()
+    {
+        using var sim = BuildSim(characters:
+        [
+            CharacterBattleInstance.CreateForTests("blue_a", BaseAttrs, element: EElement.Blue),
+            CharacterBattleInstance.CreateForTests("green", BaseAttrs, element: EElement.Green),
+            CharacterBattleInstance.CreateForTests("blue_b", BaseAttrs, element: EElement.Blue),
+        ]);
+        var source = new CombatTargetRef(ECombatSide.Player, 0);
+        var parameters = new Dictionary<string, object>(StringComparer.Ordinal)
+        {
+            ["targetFilter"] = new Dictionary<string, object>(StringComparer.Ordinal)
+            {
+                ["excludeSelf"] = true,
+                ["condition"] = new Dictionary<string, object>(StringComparer.Ordinal)
+                {
+                    ["kind"] = "IdentityMatch",
+                    ["params"] = new Dictionary<string, object>(StringComparer.Ordinal)
+                    {
+                        ["elementAny"] = new[] { "Blue" },
+                    },
+                },
+            },
+        };
+
+        var targets = CombatTargetSelector.Resolve(sim, source, parameters);
+
+        Assert.That(
+            targets,
+            Is.EqualTo(new[] { new CombatTargetRef(ECombatSide.Player, 2) }),
+            "只命中非来源的蓝属性候选");
+    }
+
+    [Test]
+    public void Chain_does_not_apply_to_non_damage_heal_card_types()    {
         var curseCard = ElementCard("card.curse", EElement.Blue, ECardType.Curse);
         Assert.That(ChainCalculator.AppliesToCard(curseCard), Is.False);
 

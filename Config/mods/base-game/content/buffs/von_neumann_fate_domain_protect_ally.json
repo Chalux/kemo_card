@@ -5,7 +5,9 @@
   "duration": 2,
   "stackRule": "Refresh",
   "applyScope": "AllAllies",
-  "condition": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"] },
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Red"], "raceAny": ["Human", "Academic"] } }
+  ],
   "modifiers": [
     { "attributeId": "DamageTakenScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": -0.5 } }
   ],

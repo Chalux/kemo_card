@@ -307,10 +307,8 @@ public sealed partial class RunMod : BaseMod
             PlayerStates[i].EventFlags.Clear();
             foreach (var (k, v) in stateDto.EventFlags)
                 PlayerStates[i].EventFlags[k] = v;
-            PlayerStates[i].ResetPotentialDirectCredit();
-            PlayerStates[i].AddPotentialDirectCredit(stateDto.PotentialDirectCredit);
-            PlayerStates[i].PotentialSpent.Clear();
-            PlayerStates[i].PotentialSpent.AddRange(stateDto.PotentialSpent ?? []);
+            PlayerStates[i].ResetAllocatedPotential();
+            PlayerStates[i].AllocatePotential(stateDto.PotentialDirectCredit);
 
             if (stateDto.ActiveCharacterIndex.HasValue
                 && stateDto.ActiveCharacterIndex.Value >= 0

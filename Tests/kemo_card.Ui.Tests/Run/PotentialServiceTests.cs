@@ -7,8 +7,9 @@ using NUnit.Framework;
 namespace KemoCard.Ui.Tests.Run;
 
 /// <summary>
-/// 团体潜能：池/直充双来源消费、整笔（跨来源原子）返还与重锁、表决模式的提议限额、
-/// 重复角色奖励入账、Run 存档 v1→v2 迁移。
+/// 团体潜能（2026-09-26 起的**进度值**模型）：槽位已分配 ≥ 门槛自动解锁、扣回低于门槛即重锁；
+/// 分配 = 团队池 → 槽位（投票模式下需表决），扣除 = 槽位 → 团队池（无需表决）；
+/// 重复角色奖励入账、Run 存档迁移与坏档容错。
 /// </summary>
 [TestFixture]
 public sealed class PotentialServiceTests
@@ -31,7 +32,11 @@ public sealed class PotentialServiceTests
         return new PotentialService(model ?? new RunMod(), () => settings, approver);
     }
 
-    #region 解锁与消费
+    /// <summary>把角色上阵到指定槽位（解锁判定按「该槽位已分配潜能」）。</summary>
+    private static void Deploy(RunMod model, int slotIndex, CharacterInstance character) =>
+        model.PlayerStates[slotIndex].SetActiveCharacter(character);
+
+    #region 自动解锁（进度值）
 
     [Test]
     public void Zero_cost_passive_is_unlocked_by_default()
@@ -44,113 +49,154 @@ public sealed class PotentialServiceTests
     }
 
     [Test]
-    public void Unlock_consumes_direct_credit_before_team_pool()
+    public void Passives_unlock_automatically_when_slot_allocation_reaches_threshold()
     {
         var model = new RunMod();
         var character = NewCharacter();
-        model.PlayerStates[0].AddPotentialDirectCredit(6);
-        model.TeamPotentialPool = 10;
-        var service = NewService(model);
+        Deploy(model, 1, character);
 
-        var result = service.TryUnlock(0, character, Passive("p2", 10));
+        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)), Is.False);
 
-        Assert.That(result.Success, Is.True);
-        Assert.That(model.PlayerStates[0].PotentialDirectCredit, Is.EqualTo(0), "先扣直充");
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(6), "再扣团队池");
-        var entries = model.PlayerStates[0].PotentialSpent;
-        Assert.That(entries.Count, Is.EqualTo(2), "跨来源拆两笔记账");
-        Assert.That(entries.Sum(entry => entry.Amount), Is.EqualTo(10));
-        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)), Is.True);
+        model.PlayerStates[1].AllocatePotential(10);
+        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)), Is.True, "达到门槛自动解锁");
+        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p3", 30)), Is.False, "更高门槛仍未解锁");
     }
 
     [Test]
-    public void Unlock_fails_when_funds_insufficient()
+    public void Deducting_below_threshold_relocks_the_passive()
     {
         var model = new RunMod();
         var character = NewCharacter();
+        Deploy(model, 0, character);
+        model.PlayerStates[0].AllocatePotential(30);
+        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p3", 30)), Is.True);
+
+        var result = NewService(model).TryDeduct(0, 25);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(model.PlayerStates[0].AllocatedPotential, Is.EqualTo(5));
+        Assert.That(model.TeamPotentialPool, Is.EqualTo(25), "扣除退回团队池");
+        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p3", 30)), Is.False, "30 门槛重锁");
+        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)), Is.False, "10 门槛也重锁");
+    }
+
+    [Test]
+    public void Unassigned_character_only_unlocks_zero_cost_passives()
+    {
+        var model = new RunMod();
+        var character = NewCharacter();
+        model.PlayerStates[0].AllocatePotential(50);
+
+        Assert.That(
+            PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)),
+            Is.False,
+            "未上阵没有槽位（视为 0）");
+    }
+
+    [Test]
+    public void Allocation_belongs_to_the_slot_not_the_character_instance()
+    {
+        var model = new RunMod();
+        var a = NewCharacter("a");
+        var b = NewCharacter("b");
+        Deploy(model, 2, a);
+        model.PlayerStates[2].AllocatePotential(30);
+        Assert.That(PotentialService.IsPassiveUnlocked(model, a, Passive("p2", 30)), Is.True);
+
+        // 换人：进度留在槽位（槽位账本语义），新角色按同一进度解锁。
+        Deploy(model, 2, b);
+        Assert.That(PotentialService.IsPassiveUnlocked(model, b, Passive("p2", 30)), Is.True);
+        Assert.That(PotentialService.IsPassiveUnlocked(model, a, Passive("p2", 30)), Is.False, "离开槽位即失去进度");
+    }
+
+    [Test]
+    public void FindAssignedSlot_reports_the_deployed_slot()
+    {
+        var model = new RunMod();
+        var character = NewCharacter();
+        Assert.That(PotentialService.FindAssignedSlot(model, character), Is.Null);
+
+        Deploy(model, 3, character);
+        Assert.That(PotentialService.FindAssignedSlot(model, character), Is.EqualTo(3));
+    }
+
+    #endregion
+
+    #region 分配 / 扣除
+
+    [Test]
+    public void Allocate_moves_pool_to_slot()
+    {
+        var model = new RunMod();
+        model.TeamPotentialPool = 30;
+        var service = NewService(model);
+
+        var result = service.TryAllocate(1, 20);
+
+        Assert.That(result.Success, Is.True);
+        Assert.That(result.Amount, Is.EqualTo(20));
+        Assert.That(model.TeamPotentialPool, Is.EqualTo(10));
+        Assert.That(model.PlayerStates[1].AllocatedPotential, Is.EqualTo(20));
+        Assert.That(service.AllocatedFor(1), Is.EqualTo(20));
+    }
+
+    [Test]
+    public void Allocate_fails_when_pool_is_short_and_does_not_move_anything()
+    {
+        var model = new RunMod();
         model.TeamPotentialPool = 9;
         var service = NewService(model);
 
-        var result = service.TryUnlock(0, character, Passive("p2", 10));
+        var result = service.TryAllocate(0, 10);
 
         Assert.That(result.Success, Is.False);
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(9), "失败不动账");
-        Assert.That(model.PlayerStates[0].PotentialSpent, Is.Empty);
+        Assert.That(result.Failure, Is.EqualTo(EPotentialFailure.PoolShort));
+        Assert.That(model.TeamPotentialPool, Is.EqualTo(9));
+        Assert.That(model.PlayerStates[0].AllocatedPotential, Is.EqualTo(0));
     }
 
     [Test]
-    public void Refund_returns_amount_to_original_source_and_relocks()
+    public void Allocate_rejects_invalid_slot_and_amount()
+    {
+        var service = NewService();
+
+        Assert.That(service.TryAllocate(-1, 10).Failure, Is.EqualTo(EPotentialFailure.InvalidSlot));
+        Assert.That(service.TryAllocate(RunConstants.SlotCount, 10).Failure, Is.EqualTo(EPotentialFailure.InvalidSlot));
+        Assert.That(service.TryAllocate(0, 0).Failure, Is.EqualTo(EPotentialFailure.InvalidAmount));
+        Assert.That(service.TryAllocate(0, -5).Failure, Is.EqualTo(EPotentialFailure.InvalidAmount));
+    }
+
+    [Test]
+    public void Deduct_fails_when_slot_allocation_is_short()
     {
         var model = new RunMod();
-        var character = NewCharacter();
-        model.TeamPotentialPool = 30;
+        model.PlayerStates[0].AllocatePotential(6);
         var service = NewService(model);
-        service.TryUnlock(0, character, Passive("p2", 30));
+
+        var result = service.TryDeduct(0, 10);
+
+        Assert.That(result.Success, Is.False);
+        Assert.That(result.Failure, Is.EqualTo(EPotentialFailure.SlotShort));
+        Assert.That(model.PlayerStates[0].AllocatedPotential, Is.EqualTo(6));
         Assert.That(model.TeamPotentialPool, Is.EqualTo(0));
-
-        var entry = model.PlayerStates[0].PotentialSpent.Single();
-        var refunded = service.Refund(0, entry.EntryId);
-
-        Assert.That(refunded, Is.EqualTo(30), "返回实际返还总额");
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(30), "返还退回团队池");
-        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 30)), Is.False, "被动重新锁定");
-    }
-
-    /// <summary>
-    /// 部分返还漏洞（2026-09-19 评审）：解锁按「存在匹配流水」判定，跨来源拆两笔的消费
-    /// 只退池那笔时解锁仍在。返还必须按 (角色实例, 被动) 整组原子退回。
-    /// </summary>
-    [Test]
-    public void Refund_is_atomic_for_split_purchase()
-    {
-        var model = new RunMod();
-        var character = NewCharacter();
-        model.PlayerStates[0].AddPotentialDirectCredit(6);
-        model.TeamPotentialPool = 10;
-        var service = NewService(model);
-        Assert.That(service.TryUnlock(0, character, Passive("p2", 10)).Success, Is.True);
-        var entries = model.PlayerStates[0].PotentialSpent;
-        Assert.That(entries.Count, Is.EqualTo(2), "跨来源拆两笔");
-
-        // 只点名池那笔，也必须整组退回。
-        var poolEntry = entries.Single(entry => entry.Source != "credit");
-        var refunded = service.Refund(0, poolEntry.EntryId);
-
-        Assert.That(refunded, Is.EqualTo(10), "整笔 10 全额退回");
-        Assert.That(model.PlayerStates[0].PotentialDirectCredit, Is.EqualTo(6), "直充部分回到槽位");
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(10), "池部分回到团队池");
-        Assert.That(model.PlayerStates[0].PotentialSpent, Is.Empty, "该笔消费流水全部清除");
-        Assert.That(PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)), Is.False, "解锁随之撤销");
     }
 
     [Test]
-    public void Refund_direct_credit_entry_restores_slot_credit()
+    public void Deduct_rejects_invalid_slot_and_amount()
     {
-        var model = new RunMod();
-        var character = NewCharacter();
-        model.PlayerStates[1].AddPotentialDirectCredit(20);
-        var service = NewService(model);
-        Assert.That(service.TryUnlock(1, character, Passive("p2", 20)).Success, Is.True);
-        Assert.That(model.PlayerStates[1].PotentialDirectCredit, Is.EqualTo(0));
+        var service = NewService();
 
-        var entry = model.PlayerStates[1].PotentialSpent.Single();
-        Assert.That(service.Refund(1, entry.EntryId), Is.EqualTo(20));
-        Assert.That(model.PlayerStates[1].PotentialDirectCredit, Is.EqualTo(20), "直充来源返还到槽位直充");
+        Assert.That(service.TryDeduct(-1, 10).Failure, Is.EqualTo(EPotentialFailure.InvalidSlot));
+        Assert.That(service.TryDeduct(0, 0).Failure, Is.EqualTo(EPotentialFailure.InvalidAmount));
     }
 
     [Test]
-    public void Duplicate_unlock_is_idempotent_no_extra_charge()
+    public void AllocatedFor_is_zero_for_out_of_range_slot()
     {
-        var model = new RunMod();
-        var character = NewCharacter();
-        model.TeamPotentialPool = 30;
-        var service = NewService(model);
+        var service = NewService();
 
-        Assert.That(service.TryUnlock(0, character, Passive("p2", 10)).Success, Is.True);
-        Assert.That(service.TryUnlock(0, character, Passive("p2", 10)).Success, Is.True, "重复解锁视为成功");
-
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(20), "只扣一次");
-        Assert.That(model.PlayerStates[0].PotentialSpent.Count, Is.EqualTo(1));
+        Assert.That(service.AllocatedFor(-1), Is.Zero);
+        Assert.That(service.AllocatedFor(RunConstants.SlotCount), Is.Zero);
     }
 
     #endregion
@@ -169,42 +215,44 @@ public sealed class PotentialServiceTests
     }
 
     [Test]
-    public void Vote_mode_requires_approval_for_pool_spend_but_not_credit_spend()
+    public void Vote_mode_requires_approval_for_allocation_but_not_for_deduction()
     {
         var model = new RunMod();
-        var character = NewCharacter();
-        model.PlayerStates[0].AddPotentialDirectCredit(10);
-        model.TeamPotentialPool = 10;
+        model.TeamPotentialPool = 30;
         var approver = new RejectingApprover();
         var service = NewService(model, new PotentialPolicySettings(RequireVote: true, 2, false), approver);
 
-        // 纯直充消费：无需表决。
-        Assert.That(service.TryUnlock(0, character, Passive("p.credit", 10)).Success, Is.True);
-        Assert.That(approver.Requests, Is.EqualTo(0));
-
-        // 涉及团队池：表决被拒 → 失败且扣款被回滚（未入账）。
-        Assert.That(service.TryUnlock(0, character, Passive("p.pool", 10)).Success, Is.False);
+        var rejected = service.TryAllocate(0, 10);
+        Assert.That(rejected.Success, Is.False);
+        Assert.That(rejected.Failure, Is.EqualTo(EPotentialFailure.VoteRejected));
         Assert.That(approver.Requests, Is.EqualTo(1));
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(10));
-        Assert.That(model.PlayerStates[0].PotentialSpent.Count, Is.EqualTo(1), "只有直充那笔记账");
+        Assert.That(model.TeamPotentialPool, Is.EqualTo(30), "表决被拒不动账");
+        Assert.That(model.PlayerStates[0].AllocatedPotential, Is.EqualTo(0));
+
+        // 扣除（退回团队池）不需要表决：先手动摆好进度再扣（手动摆进度不动池）。
+        model.PlayerStates[0].AllocatePotential(10);
+        var deducted = service.TryDeduct(0, 10);
+
+        Assert.That(deducted.Success, Is.True);
+        Assert.That(approver.Requests, Is.EqualTo(1), "扣除不发起表决");
+        Assert.That(model.TeamPotentialPool, Is.EqualTo(40), "扣除的 10 点回到团队池");
     }
 
     [Test]
     public void Vote_mode_limits_proposals_per_ring()
     {
         var model = new RunMod();
-        var character = NewCharacter();
-        var characterB = NewCharacter("other");
         model.TeamPotentialPool = 100;
         var approver = new RejectingApprover();
         var service = NewService(model, new PotentialPolicySettings(RequireVote: true, 1, false), approver);
 
         // 第 1 次提议（被拒，但次数已消耗）。
-        service.TryUnlock(0, character, Passive("p.a", 10));
+        service.TryAllocate(0, 10);
         // 第 2 次提议：超过每环 1 次上限，直接拒绝。
-        var second = service.TryUnlock(0, characterB, Passive("p.b", 10));
+        var second = service.TryAllocate(0, 10);
 
         Assert.That(second.Success, Is.False);
+        Assert.That(second.Failure, Is.EqualTo(EPotentialFailure.VoteRejected));
         Assert.That(approver.Requests, Is.EqualTo(1), "限额后不再发起表决");
 
         // 换环重置后可再次提议。
@@ -216,14 +264,13 @@ public sealed class PotentialServiceTests
     public void Vote_mode_unlimited_proposals_bypasses_the_cap()
     {
         var model = new RunMod();
-        var character = NewCharacter();
         model.TeamPotentialPool = 100;
         var approver = new RejectingApprover();
         var service = NewService(model, new PotentialPolicySettings(true, 2, UnlimitedProposals: true), approver);
 
         for (var i = 0; i < 5; i++)
         {
-            service.TryUnlock(0, character, Passive($"p.{i}", 10));
+            service.TryAllocate(0, 10);
         }
 
         Assert.That(approver.Requests, Is.EqualTo(5), "无限制勾选生效，次数不封顶");
@@ -234,7 +281,7 @@ public sealed class PotentialServiceTests
     #region 奖励入账与存档
 
     [Test]
-    public void Duplicate_reward_goes_to_slot_credit_or_team_pool()
+    public void Duplicate_reward_goes_to_slot_allocation_or_team_pool()
     {
         var model = new RunMod();
         var service = NewService(model);
@@ -243,8 +290,8 @@ public sealed class PotentialServiceTests
         Assert.That(model.TeamPotentialPool, Is.EqualTo(20));
 
         service.GrantDuplicateReward(slotIndex: 2);
-        Assert.That(model.TeamPotentialPool, Is.EqualTo(20), "槽位直充不动池");
-        Assert.That(model.PlayerStates[2].PotentialDirectCredit, Is.EqualTo(20));
+        Assert.That(model.TeamPotentialPool, Is.EqualTo(20), "直接分配到槽位不动池");
+        Assert.That(model.PlayerStates[2].AllocatedPotential, Is.EqualTo(20));
     }
 
     /// <summary>调试/奖励管线的任意数额入账：按申请数额精确入账（不再按 20 取整）。</summary>
@@ -259,7 +306,7 @@ public sealed class PotentialServiceTests
 
         service.Grant(7, slotIndex: 1);
         Assert.That(model.TeamPotentialPool, Is.EqualTo(5));
-        Assert.That(model.PlayerStates[1].PotentialDirectCredit, Is.EqualTo(7));
+        Assert.That(model.PlayerStates[1].AllocatedPotential, Is.EqualTo(7));
 
         service.Grant(0);
         service.Grant(-3);
@@ -267,24 +314,60 @@ public sealed class PotentialServiceTests
     }
 
     [Test]
-    public void Potential_ledger_round_trips_through_dto()
+    public void Potential_round_trips_through_dto()
     {
         var model = new RunMod();
-        var character = NewCharacter();
         model.TeamPotentialPool = 7;
-        model.PlayerStates[3].AddPotentialDirectCredit(11);
-        var service = NewService(model);
-        Assert.That(service.TryUnlock(3, character, Passive("p2", 15)).Success, Is.True);
+        model.PlayerStates[3].AllocatePotential(11);
 
         var dto = model.ToDto();
         var restored = new RunMod();
         restored.RestoreFrom(dto);
 
-        // 消费 15 = 直充 11 + 池 4，因此池剩 7 - 4 = 3。
-        Assert.That(restored.TeamPotentialPool, Is.EqualTo(3));
-        Assert.That(restored.PlayerStates[3].PotentialDirectCredit, Is.EqualTo(0));
-        Assert.That(restored.PlayerStates[3].PotentialSpent.Count, Is.EqualTo(2));
-        Assert.That(restored.PlayerStates[3].PotentialSpent.Sum(entry => entry.Amount), Is.EqualTo(15));
+        Assert.That(restored.TeamPotentialPool, Is.EqualTo(7));
+        Assert.That(restored.PlayerStates[3].AllocatedPotential, Is.EqualTo(11));
+    }
+
+    /// <summary>
+    /// 老档（消费流水模型）仍能反序列化并恢复：流水字段保留但**不参与**解锁判定，
+    /// 只有 `PotentialDirectCredit`（现为「已分配潜能」）决定门槛。
+    /// </summary>
+    [Test]
+    public void Legacy_spend_ledger_is_tolerated_but_unused()
+    {
+        var json = """
+        {
+          "runId": "r1",
+          "storyId": "s1",
+          "schemaVersion": 2,
+          "playerStates": [
+            {
+              "gold": 5,
+              "potentialDirectCredit": 0,
+              "potentialSpent": [
+                { "entryId": "e1", "source": "pool", "amount": 10, "characterInstanceId": "inst-1", "buffId": "p2" }
+              ]
+            }
+          ]
+        }
+        """;
+
+        var dto = System.Text.Json.JsonSerializer.Deserialize<RunDto>(json,
+            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+        var normalized = dto.Normalize();
+
+        Assert.That(normalized.PlayerStates[0].PotentialSpent, Has.Count.EqualTo(1), "老档流水能被读入");
+
+        var model = new RunMod();
+        model.RestoreFrom(normalized);
+        var character = new CharacterInstance(new CharacterDto { Id = "chalux" }, "inst-1");
+        Deploy(model, 0, character);
+
+        Assert.That(model.PlayerStates[0].AllocatedPotential, Is.EqualTo(0));
+        Assert.That(
+            PotentialService.IsPassiveUnlocked(model, character, Passive("p2", 10)),
+            Is.False,
+            "流水不再解锁被动；要解锁得把潜能分配回槽位");
     }
 
     [Test]

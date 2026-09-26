@@ -5,16 +5,16 @@
   "tags": ["buff.passive", "buff.undispellable"],
   "hooks": {
     "onWaveStart": [
-      { "effectId": "bach_p3_boost_self", "params": { "targetFilter": { "self": true } } },
-      { "effectId": "bach_p3_boost_green", "params": { "targetFilter": { "elementAny": ["Green"] } } },
-      { "effectId": "bach_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] } } },
-      { "effectId": "bach_p3_boost_god", "params": { "targetFilter": { "raceAny": ["God"] } } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "self": true } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Green"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Human"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["God"] } } } } }
     ],
     "onTurnStart": [
-      { "effectId": "bach_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 6 } },
-      { "effectId": "bach_p3_boost_green", "params": { "targetFilter": { "elementAny": ["Green"] }, "turnInterval": 6 } },
-      { "effectId": "bach_p3_boost_human", "params": { "targetFilter": { "raceAny": ["Human"] }, "turnInterval": 6 } },
-      { "effectId": "bach_p3_boost_god", "params": { "targetFilter": { "raceAny": ["God"] }, "turnInterval": 6 } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "self": true }, "turnInterval": 6 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Green"] } } }, "turnInterval": 6 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Human"] } } }, "turnInterval": 6 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["God"] } } }, "turnInterval": 6 } }
     ]
   }
 }

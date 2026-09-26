@@ -309,8 +309,8 @@ Root(full-rect) → Bg(PageBg)
 
 ## 7. Run 调试面板（RunDebugDlg + RunDebugService）（原 2026-09-19 §5）
 
-- `RunDebugDlg`（`EUILayer.Debug` 顶层，`CacheTime = 0`）：Tab 分组——卡牌（取卡/入卡组/回收）、角色（入池/上阵/一键满编）、战斗（开战/胜/负/充能球授予与触发）、事件（触发）、通用（金币/环数/阶段）、潜能（入账池/入账槽/解锁下一条被动/返还最近一笔/战斗检查）。
-- **语义全部在 `RunDebugService`**（可单测、不依赖 Godot）；对话框只做取值 + 显示 + 收集参数。调试操作走正式管线（潜能入账 → `Potential.Grant`，解锁 → `TryUnlock`），不走旁路。
+- `RunDebugDlg`（`EUILayer.Debug` 顶层，`CacheTime = 0`）：Tab 分组——卡牌（取卡/入卡组/回收）、角色（入池/上阵/一键满编）、战斗（开战/胜/负/充能球授予与触发）、事件（触发）、通用（金币/环数/阶段）、潜能（入账池/入账槽/分配到选中槽位/从选中槽位扣除/战斗检查）。
+- **语义全部在 `RunDebugService`**（可单测、不依赖 Godot）；对话框只做取值 + 显示 + 收集参数。调试操作走正式管线（潜能入账 → `Potential.Grant`，分配/扣除 → `TryAllocate` / `TryDeduct`），不走旁路。
 - 入口按钮在 `RunMainWin`：**仅 `OS.IsDebugBuild()` 显示**（release 隐藏，不留死按钮）。
 - 语义测试见 `Tests/.../Run/RunDebugServiceTests.cs`（含重复角色转化为潜能、精确数额入账、整笔返还、战斗检查输出）。
 

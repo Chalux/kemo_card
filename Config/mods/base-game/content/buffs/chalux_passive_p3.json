@@ -5,16 +5,16 @@
   "tags": ["buff.passive", "buff.undispellable"],
   "hooks": {
     "onWaveStart": [
-      { "effectId": "chalux_p3_boost_self", "params": { "targetFilter": { "self": true } } },
-      { "effectId": "chalux_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] } } },
-      { "effectId": "chalux_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] } } },
-      { "effectId": "chalux_p3_boost_dragon", "params": { "targetFilter": { "raceAny": ["Dragon"] } } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 3, "targetFilter": { "self": true } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Blue"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Animal"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Dragon"] } } } } }
     ],
     "onTurnStart": [
-      { "effectId": "chalux_p3_boost_self", "params": { "targetFilter": { "self": true }, "turnInterval": 8 } },
-      { "effectId": "chalux_p3_boost_blue", "params": { "targetFilter": { "elementAny": ["Blue"] }, "turnInterval": 8 } },
-      { "effectId": "chalux_p3_boost_animal", "params": { "targetFilter": { "raceAny": ["Animal"] }, "turnInterval": 8 } },
-      { "effectId": "chalux_p3_boost_dragon", "params": { "targetFilter": { "raceAny": ["Dragon"] }, "turnInterval": 8 } }
+      { "effectId": "gain_skill_counter", "params": { "amount": 3, "targetFilter": { "self": true }, "turnInterval": 8 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Blue"] } } }, "turnInterval": 8 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Animal"] } } }, "turnInterval": 8 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 1, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Dragon"] } } }, "turnInterval": 8 } }
     ]
   }
 }

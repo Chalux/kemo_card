@@ -86,6 +86,7 @@ public sealed class CombatEffectExecutor
     /// <summary>
     /// 求值效果的全部 <c>conditions</c>（AND）。未知 CondType / 参数非法 = 不通过：
     /// 运行期保守失败，内容准入阶段由 <c>ContentDefinitionValidator</c> 提前拦下。
+    /// 条件主体缺省 = 来源角色（身份类条件用）。
     /// </summary>
     private static bool ConditionsPass(
         EffectDto effect,
@@ -95,23 +96,9 @@ public sealed class CombatEffectExecutor
         if (effect.Conditions.Count == 0)
             return true;
 
-        var context = new CombatCondContext(simulation, source.Index);
-        foreach (var condition in effect.Conditions)
-        {
-            if (!ConditionDomains.Combat.TryGet(condition.Kind, out var handler) || handler is null)
-                return false;
-
-            var args = JsonSerializer.SerializeToElement(
-                condition.Params ?? new Dictionary<string, object>(StringComparer.Ordinal));
-            var sourcePath = $"effect:{effect.Id}:conditions.{condition.Kind}";
-            if (!handler.TryParse(args, sourcePath, out var parsedArgs, out _) || parsedArgs is null)
-                return false;
-
-            if (!handler.Check(parsedArgs, context).Passed)
-                return false;
-        }
-
-        return true;
+        var (elementFlags, raceFlags) = CombatIdentity.Resolve(simulation, source);
+        var context = new CombatCondContext(simulation, source.Index, elementFlags, raceFlags);
+        return CombatConditionEvaluator.Pass(effect.Conditions, context, $"effect:{effect.Id}:conditions");
     }
 
     public void ExecuteSkillActionRef(

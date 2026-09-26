@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.training_dummy_fatal_strike.name",
+  "descId": "skill.training_dummy_fatal_strike.desc",
+  "targetOverride": { "side": "Enemy", "scope": "RandomN", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "training_dummy_strike", "params": { "Amount": 10000 } }
+  ],
+  "tags": ["attack"]
+}

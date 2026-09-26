@@ -14,14 +14,23 @@ public sealed record PlayerRunStateDto
     public List<RunModifierDto> Modifiers { get; init; } = [];
     public Dictionary<string, object> EventFlags { get; init; } = new(StringComparer.Ordinal);
 
-    /// <summary>潜能直充余额：仅本槽位可消费、无需表决、可返还；消费时先扣这里再扣团队池。</summary>
+    /// <summary>
+    /// 槽位已分配潜能（进度值）：≥ 被动门槛即自动解锁。
+    /// 字段名沿用旧「直充余额」（存档兼容）；现行语义见 <c>PotentialService</c>。
+    /// </summary>
     public int PotentialDirectCredit { get; init; }
 
-    /// <summary>本槽位的潜能消费流水（解锁的被动），逐笔可返还。</summary>
+    /// <summary>
+    /// 旧「消费流水」账本（解锁显式花潜能的模型）——2026-09-26 起模型废止，
+    /// 仅保留字段以便老档反序列化，运行态不再读写。
+    /// </summary>
     public List<PotentialSpendEntryDto> PotentialSpent { get; init; } = [];
 }
 
-/// <summary>一笔潜能消费：解锁某个角色被动；返还即重新锁定该被动。</summary>
+/// <summary>
+/// 旧「一笔潜能消费」流水（2026-09-26 起模型废止）：字段保留只为老档反序列化，
+/// 运行态不再读写，存档时也不再写出。
+/// </summary>
 public sealed record PotentialSpendEntryDto
 {
     public string EntryId { get; init; } = "";

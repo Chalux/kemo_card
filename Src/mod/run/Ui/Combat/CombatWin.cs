@@ -465,6 +465,9 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
         _sharedHp?.SetValue(simulation.PlayerTeam.SharedHp, simulation.PlayerTeam.MaxHp);
 
+        // 嘲讽标识（Run 规格 §14.2）：全队当前嘲讽值里最高的一组打 Crosshair（判定见 CombatTauntMarks）。
+        var tauntMarks = CombatTauntMarks.Resolve(simulation);
+
         // 左栏：非当前操控的角色。
         var benchIndex = 0;
         for (var i = 0; i < characters.Count && benchIndex < _members.Count; i++)
@@ -481,18 +484,23 @@ public partial class CombatWin : BaseWin, ICombatStageView
                 _ui.CanControl(i),
                 !_ui.InputLocked,
                 CombatActionMarks.Resolve(simulation, i));
+            member.SetTauntMark(i < tauntMarks.Length && tauntMarks[i]);
         }
 
         for (; benchIndex < _members.Count; benchIndex++)
+        {
             _members[benchIndex].Visible = false;
+            _members[benchIndex].SetTauntMark(false);
+        }
 
-        // 友方舞台：状态文本 + 高亮。
+        // 友方舞台：状态文本 + 高亮 + 嘲讽标识。
         for (var i = 0; i < _allies.Count && i < characters.Count; i++)
         {
             _allies[i].Bind(i, characters[i], ResolveCharacter(store, characters[i].DefinitionId));
             var targetable = pendingCard is not null &&
                 CombatTargeting.IsLegalTarget(simulation, pendingCard, controlled, new CombatTargetRef(ECombatSide.Player, i));
             _allies[i].SetHighlight(i == controlled, targetable);
+            _allies[i].SetTauntMark(i < tauntMarks.Length && tauntMarks[i]);
         }
 
         // 敌方舞台。

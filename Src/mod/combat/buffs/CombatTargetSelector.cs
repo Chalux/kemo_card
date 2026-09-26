@@ -1,5 +1,6 @@
 using System.Text.Json;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.Buffs;
@@ -7,13 +8,14 @@ namespace KemoCard.Mod.Combat.Buffs;
 /// <summary>
 /// 效果/钩子的目标选择器：按效果参数解析目标集。
 /// <c>hookTargets</c> 支持 <c>self</c>（缺省）/ <c>team</c> / <c>allies</c> / <c>randomEnemy</c> / <c>allEnemies</c>；
-/// <c>targetFilter</c>（<c>self</c> / <c>excludeSelf</c> / <c>elementAny</c> / <c>raceAny</c> / <c>raceAll</c> / <c>matchAll</c>）
-/// 筛选玩家角色。
+/// <c>targetFilter</c>（<c>self</c> / <c>excludeSelf</c> / <c>condition</c>）筛选玩家角色。
 /// </summary>
 /// <remarks>
-/// <para>筛选维度之间的关系（2026-09-25 起）：**默认取"或"**——效果描述里的「·」表示或，
-/// 只有显式写「且」时才用 <c>matchAll: true</c> 取"且"；<c>raceAll</c> 仍是列表内取"且"
-/// （"同时具备多种族"的显式且）。<c>self</c> / <c>excludeSelf</c> 是硬约束，永远与筛选维度取"且"。</para>
+/// <para>筛选条件（2026-09-26 统一）：<c>condition</c> 是一条战斗条件，逐候选把主体设为该候选求值；
+/// 身份/种族筛选走 <c>IdentityMatch</c>。旧的扁平字段（<c>elementAny</c> / <c>raceAny</c> / <c>raceAll</c> /
+/// <c>matchAll</c>）已删除——出现未知键时<b>保守回退到 [来源]</b>，绝不静默全队命中；
+/// 内容准入阶段由 <c>ContentDefinitionValidator</c> 直接报错。
+/// <c>self</c> / <c>excludeSelf</c> 是硬约束，永远与条件取"且"。</para>
 /// <para><c>hookTargets: "team"</c> 解析为**队伍共享账本**（<see cref="CombatTargetRef.PlayerTeam"/>）：
 /// 规格 §1.3 的玩家侧治疗只认账本目标（点名槽位会被软失败剔除），队伍级效果必须走这条；
 /// <c>hookTargets: "allies"</c> 解析为全部玩家角色（逐槽位，"己方全体"的抽取/增益用它）。
@@ -61,30 +63,28 @@ internal static class CombatTargetSelector
             var matched = new List<CombatTargetRef>();
             for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
             {
-                var candidate = simulation.PlayerTeam.Characters[i];
-
                 // self / excludeSelf 是硬约束（永远取"且"）。
                 if (filter.SelfOnly && i != source.Index)
                     continue;
                 if (filter.ExcludeSelf && i == source.Index)
                     continue;
 
-                // 描述约定（2026-09-25）：效果描述里的「·」= 或——筛选维度默认取"或"，
-                // 只有显式写「且」时才用 matchAll: true（raceAll 仍是"同时具备多种族"的显式且）。
-                var dimensions = new List<bool>(3);
-                if (filter.ElementAny is { Count: > 0 })
-                    dimensions.Add(filter.ElementAny.Any(flag => (candidate.Element & flag) != 0));
-                if (filter.RaceAny is { Count: > 0 })
-                    dimensions.Add(filter.RaceAny.Any(flag => (candidate.Race & flag) != 0));
-                if (filter.RaceAll is { Count: > 0 })
-                    dimensions.Add(filter.RaceAll.All(flag => (candidate.Race & flag) != 0));
+                var candidate = new CombatTargetRef(ECombatSide.Player, i);
+                // 身份/其它条件（2026-09-26 统一）：主体 = 候选；不通过即落选。
+                if (filter.Condition is not null)
+                {
+                    var (elementFlags, raceFlags) = CombatIdentity.Resolve(simulation, candidate);
+                    var context = new CombatCondContext(simulation, source.Index, elementFlags, raceFlags);
+                    if (!CombatConditionEvaluator.Pass(
+                        filter.Condition,
+                        context,
+                        $"targetFilter.condition（{candidate.Side}:{candidate.Index}）"))
+                    {
+                        continue;
+                    }
+                }
 
-                var dimensionMatched = dimensions.Count == 0 ||
-                    (filter.MatchAll ? dimensions.All(value => value) : dimensions.Any(value => value));
-                if (!dimensionMatched)
-                    continue;
-
-                matched.Add(new CombatTargetRef(ECombatSide.Player, i));
+                matched.Add(candidate);
             }
 
             return matched;
@@ -118,11 +118,13 @@ internal static class CombatTargetSelector
     private sealed record TargetFilter(
         bool SelfOnly,
         bool ExcludeSelf,
-        bool MatchAll,
-        List<EElement>? ElementAny,
-        List<ERace>? RaceAny,
-        List<ERace>? RaceAll);
+        ConditionRefDto? Condition);
 
+    /// <summary>
+    /// 解析 <c>targetFilter</c>（2026-09-26 统一）：只认 <c>self</c> / <c>excludeSelf</c> / <c>condition</c>。
+    /// 出现未知键（旧扁平写法）或非法 / 空 kind 的 <c>condition</c> 时返回 <c>null</c>——调用方回退到
+    /// [来源]，宁可少投放也不静默命中全队；这类写法在内容准入阶段就会被 <c>ContentDefinitionValidator</c> 拒绝。
+    /// </summary>
     private static TargetFilter? ParseTargetFilter(object value)
     {
         Dictionary<string, object>? dict = value switch
@@ -137,42 +139,37 @@ internal static class CombatTargetSelector
         };
         if (dict is null)
             return null;
-
-        var selfOnly = dict.TryGetValue("self", out var selfValue) &&
-            string.Equals(selfValue.ToString(), "true", StringComparison.OrdinalIgnoreCase);
-        var excludeSelf = dict.TryGetValue("excludeSelf", out var excludeValue) &&
-            string.Equals(excludeValue.ToString(), "true", StringComparison.OrdinalIgnoreCase);
-        var matchAll = dict.TryGetValue("matchAll", out var matchAllValue) &&
-            string.Equals(matchAllValue.ToString(), "true", StringComparison.OrdinalIgnoreCase);
-        List<EElement>? elementAny = ParseEnumList<EElement>(dict, "elementAny");
-        List<ERace>? raceAny = ParseEnumList<ERace>(dict, "raceAny");
-        List<ERace>? raceAll = ParseEnumList<ERace>(dict, "raceAll");
-        return new TargetFilter(selfOnly, excludeSelf, matchAll, elementAny, raceAny, raceAll);
-    }
-
-    private static List<TEnum>? ParseEnumList<TEnum>(Dictionary<string, object> dict, string key)
-        where TEnum : struct, Enum
-    {
-        if (!dict.TryGetValue(key, out var value) || value is null)
+        if (dict.Keys.Any(key => key is not ("self" or "excludeSelf" or "condition")))
             return null;
 
-        var raw = value switch
+        var selfOnly = ReadBool(dict, "self");
+        var excludeSelf = ReadBool(dict, "excludeSelf");
+        ConditionRefDto? condition = null;
+        if (dict.TryGetValue("condition", out var conditionValue) && conditionValue is not null)
         {
-            JsonElement { ValueKind: JsonValueKind.Array } element =>
-                element.EnumerateArray().Select(item => item.ToString()).ToList(),
-            IEnumerable<object> list => list.Select(item => item.ToString()!).ToList(),
-            _ => null,
-        };
-        if (raw is null)
-            return null;
-
-        var parsed = new List<TEnum>();
-        foreach (var entry in raw)
-        {
-            if (Enum.TryParse<TEnum>(entry, ignoreCase: true, out var flag))
-                parsed.Add(flag);
+            condition = ParseConditionRef(conditionValue);
+            if (condition is null || string.IsNullOrWhiteSpace(condition.Kind))
+                return null;
         }
 
-        return parsed.Count > 0 ? parsed : null;
+        return new TargetFilter(selfOnly, excludeSelf, condition);
+    }
+
+    private static bool ReadBool(Dictionary<string, object> dict, string key) =>
+        dict.TryGetValue(key, out var value) &&
+        string.Equals(value.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>把参数里的 <c>condition</c> 反序列化成 <see cref="ConditionRefDto"/>（对象形态原样序列化再读）。</summary>
+    private static ConditionRefDto? ParseConditionRef(object value)
+    {
+        try
+        {
+            var json = value is JsonElement element ? element.GetRawText() : JsonSerializer.Serialize(value);
+            return JsonSerializer.Deserialize<ConditionRefDto>(json);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 }

@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="6_carditem"]
 
-[node name="RunTeamEditDlg" type="Control" unique_id=328732083 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_lblDeckCaption", "_deckStrip", "_lblStatus")]
+[node name="RunTeamEditDlg" type="Control" unique_id=328732083 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_lblDeckCaption", "_deckStrip", "_lblStatus", "_lblPotentialPool", "_lblSlotPotential", "_potentialInput", "_btnAllocate", "_btnDeduct")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -31,6 +31,11 @@ _lblAttrs = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblAttrs")
 _lblDeckCaption = NodePath("Layout/Content/VBox/Body/Right/VBox/LblDeckCaption")
 _deckStrip = NodePath("Layout/Content/VBox/Body/Right/VBox/DeckStrip")
 _lblStatus = NodePath("Layout/Rail/Margin/VBox/LblStatus")
+_lblPotentialPool = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/LblPotentialPool")
+_lblSlotPotential = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/LblSlotPotential")
+_potentialInput = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/Row/PotentialInput")
+_btnAllocate = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/Row/BtnAllocate")
+_btnDeduct = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/Row/BtnDeduct")
 
 [node name="Bg" type="Panel" parent="." unique_id=1307442161]
 layout_mode = 1
@@ -98,6 +103,54 @@ grow_horizontal = 2
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "UI_TEAM_UNASSIGN"
+script = ExtResource("2_kbtn")
+
+[node name="PotentialBox" type="PanelContainer" parent="Layout/Rail/Margin/VBox"]
+layout_mode = 2
+theme_type_variation = &"SunkenContainer"
+
+[node name="Margin" type="MarginContainer" parent="Layout/Rail/Margin/VBox/PotentialBox"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="VBox" type="VBoxContainer" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="LblPotentialPool" type="Label" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+
+[node name="LblSlotPotential" type="Label" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+
+[node name="Row" type="HBoxContainer" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="PotentialInput" type="LineEdit" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/Row"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "10"
+placeholder_text = "10"
+
+[node name="BtnAllocate" type="Button" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/Row"]
+custom_minimum_size = Vector2(76, 36)
+layout_mode = 2
+text = "UI_TEAM_POTENTIAL_ALLOCATE"
+script = ExtResource("2_kbtn")
+
+[node name="BtnDeduct" type="Button" parent="Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/Row"]
+custom_minimum_size = Vector2(76, 36)
+layout_mode = 2
+text = "UI_TEAM_POTENTIAL_DEDUCT"
 script = ExtResource("2_kbtn")
 
 [node name="Spacer" type="Control" parent="Layout/Rail/Margin/VBox" unique_id=1178559626]

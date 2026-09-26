@@ -3,7 +3,9 @@
   "durationType": "Permanent",
   "stackRule": "Replace",
   "applyScope": "AllAllies",
-  "condition": { "elementAny": ["Blue"], "raceAny": ["Animal", "Dragon"] },
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Blue"], "raceAny": ["Animal", "Dragon"] } }
+  ],
   "modifiers": [
     { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } },
     { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } },

@@ -1,12 +1,14 @@
+using KemoCard.Frame.Condition;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
+using KemoCard.Mod.Combat.Condition;
 
 namespace KemoCard.Mod.Combat.Buffs;
 
 /// <summary>
 /// 单个持有者（角色 / 敌人 / 手牌槽位）的 buff 容器。
 /// 纯状态管理：应用、叠层、休眠评估、到期递减；钩子触发与投放范围由 <see cref="BuffRuntime"/> 编排。
-/// 槽位容器没有 ASC 与持有者属性，condition / modifiers 均不适用（只承载钩子与 tag）。
+/// 槽位容器没有 ASC 与持有者属性，conditions / modifiers 均不适用（只承载钩子与 tag）。
 /// </summary>
 public sealed class BuffContainer
 {
@@ -50,10 +52,15 @@ public sealed class BuffContainer
         !instance.IsDormant && instance.Def.EffectiveTags.Contains(tag, StringComparer.Ordinal));
 
     /// <summary>新建实例并入容器（不做叠层/互斥判定——那属于 <see cref="BuffRuntime"/> 的编排职责）。</summary>
-    public BuffInstance Add(BuffDto def, IReadOnlyDictionary<string, object>? parameters)
+    /// <param name="context">条件上下文（2026-09-26）：身份类条件的主体 = 持有者；未传时用持有者自身
+    /// 的属性/种族/队伍查询构造（回合与出牌统计为 0/-1）。</param>
+    public BuffInstance Add(
+        BuffDto def,
+        IReadOnlyDictionary<string, object>? parameters,
+        ICombatCondContext? context = null)
     {
         var instance = new BuffInstance(def, parameters, _magnitudeResolver);
-        EvaluateDormancy(instance);
+        EvaluateDormancy(instance, context);
         _instances.Add(instance);
         instance.RegisterModifiers(_asc);
         return instance;
@@ -85,15 +92,15 @@ public sealed class BuffContainer
     /// 重新评估全部实例的休眠状态并同步修正注册。
     /// 每回合开始时调用一次；持有者属性/种族战斗中变化后下一回合自动生效。
     /// </summary>
-    public void EvaluateDormancy()
+    public void EvaluateDormancy(ICombatCondContext? context = null)
     {
         foreach (var instance in _instances)
-            EvaluateDormancy(instance);
+            EvaluateDormancy(instance, context);
     }
 
-    private void EvaluateDormancy(BuffInstance instance)
+    private void EvaluateDormancy(BuffInstance instance, ICombatCondContext? context)
     {
-        var shouldDormant = instance.Def.Condition is not null && !MatchesCondition(instance.Def.Condition);
+        var shouldDormant = instance.Def.Conditions.Count > 0 && !ConditionsPass(instance.Def, context);
         if (shouldDormant == instance.IsDormant)
             return;
 
@@ -110,58 +117,52 @@ public sealed class BuffContainer
         }
     }
 
-    private bool MatchesCondition(BuffConditionDto condition)
+    /// <summary>
+    /// 持有者条件（2026-09-26 统一走战斗条件域）：主体 = 持有者，身份/人数维度与其它条件共用
+    /// <c>IdentityMatch</c> 等条件类型。角色 / 敌人容器用调用方传入的持有者上下文；
+    /// 槽位容器没有 ASC 与持有者身份，一律用容器自身 provider（槽位为 null → 身份条件不满足而休眠），
+    /// 避免槽位 buff 意外按"所属角色的身份"求值（与类注释口径一致）。
+    /// </summary>
+    private bool ConditionsPass(BuffDto def, ICombatCondContext? context)
     {
-        var element = _elementProvider?.Invoke() ?? EElement.None;
-        var race = _raceProvider?.Invoke() ?? ERace.None;
-
-        // 只把**已配置**的维度纳入判定：matchAll 是"跨配置维度取且"，未配置的维度不参与
-        // （旧实现用固定两个布尔，只配一项时 matchAll 恒不满足）。
-        var dimensions = new List<bool>(3);
-        if (condition.ElementAny is { Count: > 0 })
-        {
-            dimensions.Add(condition.ElementAny.Any(flag => flag != EElement.None && (element & flag) != 0));
-        }
-
-        if (condition.RaceAny is { Count: > 0 })
-        {
-            dimensions.Add(condition.RaceAny.Any(flag => flag != ERace.None && (race & flag) != 0));
-        }
-
-        // raceAll（2026-09-25）：列表内取"且"——描述显式写「人类且学术」这类"同时具备多种族"时才用它。
-        if (condition.RaceAll is { Count: > 0 })
-        {
-            dimensions.Add(condition.RaceAll.All(flag => flag != ERace.None && (race & flag) != 0));
-        }
-
-        // 持有者维度：默认"或"（任一维度命中即满足），matchAll: true 时取"且"。
-        var holderMatched = dimensions.Count > 0 &&
-            (condition.MatchAll ? dimensions.All(matched => matched) : dimensions.Any(matched => matched));
-
-        // 队伍人数门闩（2026-09-21）：与持有者维度取"且"；只配人数时完全由人数决定。
-        if (condition.PartyMinCount > 0)
-        {
-            var partyMatched = CountPartyMatches(condition) >= condition.PartyMinCount;
-            return partyMatched && (dimensions.Count == 0 || holderMatched);
-        }
-
-        return holderMatched;
+        var effective = _asc is null
+            ? new HolderCondContext(_elementProvider, _raceProvider, _partyCountQuery)
+            : context ?? new HolderCondContext(_elementProvider, _raceProvider, _partyCountQuery);
+        return CombatConditionEvaluator.Pass(def.Conditions, effective, $"buff:{def.Id}:conditions");
     }
 
-    private int CountPartyMatches(BuffConditionDto condition)
+    /// <summary>持有者上下文：只提供身份主体与队伍人数查询，其余查询（回合 / 出牌 / 连携）为 0/-1。</summary>
+    private sealed class HolderCondContext : ICombatCondContext
     {
-        if (_partyCountQuery is null)
-            return 0;
+        private readonly Func<EElement>? _elementProvider;
+        private readonly Func<ERace>? _raceProvider;
+        private readonly Func<int, int, bool, int>? _partyCountQuery;
 
-        var elementFlags = 0;
-        foreach (var flag in condition.PartyElementAny ?? [])
-            elementFlags |= (int)flag;
+        public HolderCondContext(
+            Func<EElement>? elementProvider,
+            Func<ERace>? raceProvider,
+            Func<int, int, bool, int>? partyCountQuery)
+        {
+            _elementProvider = elementProvider;
+            _raceProvider = raceProvider;
+            _partyCountQuery = partyCountQuery;
+        }
 
-        var raceFlags = 0;
-        foreach (var flag in condition.PartyRaceAny ?? [])
-            raceFlags |= (int)flag;
+        public int TurnNumber => 0;
 
-        // 描述约定（2026-09-25）：`·` = 或——队伍人数筛选与持有者维度共用同一个 matchAll 开关。
-        return _partyCountQuery(elementFlags, raceFlags, condition.MatchAll);
+        public int TurnsIntoWave => 0;
+
+        public int SourceCharacterIndex => -1;
+
+        public int SubjectElementFlags => (int)(_elementProvider?.Invoke() ?? EElement.None);
+
+        public int SubjectRaceFlags => (int)(_raceProvider?.Invoke() ?? ERace.None);
+
+        public int CountCardsPlayedThisTurn(int characterIndex, int elementFlags) => 0;
+
+        public int CountChainParticipants(int elementFlags) => 0;
+
+        public int CountPartyIdentityMatches(int elementFlags, int raceFlags, bool matchAll) =>
+            _partyCountQuery?.Invoke(elementFlags, raceFlags, matchAll) ?? 0;
     }
 }
