@@ -9,7 +9,7 @@ namespace KemoCard.Mod.Global.Ui;
 /// <remarks>
 /// <para>属性名走内容侧键 <c>attr.&lt;snake_case&gt;.name</c>（见 Run 规格 §12.3 的队伍编辑属性行），
 /// 缺键时回落原始 id——直接把属性 id 插进界面会露出 <c>PhysicalAttack</c> 这类英文标识符。</para>
-/// <para>展示顺序按 <see cref="PreferredOrder"/>（与战斗面板「物攻·魔攻 / 物防·魔防 / 回复量」的
+/// <para>展示顺序按 <see cref="PreferredOrder"/>（与战斗面板「物理攻击 / 魔法攻击 / 物理防御 / 魔法防御 / 回复量」的
 /// 阅读顺序一致，核心属性在前），未知属性按 id 序排在最后。</para>
 /// <para>取 <paramref name="translate"/> 委托而不是直接调 <c>Localization.Tr</c>：拼接逻辑要能脱离
 /// Godot 单测（与 <see cref="CharacterIdentityLabels"/> 同约定）。</para>

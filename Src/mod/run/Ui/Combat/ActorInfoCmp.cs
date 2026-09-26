@@ -8,7 +8,7 @@ namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>
 /// 底栏最左：当前操控角色的信息——名字、元素·定位、能量（可用 / 当前 / 上限）、技能计数 S / Cap、
-/// 物攻·魔攻、物防·魔防、回复量、buff 列表。
+/// 物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量、buff 列表。
 /// </summary>
 public partial class ActorInfoCmp : BaseCmp
 {
@@ -17,7 +17,9 @@ public partial class ActorInfoCmp : BaseCmp
     [Export] private Label? _lblEnergy;
     [Export] private Label? _lblSkill;
     [Export] private Label? _lblAttack;
+    [Export] private Label? _lblMagicAttack;
     [Export] private Label? _lblDefense;
+    [Export] private Label? _lblMagicDefense;
     [Export] private Label? _lblHeal;
     [Export] private Label? _lblState;
     [Export] private Label? _lblMark;
@@ -49,9 +51,13 @@ public partial class ActorInfoCmp : BaseCmp
         }
 
         if (_lblAttack != null)
-            _lblAttack.Text = CombatUnitFormat.Attack(character.Asc);
+            _lblAttack.Text = CombatUnitFormat.PhysicalAttack(character.Asc);
+        if (_lblMagicAttack != null)
+            _lblMagicAttack.Text = CombatUnitFormat.MagicAttack(character.Asc);
         if (_lblDefense != null)
-            _lblDefense.Text = CombatUnitFormat.Defense(character.Asc);
+            _lblDefense.Text = CombatUnitFormat.PhysicalDefense(character.Asc);
+        if (_lblMagicDefense != null)
+            _lblMagicDefense.Text = CombatUnitFormat.MagicDefense(character.Asc);
         if (_lblHeal != null)
             _lblHeal.Text = CombatUnitFormat.Heal(character.Asc);
 

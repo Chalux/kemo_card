@@ -345,14 +345,16 @@ UI_COMBAT_CARD_MARKED,已标记,Queued
 UI_COMBAT_CONFIRMED,已确认,Confirmed
 UI_COMBAT_SEALED,封印,Sealed
 UI_COMBAT_NO_CONTROL,无控制权,Not Yours
-UI_COMBAT_STAT_ATTACK,物攻·魔攻,P.ATK · M.ATK
-UI_COMBAT_STAT_DEFENSE,物防·魔防,P.DEF · M.DEF
+UI_COMBAT_STAT_PHYSICAL_ATTACK,物理攻击,Physical Attack
+UI_COMBAT_STAT_MAGIC_ATTACK,魔法攻击,Magic Attack
+UI_COMBAT_STAT_PHYSICAL_DEFENSE,物理防御,Physical Defense
+UI_COMBAT_STAT_MAGIC_DEFENSE,魔法防御,Magic Defense
 UI_COMBAT_STAT_HEAL,回复量,Heal Power
 UI_COMBAT_ENERGY,能量 {0} / {1}（上限 {2}）,Energy {0} / {1} (max {2})
 UI_COMBAT_SKILL_COUNTER,技能 {0} / {1},Skill {0} / {1}
 UI_COMBAT_TIP_HP,剩余生命 {0} / {1},HP {0} / {1}
-UI_COMBAT_TIP_ATTACK,物攻·魔攻 {0},P.ATK · M.ATK {0}
-UI_COMBAT_TIP_DEFENSE,物防·魔防 {0},P.DEF · M.DEF {0}
+UI_COMBAT_TIP_ATTACK,物理攻击 {0} 魔法攻击 {1},Physical Attack {0} Magic Attack {1}
+UI_COMBAT_TIP_DEFENSE,物理防御 {0} 魔法防御 {1},Physical Defense {0} Magic Defense {1}
 UI_COMBAT_HINT_PICK_TARGET,请选择目标（ESC 取消）,Pick a target (ESC to cancel)
 UI_COMBAT_HINT_CONFIRM_PLAY,确认要打出这张牌吗？,Play this card?
 UI_COMBAT_HINT_PLAYING,结算中……,Resolving...

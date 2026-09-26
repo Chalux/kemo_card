@@ -136,8 +136,14 @@ public partial class EnemyUnitCmp : BaseCmp
         if (identity.Length > 0)
             lines.Add(identity);
         lines.Add(string.Format(Localization.Tr("UI_COMBAT_TIP_HP"), _unit.CurrentHp, _unit.MaxHp));
-        lines.Add(string.Format(Localization.Tr("UI_COMBAT_TIP_ATTACK"), CombatUnitFormat.Attack(_unit.Asc)));
-        lines.Add(string.Format(Localization.Tr("UI_COMBAT_TIP_DEFENSE"), CombatUnitFormat.Defense(_unit.Asc)));
+        lines.Add(string.Format(
+            Localization.Tr("UI_COMBAT_TIP_ATTACK"),
+            CombatUnitFormat.PhysicalAttack(_unit.Asc),
+            CombatUnitFormat.MagicAttack(_unit.Asc)));
+        lines.Add(string.Format(
+            Localization.Tr("UI_COMBAT_TIP_DEFENSE"),
+            CombatUnitFormat.PhysicalDefense(_unit.Asc),
+            CombatUnitFormat.MagicDefense(_unit.Asc)));
 
         KeywordTipService.Current?.ShowCustomTips(this, [(title, string.Join("\n", lines))], TipSide.Left);
     }

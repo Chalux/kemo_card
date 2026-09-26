@@ -11,13 +11,21 @@ public static class CombatUnitFormat
     private static int Read(AbilitySystemComponent asc, string attributeId) =>
         (int)MathF.Round(asc.GetCurrentValue(attributeId));
 
-    /// <summary>「物攻·魔攻」值文本，如 <c>12 · 4</c>。</summary>
-    public static string Attack(AbilitySystemComponent asc) =>
-        $"{Read(asc, AttributeIds.PhysicalAttack)} · {Read(asc, AttributeIds.MagicAttack)}";
+    /// <summary>物理攻击值文本。</summary>
+    public static string PhysicalAttack(AbilitySystemComponent asc) =>
+        Read(asc, AttributeIds.PhysicalAttack).ToString();
 
-    /// <summary>「物防·魔防」值文本。</summary>
-    public static string Defense(AbilitySystemComponent asc) =>
-        $"{Read(asc, AttributeIds.PhysicalDefense)} · {Read(asc, AttributeIds.MagicDefense)}";
+    /// <summary>魔法攻击值文本。</summary>
+    public static string MagicAttack(AbilitySystemComponent asc) =>
+        Read(asc, AttributeIds.MagicAttack).ToString();
+
+    /// <summary>物理防御值文本。</summary>
+    public static string PhysicalDefense(AbilitySystemComponent asc) =>
+        Read(asc, AttributeIds.PhysicalDefense).ToString();
+
+    /// <summary>魔法防御值文本。</summary>
+    public static string MagicDefense(AbilitySystemComponent asc) =>
+        Read(asc, AttributeIds.MagicDefense).ToString();
 
     /// <summary>回复量。</summary>
     public static string Heal(AbilitySystemComponent asc) => Read(asc, AttributeIds.HealPower).ToString();

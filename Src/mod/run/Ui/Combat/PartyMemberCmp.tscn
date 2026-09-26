@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/PartyMemberCmp.cs" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://cj3lseqeqbcvx" path="res://Resource/Asset/Icon/crosshair.svg" id="2_crosshair"]
 
-[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair")]
+[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair")]
 custom_minimum_size = Vector2(0, 104)
 layout_mode = 3
 anchors_preset = 0
@@ -12,7 +12,9 @@ offset_bottom = 104.0
 script = ExtResource("1_script")
 _lblName = NodePath("Margin/VBox/Header/Name")
 _lblAttack = NodePath("Margin/VBox/Grid/AttackValue")
+_lblMagicAttack = NodePath("Margin/VBox/Grid/MagicAttackValue")
 _lblDefense = NodePath("Margin/VBox/Grid/DefenseValue")
+_lblMagicDefense = NodePath("Margin/VBox/Grid/MagicDefenseValue")
 _lblHeal = NodePath("Margin/VBox/Grid/HealValue")
 _lblState = NodePath("Margin/VBox/Header/State")
 _lblMark = NodePath("Margin/VBox/Header/Mark")
@@ -88,35 +90,55 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 2
-columns = 2
+columns = 4
 
 [node name="AttackLabel" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 13
-text = "UI_COMBAT_STAT_ATTACK"
+text = "UI_COMBAT_STAT_PHYSICAL_ATTACK"
 
 [node name="AttackValue" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
-size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13
-horizontal_alignment = 2
+
+[node name="MagicAttackLabel" type="Label" parent="Margin/VBox/Grid"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 13
+text = "UI_COMBAT_STAT_MAGIC_ATTACK"
+
+[node name="MagicAttackValue" type="Label" parent="Margin/VBox/Grid"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
 
 [node name="DefenseLabel" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 13
-text = "UI_COMBAT_STAT_DEFENSE"
+text = "UI_COMBAT_STAT_PHYSICAL_DEFENSE"
 
 [node name="DefenseValue" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
-size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13
-horizontal_alignment = 2
+
+[node name="MagicDefenseLabel" type="Label" parent="Margin/VBox/Grid"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 13
+text = "UI_COMBAT_STAT_MAGIC_DEFENSE"
+
+[node name="MagicDefenseValue" type="Label" parent="Margin/VBox/Grid"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
 
 [node name="HealLabel" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
@@ -127,7 +149,5 @@ text = "UI_COMBAT_STAT_HEAL"
 
 [node name="HealValue" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
-size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13
-horizontal_alignment = 2
