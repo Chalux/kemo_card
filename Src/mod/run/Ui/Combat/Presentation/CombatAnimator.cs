@@ -289,7 +289,7 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
 
         // 按载荷先画这一格再闪：满员自动触发的球在事件到达界面时队列已经清空，
         // 读状态重绘会让刚入队的球不可见（整排闪光的 OrbsTriggeredEvent 随后才清空）。
-        _view.PaintOrb(evt.QueueCount - 1, evt.OrbTypeId, evt.QueueCount);
+        _view.PaintOrb(evt.QueueCount - 1, evt.OrbTypeId, evt.QueueCount, evt.ProducerIndex);
         return orbs.FlashSlotAsync(evt.QueueCount - 1, CombatAnimationTiming.OrbFlash);
     }
 

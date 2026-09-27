@@ -90,8 +90,11 @@ public static class GlossaryBuilder
         return entries;
     }
 
-    /// <summary>纯效果球 → 支援球文案；否则按伤害类型分物理 / 魔法 / 元素。</summary>
-    private static string ResolveOrbBodyKey(OrbTypeDto orb)
+    /// <summary>
+    /// 纯效果球 → 支援球文案；否则按伤害类型分物理 / 魔法 / 元素。
+    /// 战斗界面的球位悬停（<c>CombatOrbTips</c>）共用同一份正文键，改文案只改 CSV。
+    /// </summary>
+    public static string ResolveOrbBodyKey(OrbTypeDto orb)
     {
         if (!orb.DealsDamage)
         {
@@ -106,8 +109,8 @@ public static class GlossaryBuilder
         };
     }
 
-    /// <summary>伤害球正文参数：每球固定值 + 攻击加成百分比；纯效果球无参数。</summary>
-    private static IReadOnlyList<object>? ResolveOrbBodyArgs(OrbTypeDto orb) =>
+    /// <summary>伤害球正文参数：每球固定值 + 攻击加成百分比；纯效果球无参数。球位悬停共用。</summary>
+    public static IReadOnlyList<object>? ResolveOrbBodyArgs(OrbTypeDto orb) =>
         orb.DealsDamage
             ? [orb.PerOrbAmount, MathF.Round(orb.AttackBonusScale * 100f)]
             : null;

@@ -1075,7 +1075,7 @@ CombatWin
 | `PartyMemberCmp` | 名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量、已确认标记、本回合普攻/追打标识、**嘲讽 Crosshair**、**已标记卡牌条**（右侧浮层） | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用） |
 | `AllyUnitCmp` | 边框 + `CharacterPresenter`（有 `presentation` 播序列帧，否则立绘 / 空白）；当前操控 / 已确认 / 合法目标高亮；**嘲讽 Crosshair** | 选目标态点击 = 选为目标；`MoveTo/ReturnHome/Play(anim)` 由动画驱动 |
 | `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + `BuffListCmp`；合法目标高亮；**阵亡即退场**（淡出到全透明后隐藏，存活敌人自动重排，2026-09-26） | 悬停：名字 / 种族·定位 / 剩余生命 / 物理攻击 / 魔法攻击 / 物理防御 / 魔法防御；点击 = 选为目标 |
-| `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮 | 触发 → `TriggerOrbsCommand` |
+| `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮；**悬停球位**：球名 + 触发效果（与词典共用同一份正文键 `UI_GLOSSARY_ORB_BODY_*`）+ 产球者（`CombatOrbTips`；产球者取 `OrbInstance.ProducerIndex`，无产球者回落「触发时按全队最高攻击者」） | 触发 → `TriggerOrbsCommand` |
 | `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap、物理攻击 / 魔法攻击 / 物理防御 / 魔法防御 + 回复、buff 列表、本回合普攻/追打标识；根节点为 `PanelContainer`（最小尺寸随内容传播，2026-09-26） | — |
 | `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 + 充能指示（`SlotChargeCmp`：光晕框包住「X / N」进度条与卡牌，不含 buff 列表；无充能时隐藏） | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
 | `CardPileCmp` | 标题 + 张数 | — |

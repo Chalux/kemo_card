@@ -59,5 +59,5 @@ public interface ICombatStageView
     /// 按事件载荷单独上色一格球位（不读模拟器状态）：满员自动触发时队列已被清空，
     /// 靠状态重绘看不到刚入队的球，必须用 <c>OrbGainedEvent</c> 的载荷把这一格画出来。
     /// </summary>
-    void PaintOrb(int index, string orbTypeId, int queueCount);
+    void PaintOrb(int index, string orbTypeId, int queueCount, int producerIndex);
 }

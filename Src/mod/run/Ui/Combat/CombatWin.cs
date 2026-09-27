@@ -541,7 +541,10 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
         // 右栏：充能球。
         _orbs?.SetInputLocked(_ui.InputLocked || !inPlayerPhase);
-        _orbs?.Bind(simulation.Orbs.Queue, id => store.TryGetOrbType(id, out var orb) ? orb : null);
+        _orbs?.Bind(
+            simulation.Orbs.Queue,
+            id => store.TryGetOrbType(id, out var orb) ? orb : null,
+            producerIndex => ResolveOrbProducerName(simulation, store, producerIndex));
 
         // 底栏。
         if (TryGetControlledCharacter(simulation, out var actor))
@@ -743,18 +746,43 @@ public partial class CombatWin : BaseWin, ICombatStageView
             return;
 
         var store = simulation.Definitions.Store;
-        _orbs.Bind(simulation.Orbs.Queue, id => store.TryGetOrbType(id, out var orb) ? orb : null);
+        _orbs.Bind(
+            simulation.Orbs.Queue,
+            id => store.TryGetOrbType(id, out var orb) ? orb : null,
+            producerIndex => ResolveOrbProducerName(simulation, store, producerIndex));
     }
 
     /// <summary>按事件载荷单独上色一格（<see cref="OrbGainedEvent"/> 驱动）：不读队列终态。</summary>
-    public void PaintOrb(int index, string orbTypeId, int queueCount)
+    public void PaintOrb(int index, string orbTypeId, int queueCount, int producerIndex)
     {
-        var store = Simulation?.Definitions.Store;
+        var simulation = Simulation;
+        var store = simulation?.Definitions.Store;
         _orbs?.PaintOrb(
             index,
             orbTypeId,
+            producerIndex,
             queueCount,
-            id => store is not null && store.TryGetOrbType(id, out var orb) ? orb : null);
+            id => store is not null && store.TryGetOrbType(id, out var orb) ? orb : null,
+            producer => simulation is null || store is null
+                ? ""
+                : ResolveOrbProducerName(simulation, store, producer));
+    }
+
+    /// <summary>
+    /// 球位悬停的产球者显示名（槽位 → 角色显示名，缺显示名回落定义 id）；
+    /// 无效槽位（&lt; 0 = 无产球者 / 越界）返回空串，由提示回落"触发时按全队最高攻击者"。
+    /// </summary>
+    private static string ResolveOrbProducerName(CombatSimulation simulation, GameDefinitionStore store, int producerIndex)
+    {
+        var characters = simulation.PlayerTeam.Characters;
+        if (producerIndex < 0 || producerIndex >= characters.Count)
+            return "";
+
+        var character = characters[producerIndex];
+        var definition = ResolveCharacter(store, character.DefinitionId);
+        return definition is null || string.IsNullOrWhiteSpace(definition.DisplayNameId)
+            ? character.DefinitionId
+            : Localization.Tr(definition.DisplayNameId);
     }
 
     public void RefreshBuffs(BuffHolderRef holder)

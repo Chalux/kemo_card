@@ -226,6 +226,8 @@ UI_ORB_EMPTY,无,None
 UI_ORB_HINT,满 {0} 个自动触发（≥{1} 可主动触发）,Auto at {0} (manual at {1}+)
 UI_ORB_TRIGGER,触发充能球,Trigger Orbs
 UI_ORB_TRIGGER_FAILED,充能球触发失败,Charge orb trigger failed
+UI_COMBAT_ORB_PRODUCER,产球者：{0},Produced by: {0}
+UI_COMBAT_ORB_PRODUCER_UNKNOWN,产球者：触发时按全队最高攻击者,Producer: highest attacker on trigger
 UI_DEBUG_ORB_LABEL,充能球,Charge Orb
 UI_DEBUG_GRANT_ORB,授予充能球,Grant Orbs
 UI_DEBUG_TRIGGER_ORBS,触发充能球,Trigger Orbs
