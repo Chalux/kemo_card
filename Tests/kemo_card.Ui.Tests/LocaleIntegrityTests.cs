@@ -123,6 +123,7 @@ public sealed class LocaleIntegrityTests
             Path.Combine("Src", "mod", "global", "Glossary", "GlossaryBuilder.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "PassiveTextBuilder.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "ActiveSkillTextBuilder.cs"),
+            Path.Combine("Src", "mod", "run", "Ui", "Combat", "CombatActiveSkillTips.cs"),
         ];
 
         foreach (var relative in files)

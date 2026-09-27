@@ -1,13 +1,17 @@
 using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Content.Keywords;
+using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Combat;
+using KemoCard.Mod.Global.Ui.Tip;
 
 namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>
 /// 左栏的非操控角色卡片：名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量；点击切换操控（仅有权控制的槽位）。
+/// 悬停显示该角色的主动技（每一档 + 当前可释放档高亮，见 <see cref="CombatActiveSkillTips"/>）。
 /// 已标记卡牌条不挂在本组件内（Godot GUI 拾取按树序，挂左栏会被战场单位截走悬停），
 /// 由 <see cref="CombatWin"/> 的浮层跟随本卡定位，见 <see cref="MarkedCardStripCmp"/>。
 /// </summary>
@@ -29,6 +33,7 @@ public partial class PartyMemberCmp : BaseCmp
     public int SlotIndex { get; private set; } = -1;
 
     private bool _interactable;
+    private CharacterBattleInstance? _character;
 
     protected override void OnReady()
     {
@@ -42,7 +47,10 @@ public partial class PartyMemberCmp : BaseCmp
             if (_interactable && SlotIndex >= 0)
                 Clicked?.Invoke(SlotIndex);
         });
+        Binder.OnMouseEnterExit(this, OnHoverEntered, OnHoverExited);
     }
+
+    protected override void OnExitTree() => KeywordTipService.Current?.HideTips(this);
 
     public void Bind(
         int slotIndex,
@@ -54,6 +62,7 @@ public partial class PartyMemberCmp : BaseCmp
     {
         SlotIndex = slotIndex;
         _interactable = interactable && canControl;
+        _character = character;
 
         if (_lblName != null)
             _lblName.Text = CombatUnitFormat.DisplayName(definition?.DisplayNameId, character.DefinitionId);
@@ -93,4 +102,12 @@ public partial class PartyMemberCmp : BaseCmp
         if (_crosshair != null)
             _crosshair.Visible = marked;
     }
+
+    private void OnHoverEntered()
+    {
+        if (_character is not null)
+            CombatActiveSkillTips.TryShow(this, _character, TipSide.Right);
+    }
+
+    private void OnHoverExited() => KeywordTipService.Current?.HideTips(this);
 }
