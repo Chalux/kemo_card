@@ -15,7 +15,8 @@ using KemoCard.Mod.Run.Team;
 namespace KemoCard.Mod.Run.Ui;
 
 /// <summary>
-/// 队伍编辑：顶部 4 个槽位选项卡，左"当前上阵"、中"角色池"、右"详细信息预览"。
+/// 队伍编辑：顶部 4 个槽位选项卡，左"当前上阵"、中"角色池"、右"详细信息预览"
+/// （立绘 + 身份行 + 主动技 / 潜能被动 / 属性 + 卡组缩略，信息区整列滚动）。
 /// </summary>
 /// <remarks>
 /// <para>本类只做「取值 + 显示 + 把用户操作转成服务调用」；槽位/上阵/下阵/卡组的全部语义在
@@ -38,6 +39,10 @@ public partial class RunTeamEditDlg : BaseDlg
     [Export] private Label? _lblName;
     [Export] private Label? _lblInfo;
     [Export] private Label? _lblAttrs;
+    [Export] private Control? _activeSkillBox;
+    [Export] private RichTextLabel? _rtActiveSkill;
+    [Export] private Control? _passiveBox;
+    [Export] private RichTextLabel? _rtPassives;
     [Export] private Label? _lblDeckCaption;
     [Export] private VirtualList? _deckStrip;
     [Export] private Label? _lblStatus;
@@ -352,6 +357,8 @@ public partial class RunTeamEditDlg : BaseDlg
                 _lblAttrs.Text = "";
             }
 
+            BindActiveSkill(null);
+            BindPassives(null);
             _deckStrip?.SetData(0, static (_, _) => { });
             return;
         }
@@ -390,6 +397,8 @@ public partial class RunTeamEditDlg : BaseDlg
         }
 
         RefreshDeckStrip(instance);
+        BindActiveSkill(character);
+        BindPassives(instanceId);
     }
 
     private void RefreshDeckStrip(CharacterInstance? instance)
@@ -414,6 +423,59 @@ public partial class RunTeamEditDlg : BaseDlg
             // 与卡组编辑、角色详情的卡面同一交互；条目是对象池复用的，每次渲染显式打开。
             cardItem.EnableHoverTip = true;
         });
+    }
+
+    /// <summary>
+    /// 主动技区：蓄力链各档的名称 + 门槛 + 描述（文案口径 <see cref="ActiveSkillTextBuilder"/>，
+    /// 与角色详情 / 卡组编辑 / 悬停摘要共用）。没有主动技的角色整块隐藏，不留空标题。
+    /// </summary>
+    private void BindActiveSkill(CharacterDto? character)
+    {
+        if (_rtActiveSkill is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<string> entries = character is not null && _service is not null
+            ? ActiveSkillTextBuilder.Entries(character, _service.GetSkill, Localization.Tr)
+            : [];
+
+        if (_activeSkillBox != null)
+        {
+            _activeSkillBox.Visible = entries.Count > 0;
+        }
+
+        _rtActiveSkill.Text = string.Join("\n\n", entries);
+    }
+
+    /// <summary>
+    /// 被动区：潜能门槛 + 解锁状态 + 描述（文案口径 <see cref="PassiveTextBuilder"/>）。解锁状态由
+    /// <see cref="RunTeamEditService.GetPassives"/> 判定（与开战挂载共用同一处），界面不自行推断；
+    /// 没有被动的角色整块隐藏。
+    /// </summary>
+    private void BindPassives(string? instanceId)
+    {
+        if (_rtPassives is null)
+        {
+            return;
+        }
+
+        IReadOnlyList<PassiveView> passives = instanceId is null || _service is null
+            ? []
+            : _service.GetPassives(instanceId);
+
+        if (_passiveBox != null)
+        {
+            _passiveBox.Visible = passives.Count > 0;
+        }
+
+        _rtPassives.Text = string.Join(
+            "\n\n",
+            passives.Select(passive => PassiveTextBuilder.Entry(
+                passive.RequiredPotential,
+                passive.Unlocked,
+                string.IsNullOrWhiteSpace(passive.DescriptionId) ? "" : Localization.Tr(passive.DescriptionId),
+                Localization.Tr)));
     }
 
     /// <summary>

@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://Src/mod/global/Ui/Comp/BaseCharacterItem.tscn" id="5_charitem"]
 [ext_resource type="PackedScene" uid="uid://c4e8o1dsbyc7e" path="res://Src/mod/global/Ui/Comp/BaseCardItem.tscn" id="6_carditem"]
 
-[node name="RunTeamEditDlg" type="Control" unique_id=328732083 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_lblDeckCaption", "_deckStrip", "_lblStatus", "_lblPotentialPool", "_lblSlotPotential", "_potentialInput", "_btnAllocate", "_btnDeduct")]
+[node name="RunTeamEditDlg" type="Control" unique_id=328732083 node_paths=PackedStringArray("_lblTitle", "_btnClose", "_slotTabs", "_lblCurrentCaption", "_currentHolder", "_currentCharacter", "_btnUnassign", "_lblPoolCaption", "_poolList", "_presenter", "_lblName", "_lblInfo", "_lblAttrs", "_activeSkillBox", "_rtActiveSkill", "_passiveBox", "_rtPassives", "_lblDeckCaption", "_deckStrip", "_lblStatus", "_lblPotentialPool", "_lblSlotPotential", "_potentialInput", "_btnAllocate", "_btnDeduct")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,9 +27,13 @@ _poolList = NodePath("Layout/Content/VBox/Body/Center/PoolList")
 _presenter = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/Presenter")
 _lblName = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblName")
 _lblInfo = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblInfo")
-_lblAttrs = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/LblAttrs")
-_lblDeckCaption = NodePath("Layout/Content/VBox/Body/Right/VBox/LblDeckCaption")
-_deckStrip = NodePath("Layout/Content/VBox/Body/Right/VBox/DeckStrip")
+_lblAttrs = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/AttrBox/LblAttrs")
+_activeSkillBox = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/ActiveSkillBox")
+_rtActiveSkill = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/ActiveSkillBox/RtActiveSkill")
+_passiveBox = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/PassiveBox")
+_rtPassives = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/PassiveBox/RtPassives")
+_lblDeckCaption = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/LblDeckCaption")
+_deckStrip = NodePath("Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/DeckStrip")
 _lblStatus = NodePath("Layout/Rail/Margin/VBox/LblStatus")
 _lblPotentialPool = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/LblPotentialPool")
 _lblSlotPotential = NodePath("Layout/Rail/Margin/VBox/PotentialBox/Margin/VBox/LblSlotPotential")
@@ -232,7 +236,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 6
 
 [node name="Presenter" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=162115224 instance=ExtResource("4_presenter")]
-custom_minimum_size = Vector2(0, 180)
+custom_minimum_size = Vector2(0, 150)
 layout_mode = 2
 
 [node name="LblName" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=566190417]
@@ -251,17 +255,78 @@ autowrap_mode = 3
 [node name="Rule" type="HSeparator" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=788363965]
 layout_mode = 2
 
-[node name="LblAttrs" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=1663793200]
-custom_minimum_size = Vector2(280, 0)
+[node name="InfoScroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/VBox/Preview"]
 layout_mode = 2
 size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="InfoBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="ActiveSkillBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LblActiveSkillCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/ActiveSkillBox"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = "UI_CHARACTER_ACTIVE_SKILL_TITLE"
+
+[node name="RtActiveSkill" type="RichTextLabel" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/ActiveSkillBox"]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 14
+theme_override_font_sizes/bold_font_size = 14
+theme_override_font_sizes/bold_italics_font_size = 14
+theme_override_font_sizes/italics_font_size = 14
+theme_override_font_sizes/mono_font_size = 14
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="PassiveBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LblPassivesCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/PassiveBox"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = "UI_CHARACTER_PASSIVES_TITLE"
+
+[node name="RtPassives" type="RichTextLabel" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/PassiveBox"]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 14
+theme_override_font_sizes/bold_font_size = 14
+theme_override_font_sizes/bold_italics_font_size = 14
+theme_override_font_sizes/italics_font_size = 14
+theme_override_font_sizes/mono_font_size = 14
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+
+[node name="AttrBox" type="VBoxContainer" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="LblAttrsCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/AttrBox"]
+layout_mode = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 14
+text = "UI_CHARACTER_ATTRS_TITLE"
+
+[node name="LblAttrs" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/AttrBox" unique_id=1663793200]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
 autowrap_mode = 3
 
-[node name="LblDeckCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox" unique_id=1184252619]
+[node name="LblDeckCaption" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox" unique_id=1184252619]
 layout_mode = 2
 theme_type_variation = &"Caption"
 
-[node name="DeckStrip" type="Control" parent="Layout/Content/VBox/Body/Right/VBox" unique_id=149055605 node_paths=PackedStringArray("ScrollArea")]
+[node name="DeckStrip" type="Control" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox" unique_id=149055605 node_paths=PackedStringArray("ScrollArea")]
 custom_minimum_size = Vector2(0, 222)
 layout_mode = 2
 script = ExtResource("3_vlist")
@@ -271,7 +336,7 @@ ItemSize = 160.0
 Spacing = 10.0
 IsVertical = false
 
-[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/VBox/DeckStrip" unique_id=1484007277]
+[node name="Scroll" type="ScrollContainer" parent="Layout/Content/VBox/Body/Right/VBox/Preview/InfoScroll/InfoBox/DeckStrip" unique_id=1484007277]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
