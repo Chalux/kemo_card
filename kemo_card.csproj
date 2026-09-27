@@ -12,6 +12,16 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Puerts.V8.Complete" Version="3.0.2" />
+    <!--
+      直接引用 Puerts.Core 只为拿 $(PkgPuerts_Core)（GeneratePathProperty 只对直接引用生效）。
+      内置 JS（puerts/*.mjs、esm_bootstrap.cjs）要嵌进程序集：Puerts.Core.targets 只在 Build 之后
+      把 contentFiles/puerts/ 拷到 OutDir，编辑器跑在 OutDir 上能读到，但**导出产物里没有**这些文件，
+      导出后启动会 DirectoryNotFoundException。升级 Puerts.V8.Complete 时两处版本必须同步（否则 NU1605）。
+    -->
+    <PackageReference Include="Puerts.Core" Version="3.0.2" GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(PkgPuerts_Core)/contentFiles/puerts/*" LogicalName="KemoCard.PuertsJs.%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
