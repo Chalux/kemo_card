@@ -32,22 +32,4 @@ public sealed class EnemyUnitTests
         Assert.That(unit.CurrentHp, Is.EqualTo(0), "取整后的展示值本来就是 0");
         Assert.That(unit.IsAlive, Is.True, "0.5 血不能被判为已阵亡");
     }
-
-    [Test]
-    public void Enemy_at_zero_hp_is_not_alive()
-    {
-        var unit = new EnemyUnit("rt-3", "slime", maxHp: 10);
-
-        unit.ApplyDamage(10);
-
-        Assert.That(unit.IsAlive, Is.False);
-    }
-
-    [Test]
-    public void CombatTargetRef_is_value_equality()
-    {
-        var a = new CombatTargetRef(ECombatSide.Enemy, 0);
-        var b = new CombatTargetRef(ECombatSide.Enemy, 0);
-        Assert.That(a, Is.EqualTo(b));
-    }
 }

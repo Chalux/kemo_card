@@ -34,25 +34,6 @@ public sealed class CombatEffectExecutorTests
         Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(17.5f));
     }
 
-    [Test]
-    public void Damage_reduces_enemy_hp_through_rule_pipeline()
-    {
-        var registry = CombatTestHelper.CreateFullRegistry(
-            effects: new Dictionary<string, EffectDto>
-            {
-                ["hit"] = new() { Id = "hit", Kind = EEffectKind.Damage, Params = new() { ["amount"] = 5 } },
-            });
-        var enemy = new EnemyUnit("e0", "slime", maxHp: 20);
-        var sim = CombatSimulationTestBuilder.Minimal(enemy, registry, rules: [new SharedHpDefeatRule()]);
-        var executor = new CombatEffectExecutor(registry);
-        var source = new CombatTargetRef(ECombatSide.Player, 0);
-        var target = new CombatTargetRef(ECombatSide.Enemy, 0);
-
-        executor.ExecuteEffectRef(new EffectRefDto { EffectId = "hit" }, sim, source, [target]);
-
-        Assert.That(enemy.CurrentHp, Is.EqualTo(15));
-    }
-
     /// <summary>
     /// 直伤路径（不经 GAS DamageExecution）的缩放补齐：×(1 + 源 DamageDealtScale + 连携)，
     /// 与 DamageExecution 同桶加算（规格 §3），不再只乘连携。

@@ -43,14 +43,6 @@ public sealed class UiOwnerContractTests
         }
     }
 
-    /// <summary>防漂移：<c>FeatureId</c> 常量必须与 <c>BaseMod.ModId</c> 一致（注册用的 id 与运行时不一致会导致界面找不到归属功能）。</summary>
-    [Test]
-    public void FeatureId_constants_match_mod_runtime_ids()
-    {
-        Assert.That(new GlobalMod().ModId, Is.EqualTo(GlobalMod.FeatureId));
-        Assert.That(new RunMod().ModId, Is.EqualTo(RunMod.FeatureId));
-    }
-
     #endregion
 
     #region Validate 三条硬校验

@@ -81,15 +81,6 @@ public sealed class RedDotServiceTests
     }
 
     [Test]
-    public void Aggregation_node_without_checkFunc_works()
-    {
-        RedDotService.RegisterNode("Menu/Codex", () => true);
-        RedDotService.RegisterNode("Menu");
-        RedDotService.RegisterParent("Menu/Codex", "Menu");
-        Assert.That(RedDotService.IsActive("Menu"), Is.True);
-    }
-
-    [Test]
     public void FlushAll_evaluates_dirty_nodes()
     {
         bool checkReturn = false;

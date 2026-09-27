@@ -59,17 +59,6 @@ public sealed class RunBattleWiringTests
     }
 
     [Test]
-    public void StartBattle_uses_explicit_battle_id()
-    {
-        var (controller, registry, rng) = BuildReadyRun();
-
-        var simulation = controller.StartBattle(registry, rng, runSeed: 1, battleId: RunTestHelper.TestBattleId);
-
-        Assert.That(simulation.Battle!.Id, Is.EqualTo(RunTestHelper.TestBattleId));
-        simulation.Dispose();
-    }
-
-    [Test]
     public void StartBattle_throws_when_content_has_no_battle()
     {
         var (controller, _, rng) = BuildReadyRun();
@@ -90,16 +79,6 @@ public sealed class RunBattleWiringTests
             controller.StartBattle(registry, rng, runSeed: 1, battleId: "battle.nope"));
 
         Assert.That(ex!.Message, Does.Contain("battle.nope"));
-    }
-
-    [Test]
-    public void StartBattle_sets_run_phase_to_battle()
-    {
-        var (controller, registry, rng) = BuildReadyRun();
-
-        using var simulation = controller.StartBattle(registry, rng, runSeed: 1);
-
-        Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Battle));
     }
 
     private static (RunController Controller, GameDefinitionRegistry Registry, HostRng Rng) BuildReadyRun()

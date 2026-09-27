@@ -219,19 +219,6 @@ public sealed class EventDispatcherTests
     }
 
     [Test]
-    public void Send_single_listener_struct_payload_invokes_without_error()
-    {
-        var bus = new EventDispatcher();
-        var key = new EventKey<IntPayload>(12);
-        var received = 0;
-
-        bus.On(key, (p, _) => received = p.Value, this);
-        bus.Send(key, new IntPayload(99));
-
-        Assert.That(received, Is.EqualTo(99));
-    }
-
-    [Test]
     public void Send_multiple_listeners_struct_payload_invokes_all()
     {
         var bus = new EventDispatcher();

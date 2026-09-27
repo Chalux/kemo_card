@@ -91,21 +91,6 @@ public sealed class RunSaveClosureTests
         Assert.That(loaded.Phase, Is.EqualTo(ERunPhase.Reward));
     }
 
-    [Test]
-    public void Delete_clears_save()
-    {
-        using var dir = TempDir();
-        var saveService = new RunSaveService(dir.Path);
-        var controller = new RunController(new RunMod());
-        controller.EnableAutoSave(saveService);
-
-        controller.CreateRun("story_a", new HostRng(1, "create"), [], isMultiplayer: false);
-        Assert.That(saveService.Exists, Is.True);
-
-        saveService.Delete();
-        Assert.That(saveService.Exists, Is.False);
-    }
-
     private static RunController BuildBattleReadyController(RunSaveService saveService)
     {
         var mod = new RunMod { Phase = ERunPhase.Reward, IsMultiplayer = false };

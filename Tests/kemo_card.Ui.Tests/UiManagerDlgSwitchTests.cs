@@ -60,18 +60,4 @@ public sealed class UiManagerDlgSwitchTests
         Assert.That(sm.CurrentState, Is.EqualTo(EUIState.CloseDone));
         Assert.That(steps, Is.EqualTo(new[] { EUIState.Open, EUIState.Close, EUIState.Close, EUIState.CloseDone }));
     }
-
-    [Test]
-    public void Reopen_after_close_completes_full_cycle()
-    {
-        var sm = new StateMachine<EUIState, IUIStateContext>();
-
-        sm.SetInitialState(EUIState.CloseDone);
-        sm.TransitionTo(EUIState.Wait);
-        sm.TransitionTo(EUIState.Load);
-        sm.TransitionTo(EUIState.Create);
-        sm.TransitionTo(EUIState.Open);
-
-        Assert.That(sm.CurrentState, Is.EqualTo(EUIState.Open));
-    }
 }

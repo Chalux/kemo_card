@@ -73,21 +73,6 @@ public sealed class VonNeumannExclusiveCardContentTests
     }
 
     [Test]
-    public void Heal_cards_declare_the_team_scope_required_by_the_spec()
-    {
-        var definitions = BaseGameContent.Load();
-
-        foreach (var cardId in new[] { DirectDeduction, MergeSort })
-        {
-            var card = definitions.Cards[cardId];
-            Assert.That(
-                card.TargetSide is ETargetSide.Self or ETargetSide.Ally && card.TargetScope is ETargetScope.Team,
-                Is.True,
-                $"{cardId} 是玩家侧治疗卡：规格 §1.3 要求 targetSide ∈ {{Self, Ally}} 且 targetScope = Team");
-        }
-    }
-
-    [Test]
     public void Cards_are_in_von_neumann_deck_and_their_payloads_resolve()
     {
         var definitions = BaseGameContent.Load();

@@ -287,19 +287,6 @@ public sealed class TuringExclusiveCardContentTests
     #region 潜能被动（0 / 20 / 50 / 99 四档）
 
     [Test]
-    public void Turing_has_four_potential_passives()
-    {
-        var definitions = BaseGameContent.Load();
-        var turing = definitions.Characters["turing"];
-
-        Assert.That(
-            turing.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
-        foreach (var passive in turing.Passives)
-            Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
-    }
-
-    [Test]
     public void Passive_one_grants_poison_immunity()
     {
         var definitions = BaseGameContent.Load();

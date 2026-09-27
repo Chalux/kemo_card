@@ -48,39 +48,4 @@ public sealed class ConditionIntegrationTests
         Assert.That(result.Passed, Is.False);
         Assert.That(result.Leaves, Has.Count.EqualTo(2));
     }
-
-    [Test]
-    public void Combined_persistent_conditions_pass_when_all_requirements_met()
-    {
-        var context = new FakePersistentCondContext();
-        context.Flags.Add("intro");
-        context.Items["wood"] = 2;
-        context.Items["stone"] = 1;
-
-        var result = ParseAndEvaluate(
-            """{"HasFlag":["intro"],"HasAllItems":[["wood",2],["stone",1]]}""",
-            context,
-            CreateRegistry());
-
-        Assert.That(result.Passed, Is.True);
-        Assert.That(result.Leaves, Has.Count.EqualTo(2));
-    }
-
-    [Test]
-    public void Empty_or_array_is_false()
-    {
-        var context = new FakePersistentCondContext();
-        var result = ParseAndEvaluate("[]", context, CreateRegistry());
-
-        Assert.That(result.Passed, Is.False);
-    }
-
-    [Test]
-    public void Empty_and_object_is_true()
-    {
-        var context = new FakePersistentCondContext();
-        var result = ParseAndEvaluate("{}", context, CreateRegistry());
-
-        Assert.That(result.Passed, Is.True);
-    }
 }

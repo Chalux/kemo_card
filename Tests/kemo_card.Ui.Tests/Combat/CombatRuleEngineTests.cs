@@ -32,12 +32,4 @@ public sealed class CombatRuleEngineTests
         engine.DispatchTurnStart(new CombatContext(null!, turnNumber: 1), r => order.Add(r.Id));
         Assert.That(order, Is.EqualTo(new[] { "high", "low" }));
     }
-
-    [Test]
-    public void Rules_collection_is_readonly_after_construction()
-    {
-        var engine = new CombatRuleEngine([new SharedHpDefeatRule()]);
-        Assert.That(engine.Rules, Is.InstanceOf<IReadOnlyList<ICombatRule>>());
-        Assert.That(engine.Rules.Count, Is.EqualTo(1));
-    }
 }

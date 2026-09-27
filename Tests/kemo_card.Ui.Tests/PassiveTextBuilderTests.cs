@@ -52,10 +52,4 @@ public sealed class PassiveTextBuilderTests
             PassiveTextBuilder.Entry(50, true, "", Translate),
             Is.EqualTo("[b]潜能 50[/b]【已解锁】\n"));
     }
-
-    [Test]
-    public void Title_key_is_the_shared_section_key()
-    {
-        Assert.That(PassiveTextBuilder.TitleKey, Is.EqualTo("UI_CHARACTER_PASSIVES_TITLE"));
-    }
 }

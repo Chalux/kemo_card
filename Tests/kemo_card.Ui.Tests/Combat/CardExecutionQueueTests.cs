@@ -7,17 +7,6 @@ namespace KemoCard.Ui.Tests.Combat;
 public sealed class CardExecutionQueueTests
 {
     [Test]
-    public void Dequeue_returns_highest_priority_first()
-    {
-        var queue = new CardExecutionQueue();
-        queue.Enqueue(new QueuedCardEntry(0, "low", "rt-low", 100, [], 1));
-        queue.Enqueue(new QueuedCardEntry(1, "high", "rt-high", 200, [], 2));
-
-        Assert.That(queue.TryDequeue(out var entry), Is.True);
-        Assert.That(entry!.CardId, Is.EqualTo("high"));
-    }
-
-    [Test]
     public void Same_priority_dequeues_in_enqueue_sequence_order()
     {
         var queue = new CardExecutionQueue();

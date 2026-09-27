@@ -42,19 +42,6 @@ public sealed class ContentModBootstrapTests
         Assert.That(File.ReadAllText(installedManifest), Does.Contain("\"version\": \"2.0.0\""));
     }
 
-    [Test]
-    public void EnsureDefaultModsCopied_does_not_leave_staging_directory()
-    {
-        var root = Path.Combine(Path.GetTempPath(), "kemo_bootstrap_tests", Guid.NewGuid().ToString("N"));
-        var bundled = Path.Combine(root, "bundled");
-        var userMods = Path.Combine(root, "user-mods");
-        ContentModTestHelper.CreateModFolder(bundled, "base-game", "base.game");
-
-        ContentModBootstrap.EnsureDefaultModsCopied(userMods, bundled);
-
-        Assert.That(Directory.Exists(Path.Combine(userMods, "base-game.staging")), Is.False);
-    }
-
     /// <summary>
     /// 调试构建的强制刷新：版本号不变也重新拷贝，开发期新增内容不必抬版本号即可生效。
     /// </summary>

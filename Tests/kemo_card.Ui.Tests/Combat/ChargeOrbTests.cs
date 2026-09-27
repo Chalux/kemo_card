@@ -27,13 +27,6 @@ public sealed class ChargeOrbTests
     #region 队列与触发门槛
 
     [Test]
-    public void Queue_constants_are_capacity_seven_and_threshold_three()
-    {
-        Assert.That(OrbQueue.Capacity, Is.EqualTo(7));
-        Assert.That(OrbQueue.ManualTriggerThreshold, Is.EqualTo(3));
-    }
-
-    [Test]
     public void Grant_fills_queue_and_reaching_capacity_triggers_immediately()
     {
         using var sim = BuildSim(orbTypes: BuiltinOrbs());

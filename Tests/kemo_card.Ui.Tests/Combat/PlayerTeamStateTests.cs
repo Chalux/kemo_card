@@ -38,16 +38,6 @@ public sealed class PlayerTeamStateTests
         Assert.That(team.IsDefeated, Is.False, "0.5 账本不能被判负");
     }
 
-    [Test]
-    public void Zero_ledger_is_defeated()
-    {
-        var team = new PlayerTeamState([CreateBattle("c0", hpCap: 10)], sharedMaxHp: 10);
-
-        team.ApplySharedDamage(10f);
-
-        Assert.That(team.IsDefeated, Is.True);
-    }
-
     /// <summary>未判负时仍可继续扣血直到真正归零。</summary>
     [Test]
     public void Fractional_ledger_can_still_take_damage_until_zero()

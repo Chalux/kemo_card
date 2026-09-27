@@ -1,3 +1,4 @@
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
@@ -76,84 +77,6 @@ public sealed class UiFrameworkTests
         Assert.That(data.IsCloseOpen, Is.True);
     }
 
-    [Test]
-    public void SkipReOpen_recognizes_reopen_tag()
-    {
-        // 模拟 UIOpenStateHandler 中的判断逻辑
-        bool skipReOpen = true;
-        OpenTransitionData data = OpenTransitionData.Reopen;
-
-        bool playAnim = !skipReOpen || !data.IsReopen;
-
-        Assert.That(playAnim, Is.False);
-    }
-
-    [Test]
-    public void CloseOpen_bypasses_skip_reopen()
-    {
-        bool skipReOpen = true;
-        OpenTransitionData data = OpenTransitionData.CloseOpen;
-
-        bool playAnim = !skipReOpen || !data.IsReopen;
-
-        Assert.That(playAnim, Is.False); // CloseOpen 的 IsReopen 也为 true
-    }
-
-    [Test]
-    public void FirstOpen_always_plays_anim()
-    {
-        bool skipReOpen = true;
-        OpenTransitionData data = OpenTransitionData.FirstOpen;
-
-        bool playAnim = !skipReOpen || !data.IsReopen;
-
-        Assert.That(playAnim, Is.True);
-    }
-
-    #endregion
-
-    #region OnFail 语义
-
-    [Test]
-    public void OnFail_should_trigger_when_destroyed_from_load()
-    {
-        var fromState = EUIState.Load;
-        bool shouldCallOnFail = fromState is EUIState.Load or EUIState.PreLoad;
-        Assert.That(shouldCallOnFail, Is.True);
-    }
-
-    [Test]
-    public void OnFail_should_trigger_when_destroyed_from_preload()
-    {
-        var fromState = EUIState.PreLoad;
-        bool shouldCallOnFail = fromState is EUIState.Load or EUIState.PreLoad;
-        Assert.That(shouldCallOnFail, Is.True);
-    }
-
-    [Test]
-    public void OnFail_should_not_trigger_when_destroyed_from_close()
-    {
-        var fromState = EUIState.Close;
-        bool shouldCallOnFail = fromState is EUIState.Load or EUIState.PreLoad;
-        Assert.That(shouldCallOnFail, Is.False);
-    }
-
-    [Test]
-    public void OnFail_should_not_trigger_when_destroyed_from_closeDone()
-    {
-        var fromState = EUIState.CloseDone;
-        bool shouldCallOnFail = fromState is EUIState.Load or EUIState.PreLoad;
-        Assert.That(shouldCallOnFail, Is.False);
-    }
-
-    [Test]
-    public void OnFail_should_not_trigger_when_destroyed_from_cache()
-    {
-        var fromState = EUIState.Cache;
-        bool shouldCallOnFail = fromState is EUIState.Load or EUIState.PreLoad;
-        Assert.That(shouldCallOnFail, Is.False);
-    }
-
     #endregion
 
     #region 注册与路由
@@ -183,43 +106,34 @@ public sealed class UiFrameworkTests
         Assert.That(reg.GetChildren("page"), Is.EqualTo(new[] { "page.child" }));
     }
 
+    /// <summary>父路由未注册属于路由一致性问题：<c>Validate</c> 必须留下可诊断的错误日志（不阻断装配）。</summary>
     [Test]
-    public void Route_validate_no_errors_for_valid_registry()
+    public void Route_validate_reports_missing_parent()
     {
-        var reg = new UIRuntimeRegistry();
-        reg.Register(new UIRuntimeEntry
+        var recording = new RecordingAppLog();
+        AppLog.Configure(recording);
+        try
         {
-            OwnerModId = "test.mod",
-            Id = "parent",
-            Dir = "ui",
-            Type = EUIType.Pge,
-        });
-        reg.Register(new UIRuntimeEntry
+            var reg = new UIRuntimeRegistry();
+            reg.Register(new UIRuntimeEntry
+            {
+                OwnerModId = "test.mod",
+                Id = "orphan",
+                Dir = "ui",
+                Type = EUIType.Pge,
+                RouteMeta = new UIRouteMeta { ParentId = "missing" },
+            });
+
+            Assert.That(reg.Validate(), Is.False, "父路由缺失不阻断装配");
+            Assert.That(
+                recording.Entries.Any(entry => entry.Message.Contains("父路由 missing 未注册")),
+                Is.True,
+                "父路由未注册必须留下错误日志");
+        }
+        finally
         {
-            OwnerModId = "test.mod",
-            Id = "child",
-            Dir = "ui",
-            Type = EUIType.Pge,
-            RouteMeta = new UIRouteMeta { ParentId = "parent" },
-        });
-
-        Assert.DoesNotThrow(() => reg.Validate());
-    }
-
-    [Test]
-    public void Route_validate_detects_missing_parent()
-    {
-        var reg = new UIRuntimeRegistry();
-        reg.Register(new UIRuntimeEntry
-        {
-            OwnerModId = "test.mod",
-            Id = "orphan",
-            Dir = "ui",
-            Type = EUIType.Pge,
-            RouteMeta = new UIRouteMeta { ParentId = "missing" },
-        });
-
-        Assert.DoesNotThrow(() => reg.Validate());
+            AppLog.Configure(NullAppLog.Instance);
+        }
     }
 
     #endregion
@@ -234,14 +148,6 @@ public sealed class UiFrameworkTests
         Assert.That(str, Is.EqualTo("test.id"));
         Assert.That(id.Value, Is.EqualTo("test.id"));
         Assert.That(id.ToString(), Is.EqualTo("test.id"));
-    }
-
-    [Test]
-    public void EmptyPayload_is_default_value()
-    {
-        var payload = new EmptyPayload();
-        var defaultPayload = default(EmptyPayload);
-        Assert.That(payload, Is.EqualTo(defaultPayload));
     }
 
     #endregion

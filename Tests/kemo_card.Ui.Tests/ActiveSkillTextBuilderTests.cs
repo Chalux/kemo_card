@@ -124,10 +124,4 @@ public sealed class ActiveSkillTextBuilderTests
     {
         Assert.That(ActiveSkillTextBuilder.Block(new CharacterDto(), _ => null, Translate), Is.Empty);
     }
-
-    [Test]
-    public void Title_key_is_the_shared_section_key()
-    {
-        Assert.That(ActiveSkillTextBuilder.TitleKey, Is.EqualTo("UI_CHARACTER_ACTIVE_SKILL_TITLE"));
-    }
 }

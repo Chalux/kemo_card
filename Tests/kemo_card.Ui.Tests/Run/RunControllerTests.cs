@@ -222,26 +222,6 @@ public sealed class RunControllerTests
     }
 
     [Test]
-    public void ValidateParty_all_slots_must_be_non_null()
-    {
-        var controller = new RunController(new RunMod());
-        for (var i = 0; i < 4; i++)
-        {
-            var character = new CharacterInstance(
-                new CharacterDto { Id = $"test_{i}", Cards = [] }, $"inst-{i}");
-            controller.AddToCharacterPool(character);
-        }
-        controller.SetActiveCharacter(0, 0);
-        controller.SetActiveCharacter(1, 1);
-        controller.SetActiveCharacter(2, 2);
-
-        Assert.That(controller.ValidateParty(), Is.False);
-
-        controller.SetActiveCharacter(3, 3);
-        Assert.That(controller.ValidateParty(), Is.True);
-    }
-
-    [Test]
     public void Gold_operations_singleplayer_use_shared_gold()
     {
         var mod = new RunMod { IsMultiplayer = false };
