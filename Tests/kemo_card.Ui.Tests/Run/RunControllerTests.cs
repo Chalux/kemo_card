@@ -125,11 +125,11 @@ public sealed class RunControllerTests
         var controller = new RunController(new RunMod());
         var rng = new HostRng(42, "story_select");
 
-        var dto = controller.CreateRun("story_kemo_first", rng, [], isMultiplayer: false);
+        var dto = controller.CreateRun("base-rogue", rng, [], isMultiplayer: false);
 
-        Assert.That(dto.StoryId, Is.EqualTo("story_kemo_first"));
+        Assert.That(dto.StoryId, Is.EqualTo("base-rogue"));
         Assert.That(dto.RunSeed, Is.EqualTo(42));
-        Assert.That(controller.State.StoryId, Is.EqualTo("story_kemo_first"));
+        Assert.That(controller.State.StoryId, Is.EqualTo("base-rogue"));
     }
 
     [Test]

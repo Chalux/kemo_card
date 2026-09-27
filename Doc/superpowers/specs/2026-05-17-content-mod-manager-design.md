@@ -178,23 +178,24 @@ user://mods/
 - **所属 Mod**：由 `GameDefinitionRegistry.TryGetOwnerModId(Story, id)` 读取，不写入 DTO。
 - **校验**：`unlock` 存在且非 JSON null 时，用 `ConditionParser.TryParse<IPersistentCondContext>` 在 Persistent 域解析；失败 → `ContentDefinitionValidationError(Category=Story)`，错误带 `content/stories/<id>.json:unlock` 来源路径，该定义从 Store / owner 映射移除。
 - **运行期求值**：选故事 UI 用 `ConditionEvaluator` + `GlobalPersistentCondContext`（`HasFlag` → 全局存档 `Unlocks`）判定可玩性。
-- **样例**：
+- **样例**（出货故事只有肉鸽模式 `base-rogue`；`unlock` 目前无出货用例，下面第二例仅示意格式）：
 
 ```json
 {
-  "displayNameId": "story.kemo_first.name",
-  "descId": "story.kemo_first.desc",
-  "author": "KemoCard Team",
+  "displayNameId": "story.base_rogue.name",
+  "descId": "story.base_rogue.desc",
+  "author": "Chalux",
+  "scriptPath": "stories/base_rogue.js",
   "singlePlayerOnly": true
 }
 ```
 
 ```json
 {
-  "displayNameId": "story.kemo_second.name",
-  "descId": "story.kemo_second.desc",
-  "author": "KemoCard Team",
-  "unlock": { "HasFlag": ["story.kemo_first.clear"] },
+  "displayNameId": "story.example.name",
+  "descId": "story.example.desc",
+  "author": "示例",
+  "unlock": { "HasFlag": ["story.example.clear"] },
   "singlePlayerOnly": true
 }
 ```

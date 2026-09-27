@@ -826,15 +826,33 @@ public partial class CombatWin : BaseWin, ICombatStageView
         var store = simulation.Definitions.Store;
         var tierIndex = character.ResolveCastableTier();
         var skillId = character.ActiveSkillChain[tierIndex].SkillId;
-        var skillName = store.TryGetSkill(skillId, out var skill) && !string.IsNullOrWhiteSpace(skill.DisplayNameId)
-            ? Localization.Tr(skill.DisplayNameId)
-            : skillId;
+        var skillName = skillId;
+        var skillEffect = "";
+        if (store.TryGetSkill(skillId, out var skill))
+        {
+            if (!string.IsNullOrWhiteSpace(skill.DisplayNameId))
+            {
+                skillName = Localization.Tr(skill.DisplayNameId);
+            }
+
+            // 确认框是 Label（非 RichTextLabel）：关键词标记先剥掉，否则会露出 [url=kw:...] 原文。
+            if (!string.IsNullOrWhiteSpace(skill.DescId))
+            {
+                skillEffect = CardSummaryBuilder.StripRichText(Localization.Tr(skill.DescId));
+            }
+        }
 
         _ = GlobalModController.OpenAlertAsync(new AlertDlgPayload
         {
             TitleKey = "UI_COMBAT_ACTIVE_SKILL_CONFIRM_TITLE",
             DescKey = "UI_COMBAT_ACTIVE_SKILL_CONFIRM_DESC",
-            DescArgs = [ResolveCharacterName(simulation, store, characterIndex), skillName],
+            // {2} = 技能效果（前置空行；效果为空时不留空行）。
+            DescArgs =
+            [
+                ResolveCharacterName(simulation, store, characterIndex),
+                skillName,
+                string.IsNullOrWhiteSpace(skillEffect) ? "" : $"\n\n{skillEffect}",
+            ],
             OkTextKey = "UI_ALERT_OK",
             CancelTextKey = "UI_ALERT_CANCEL",
             Time = 0,

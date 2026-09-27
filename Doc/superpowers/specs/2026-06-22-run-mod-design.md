@@ -1114,7 +1114,8 @@ CombatWin
 > **主动技释放按钮**（2026-09-27）：队友卡（表头右侧）与操控角色面板（技能状态行右侧）在
 > `CombatActiveSkillTips.CanRelease`（有可释放档）且处于玩家阶段、未锁输入、有权控制、未封印时显示「释放」；
 > 按钮走主题 `Compact` 变体（小内边距，行高已预留 → 显示 / 隐藏不改变卡片尺寸，无 FitScale 抖动）。
-> 点击弹 `AlertDlg` 二次确认（正文带角色名与**将释放档位**的技能名，走 `AlertDlgPayload.DescArgs`），
+> 点击弹 `AlertDlg` 二次确认（正文带角色名、**将释放档位**的技能名与**技能效果**——效果先剥掉
+> 关键词标记再进 Label，走 `AlertDlgPayload.DescArgs`），
 > 确认后发 `CastActiveSkillCommand(index, [])`——目标传空集，由状态机按该档 `targetOverride` 解析
 > （当前内容全部 `Self/Self`；非自指档位缺目标会得到可读错误 → Toast）。释放即时结算、不入队、不占已行动。
 

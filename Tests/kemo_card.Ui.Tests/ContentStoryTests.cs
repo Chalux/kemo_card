@@ -16,6 +16,18 @@ public sealed class ContentStoryTests
         BuiltinPersistentConditions.RegisterAll(ConditionDomains.Persistent);
     }
 
+    /// <summary>
+    /// 出货故事只有肉鸽模式（2026-09-27 移除两个示例故事 `story_kemo_first` / `story_kemo_second`）：
+    /// 防止它们被无意加回来。
+    /// </summary>
+    [Test]
+    public void Base_game_ships_only_the_rogue_story()
+    {
+        var definitions = Combat.BaseGameContent.Load();
+
+        Assert.That(definitions.Stories.Keys, Is.EquivalentTo(new[] { "base-rogue" }));
+    }
+
     [Test]
     public void Rebuild_loads_stories_into_store()
     {
