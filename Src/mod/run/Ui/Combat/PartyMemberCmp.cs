@@ -26,9 +26,13 @@ public partial class PartyMemberCmp : BaseCmp
     [Export] private Label? _lblState;
     [Export] private Label? _lblMark;
     [Export] private TextureRect? _crosshair;
+    [Export] private Button? _btnRelease;
 
     /// <summary>点击回调，参数为该卡片绑定的槽位索引。</summary>
     public Action<int>? Clicked { get; set; }
+
+    /// <summary>「释放主动技」回调，参数为该卡片绑定的槽位索引（按钮只在有可释放档时可见）。</summary>
+    public Action<int>? ReleaseRequested { get; set; }
 
     public int SlotIndex { get; private set; } = -1;
 
@@ -47,6 +51,16 @@ public partial class PartyMemberCmp : BaseCmp
             if (_interactable && SlotIndex >= 0)
                 Clicked?.Invoke(SlotIndex);
         });
+        if (_btnRelease != null)
+        {
+            // 按钮自身消费点击（BaseButton），不会冒泡到卡片的切换操控。
+            OnClicks(_btnRelease, () =>
+            {
+                if (SlotIndex >= 0)
+                    ReleaseRequested?.Invoke(SlotIndex);
+            });
+        }
+
         Binder.OnMouseEnterExit(this, OnHoverEntered, OnHoverExited);
     }
 
@@ -101,6 +115,13 @@ public partial class PartyMemberCmp : BaseCmp
     {
         if (_crosshair != null)
             _crosshair.Visible = marked;
+    }
+
+    /// <summary>「释放主动技」按钮的显隐（判据见 <see cref="CombatActiveSkillTips.CanRelease"/>）。</summary>
+    public void SetSkillRelease(bool visible)
+    {
+        if (_btnRelease != null)
+            _btnRelease.Visible = visible;
     }
 
     private void OnHoverEntered()

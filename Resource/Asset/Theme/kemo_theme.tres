@@ -589,6 +589,70 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxFlat" id="compact_normal"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.184, 0.365, 0.314, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.145, 0.286, 0.247, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="compact_hover"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.231, 0.435, 0.376, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.145, 0.286, 0.247, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="compact_pressed"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.145, 0.286, 0.247, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.145, 0.286, 0.247, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="compact_disabled"]
+content_margin_left = 8.0
+content_margin_top = 2.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.561, 0.639, 0.612, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.561, 0.639, 0.612, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
 [sub_resource type="StyleBoxFlat" id="rail_bg"]
 bg_color = Color(0.894, 0.839, 0.737, 1)
 border_width_right = 2
@@ -789,6 +853,18 @@ Button/styles/pressed = SubResource("btn_pressed")
 Caption/base_type = &"Label"
 Caption/colors/font_color = Color(0.431, 0.369, 0.314, 1)
 Caption/font_sizes/font_size = 13
+Compact/base_type = &"Button"
+Compact/colors/font_color = Color(0.961, 0.933, 0.867, 1)
+Compact/colors/font_disabled_color = Color(0.961, 0.933, 0.867, 0.7)
+Compact/colors/font_focus_color = Color(0.961, 0.933, 0.867, 1)
+Compact/colors/font_hover_color = Color(0.961, 0.933, 0.867, 1)
+Compact/colors/font_hover_pressed_color = Color(0.961, 0.933, 0.867, 1)
+Compact/colors/font_pressed_color = Color(0.961, 0.933, 0.867, 1)
+Compact/styles/disabled = SubResource("compact_disabled")
+Compact/styles/focus = SubResource("primary_focus")
+Compact/styles/hover = SubResource("compact_hover")
+Compact/styles/normal = SubResource("compact_normal")
+Compact/styles/pressed = SubResource("compact_pressed")
 Danger/base_type = &"Button"
 Danger/colors/font_color = Color(0.961, 0.933, 0.867, 1)
 Danger/colors/font_disabled_color = Color(0.961, 0.933, 0.867, 0.7)

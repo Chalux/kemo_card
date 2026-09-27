@@ -32,7 +32,7 @@ public sealed class ActiveSkillTextBuilderTests
     {
         Assert.That(
             ActiveSkillTextBuilder.Entry("冰川溢出", 8, "自身 3 回合物理攻击 +6。", Translate),
-            Is.EqualTo("[b]冰川溢出[/b]（技能 8）\n自身 3 回合物理攻击 +6。"));
+            Is.EqualTo("[font_size=16]冰川溢出[/font_size]（技能 8）\n自身 3 回合物理攻击 +6。"));
     }
 
     [Test]
@@ -48,7 +48,7 @@ public sealed class ActiveSkillTextBuilderTests
     {
         Assert.That(
             ActiveSkillTextBuilder.Entry("冰川溢出", 8, "", Translate),
-            Is.EqualTo("[b]冰川溢出[/b]（技能 8）"));
+            Is.EqualTo("[font_size=16]冰川溢出[/font_size]（技能 8）"));
     }
 
     [Test]
@@ -67,9 +67,9 @@ public sealed class ActiveSkillTextBuilderTests
         var entries = ActiveSkillTextBuilder.Entries(character, Skill, Translate);
 
         Assert.That(entries, Has.Count.EqualTo(3));
-        Assert.That(entries[0], Does.StartWith("[b]s1.name[/b]（技能 6）"));
-        Assert.That(entries[1], Does.StartWith("[b]s2.name[/b]（技能 10）"), "第二档门槛 = 6 + 4");
-        Assert.That(entries[2], Does.StartWith("[b]s3.name[/b]（技能 16）"), "第三档门槛 = 6 + 4 + 6");
+        Assert.That(entries[0], Does.StartWith("[font_size=16]s1.name[/font_size]（技能 6）"));
+        Assert.That(entries[1], Does.StartWith("[font_size=16]s2.name[/font_size]（技能 10）"), "第二档门槛 = 6 + 4");
+        Assert.That(entries[2], Does.StartWith("[font_size=16]s3.name[/font_size]（技能 16）"), "第三档门槛 = 6 + 4 + 6");
     }
 
     [Test]
@@ -90,7 +90,7 @@ public sealed class ActiveSkillTextBuilderTests
             Translate);
 
         Assert.That(entries, Has.Count.EqualTo(1));
-        Assert.That(entries[0], Does.StartWith("[b]s2.name[/b]（技能 10）"), "解析不到的档位仍累计门槛");
+        Assert.That(entries[0], Does.StartWith("[font_size=16]s2.name[/font_size]（技能 10）"), "解析不到的档位仍累计门槛");
     }
 
     [Test]
@@ -116,7 +116,7 @@ public sealed class ActiveSkillTextBuilderTests
 
         Assert.That(
             block,
-            Is.EqualTo("[b]主动技[/b]\n[b]冰川溢出[/b]（技能 8）\n自身 3 回合物理攻击 +6。"));
+            Is.EqualTo("[b]主动技[/b]\n[font_size=16]冰川溢出[/font_size]（技能 8）\n自身 3 回合物理攻击 +6。"));
     }
 
     [Test]

@@ -67,6 +67,10 @@ public partial class CombatWin : BaseWin, ICombatStageView
         CollectChildren(_allyStage, _allies);
         CollectChildren(_hand, _hands);
         CollectChildren(_stripLayer, _strips);
+        foreach (var member in _members)
+            member.ReleaseRequested = OnReleaseSkillRequested;
+        if (_actor != null)
+            _actor.ReleaseRequested = () => OnReleaseSkillRequested(_ui?.ControlledSlot ?? -1);
         if (_phaseBanner != null)
             _phaseBanner.Visible = false;
     }
@@ -488,6 +492,13 @@ public partial class CombatWin : BaseWin, ICombatStageView
             var strip = benchIndex < _strips.Count ? _strips[benchIndex] : null;
             benchIndex++;
 
+            // 释放按钮（2026-09-27）：玩家阶段、未锁输入、有权控制、未封印且有可释放档才显示。
+            var canRelease = inPlayerPhase
+                && !_ui.InputLocked
+                && _ui.CanControl(i)
+                && !characters[i].IsSealed
+                && CombatActiveSkillTips.CanRelease(characters[i]);
+
             member.Visible = true;
             member.Bind(
                 i,
@@ -497,6 +508,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
                 !_ui.InputLocked,
                 CombatActionMarks.Resolve(simulation, i));
             member.SetTauntMark(i < tauntMarks.Length && tauntMarks[i]);
+            member.SetSkillRelease(canRelease);
             if (strip != null)
             {
                 strip.Follow(member);
@@ -544,13 +556,14 @@ public partial class CombatWin : BaseWin, ICombatStageView
         _orbs?.Bind(
             simulation.Orbs.Queue,
             id => store.TryGetOrbType(id, out var orb) ? orb : null,
-            producerIndex => ResolveOrbProducerName(simulation, store, producerIndex));
+            characterIndex => ResolveCharacterName(simulation, store, characterIndex));
 
         // 底栏。
         if (TryGetControlledCharacter(simulation, out var actor))
         {
             var canAct = inPlayerPhase && !_ui.InputLocked && _ui.CanControl(controlled) && !actor.IsSealed;
             _actor?.Bind(actor, ResolveCharacter(store, actor.DefinitionId), CombatActionMarks.Resolve(simulation, controlled));
+            _actor?.SetSkillRelease(canAct && CombatActiveSkillTips.CanRelease(actor));
             _deck?.SetCount(actor.DrawPile.Count);
             _grave?.SetCount(actor.Graveyard.Count);
 
@@ -610,7 +623,14 @@ public partial class CombatWin : BaseWin, ICombatStageView
         for (var i = 0; i < _allies.Count; i++)
             _allies[i].SetHighlight(i == _ui.ControlledSlot, targetable: false);
         foreach (var member in _members)
+        {
             member.Modulate = member.Modulate with { A = locked ? 0.6f : 1f };
+            if (locked)
+                member.SetSkillRelease(false);
+        }
+
+        if (locked)
+            _actor?.SetSkillRelease(false);
         _orbs?.SetInputLocked(locked);
 
         if (_btnConfirm != null)
@@ -749,7 +769,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         _orbs.Bind(
             simulation.Orbs.Queue,
             id => store.TryGetOrbType(id, out var orb) ? orb : null,
-            producerIndex => ResolveOrbProducerName(simulation, store, producerIndex));
+            characterIndex => ResolveCharacterName(simulation, store, characterIndex));
     }
 
     /// <summary>按事件载荷单独上色一格（<see cref="OrbGainedEvent"/> 驱动）：不读队列终态。</summary>
@@ -765,24 +785,74 @@ public partial class CombatWin : BaseWin, ICombatStageView
             id => store is not null && store.TryGetOrbType(id, out var orb) ? orb : null,
             producer => simulation is null || store is null
                 ? ""
-                : ResolveOrbProducerName(simulation, store, producer));
+                : ResolveCharacterName(simulation, store, producer));
     }
 
     /// <summary>
-    /// 球位悬停的产球者显示名（槽位 → 角色显示名，缺显示名回落定义 id）；
-    /// 无效槽位（&lt; 0 = 无产球者 / 越界）返回空串，由提示回落"触发时按全队最高攻击者"。
+    /// 角色显示名（槽位 → 显示名，缺显示名回落定义 id）：球位悬停的产球者与主动技确认弹窗共用。
+    /// 无效槽位（&lt; 0 / 越界）返回空串，由调用方决定回落文案。
     /// </summary>
-    private static string ResolveOrbProducerName(CombatSimulation simulation, GameDefinitionStore store, int producerIndex)
+    private static string ResolveCharacterName(CombatSimulation simulation, GameDefinitionStore store, int characterIndex)
     {
         var characters = simulation.PlayerTeam.Characters;
-        if (producerIndex < 0 || producerIndex >= characters.Count)
+        if (characterIndex < 0 || characterIndex >= characters.Count)
             return "";
 
-        var character = characters[producerIndex];
+        var character = characters[characterIndex];
         var definition = ResolveCharacter(store, character.DefinitionId);
         return definition is null || string.IsNullOrWhiteSpace(definition.DisplayNameId)
             ? character.DefinitionId
             : Localization.Tr(definition.DisplayNameId);
+    }
+
+    /// <summary>
+    /// 「释放主动技」按钮（队友卡 / 操控角色面板）：二次确认后发 <see cref="CastActiveSkillCommand"/>。
+    /// 确认文案带上角色名与将释放的档位技能名；无主动链 / 无可释放档直接忽略。
+    /// </summary>
+    private void OnReleaseSkillRequested(int characterIndex)
+    {
+        var simulation = Simulation;
+        if (simulation is null)
+            return;
+
+        var characters = simulation.PlayerTeam.Characters;
+        if (characterIndex < 0 || characterIndex >= characters.Count)
+            return;
+
+        var character = characters[characterIndex];
+        if (!CombatActiveSkillTips.CanRelease(character))
+            return;
+
+        var store = simulation.Definitions.Store;
+        var tierIndex = character.ResolveCastableTier();
+        var skillId = character.ActiveSkillChain[tierIndex].SkillId;
+        var skillName = store.TryGetSkill(skillId, out var skill) && !string.IsNullOrWhiteSpace(skill.DisplayNameId)
+            ? Localization.Tr(skill.DisplayNameId)
+            : skillId;
+
+        _ = GlobalModController.OpenAlertAsync(new AlertDlgPayload
+        {
+            TitleKey = "UI_COMBAT_ACTIVE_SKILL_CONFIRM_TITLE",
+            DescKey = "UI_COMBAT_ACTIVE_SKILL_CONFIRM_DESC",
+            DescArgs = [ResolveCharacterName(simulation, store, characterIndex), skillName],
+            OkTextKey = "UI_ALERT_OK",
+            CancelTextKey = "UI_ALERT_CANCEL",
+            Time = 0,
+            OkCallback = () => CastActiveSkill(characterIndex),
+        });
+    }
+
+    /// <summary>
+    /// 确认后释放主动技：目标传空集，由状态机按该档的 <c>targetOverride</c> 解析
+    /// （当前内容全部 Self/Self；非自指档位缺目标会得到可读错误 → Toast）。
+    /// </summary>
+    private void CastActiveSkill(int characterIndex)
+    {
+        // 确认框生命周期可能长于本界面（战斗结束 / 窗口销毁）：先校验节点有效性再走指令。
+        if (!GodotObject.IsInstanceValid(this) || !IsInsideTree())
+            return;
+
+        ApplyCommand(new CastActiveSkillCommand(characterIndex, []));
     }
 
     public void RefreshBuffs(BuffHolderRef holder)

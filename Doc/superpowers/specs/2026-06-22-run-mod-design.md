@@ -1065,7 +1065,7 @@ CombatWin
 > 内层 `MarginContainer` 按锚点对称外扩还会把整卡左移出屏。现在根节点改为 **`PanelContainer`**（同一套 `card` 样式），
 > 最小尺寸从内容向上传播、卡片随内容增长，不会再溢出；同时把「能量 / 技能」两行拆开（原先并排 228px 超出 210 预算），
 > 让卡片回到预算内。「能量 / 技能」两行拆开后底栏高度 214 → 244，整体缩放随之从 ~0.99 变为 ~0.97；
-> 2026-09-27 再加主动技状态行 `SkillHint`（常驻占位）后高度 244 → ~265、整体缩放 ~0.97 → ~0.94。
+> 2026-09-27 再加主动技状态行 `SkillHint`（常驻占位，含释放按钮行高）后高度 244 → ~268、整体缩放 ~0.97 → ~0.94。
 
 组件全部继承 `BaseCmp`（订阅写 `InitEvent`）：
 
@@ -1073,11 +1073,11 @@ CombatWin
 |---|---|---|
 | `HpBarCmp` | 当前 / 最大 + 进度条；`AnimateTo(value)` 供动画过渡 | — |
 | `BuffListCmp` / `BuffIconCmp` | `BuffContainer.Visible` 的图标（`iconPath` 缺失回落短名）、层数、剩余回合 | 悬停显示名字 / 描述（BBCode 渲染，`[url=kw:id]` 关键词高亮）/ 剩余时间（按 `durationType` 分派文案）/ 层数「当前 / 上限」（无上限或可无限叠显示 ∞）；描述引用的关键词效果以附加块列在下方（`KeywordTipService.BuildKeywordEffectTips`）（`ShowCustomTips`） |
-| `PartyMemberCmp` | 名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量、已确认标记、本回合普攻/追打标识、**嘲讽 Crosshair**、**已标记卡牌条**（右侧浮层） | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用）；**悬停：该角色主动技**（每一档 + 当前可释放档高亮） |
+| `PartyMemberCmp` | 名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量、已确认标记、本回合普攻/追打标识、**嘲讽 Crosshair**、**已标记卡牌条**（右侧浮层） | 点击切换操控（仅有权控制的槽位；无权 / 播放期禁用）；**悬停：该角色主动技**（每一档 + 当前可释放档高亮）；**有可释放档时显示「释放」按钮**（二次确认后释放） |
 | `AllyUnitCmp` | 边框 + `CharacterPresenter`（有 `presentation` 播序列帧，否则立绘 / 空白）；当前操控 / 已确认 / 合法目标高亮；**嘲讽 Crosshair** | 选目标态点击 = 选为目标；`MoveTo/ReturnHome/Play(anim)` 由动画驱动 |
 | `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + `BuffListCmp`；合法目标高亮；**阵亡即退场**（淡出到全透明后隐藏，存活敌人自动重排，2026-09-26） | 悬停：名字 / 种族·定位 / 剩余生命 / 物理攻击 / 魔法攻击 / 物理防御 / 魔法防御；点击 = 选为目标 |
 | `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮；**悬停球位**：球名 + 触发效果（与词典共用同一份正文键 `UI_GLOSSARY_ORB_BODY_*`）+ 产球者（`CombatOrbTips`；产球者取 `OrbInstance.ProducerIndex`，无产球者回落「触发时按全队最高攻击者」） | 触发 → `TriggerOrbsCommand` |
-| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap + **主动技状态行**（达标 → 「主动技能可用」/ 满档 → 「主动技能最大」）、物理攻击 / 魔法攻击 / 物理防御 / 魔法防御 + 回复、buff 列表、本回合普攻/追打标识；根节点为 `PanelContainer`（最小尺寸随内容传播，2026-09-26） | **悬停：该角色主动技**（每一档 + 当前可释放档高亮） |
+| `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap + **主动技状态行**（达标 → 「主动技能可用」/ 满档 → 「主动技能最大」）、物理攻击 / 魔法攻击 / 物理防御 / 魔法防御 + 回复、buff 列表、本回合普攻/追打标识；根节点为 `PanelContainer`（最小尺寸随内容传播，2026-09-26） | **悬停：该角色主动技**（每一档 + 当前可释放档高亮）；**有可释放档时显示「释放」按钮**（二次确认后释放） |
 | `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 + 充能指示（`SlotChargeCmp`：光晕框包住「X / N」进度条与卡牌，不含 buff 列表；无充能时隐藏） | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
 | `CardPileCmp` | 标题 + 张数 | — |
 
@@ -1106,9 +1106,17 @@ CombatWin
 > **主动技提示**（2026-09-27）：悬停队友卡或操控角色面板显示该角色的主动技——**每一档都列出**
 > （名称 + 累计门槛 + 描述，与角色详情 / 卡组编辑共用 `ActiveSkillTextBuilder`），只有当前可释放的档
 > （`CharacterBattleInstance.ResolveCastableTier`，自动最高档）加【可用】标记并整体高亮（`CombatActiveSkillTips`；
-> 高亮色取 `KemoPalette.TextOnAccent`）。操控角色面板的技能进度后另加**主动技状态行**（`SkillHint`）：
+> 高亮色取 `KemoPalette.TextOnAccent`）。**技能名只用字号（`[font_size=16]`）强调、不加粗**——窄提示里加粗会挤成一团。
+> 操控角色面板的技能进度后另加**主动技状态行**（`SkillHint`）：
 > `S` 达 `Cap` → 「主动技能最大」，否则有可释放档 → 「主动技能可用」（满档优先；单档角色的「可用」即「满档」，
 > 只提示最大）。状态行**常驻占位**（空文本也保留一行高度），避免卡片高度随状态变化 → FitScale 整屏缩放抖动。
+>
+> **主动技释放按钮**（2026-09-27）：队友卡（表头右侧）与操控角色面板（技能状态行右侧）在
+> `CombatActiveSkillTips.CanRelease`（有可释放档）且处于玩家阶段、未锁输入、有权控制、未封印时显示「释放」；
+> 按钮走主题 `Compact` 变体（小内边距，行高已预留 → 显示 / 隐藏不改变卡片尺寸，无 FitScale 抖动）。
+> 点击弹 `AlertDlg` 二次确认（正文带角色名与**将释放档位**的技能名，走 `AlertDlgPayload.DescArgs`），
+> 确认后发 `CastActiveSkillCommand(index, [])`——目标传空集，由状态机按该档 `targetOverride` 解析
+> （当前内容全部 `Self/Self`；非自指档位缺目标会得到可读错误 → Toast）。释放即时结算、不入队、不占已行动。
 
 ### 14.3 交互状态（`CombatUiState`，纯 C#）
 

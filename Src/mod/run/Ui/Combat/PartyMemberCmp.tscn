@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/PartyMemberCmp.cs" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://cj3lseqeqbcvx" path="res://Resource/Asset/Icon/crosshair.svg" id="2_crosshair"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
 
-[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair")]
+[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair", "_btnRelease")]
 custom_minimum_size = Vector2(0, 104)
 layout_mode = 3
 anchors_preset = 0
@@ -19,6 +20,7 @@ _lblHeal = NodePath("Margin/VBox/Grid/HealValue")
 _lblState = NodePath("Margin/VBox/Header/State")
 _lblMark = NodePath("Margin/VBox/Header/Mark")
 _crosshair = NodePath("Margin/VBox/Header/Crosshair")
+_btnRelease = NodePath("Margin/VBox/Header/BtnRelease")
 
 [node name="Face" type="Panel" parent="."]
 layout_mode = 1
@@ -84,6 +86,16 @@ mouse_filter = 2
 theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 12
 horizontal_alignment = 2
+
+[node name="BtnRelease" type="Button" parent="Margin/VBox/Header"]
+visible = false
+custom_minimum_size = Vector2(44, 20)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"Compact"
+theme_override_font_sizes/font_size = 11
+text = "UI_COMBAT_ACTIVE_SKILL_RELEASE"
+script = ExtResource("3_kbtn")
 
 [node name="Grid" type="GridContainer" parent="Margin/VBox"]
 layout_mode = 2

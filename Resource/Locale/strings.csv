@@ -359,6 +359,9 @@ UI_COMBAT_SKILL_COUNTER,技能 {0} / {1},Skill {0} / {1}
 UI_COMBAT_ACTIVE_SKILL_READY,【可用】,[Ready]
 UI_COMBAT_ACTIVE_SKILL_USABLE,主动技能可用,Active skill ready
 UI_COMBAT_ACTIVE_SKILL_MAX,主动技能最大,Active skill maxed
+UI_COMBAT_ACTIVE_SKILL_RELEASE,释放,Release
+UI_COMBAT_ACTIVE_SKILL_CONFIRM_TITLE,释放主动技,Release Active Skill
+UI_COMBAT_ACTIVE_SKILL_CONFIRM_DESC,确定释放 {0} 的「{1}」吗？,Release {1} for {0}?
 UI_COMBAT_TIP_HP,剩余生命 {0} / {1},HP {0} / {1}
 UI_COMBAT_TIP_ATTACK,物理攻击 {0} 魔法攻击 {1},Physical Attack {0} Magic Attack {1}
 UI_COMBAT_TIP_DEFENSE,物理防御 {0} 魔法防御 {1},Physical Defense {0} Magic Defense {1}

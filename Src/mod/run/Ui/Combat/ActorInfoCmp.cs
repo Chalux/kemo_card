@@ -21,6 +21,7 @@ public partial class ActorInfoCmp : BaseCmp
     [Export] private Label? _lblEnergy;
     [Export] private Label? _lblSkill;
     [Export] private Label? _lblSkillHint;
+    [Export] private Button? _btnRelease;
     [Export] private Label? _lblAttack;
     [Export] private Label? _lblMagicAttack;
     [Export] private Label? _lblDefense;
@@ -32,10 +33,16 @@ public partial class ActorInfoCmp : BaseCmp
 
     public BuffListCmp? BuffList => _buffs;
 
+    /// <summary>「释放主动技」回调（按钮只在有可释放档时可见）。</summary>
+    public Action? ReleaseRequested { get; set; }
+
     private CharacterBattleInstance? _character;
 
     protected override void InitEvent()
     {
+        if (_btnRelease != null)
+            OnClicks(_btnRelease, () => ReleaseRequested?.Invoke());
+
         Binder.OnMouseEnterExit(this, OnHoverEntered, OnHoverExited);
     }
 
@@ -110,4 +117,11 @@ public partial class ActorInfoCmp : BaseCmp
     }
 
     private void OnHoverExited() => KeywordTipService.Current?.HideTips(this);
+
+    /// <summary>「释放主动技」按钮的显隐（判据见 <see cref="CombatActiveSkillTips.CanRelease"/>）。</summary>
+    public void SetSkillRelease(bool visible)
+    {
+        if (_btnRelease != null)
+            _btnRelease.Visible = visible;
+    }
 }

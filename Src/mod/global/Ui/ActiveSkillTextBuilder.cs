@@ -19,6 +19,9 @@ public static class ActiveSkillTextBuilder
 
     private const string ThresholdKey = "UI_CHARACTER_ACTIVE_SKILL_THRESHOLD";
 
+    /// <summary>技能名字号（BBCode <c>[font_size]</c>）：比正文大一档，不用加粗（加粗在窄提示里挤成一团）。</summary>
+    private const int SkillNameFontSize = 16;
+
     /// <summary>
     /// 一档主动技的展示文本：<see cref="TierIndex"/> = 蓄力链下标（供调用方对齐"当前可释放档"），
     /// <see cref="Threshold"/> = 累计门槛，名称 / 描述为空时为 <c>""</c>。
@@ -65,8 +68,9 @@ public static class ActiveSkillTextBuilder
     }
 
     /// <summary>
-    /// 单档主动技的 BBCode 文案：<c>[b]名称[/b]（技能 N）{suffix}</c> 换行后接描述。
-    /// 名与描述都为空时返回 <c>""</c>；<paramref name="suffix"/> 供调用方附「可用」这类状态标记。
+    /// 单档主动技的 BBCode 文案：<c>[font_size=16]名称[/font_size]（技能 N）{suffix}</c> 换行后接描述
+    /// （技能名只用字号强调、不加粗）。名与描述都为空时返回 <c>""</c>；
+    /// <paramref name="suffix"/> 供调用方附「可用」这类状态标记。
     /// </summary>
     public static string Entry(
         string name,
@@ -77,7 +81,7 @@ public static class ActiveSkillTextBuilder
     {
         ArgumentNullException.ThrowIfNull(translate);
 
-        var header = string.IsNullOrWhiteSpace(name) ? "" : $"[b]{name}[/b]";
+        var header = string.IsNullOrWhiteSpace(name) ? "" : $"[font_size={SkillNameFontSize}]{name}[/font_size]";
         if (threshold > 0)
         {
             header += string.Format(translate(ThresholdKey), threshold);

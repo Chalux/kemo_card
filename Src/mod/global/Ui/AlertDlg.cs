@@ -164,6 +164,14 @@ public partial class AlertDlg : BaseDlg
             return;
         }
 
+        if (_payload.DescArgs is { Length: > 0 } args)
+        {
+            // 已自行翻译并注入参数：关掉节点自动翻译，避免对成品文案再做一次查表。
+            _lblDesc.AutoTranslateMode = Node.AutoTranslateModeEnum.Disabled;
+            _lblDesc.Text = string.Format(Localization.Tr(_payload.DescKey), args);
+            return;
+        }
+
         _lblDesc.AutoTranslateMode = Node.AutoTranslateModeEnum.Inherit;
         _lblDesc.Text = _payload.DescKey;
     }

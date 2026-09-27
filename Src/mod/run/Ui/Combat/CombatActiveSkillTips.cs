@@ -32,6 +32,14 @@ public static class CombatActiveSkillTips
     /// <summary>技能进度后缀：满档（<c>S</c> 已达 <c>Cap</c>，最高档可释放）。</summary>
     public const string MaxKey = "UI_COMBAT_ACTIVE_SKILL_MAX";
 
+    /// <summary>是否有可释放档（释放按钮的显示判据；无主动链恒 <c>false</c>）。</summary>
+    public static bool CanRelease(CharacterBattleInstance character)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+
+        return character.ActiveSkillChain.Count > 0 && character.ResolveCastableTier() >= 0;
+    }
+
     /// <summary>
     /// 技能进度后缀（已本地化）：满档 → 最大；有可释放档 → 可用；无主动链 / 尚不可用 → <c>null</c>。
     /// 满档优先于可用（单档角色的「可用」即「满档」，只提示最大）。
@@ -51,7 +59,7 @@ public static class CombatActiveSkillTips
             return translate(MaxKey);
         }
 
-        return character.ResolveCastableTier() >= 0 ? translate(UsableKey) : null;
+        return CanRelease(character) ? translate(UsableKey) : null;
     }
 
     /// <summary>

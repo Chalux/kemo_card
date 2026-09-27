@@ -97,18 +97,30 @@ public sealed class CombatActiveSkillTipsTests
         var tip = CombatActiveSkillTips.BuildTip(character, Skill, Tr, "f5eedd");
 
         Assert.That(tip, Does.StartWith("技能 10 / 16\n\n"), "首行是当前进度");
-        Assert.That(tip, Does.Contain("[b]skill.t1.name[/b]（技能 6）\nskill.t1.desc"), "未达标档照常列出（不上色）");
+        Assert.That(tip, Does.Contain("[font_size=16]skill.t1.name[/font_size]（技能 6）\nskill.t1.desc"), "未达标档照常列出（不上色）");
         Assert.That(
             tip,
-            Does.Contain("[color=#f5eedd][b]skill.t2.name[/b]（技能 10）【可用】\nskill.t2.desc[/color]"),
+            Does.Contain("[color=#f5eedd][font_size=16]skill.t2.name[/font_size]（技能 10）【可用】\nskill.t2.desc[/color]"),
             "当前可释放档加【可用】并整体高亮");
-        Assert.That(tip, Does.Contain("[b]skill.t3.name[/b]（技能 16）\nskill.t3.desc"), "更高档照常列出");
-        Assert.That(tip, Does.Not.Contain("[color=#f5eedd][b]skill.t1"), "只有可释放档上色");
+        Assert.That(tip, Does.Contain("[font_size=16]skill.t3.name[/font_size]（技能 16）\nskill.t3.desc"), "更高档照常列出");
+        Assert.That(tip, Does.Not.Contain("[color=#f5eedd][font_size=16]skill.t1"), "只有可释放档上色");
     }
 
     [Test]
     public void BuildTip_is_empty_without_active_chain()
     {
         Assert.That(CombatActiveSkillTips.BuildTip(Character(), Skill, Tr), Is.Empty);
+    }
+
+    [Test]
+    public void CanRelease_tracks_the_castable_tier()
+    {
+        var character = Character(6, 4);
+        Assert.That(CombatActiveSkillTips.CanRelease(character), Is.False, "S 未达第一档门槛");
+
+        character.GainSkillCounter(6);
+        Assert.That(CombatActiveSkillTips.CanRelease(character), Is.True);
+
+        Assert.That(CombatActiveSkillTips.CanRelease(Character()), Is.False, "无主动链恒 false");
     }
 }

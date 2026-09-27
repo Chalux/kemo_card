@@ -2,8 +2,9 @@
 
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/ActorInfoCmp.cs" id="1_script"]
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffListCmp.tscn" id="2_buffs"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
 
-[node name="ActorInfoCmp" type="PanelContainer" node_paths=PackedStringArray("_lblName", "_lblMeta", "_lblEnergy", "_lblSkill", "_lblSkillHint", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_buffs")]
+[node name="ActorInfoCmp" type="PanelContainer" node_paths=PackedStringArray("_lblName", "_lblMeta", "_lblEnergy", "_lblSkill", "_lblSkillHint", "_btnRelease", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_buffs")]
 custom_minimum_size = Vector2(210, 0)
 layout_mode = 3
 anchors_preset = 0
@@ -15,7 +16,8 @@ _lblName = NodePath("Margin/VBox/Header/Name")
 _lblMeta = NodePath("Margin/VBox/Meta")
 _lblEnergy = NodePath("Margin/VBox/Resources/Energy")
 _lblSkill = NodePath("Margin/VBox/Resources/Skill")
-_lblSkillHint = NodePath("Margin/VBox/Resources/SkillHint")
+_lblSkillHint = NodePath("Margin/VBox/Resources/SkillRow/SkillHint")
+_btnRelease = NodePath("Margin/VBox/Resources/SkillRow/BtnRelease")
 _lblAttack = NodePath("Margin/VBox/Grid/AttackValue")
 _lblMagicAttack = NodePath("Margin/VBox/Grid/MagicAttackValue")
 _lblDefense = NodePath("Margin/VBox/Grid/DefenseValue")
@@ -88,12 +90,28 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 15
 
-[node name="SkillHint" type="Label" parent="Margin/VBox/Resources"]
-custom_minimum_size = Vector2(0, 19)
+[node name="SkillRow" type="HBoxContainer" parent="Margin/VBox/Resources"]
 layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="SkillHint" type="Label" parent="Margin/VBox/Resources/SkillRow"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 13
+
+[node name="BtnRelease" type="Button" parent="Margin/VBox/Resources/SkillRow"]
+visible = false
+custom_minimum_size = Vector2(52, 22)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"Compact"
+theme_override_font_sizes/font_size = 12
+text = "UI_COMBAT_ACTIVE_SKILL_RELEASE"
+script = ExtResource("3_kbtn")
 
 [node name="Grid" type="GridContainer" parent="Margin/VBox"]
 layout_mode = 2
