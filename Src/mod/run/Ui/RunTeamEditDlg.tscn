@@ -236,7 +236,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 6
 
 [node name="Presenter" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=162115224 instance=ExtResource("4_presenter")]
-custom_minimum_size = Vector2(0, 150)
+custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 
 [node name="LblName" type="Label" parent="Layout/Content/VBox/Body/Right/VBox/Preview" unique_id=566190417]
