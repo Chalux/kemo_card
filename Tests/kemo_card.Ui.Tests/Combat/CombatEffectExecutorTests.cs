@@ -1,7 +1,6 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Effects;
-using KemoCard.Mod.Combat.Rules.Builtin;
 using KemoCard.Mod.Combat.Runtime;
 using NUnit.Framework;
 

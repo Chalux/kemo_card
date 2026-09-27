@@ -807,7 +807,8 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
     /// <summary>
     /// 「释放主动技」按钮（队友卡 / 操控角色面板）：二次确认后发 <see cref="CastActiveSkillCommand"/>。
-    /// 确认文案带上角色名与将释放的档位技能名；无主动链 / 无可释放档直接忽略。
+    /// 确认文案带上角色名、将释放的档位技能名与技能效果（效果先剥掉关键词标记再进 Label）；
+    /// 无主动链 / 无可释放档直接忽略。
     /// </summary>
     private void OnReleaseSkillRequested(int characterIndex)
     {

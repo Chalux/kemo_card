@@ -1,5 +1,4 @@
 using KemoCard.Mod.Combat.Rules;
-using KemoCard.Mod.Combat.Rules.Builtin;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests.Combat;

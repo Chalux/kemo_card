@@ -1,7 +1,6 @@
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Mod;
-using KemoCard.Mod.Global;
 using KemoCard.Mod.Run;
 using KemoCard.Mod.Run.Ui;
 using NUnit.Framework;
