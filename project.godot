@@ -22,6 +22,7 @@ buses/default_bus_layout="uid://fd5hvb3qte7v"
 [autoload]
 
 DialogueManager="*uid://c3rodes2l3gxb"
+MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
 
 [dialogue_manager]
 
@@ -40,7 +41,7 @@ project/assembly_name="kemo_card"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_mcp_toolkit/plugin.cfg")
 
 [gui]
 

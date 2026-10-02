@@ -16,8 +16,7 @@
 /addons/beckett/
 /.beckett/
 
-# Godot MCP toolkit plugin & local AI config (kept local, not version-controlled)
-/addons/godot_mcp_toolkit/
+# Godot MCP toolkit：插件本体已入库（随项目一起用），仅本地 AI 配置不入库
 /opencode.json
 
 # Git worktrees
