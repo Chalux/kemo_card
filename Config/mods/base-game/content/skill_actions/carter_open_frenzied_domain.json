@@ -1,0 +1,4 @@
+{
+  "kind": "SetDomain",
+  "params": { "gameplayEffectId": "carter_frenzied_domain", "turns": 2 }
+}

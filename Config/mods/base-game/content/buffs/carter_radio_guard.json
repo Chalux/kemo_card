@@ -1,0 +1,15 @@
+{
+  "displayNameId": "buff.carter_radio_guard.name",
+  "descId": "buff.carter_radio_guard.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    {
+      "attributeId": "MagicDefense",
+      "operation": "Add",
+      "magnitude": { "kind": "TeamMaxHealthScaled", "flat": 25, "ratio": 0.05 }
+    }
+  ]
+}

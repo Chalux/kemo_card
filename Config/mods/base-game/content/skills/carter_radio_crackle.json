@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.carter_radio_crackle.name",
+  "descId": "skill.carter_radio_crackle.desc",
+  "actionRefs": [
+    { "actionId": "carter_radio_guard" },
+    { "actionId": "carter_radio_draw" }
+  ],
+  "tags": ["buff"]
+}

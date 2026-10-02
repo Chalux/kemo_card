@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.carter_aishi_rescue.name",
+  "descId": "skill.carter_aishi_rescue.desc",
+  "actionRefs": [
+    { "actionId": "carter_aishi_guard" },
+    { "actionId": "carter_aishi_draw" }
+  ],
+  "tags": ["buff"]
+}

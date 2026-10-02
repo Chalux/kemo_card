@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.carter_heaven_gate_knock.name",
+  "descId": "skill.carter_heaven_gate_knock.desc",
+  "actionRefs": [
+    { "actionId": "carter_heaven_gate_shield" },
+    { "actionId": "carter_heaven_gate_mending" }
+  ],
+  "tags": ["buff"]
+}

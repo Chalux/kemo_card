@@ -259,4 +259,33 @@ battle.training_dummy_fatal.name,木桩·必杀,Fatal Dummy
 battle.training_dummy_fatal.desc,单只必杀木桩：每回合随机单体 10000 点物理伤害，用于验证战斗失败流程。,One fatal dummy: a random character takes 10000 physical damage each turn. For testing the defeat flow.
 battle.training_dummy_light.name,木桩·轻击,Light Dummy
 battle.training_dummy_light.desc,单只轻击木桩：每回合随机单体 50 点物理伤害，用于验证常规战斗流程。,One light dummy: a random character takes 50 physical damage each turn.
+char.carter.name,卡特,Carter
+attr.shield.name,护盾,Shield
+card.carter_blood_ladder.name,热血阶梯,Blood Ladder
+skill.carter_blood_ladder.name,热血阶梯,Blood Ladder
+skill.carter_blood_ladder.desc,己方 1 人获得 100 点护盾，抽卡 +3。,Grant one ally 100 Shield and +3 draws.
+card.carter_aishi_rescue.name,爱世的救因,Aishi's Rescue
+skill.carter_aishi_rescue.name,爱世的救因,Aishi's Rescue
+skill.carter_aishi_rescue.desc,己方全体 2 回合【物理防御 +25】，抽卡 +1。,Grant all allies +25 P.Def for 2 turns and +1 draw.
+buff.carter_aishi_guard.name,爱世的救因,Aishi's Rescue
+buff.carter_aishi_guard.desc,物理防御 +25，持续 2 回合。,P.Def +25 for 2 turns.
+card.carter_radio_crackle.name,电台作响,Radio Crackle
+skill.carter_radio_crackle.name,电台作响,Radio Crackle
+skill.carter_radio_crackle.desc,己方全体 1 回合【魔法防御 +25 并叠加队伍生命上限 5%（向下取整，结算时取值）】，抽卡 +2。,Grant all allies +25 M.Def plus 5% of the party Max HP (rounded down; snapshotted on resolve) for 1 turn and +2 draws.
+buff.carter_radio_guard.name,电台作响,Radio Crackle
+buff.carter_radio_guard.desc,魔法防御 +25 并叠加队伍生命上限 5%（向下取整），持续 1 回合。,M.Def +25 plus 5% of the party Max HP (rounded down) for 1 turn.
+card.carter_heaven_gate_knock.name,叩响天堂之门,Knock on Heaven's Gate
+skill.carter_heaven_gate_knock.name,叩响天堂之门,Knock on Heaven's Gate
+skill.carter_heaven_gate_knock.desc,自身获得 50 点护盾；自身 1 回合【受到攻击后，恢复 30 点生命】。,Grant self 50 Shield; for 1 turn heal 30 HP each time self is attacked.
+buff.carter_heaven_gate_mending.name,叩响天堂之门,Knock on Heaven's Gate
+buff.carter_heaven_gate_mending.desc,受到攻击后每次受击恢复 30 点生命（不吃回复量加成），持续 1 回合。,Heal 30 HP per hit taken (does not scale with Heal Power) for 1 turn.
+buff.carter_frenzied_taunt.name,挑衅弦音,Taunting Strings
+buff.carter_frenzied_taunt.desc,嘲讽 +5，持续 2 回合。,Taunt +5 for 2 turns.
+skill.carter_frenzied_strings.name,狂热琴弦,Frenzied Strings
+skill.carter_frenzied_strings.desc,队伍生命上限 +200，持续 2 回合；自身 2 回合【嘲讽 +5】。,Raise the party Max HP by 200 for 2 turns; grant self +5 Taunt for 2 turns.
+ge.carter_frenzied_domain.name,狂热琴弦·领域,Frenzied Strings Domain
+buff.carter_p1.desc,自身不受手牌槽伤害效果影响。,Immune to hand-slot damage effects.
+buff.carter_p2.desc,红属性·动物角色每回合抽卡 +1。,Red or Animal characters draw +1 card each turn.
+buff.carter_p3.desc,自身嘲讽 +5。,Self Taunt +5.
+buff.carter_p4.desc,红属性·动物角色在受到伤害后获得 1 护盾。,Red or Animal characters gain 1 Shield after taking damage.
 

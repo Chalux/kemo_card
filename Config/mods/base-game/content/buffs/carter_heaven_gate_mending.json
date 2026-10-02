@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.carter_heaven_gate_mending.name",
+  "descId": "buff.carter_heaven_gate_mending.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "hooks": {
+    "onDamaged": [
+      { "effectId": "carter_heaven_gate_heal", "params": { "hookTargets": "team" } }
+    ]
+  }
+}

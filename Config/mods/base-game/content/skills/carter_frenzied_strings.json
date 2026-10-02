@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.carter_frenzied_strings.name",
+  "descId": "skill.carter_frenzied_strings.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "carter_open_frenzied_domain" },
+    { "actionId": "carter_frenzied_taunt" }
+  ],
+  "tags": ["active"]
+}

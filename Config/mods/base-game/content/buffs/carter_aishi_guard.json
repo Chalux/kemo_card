@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.carter_aishi_guard.name",
+  "descId": "buff.carter_aishi_guard.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalDefense", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 25 } }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.carter_blood_ladder.name",
+  "descId": "skill.carter_blood_ladder.desc",
+  "actionRefs": [
+    { "actionId": "carter_blood_ladder_shield" },
+    { "actionId": "carter_blood_ladder_draw" }
+  ],
+  "tags": ["buff"]
+}

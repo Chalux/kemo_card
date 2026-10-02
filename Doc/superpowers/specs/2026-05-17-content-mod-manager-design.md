@@ -422,6 +422,8 @@ Skill DTO **不含** `ESkillTrigger` / `IsInstant`。
 
 > **2026-09-23 新增成员**（冯·诺依曼套件）：`EEffectKind` 与 `ESkillActionKind` 各加三个——`SetActionCount`（敌人行动计数，`params.count` 缺省 2）、`SetDomain`（展开队伍领域，`params.gameplayEffectId` + 可选 `turns`）、`DiscardSlot`（弃置指定手牌槽，`params.slotIndex`）。前者与 `Damage` 一样两条通道（效果 / 技能动作）同源，`EffectDto` 与 `SkillActionDto` 都可用。
 
+> **2026-09-26 新增成员**（卡特套件）：`EEffectKind` 与 `ESkillActionKind` 各加两个——`ModifyDrawCount`（抽卡数量修正，`params.amount` 可为负；原先只有技能动作通道，本轮补上**效果通道**，以便 buff 钩子投放常驻抽卡光环）、`GainShield`（授予护盾，`params.amount`；护盾本体口径见战斗规格 §14.8.7）。两者同为两条通道同源。
+
 > 2026-09-21 合并：本节的 `ERace` / `ERarity` 成员清单以本文 §13.4.1 为准（`ERace` 收敛见本文 §15.1，`ERarity` 档名收敛见本文 §15.4）。
 
 ---
@@ -816,6 +818,8 @@ content/items/*.json
 - 莱因哈特：黑船宝藏 `20/2`、呼啸激攻 `30/1`、碧蓝大海航行 `40/0`、辉耀宝刀 `30/1`。
 - 参宿四（2026-09-25）：干涉·赤红矩阵 `30生命/1物防`、掩星·不可预知 `30生命/1物防`、
   真见·吞食天地 `40生命`、操控·键闭 `40生命`。
+- 卡特（2026-09-26）：热血阶梯 `20生命/2魔防`、爱世的救因 `20生命/2物防`、
+  电台作响 `20生命/2魔防`、叩响天堂之门 `40生命`。
 
 卡组属性求和口径见本文 §14.2（`CardStatBlockDto` 路径见 §14.1）。
 

@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.carter_blood_ladder.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "carter_blood_ladder" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicDefense": 2
+    }
+  },
+  "role": "Shield",
+  "priority": 40,
+  "cardType": "Guard",
+  "targetSide": "Ally",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

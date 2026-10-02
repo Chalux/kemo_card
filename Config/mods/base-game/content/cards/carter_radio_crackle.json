@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.carter_radio_crackle.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "carter_radio_crackle" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicDefense": 2
+    }
+  },
+  "role": "Shield",
+  "priority": 40,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

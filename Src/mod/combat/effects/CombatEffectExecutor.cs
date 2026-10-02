@@ -136,6 +136,8 @@ public sealed class CombatEffectExecutor
             case EEffectKind.SetActionCount:
             case EEffectKind.SetDomain:
             case EEffectKind.DiscardSlot:
+            case EEffectKind.ModifyDrawCount:
+            case EEffectKind.GainShield:
                 _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets, depth);
                 break;
             case EEffectKind.ApplyBuff:

@@ -1,0 +1,7 @@
+{
+  "displayNameId": "ge.carter_frenzied_domain.name",
+  "durationPolicy": "Instant",
+  "modifiers": [
+    { "attributeId": "MaxHealth", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 200 } }
+  ]
+}

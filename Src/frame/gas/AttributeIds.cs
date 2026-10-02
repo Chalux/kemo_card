@@ -22,6 +22,17 @@ public static class AttributeIds
     public const string Taunt = "Taunt";
 
     /// <summary>
+    /// 护盾（2026-09-26 新增）：点名该角色槽位、且来源为敌方的伤害先按 <b>1 点护盾抵 1 点伤害</b>抵扣，
+    /// 抵扣量从护盾里扣掉，余额再落到队伍共享账本（见战斗规格「护盾」）。
+    /// </summary>
+    /// <remarks>
+    /// 护盾是<b>可消耗资源</b>而非修饰符：授予走 <c>GainShield</c>（写属性 base 值），
+    /// 受击抵扣时同样写 base 值，因此聚合重算不会把它抹掉。0 = 无护盾，无上限，战斗内永久。
+    /// 队伍账本（<c>scope: Team</c>）与自身结算的伤害（中毒 / 手牌槽伤害）不抵扣——与受击钩子同口径。
+    /// </remarks>
+    public const string Shield = "Shield";
+
+    /// <summary>
     /// 全伤害增加：与受伤增加同桶加算，连携单独乘算——
     /// <c>伤害 × (1 + 本属性 + Σ受伤增加) × (1 + 连携加成)</c>（战斗规格 §1.3）。
     /// </summary>

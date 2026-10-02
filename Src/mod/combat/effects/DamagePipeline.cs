@@ -50,7 +50,49 @@ internal static class DamagePipeline
 
         var packet = CreatePacket(source, target, amount, effectId, kind, element);
         simulation.Rules.DispatchBeforeDamage(simulation.CreateContext(), ref packet);
+        AbsorbByShield(simulation, source, target, ref packet);
         return MathF.Max(0f, packet.Amount);
+    }
+
+    /// <summary>
+    /// 护盾抵扣（2026-09-26）：点名玩家角色槽位、且来源为敌方的伤害，先按 <b>1 点护盾抵 1 点伤害</b>
+    /// 从该角色的护盾里扣，扣完的余额才落到队伍共享账本（见战斗规格「护盾」）。
+    /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item>队伍账本（<c>scope: Team</c>）没有具体受击角色，不抵扣——与「分槽护盾不吃账本目标」同口径；</item>
+    /// <item>自身结算的伤害（中毒 / 手牌槽伤害，<c>source == target</c>）与友方来源的伤害不抵扣，
+    /// 与受击钩子 <c>onDamaged</c> 的「敌方来源」口径一致；</item>
+    /// <item>放在规则之后：槽位减伤先算，护盾抵扣的是规则修正后的最终数额。</item>
+    /// </list>
+    /// </remarks>
+    private static void AbsorbByShield(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        CombatTargetRef target,
+        ref DamagePacket packet)
+    {
+        if (packet.Amount <= 0f)
+            return;
+
+        if (!SharedHpSettlement.IsPlayerSlot(target))
+            return;
+
+        if (source.Side != ECombatSide.Enemy || source == target)
+            return;
+
+        var characters = simulation.PlayerTeam.Characters;
+        if (target.Index >= characters.Count)
+            return;
+
+        var asc = characters[target.Index].Asc;
+        var shield = asc.GetCurrentValue(AttributeIds.Shield);
+        if (shield <= 0f)
+            return;
+
+        var absorbed = MathF.Min(shield, packet.Amount);
+        asc.SetBaseValue(AttributeIds.Shield, shield - absorbed);
+        packet.Amount -= absorbed;
     }
 
     /// <summary>写入完成后广播 <c>OnAfterDamage</c>（数额 ≤ 0 视为未发生伤害事件，不广播）。</summary>
@@ -64,12 +106,10 @@ internal static class DamagePipeline
         EElement element = EElement.None)
     {
         ArgumentNullException.ThrowIfNull(simulation);
-        if (appliedAmount <= 0f)
-            return;
 
-        var packet = CreatePacket(source, target, appliedAmount, effectId, kind, element);
-        simulation.Rules.DispatchAfterDamage(simulation.CreateContext(), in packet);
-        // 受击钩子（onDamaged，2026-09-25）：玩家角色被**敌方来源**命中时记一次。
+        // 受击钩子（onDamaged，2026-09-25）的记账：玩家角色被**敌方来源**的攻击命中即记一次，
+        // 与"最终掉没掉血"解耦（2026-09-26 起）——护盾 / 减伤把伤害完全抵消时角色仍然"挨了这一下"，
+        // 「受到攻击后回复生命」「受到伤害后获得护盾」都应触发（见战斗规格「护盾」「受击钩子」）。
         // 同一批次先累计、批次结束统一触发（见 CombatSimulation.FlushOnDamagedHits）；
         // 中毒 / 手牌槽伤害等由持有者自身结算（source == target），不计入。
         if (SharedHpSettlement.IsPlayerSlot(target) &&
@@ -78,6 +118,12 @@ internal static class DamagePipeline
         {
             simulation.RecordDamagedPlayerHit(target.Index);
         }
+
+        if (appliedAmount <= 0f)
+            return;
+
+        var packet = CreatePacket(source, target, appliedAmount, effectId, kind, element);
+        simulation.Rules.DispatchAfterDamage(simulation.CreateContext(), in packet);
 
         // 表现事件（规格 §16）：所有生产伤害写入都经过这里，是唯一的 DamageDealt 记账点。
         PresentationEmitter.EmitDamage(simulation, source, target, appliedAmount, kind, element, effectId);

@@ -147,6 +147,20 @@ public enum EEffectKind
     /// 暴风（<c>slot.storm</c>）逐相邻槽触发本效果。
     /// </summary>
     DiscardSlot,
+
+    /// <summary>
+    /// 投放抽牌数量修正（<c>params.amount</c>，可为负）：供每回合抽牌公式取最大 ±N（规格 §4.2），
+    /// 与同名技能动作同义，供 <b>buff 钩子</b>使用（「红属性·动物角色每回合抽卡 +1」这类常驻光环）。
+    /// 只作用于本阶段的抽牌步骤，用完即弃（<c>PlayerPhasePipeline</c> 抽牌后清账）。
+    /// </summary>
+    ModifyDrawCount,
+
+    /// <summary>
+    /// 授予护盾（<c>params.amount</c>）：给目标玩家角色加可消耗护盾值，受击时优先抵扣
+    /// （见战斗规格「护盾」）。与同名技能动作同义，供 <b>buff 钩子</b>使用
+    /// （「红属性·动物角色受到伤害后获得 1 护盾」这类被动）。
+    /// </summary>
+    GainShield,
 }
 
 public enum ESkillActionKind
@@ -174,6 +188,8 @@ public enum ESkillActionKind
     SetDomain,
     /// <summary>弃置来源角色指定手牌槽的牌（params.slotIndex，0 起；只弃未标记的牌）。</summary>
     DiscardSlot,
+    /// <summary>授予护盾（params.amount）：给目标玩家角色加可消耗护盾值（见战斗规格「护盾」）。</summary>
+    GainShield,
 }
 
 [Flags]

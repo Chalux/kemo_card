@@ -513,6 +513,19 @@ public sealed class ContentDefinitionValidator
                 ValidateAttachSlotParams(EContentCategory.Effect, effect.Id, effect.Params, store, errors);
             }
 
+            // 抽卡数量修正（2026-09-26 效果通道）：amount 非整数 / 缺失 ⇒ 运行期无操作，
+            // 常驻抽卡光环会静默失效，必须在内容准入阶段拦下。
+            if (effect.Kind == EEffectKind.ModifyDrawCount && effect.Params is not null)
+            {
+                ValidateIntParam(EContentCategory.Effect, effect.Id, effect.Params, "amount", errors, allowNegative: true);
+            }
+
+            // 护盾授予（2026-09-26 效果通道）：amount 非整数 ⇒ 发不出护盾（受击抵扣也就永远不生效）。
+            if (effect.Kind == EEffectKind.GainShield && effect.Params is not null)
+            {
+                ValidateIntParam(EContentCategory.Effect, effect.Id, effect.Params, "amount", errors, allowNegative: false);
+            }
+
             ValidateCombatConditions(EContentCategory.Effect, effect.Id, effect.Conditions, errors);
             ValidateTargetFilterCondition(EContentCategory.Effect, effect.Id, effect.Params, errors);
             ValidateScaledRuntimeParams(EContentCategory.Effect, effect.Id, effect.Params, errors);
@@ -713,6 +726,12 @@ public sealed class ContentDefinitionValidator
             if (action.Kind == ESkillActionKind.AttachSlotBuff)
             {
                 ValidateAttachSlotParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
+            }
+
+            // 护盾授予（2026-09-26）：amount 非整数 ⇒ 发不出护盾，卡面效果静默失效。
+            if (action.Kind == ESkillActionKind.GainShield && action.Params is not null)
+            {
+                ValidateIntParam(EContentCategory.SkillAction, action.Id, action.Params, "amount", errors, allowNegative: false);
             }
 
             if (action.Kind == ESkillActionKind.GainOrb)

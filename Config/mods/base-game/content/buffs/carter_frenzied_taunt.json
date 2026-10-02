@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.carter_frenzied_taunt.name",
+  "descId": "buff.carter_frenzied_taunt.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "Taunt", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 5 } }
+  ]
+}

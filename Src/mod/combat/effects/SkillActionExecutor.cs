@@ -1,6 +1,7 @@
 using System.Text.Json;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
@@ -88,6 +89,8 @@ public sealed class SkillActionExecutor
                 EEffectKind.SetActionCount => ESkillActionKind.SetActionCount,
                 EEffectKind.SetDomain => ESkillActionKind.SetDomain,
                 EEffectKind.DiscardSlot => ESkillActionKind.DiscardSlot,
+                EEffectKind.ModifyDrawCount => ESkillActionKind.ModifyDrawCount,
+                EEffectKind.GainShield => ESkillActionKind.GainShield,
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
             },
             ScriptPath = effect.ScriptPath,
@@ -128,6 +131,9 @@ public sealed class SkillActionExecutor
                 break;
             case ESkillActionKind.ModifyDrawCount:
                 ApplyModifyDrawCount(simulation, source, targets, mergedParams, ReadInt(mergedParams, "amount", 0));
+                break;
+            case ESkillActionKind.GainShield:
+                ApplyGainShield(simulation, source, targets, mergedParams, ReadInt(mergedParams, "amount", 0));
                 break;
             case ESkillActionKind.ExecuteScript:
                 ApplyExecuteScript(action, mergedParams, simulation, source, targets);
@@ -583,6 +589,36 @@ public sealed class SkillActionExecutor
 
         foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets))
             character.AddDrawModifier(amount);
+    }
+
+    /// <summary>
+    /// 授予护盾（2026-09-26）：<c>params.amount</c> 加到目标玩家角色的护盾属性上（可叠加、无上限）。
+    /// 带 <c>hookTargets</c> / <c>targetFilter</c> 时按目标选择器重解析（「己方 1 人获得 100 点护盾」用卡牌
+    /// 点选出的目标；buff 钩子缺省落在持有者自身）。
+    /// </summary>
+    /// <remarks>
+    /// 写属性 <b>base</b> 值（<see cref="KemoCard.Frame.Gas.AbilitySystemComponent.SetBaseValue"/>）：
+    /// 护盾是可消耗资源，若写 current 值，任何一次聚合重算都会把它抹回 base。
+    /// </remarks>
+    private static void ApplyGainShield(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters,
+        int amount)
+    {
+        if (amount == 0)
+            return;
+
+        var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
+            ? CombatTargetSelector.Resolve(simulation, source, parameters)
+            : targets;
+
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets))
+        {
+            var asc = character.Asc;
+            asc.SetBaseValue(AttributeIds.Shield, asc.GetCurrentValue(AttributeIds.Shield) + amount);
+        }
     }
 
     /// <summary>

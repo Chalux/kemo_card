@@ -1,0 +1,22 @@
+{
+  "displayNameId": "card.carter_heaven_gate_knock.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "carter_heaven_gate_knock" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Shield",
+  "priority": 40,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

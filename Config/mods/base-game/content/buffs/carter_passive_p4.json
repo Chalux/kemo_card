@@ -1,0 +1,15 @@
+{
+  "descId": "buff.carter_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Red"], "raceAny": ["Animal"] } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onDamaged": [
+      { "effectId": "carter_p4_shield" }
+    ]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.carter_aishi_rescue.name",
+  "element": 1,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "carter_aishi_rescue" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalDefense": 2
+    }
+  },
+  "role": "Shield",
+  "priority": 40,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

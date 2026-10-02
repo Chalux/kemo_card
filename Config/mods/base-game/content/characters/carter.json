@@ -1,0 +1,24 @@
+{
+  "displayNameId": "char.carter.name",
+  "element": "Red",
+  "role": "Shield",
+  "race": ["Animal"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "carter_frenzied_strings", "cooldown": 6 }
+  ],
+  "cards": [
+    "carter_blood_ladder",
+    "carter_aishi_rescue",
+    "carter_radio_crackle",
+    "carter_heaven_gate_knock"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "carter_passive_p1", "requiredPotential": 0 },
+    { "buffId": "carter_passive_p2", "requiredPotential": 10 },
+    { "buffId": "carter_passive_p3", "requiredPotential": 30 },
+    { "buffId": "carter_passive_p4", "requiredPotential": 50 }
+  ]
+}

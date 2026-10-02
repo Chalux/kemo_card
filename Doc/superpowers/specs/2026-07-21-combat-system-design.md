@@ -394,6 +394,7 @@ activeSkillChain: [
 - 2026-09-20：伤害维度拆成 `Kind` + `Element`；普通攻击实装（原规格已归档，正文见 §12）；「回合开始每回合只发生一次」修正（§2.1）。
 - 2026-09-21：**战斗域下级规格合并进本文**（原 4 份规格归档，映射见文首「本文承载的下级规格」）；伤害缩放统一为「增伤与受伤增加一律加算，只有连携乘算」（§1.3 / §14.11.2）；GAS 通道魔法伤害与 `attackScale` 落地（§14.5）；普攻次数 / 追打 / 专项倍率（§14.6）；Combat 条件域启用（§14.7）；`PartyCountScaled` / 手牌槽费用归零 / 封印免疫（§14.8）；充能互斥与 `OrbDamageScale` 掩码（§13.2 / §14.11.1）。
 - 2026-09-24：新增 §16 **表现事件流**（`CombatSimulation.Presentation`，逻辑只记事件、界面事后播放）；`CombatTargeting` 公开合法目标 / 自动目标解析供界面使用；充能球 UI 落位改为 `CombatWin.OrbQueueCmp`（§11.6 / §11.8）；§12.8 / §13.7 后置项清账。
+- 2026-09-26：新增 §14.8.7 **护盾**（`Shield` 属性 + `GainShield` 双通道 + 伤害包管线按 1:1 抵扣）；受击记数与最终伤害解耦（§14.8.5，护盾吃满整击仍触发 `onDamaged`）；效果通道补 `ModifyDrawCount`；新增角色卡特（红 / Shield / 动物，§15.5）。
 
 ---
 
@@ -913,6 +914,9 @@ activeSkillChain: [
 - **批次语义**：一次敌方技能（`ExecuteEnemySkill`）为一个批次——批次内每次受击先记数
   （`DamagePipeline.NotifyAfter` → `CombatSimulation.RecordDamagedPlayerHit`），**全部伤害结算完**
   后按受击次数逐次触发钩子（`FlushOnDamagedHits`）。「受到 N 次伤害回复 N 次」即由此保证。
+- **记数与"最终掉没掉血"解耦（2026-09-26）**：敌方攻击**命中**该槽位即记一次受击，即使护盾（§14.8.7）
+  或减伤把最终伤害压到 0 也计入。因此「受到**攻击**后回复生命」与「受到**伤害**后获得护盾」在护盾吃满
+  整击时都会触发；`DamageDealt` 表现事件仍只在最终伤害 > 0 时发射。
 - 治疗落点：玩家侧治疗只认队伍账本（§1.3），因此"受击回血"的钩子引用必须写 `hookTargets: "team"`。
 
 #### 14.8.6 队伍生命上限缩放（`TeamMaxHealthScaled`）（2026-09-25 新增）
@@ -920,6 +924,25 @@ activeSkillChain: [
 - 新 `EMagnitudeKind`：`flat + floor(队伍生命上限 × ratio)`，**在 buff 实例创建时取值一次并缓存**
   （快照语义）：卡牌结算当场取数值，之后队伍生命上限变化不影响本实例（`BuffInstance._snapshotMagnitudes`）。
 - 用于「物理防御 +1，并叠加队伍生命上限 3% 的数值（向下取整，仅在卡牌结算时取值）」。
+
+#### 14.8.7 护盾（`Shield`）（2026-09-26 新增）
+
+- 新属性 **`Shield`**（内容侧 `attributes/Shield.json`，默认 0、`allowNegative: false`）：**可消耗资源**，
+  存在属性 base 值上——写 current 值会被任何一次聚合重算抹回 base，因此授予与抵扣都走
+  `AbilitySystemComponent.SetBaseValue`。可叠加、无上限、战斗内永久，不随回合清零。
+- **抵扣口径**：**1 点护盾抵 1 点伤害**。抵扣发生在伤害包管线**规则修正之后**
+  （`DamagePipeline.RunBefore` → `AbsorbByShield`）：按 `min(当前护盾, 伤害)` 抵扣，护盾按实际抵扣量
+  扣减，**余额才落到队伍共享账本**。
+- **抵扣范围**（与 §14.8.5 受击钩子同口径）：
+  - 只抵扣**点名玩家角色槽位**（`IsPlayerSlot`）的伤害——队伍账本（`scope: Team`）没有具体受击角色，
+    不吃护盾（与「分槽护盾不吃账本目标」一致）；
+  - 只抵扣**敌方来源**（`source.Side == Enemy` 且 `source != target`）——中毒、手牌槽伤害等由持有者
+    自身结算的惩罚不吃护盾；
+  - 范围（`All`）伤害逐槽结算，每个槽位各吃自己那一份护盾。
+- **授予通道**：`GainShield`（`params.amount`）——技能动作与效果两条通道同源
+  （`ESkillActionKind.GainShield` / `EEffectKind.GainShield`），效果通道供 buff 钩子使用
+  （「红属性·动物角色受到伤害后获得 1 护盾」）。
+- **界面**：护盾数值的展示（角色卡 / 血条）属**后置项**，当前只有属性可读，尚无 UI 消费方。
 
 ### 14.9 （空号：卡组属性预算）
 
@@ -1164,6 +1187,40 @@ mod 侧统一入口是 `Src\mod\combat\effects\DamageScaling.cs`（直伤 / 普�
 
 > 抽卡口径沿用 §4.2/§4.3：`ModifyDrawCount` 只投放"下一次抽牌步骤"的修正（同向取最大、不叠加），
 > 卡面的"N 回合"约束的是防御类 buff 的时长。
+
+---
+
+### 15.5 角色内容（`carter` 卡特）（2026-09-26）
+
+红 / **Shield**（护盾）/ **动物**；能量 8/3；`cards` = 四张专属卡（初始卡组即这四张）；
+主动技**单档** `[狂热琴弦 ×6]`。
+
+**四条潜能被动（0 / 10 / 30 / 50）**：
+
+| 被动 | 实现 |
+|---|---|
+| P1 免疫手牌槽伤害 | `trait.immune_slot_damage` |
+| P2 抽卡光环 | `applyScope: AllAllies` + `IdentityMatch{elementAny:[Red], raceAny:[Animal]}`（描述 `·` = 或：**红 或 动物**，含自身）+ `onTurnStart` → `ModifyDrawCount{amount:1}`（走**效果通道**，见 §14.8.7 同批新增的 `EEffectKind.ModifyDrawCount`） |
+| P3 引力牵引 | `Taunt Add +5`（自身；敌方点名攻击优先命中，§14.8.4） |
+| P4 受击蓄盾 | 同上身份条件 + `onDamaged` → `GainShield{amount:1}`（护盾本体见 §14.8.7；受击记数口径见 §14.8.5） |
+
+**主动技**（`targetOverride: Self/Self`，标签 `active`）：
+
+| 档 | 技能 | CD | 效果 |
+|---|---|---|---|
+| 1 | 狂热琴弦 `carter_frenzied_strings` | 6 | 队伍生命上限 +200（`SetDomain` + `turns: 2`：域 GE 挂在队伍 ASC 上给 `MaxHealth Add +200`，§14.8）；自身 2 回合【嘲讽 +5】 |
+
+**四张专属卡**（费 / 优先级 / 效果；卡组属性贡献见内容规格 §15.3）：
+
+| 卡 | 费 / 优先 | 效果 |
+|---|---|---|
+| 热血阶梯 `carter_blood_ladder` | 2 / 40 | 己方 1 人获得 **100 点护盾**，抽卡 +3（`targetSide: Ally` + `Single`，需玩家点选；两个动作都落在点选出的目标上） |
+| 爱世的救因 `carter_aishi_rescue` | 3 / 40 | 己方全体 2 回合【物理防御 +25】，抽卡 +1 |
+| 电台作响 `carter_radio_crackle` | 3 / 40 | 己方全体 1 回合【魔法防御 +25 并叠加队伍生命上限 5%（向下取整，结算时取快照，§14.8.6）】，抽卡 +2 |
+| 叩响天堂之门 `carter_heaven_gate_knock` | 1 / 40 | 自身获得 **50 点护盾**；自身 1 回合【受到**攻击**后恢复 30 点生命】（`onDamaged` → `Heal{amount:30, healPowerScale:0, hookTargets:"team"}`；护盾吃满整击时仍触发，§14.8.5） |
+
+> 「己方全体」的抽取 / 增益走 `hookTargets: "allies"`（§13.1.1）；「抽卡 +N」沿用 §4.2/§4.3 的
+> 一次性修正口径，卡面的「N 回合」只约束防御类 buff 的时长。
 
 ---
 

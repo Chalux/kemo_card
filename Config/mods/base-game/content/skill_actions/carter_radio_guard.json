@@ -1,0 +1,4 @@
+{
+  "kind": "ApplyBuff",
+  "params": { "buffId": "carter_radio_guard", "hookTargets": "allies" }
+}
