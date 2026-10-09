@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.kagi_hunters_mark.name",
+  "descId": "skill.kagi_hunters_mark.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "kagi_apply_hunters_mark"
+    }
+  ],
+  "tags": [
+    "exclusive"
+  ]
+}

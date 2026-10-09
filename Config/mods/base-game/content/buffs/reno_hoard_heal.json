@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.reno_hoard_heal.name",
+  "descId": "buff.reno_hoard_heal.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ]
+}

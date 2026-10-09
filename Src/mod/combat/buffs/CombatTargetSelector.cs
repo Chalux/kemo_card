@@ -64,9 +64,9 @@ internal static class CombatTargetSelector
             for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
             {
                 // self / excludeSelf 是硬约束（永远取"且"）。
-                if (filter.SelfOnly && i != source.Index)
+                if (filter.SelfOnly && (source.Side != ECombatSide.Player || i != source.Index))
                     continue;
-                if (filter.ExcludeSelf && i == source.Index)
+                if (filter.ExcludeSelf && source.Side == ECombatSide.Player && i == source.Index)
                     continue;
 
                 var candidate = new CombatTargetRef(ECombatSide.Player, i);
@@ -74,7 +74,7 @@ internal static class CombatTargetSelector
                 if (filter.Condition is not null)
                 {
                     var (elementFlags, raceFlags) = CombatIdentity.Resolve(simulation, candidate);
-                    var context = new CombatCondContext(simulation, source.Index, elementFlags, raceFlags);
+                    var context = new CombatCondContext(simulation, source, elementFlags, raceFlags, candidate);
                     if (!CombatConditionEvaluator.Pass(
                         filter.Condition,
                         context,

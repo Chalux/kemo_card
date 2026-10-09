@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.hualing_final_freeze.name",
+  "element": 2,
+  "role": "Controller",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "hualing_final_freeze"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 1,
+      "PhysicalDefense": 1
+    }
+  },
+  "priority": 11,
+  "cardType": "Guard",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

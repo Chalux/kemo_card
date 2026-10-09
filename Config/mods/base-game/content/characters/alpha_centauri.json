@@ -1,0 +1,45 @@
+{
+  "displayNameId": "char.alpha_centauri.name",
+  "element": "Yellow",
+  "role": "Support",
+  "race": [
+    "Astronomy",
+    "Academic"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "alpha_centauri_centaur_alpha",
+      "cooldown": 9
+    }
+  ],
+  "cards": [
+    "alpha_centauri_southern_light",
+    "alpha_centauri_binary_resonance",
+    "alpha_centauri_centaur_guidance",
+    "alpha_centauri_stellar_guard"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "requiredPotential": 0,
+      "buffId": "alpha_centauri_passive_p1"
+    },
+    {
+      "requiredPotential": 10,
+      "buffId": "alpha_centauri_passive_p2"
+    },
+    {
+      "requiredPotential": 30,
+      "buffId": "alpha_centauri_passive_p3"
+    },
+    {
+      "requiredPotential": 50,
+      "buffId": "alpha_centauri_passive_p4"
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

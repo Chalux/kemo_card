@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "fomalhaut_alpha_power",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

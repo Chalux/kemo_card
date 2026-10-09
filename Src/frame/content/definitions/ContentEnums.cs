@@ -85,6 +85,8 @@ public enum EBuffDurationType
     Turns,
     Combat,
     UntilDispelled,
+    UntilNextTurnStart,
+    Wave,
 }
 
 public enum EBuffStackRule
@@ -92,6 +94,8 @@ public enum EBuffStackRule
     Add,
     Refresh,
     Replace,
+    /// <summary>同名效果各自持有实例、时长和移除钩子；maxStacks 限制实例数。</summary>
+    Independent,
 }
 
 public enum EEffectKind
@@ -109,8 +113,8 @@ public enum EEffectKind
     /// <summary>授予充能球（params.orbTypeId + 可选 params.count，默认 1；产球者 = 来源角色）。</summary>
     GainOrb,
     /// <summary>
-    /// 给来源角色的手牌槽位挂 buff（params.buffId + params.slotIndex 或
-    /// params.slotSelection: "randomNonEmpty"）。与同名技能动作同义，供 buff 钩子使用。
+    /// 玩家来源给自身、敌方来源给传入玩家目标挂槽位 buff；params.buffId + slotIndex 或
+    /// slotSelection（randomNonEmpty / random / all）。与同名技能动作同义，供 buff 钩子使用。
     /// </summary>
     AttachSlotBuff,
 
@@ -161,6 +165,15 @@ public enum EEffectKind
     /// （「红属性·动物角色受到伤害后获得 1 护盾」这类被动）。
     /// </summary>
     GainShield,
+
+    /// <summary>
+    /// 按"最近一次实际弃置的张数"投放抽牌数量修正（<c>params.perCard</c> 缺省 1）：
+    /// 与同名技能动作同义，供 <b>buff 钩子</b>使用（如"释放主动技后按弃牌数补抽"）。
+    /// 读取不清账——账期由玩家阶段开始时的清账界定（与同名技能动作共享同一份弃牌记录）。
+    /// </summary>
+    ModifyDrawCountByDiscard,
+    /// <summary>驱散目标角色身上的可驱散负面 Buff 和 GameplayEffect，不处理手牌槽。</summary>
+    DispelDebuffs,
 }
 
 public enum ESkillActionKind
@@ -190,6 +203,30 @@ public enum ESkillActionKind
     DiscardSlot,
     /// <summary>授予护盾（params.amount）：给目标玩家角色加可消耗护盾值（见战斗规格「护盾」）。</summary>
     GainShield,
+    /// <summary>
+    /// 弃置 <c>params.count</c> 张手牌（缺省 1）并记录<b>实际</b>弃置的张数（手牌不足时按实际张数记账）：
+    /// 弃牌分流与 <see cref="Discard"/> 完全一致（同通道、同选牌/显式随机规则、同表现事件），
+    /// 只是把实际张数登记到 <c>CombatSimulation.LastDiscardCount</c>，供同链后续的
+    /// <see cref="ModifyDrawCountByDiscard"/> / <see cref="DrawByDiscard"/> 读取。
+    /// </summary>
+    DiscardAndRecord,
+    /// <summary>
+    /// 按"最近一次 <see cref="DiscardAndRecord"/> 实际弃置的张数"投放抽牌数量修正：
+    /// 增量 = 实际弃牌数 × <c>params.perCard</c>（缺省 1，下限 0），供下一回合的抽牌步骤取最大 ±N（规格 §4.2）。
+    /// 目标解析与 <see cref="ModifyDrawCount"/> 同口径（带 <c>hookTargets</c> / <c>targetFilter</c> 时重解析，
+    /// 缺省落在来源角色）。读取最近一次主动弃牌的实际张数，不清零；下一次主动弃牌会覆盖记录。
+    /// </summary>
+    ModifyDrawCountByDiscard,
+
+    /// <summary>
+    /// 按最近一次实际弃牌数 × params.perCard（默认 1）立即抽牌，不增加后续抽牌修正。
+    /// 读取不清账，供同链后续伤害继续使用实际弃牌数；目标选择与 ModifyDrawCount 相同。
+    /// </summary>
+    DrawByDiscard,
+    /// <summary>仅主动技能通道：立即补满目标角色空手牌槽，遵守本阶段一次洗牌预算。</summary>
+    FillHand,
+    /// <summary>驱散目标角色身上的可驱散负面 Buff 和 GameplayEffect，不处理手牌槽。</summary>
+    DispelDebuffs,
 }
 
 [Flags]

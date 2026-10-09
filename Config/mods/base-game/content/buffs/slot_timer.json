@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.slot_timer.name",
+  "descId": "buff.slot_timer.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active",
+    "slot.timer"
+  ]
+}

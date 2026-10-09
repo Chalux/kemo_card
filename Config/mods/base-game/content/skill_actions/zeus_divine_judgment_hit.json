@@ -1,0 +1,8 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "AttackScale": 1.0,
+    "gameplayEffectId": "zeus_magic_damage",
+    "Amount": 12
+  }
+}

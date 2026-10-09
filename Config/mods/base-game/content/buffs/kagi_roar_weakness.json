@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.kagi_roar_weakness.name",
+  "descId": "buff.kagi_roar_weakness.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -12
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -12
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.eta_carinae_carina_nova.name",
+  "descId": "skill.eta_carinae_carina_nova.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "eta_carinae_nova_orbs"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

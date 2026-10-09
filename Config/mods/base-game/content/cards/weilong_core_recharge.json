@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.weilong_core_recharge.name",
+  "element": 4,
+  "role": "Shield",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "weilong_core_recharge"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalDefense": 2
+    }
+  },
+  "priority": 13,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

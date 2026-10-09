@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.mother_machine_parallel_schedule.name",
+  "descId": "skill.mother_machine_parallel_schedule.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "mother_machine_schedule_draw"
+    },
+    {
+      "effectId": "mother_machine_schedule_energy"
+    }
+  ]
+}

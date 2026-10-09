@@ -1,6 +1,7 @@
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.UI.States;
 
@@ -31,16 +32,33 @@ public sealed class UICloseStateHandler : IStateHandler<EUIState, IUIStateContex
             return;
         }
 
-        if (vo.Runtime.Mask != null)
+        int remaining = vo.Runtime.Mask == null ? 1 : 2;
+        int requestFlag = vo.Load.PreLoadFlag;
+        bool IsCurrentClose() => vo.StateMachine.CurrentState == EUIState.Close && requestFlag == vo.Load.PreLoadFlag;
+        void OnAnimationDone()
         {
-            vo.Anim.StartMaskCloseAnim(vo.Runtime.Mask, () => { });
+            if (!IsCurrentClose() || --remaining != 0) return;
+            vo.StateMachine.TransitionTo(EUIState.CloseDone, context);
         }
 
-        vo.Anim.StartCloseAnim(vo.OpenOpt.EffectiveAnimType, vo.Runtime.UI,
-            () =>
-            {
-                if (vo.StateMachine.CurrentState != EUIState.Close) return;
-                vo.StateMachine.TransitionTo(EUIState.CloseDone, context);
-            });
+        try
+        {
+            if (vo.Runtime.Mask != null)
+                vo.Anim.StartMaskCloseAnim(vo.Runtime.Mask, OnAnimationDone);
+            if (IsCurrentClose())
+                vo.Anim.StartCloseAnim(vo.OpenOpt.EffectiveAnimType, vo.Runtime.UI, OnAnimationDone);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error($"UI<{vo.Id}> 关闭动画失败：{ex.Message}", "UI");
+            if (!IsCurrentClose()) return;
+            vo.Anim.ClearAnim();
+            if (!IsCurrentClose()) return;
+            vo.Anim.ClearMaskAnim();
+            if (!IsCurrentClose()) return;
+            vo.Runtime.UI.AnimState = EUIAnimState.None;
+            if (vo.Runtime.Mask != null) vo.Runtime.Mask.AnimState = EUIAnimState.None;
+            vo.StateMachine.TransitionTo(EUIState.CloseDone, context);
+        }
     }
 }

@@ -48,6 +48,7 @@ public sealed class UIOpenCoordinator(UIManager manager)
         while (_openQueue.Count > 0)
         {
             UIVo vo = _openQueue.Dequeue();
+            if (vo.StateMachine.CurrentState == EUIState.Destroy) continue;
             _currOpening = vo;
             vo.StateMachine.TransitionTo(EUIState.Load, new UIStateContext(vo, _manager));
             return;
@@ -78,9 +79,10 @@ public sealed class UIOpenCoordinator(UIManager manager)
                     long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     if (now - _currOpening.Lifecycle.LoadTime > UIConsts.UI_LOAD_TIMEOUT)
                     {
-                        _currOpening.StateMachine.TransitionTo(EUIState.Destroy,
-                            new UIStateContext(_currOpening, _manager));
-                        _currOpening = null;
+                        var timedOut = _currOpening;
+                        timedOut.StateMachine.TransitionTo(EUIState.Destroy,
+                            new UIStateContext(timedOut, _manager));
+                        ResetCurrentOpening(timedOut);
                         OpenNext();
                     }
                     break;

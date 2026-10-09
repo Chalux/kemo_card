@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.reno_p2.name",
+  "descId": "buff.reno_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onTurnStart": [
+      { "effectId": "reno_p2_team_regen", "params": { "hookTargets": "team" } }
+    ]
+  }
+}

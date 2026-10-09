@@ -1,0 +1,7 @@
+{
+  "kind": "ModifyDrawCount",
+  "params": { "amount": 1 },
+  "conditions": [
+    { "kind": "TookMagicDamageLastTurn" }
+  ]
+}

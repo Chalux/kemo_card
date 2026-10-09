@@ -1,0 +1,342 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="c1988fb9-dd6a-4dc8-9403-c07edf4dbc5b" name="91080@CHALUXLAPTOP 2026-10-06 08:24:34" runUser="CHALUXLAPTOP\91080" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-06T08:24:34.9754572+08:00" queuing="2026-10-06T08:24:34.9754573+08:00" start="2026-10-06T08:24:34.3842149+08:00" finish="2026-10-06T08:24:35.0083924+08:00" />
+  <TestSettings name="default" id="5da37b4f-c064-4b3f-bdb3-739147b3aab6">
+    <Deployment runDeploymentRoot="91080_CHALUXLAPTOP_2026-10-06_08_24_34" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="b2ae80ff-a1ca-47db-9291-f6277d9612a1" testId="aaabaef9-35df-e37f-159e-6cf2026595a8" testName="All_target_active_skill_should_reject_duplicate_subset" computerName="CHALUXLAPTOP" duration="00:00:00.0467600" startTime="2026-10-06T08:24:34.8367198+08:00" endTime="2026-10-06T08:24:34.8834534+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b2ae80ff-a1ca-47db-9291-f6277d9612a1">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(result.Success, Is.False)&#xD;
+  Expected: False&#xD;
+  But was:  True&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.All_target_active_skill_should_reject_duplicate_subset() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 141&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.All_target_active_skill_should_reject_duplicate_subset() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 141&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0eaded53-63d1-4deb-b821-0ae1f7594514" testId="bba80bf2-ecf7-651b-9cfe-4f898d27218d" testName="Team_hp_clamp_should_use_effective_max_including_domain" computerName="CHALUXLAPTOP" duration="00:00:00.0006089" startTime="2026-10-06T08:24:34.9399792+08:00" endTime="2026-10-06T08:24:34.9405884+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0eaded53-63d1-4deb-b821-0ae1f7594514">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(150))&#xD;
+  Expected: 150&#xD;
+  But was:  110&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Team_hp_clamp_should_use_effective_max_including_domain() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 189&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Team_hp_clamp_should_use_effective_max_including_domain() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 189&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4d2671f0-2797-48cb-8f7e-398aaf49b04f" testId="5afc4375-7129-7ef5-c50f-6ce4e5da374b" testName="Obtained_generic_card_should_be_accepted_at_battle_creation" computerName="CHALUXLAPTOP" duration="00:00:00.0039810" startTime="2026-10-06T08:24:34.9267192+08:00" endTime="2026-10-06T08:24:34.9306999+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4d2671f0-2797-48cb-8f7e-398aaf49b04f">
+      <Output>
+        <ErrorInfo>
+          <Message>  当前卡组构筑非法。&#xD;
+Assert.That(result, Is.Not.Null)&#xD;
+  Expected: not null&#xD;
+  But was:  null&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Obtained_generic_card_should_be_accepted_at_battle_creation() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 60&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Obtained_generic_card_should_be_accepted_at_battle_creation() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 60&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7c82cea8-3ce8-40e7-9bdb-f883b29c77b4" testId="58c28c90-7563-184d-f25e-5613e6648fe6" testName="Buff_apply_hook_cycle_should_be_rejected_by_content_validator" computerName="CHALUXLAPTOP" duration="00:00:00.0037280" startTime="2026-10-06T08:24:34.8840201+08:00" endTime="2026-10-06T08:24:34.8877476+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7c82cea8-3ce8-40e7-9bdb-f883b29c77b4">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(errors.Any(e =&gt; e.Message.Contains("cycle", StringComparison.OrdinalIgnoreCase)), Is.True)&#xD;
+  Expected: True&#xD;
+  But was:  False&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Buff_apply_hook_cycle_should_be_rejected_by_content_validator() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 217&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Buff_apply_hook_cycle_should_be_rejected_by_content_validator() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 217&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4b7b1de0-7413-4b95-bf21-d9d2b5aeb954" testId="45b1a80e-9bf6-da09-0e9c-6880a78e94f1" testName="Fixed_damage_result_should_report_actual_hp_loss" computerName="CHALUXLAPTOP" duration="00:00:00.0019080" startTime="2026-10-06T08:24:34.9206710+08:00" endTime="2026-10-06T08:24:34.9225789+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4b7b1de0-7413-4b95-bf21-d9d2b5aeb954">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(result, Is.EqualTo(100))&#xD;
+  Expected: 100&#xD;
+  But was:  1000.0f&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Fixed_damage_result_should_report_actual_hp_loss() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 241&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Fixed_damage_result_should_report_actual_hp_loss() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 241&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="eac7f2ee-42a4-4931-82b5-c570fe85d70b" testId="4dbbe3a0-abf7-2cfd-0184-054104d6b7e2" testName="Lethal_turn_start_hook_should_end_battle_before_player_input" computerName="CHALUXLAPTOP" duration="00:00:00.0022230" startTime="2026-10-06T08:24:34.9244839+08:00" endTime="2026-10-06T08:24:34.9267067+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eac7f2ee-42a4-4931-82b5-c570fe85d70b">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Defeat))&#xD;
+  Expected: Defeat&#xD;
+  But was:  Player&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Lethal_turn_start_hook_should_end_battle_before_player_input() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 203&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Lethal_turn_start_hook_should_end_battle_before_player_input() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 203&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="cf9d09dc-049d-4751-b72e-04e6f61708c1" testId="bd04bd62-fe36-9d20-5ead-280ba9b1652f" testName="Character_gameplay_effect_should_expire_after_two_real_turns" computerName="CHALUXLAPTOP" duration="00:00:00.0128210" startTime="2026-10-06T08:24:34.9031783+08:00" endTime="2026-10-06T08:24:34.9159987+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="cf9d09dc-049d-4751-b72e-04e6f61708c1">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(sim.PlayerTeam.Characters[0].Asc.ActiveEffects, Is.Empty)&#xD;
+  Expected: &lt;empty&gt;&#xD;
+  But was:  &lt; &lt;KemoCard.Frame.Gas.ActiveGameplayEffect&gt; &gt;&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Character_gameplay_effect_should_expire_after_two_real_turns() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 102&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Character_gameplay_effect_should_expire_after_two_real_turns() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 102&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="7f79cec9-e3a2-48a8-8552-1ab1379ab800" testId="b3c67d87-4bda-9210-b938-3fa64898e43e" testName="Buff_removed_by_turn_end_hook_should_not_reregister_modifiers" computerName="CHALUXLAPTOP" duration="00:00:00.0153920" startTime="2026-10-06T08:24:34.8877607+08:00" endTime="2026-10-06T08:24:34.9031524+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7f79cec9-e3a2-48a8-8552-1ab1379ab800">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.PhysicalAttack), Is.EqualTo(10))&#xD;
+  Expected: 10&#xD;
+  But was:  16.0f&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Buff_removed_by_turn_end_hook_should_not_reregister_modifiers() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 156&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Buff_removed_by_turn_end_hook_should_not_reregister_modifiers() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 156&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="0aac54d7-3b2b-4fcb-8deb-e3f82cdcc699" testId="aaee5083-7c62-f01a-0810-77e54a6fe1ed" testName="Self_target_mark_should_not_survive_player_phase_wave_clear" computerName="CHALUXLAPTOP" duration="00:00:00.0045330" startTime="2026-10-06T08:24:34.9340580+08:00" endTime="2026-10-06T08:24:34.9385910+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="0aac54d7-3b2b-4fcb-8deb-e3f82cdcc699">
+      <Output>
+        <ErrorInfo>
+          <Message>  old paid marks must not cross the turn boundary&#xD;
+Assert.That(sim.CardQueue.Count, Is.Zero)&#xD;
+  Expected: 0&#xD;
+  But was:  1&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Self_target_mark_should_not_survive_player_phase_wave_clear() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 175&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Self_target_mark_should_not_survive_player_phase_wave_clear() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 175&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="eabed393-36de-4a8b-9e87-50d88e4d751f" testId="d5efa00d-3f2f-d454-c0b8-6a11babd9915" testName="Domain_turn_start_hook_may_replace_domain_without_collection_exception" computerName="CHALUXLAPTOP" duration="00:00:00.0046420" startTime="2026-10-06T08:24:34.9160165+08:00" endTime="2026-10-06T08:24:34.9206579+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eabed393-36de-4a8b-9e87-50d88e4d751f">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(code, new ThrowsNothingConstraint())&#xD;
+  Expected: No Exception to be thrown&#xD;
+  But was:  &lt;System.InvalidOperationException: Collection was modified; enumeration operation may not execute.&#xD;
+   at System.Collections.Generic.List`1.Enumerator.MoveNext()&#xD;
+   at KemoCard.Frame.Gas.AbilitySystemComponent.OnTurnStart() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Src\frame\gas\AbilitySystemComponent.cs:line 52&#xD;
+   at KemoCard.Mod.Combat.Runtime.TeamDomainManager.FireTurnStartHooks() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Src\mod\combat\runtime\TeamDomainManager.cs:line 92&#xD;
+   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.&lt;&gt;c__DisplayClass17_0.&lt;Domain_turn_start_hook_may_replace_domain_without_collection_exception&gt;b__0() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 232&#xD;
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)&#xD;
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)&#xD;
+--- End of stack trace from previous location ---&#xD;
+   at NUnit.Framework.Internal.ExceptionHelper.Rethrow(Exception exception)&#xD;
+   at NUnit.Framework.Internal.Reflect.DynamicInvokeWithTransparentExceptions(Delegate delegate)&#xD;
+   at NUnit.Framework.Internal.ExceptionHelper.RecordException(Delegate parameterlessDelegate, String parameterName)&gt;&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Domain_turn_start_hook_may_replace_domain_without_collection_exception() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 232&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Domain_turn_start_hook_may_replace_domain_without_collection_exception() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 232&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="e16b3479-7290-48dd-bd3b-c05f7c094959" testId="d90858fd-026f-6b7a-1b77-8a746f510a69" testName="Shielded_direct_hit_should_still_fire_on_damaged" computerName="CHALUXLAPTOP" duration="00:00:00.0009060" startTime="2026-10-06T08:24:34.9385996+08:00" endTime="2026-10-06T08:24:34.9395051+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e16b3479-7290-48dd-bd3b-c05f7c094959">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(95))&#xD;
+  Expected: 95&#xD;
+  But was:  90&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Shielded_direct_hit_should_still_fire_on_damaged() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 90&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Shielded_direct_hit_should_still_fire_on_damaged() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 90&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="a771b35f-b45b-4021-a881-cc910b6b2fdd" testId="ee5aef17-0b59-fdc0-e922-1f37d99a55ff" testName="Gas_overkill_should_apply_shield_before_health_clipping" computerName="CHALUXLAPTOP" duration="00:00:00.0018820" startTime="2026-10-06T08:24:34.9225902+08:00" endTime="2026-10-06T08:24:34.9244724+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a771b35f-b45b-4021-a881-cc910b6b2fdd">
+      <Output>
+        <ErrorInfo>
+          <Message>  100 damage - 50 shield must kill a team with 20 HP&#xD;
+Assert.That(sim.PlayerTeam.SharedHp, Is.Zero)&#xD;
+  Expected: 0&#xD;
+  But was:  20&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Gas_overkill_should_apply_shield_before_health_clipping() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 73&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Gas_overkill_should_apply_shield_before_health_clipping() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 73&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="4cb8d8fd-a87e-4b98-a04e-b9c4696aa0d3" testId="a6a375af-991f-4304-d0e3-ae73abc72e2e" testName="Single_target_card_should_reject_duplicate_targets" computerName="CHALUXLAPTOP" duration="00:00:00.0004590" startTime="2026-10-06T08:24:34.9395135+08:00" endTime="2026-10-06T08:24:34.9399727+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="4cb8d8fd-a87e-4b98-a04e-b9c4696aa0d3">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(result.Success, Is.False)&#xD;
+  Expected: False&#xD;
+  But was:  True&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Single_target_card_should_reject_duplicate_targets() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 132&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Single_target_card_should_reject_duplicate_targets() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 132&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="45538275-c233-4be1-bc2b-8e4b6940fb13" testId="b17c52f5-f966-f439-a0c6-35e8686a61bf" testName="Rules_should_receive_first_and_subsequent_turn_start" computerName="CHALUXLAPTOP" duration="00:00:00.0007110" startTime="2026-10-06T08:24:34.9307220+08:00" endTime="2026-10-06T08:24:34.9314326+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="45538275-c233-4be1-bc2b-8e4b6940fb13">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(rule.Count, Is.EqualTo(2))&#xD;
+  Expected: 2&#xD;
+  But was:  0&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Rules_should_receive_first_and_subsequent_turn_start() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 121&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Rules_should_receive_first_and_subsequent_turn_start() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 121&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f475cb5d-9cc2-4708-b1b2-902b7a26b1b1" testId="1e400d23-7430-6e06-2484-48cb4e465c7a" testName="Scripted_action_should_execute_in_its_definition_owner_mod" computerName="CHALUXLAPTOP" duration="00:00:00.0026090" startTime="2026-10-06T08:24:34.9314395+08:00" endTime="2026-10-06T08:24:34.9340479+08:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f475cb5d-9cc2-4708-b1b2-902b7a26b1b1">
+      <Output>
+        <ErrorInfo>
+          <Message>  Assert.That(host.CalledMod, Is.EqualTo(owner))&#xD;
+  Expected string length 8 but was 10. Strings differ at index 0.&#xD;
+  Expected: "test.mod"&#xD;
+  But was:  "battle.mod"&#xD;
+  -----------^&#xD;
+</Message>
+          <StackTrace>   at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Scripted_action_should_execute_in_its_definition_owner_mod() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 266&#xD;
+
+1)    at KemoCard.Ui.Tests.Combat.CombatAuditProbeTests.Scripted_action_should_execute_in_its_definition_owner_mod() in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\Combat\CombatAuditProbeTests.cs:line 266&#xD;
+
+</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Character_gameplay_effect_should_expire_after_two_real_turns" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="bd04bd62-fe36-9d20-5ead-280ba9b1652f">
+      <Execution id="cf9d09dc-049d-4751-b72e-04e6f61708c1" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Character_gameplay_effect_should_expire_after_two_real_turns" />
+    </UnitTest>
+    <UnitTest name="Domain_turn_start_hook_may_replace_domain_without_collection_exception" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="d5efa00d-3f2f-d454-c0b8-6a11babd9915">
+      <Execution id="eabed393-36de-4a8b-9e87-50d88e4d751f" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Domain_turn_start_hook_may_replace_domain_without_collection_exception" />
+    </UnitTest>
+    <UnitTest name="Rules_should_receive_first_and_subsequent_turn_start" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="b17c52f5-f966-f439-a0c6-35e8686a61bf">
+      <Execution id="45538275-c233-4be1-bc2b-8e4b6940fb13" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Rules_should_receive_first_and_subsequent_turn_start" />
+    </UnitTest>
+    <UnitTest name="Shielded_direct_hit_should_still_fire_on_damaged" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="d90858fd-026f-6b7a-1b77-8a746f510a69">
+      <Execution id="e16b3479-7290-48dd-bd3b-c05f7c094959" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Shielded_direct_hit_should_still_fire_on_damaged" />
+    </UnitTest>
+    <UnitTest name="Lethal_turn_start_hook_should_end_battle_before_player_input" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="4dbbe3a0-abf7-2cfd-0184-054104d6b7e2">
+      <Execution id="eac7f2ee-42a4-4931-82b5-c570fe85d70b" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Lethal_turn_start_hook_should_end_battle_before_player_input" />
+    </UnitTest>
+    <UnitTest name="Buff_removed_by_turn_end_hook_should_not_reregister_modifiers" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="b3c67d87-4bda-9210-b938-3fa64898e43e">
+      <Execution id="7f79cec9-e3a2-48a8-8552-1ab1379ab800" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Buff_removed_by_turn_end_hook_should_not_reregister_modifiers" />
+    </UnitTest>
+    <UnitTest name="Scripted_action_should_execute_in_its_definition_owner_mod" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="1e400d23-7430-6e06-2484-48cb4e465c7a">
+      <Execution id="f475cb5d-9cc2-4708-b1b2-902b7a26b1b1" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Scripted_action_should_execute_in_its_definition_owner_mod" />
+    </UnitTest>
+    <UnitTest name="Self_target_mark_should_not_survive_player_phase_wave_clear" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="aaee5083-7c62-f01a-0810-77e54a6fe1ed">
+      <Execution id="0aac54d7-3b2b-4fcb-8deb-e3f82cdcc699" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Self_target_mark_should_not_survive_player_phase_wave_clear" />
+    </UnitTest>
+    <UnitTest name="Buff_apply_hook_cycle_should_be_rejected_by_content_validator" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="58c28c90-7563-184d-f25e-5613e6648fe6">
+      <Execution id="7c82cea8-3ce8-40e7-9bdb-f883b29c77b4" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Buff_apply_hook_cycle_should_be_rejected_by_content_validator" />
+    </UnitTest>
+    <UnitTest name="Obtained_generic_card_should_be_accepted_at_battle_creation" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="5afc4375-7129-7ef5-c50f-6ce4e5da374b">
+      <Execution id="4d2671f0-2797-48cb-8f7e-398aaf49b04f" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Obtained_generic_card_should_be_accepted_at_battle_creation" />
+    </UnitTest>
+    <UnitTest name="Gas_overkill_should_apply_shield_before_health_clipping" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="ee5aef17-0b59-fdc0-e922-1f37d99a55ff">
+      <Execution id="a771b35f-b45b-4021-a881-cc910b6b2fdd" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Gas_overkill_should_apply_shield_before_health_clipping" />
+    </UnitTest>
+    <UnitTest name="All_target_active_skill_should_reject_duplicate_subset" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="aaabaef9-35df-e37f-159e-6cf2026595a8">
+      <Execution id="b2ae80ff-a1ca-47db-9291-f6277d9612a1" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="All_target_active_skill_should_reject_duplicate_subset" />
+    </UnitTest>
+    <UnitTest name="Team_hp_clamp_should_use_effective_max_including_domain" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="bba80bf2-ecf7-651b-9cfe-4f898d27218d">
+      <Execution id="0eaded53-63d1-4deb-b821-0ae1f7594514" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Team_hp_clamp_should_use_effective_max_including_domain" />
+    </UnitTest>
+    <UnitTest name="Single_target_card_should_reject_duplicate_targets" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="a6a375af-991f-4304-d0e3-ae73abc72e2e">
+      <Execution id="4cb8d8fd-a87e-4b98-a04e-b9c4696aa0d3" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Single_target_card_should_reject_duplicate_targets" />
+    </UnitTest>
+    <UnitTest name="Fixed_damage_result_should_report_actual_hp_loss" storage="d:\godot_v4.7.2-stable_mono_win64\projects\kemo_card\tests\kemo_card.ui.tests\bin\debug\net8.0\kemo_card.ui.tests.dll" id="45b1a80e-9bf6-da09-0e9c-6880a78e94f1">
+      <Execution id="4b7b1de0-7413-4b95-bf21-d9d2b5aeb954" />
+      <TestMethod codeBase="D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="KemoCard.Ui.Tests.Combat.CombatAuditProbeTests" name="Fixed_damage_result_should_report_actual_hp_loss" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="aaabaef9-35df-e37f-159e-6cf2026595a8" executionId="b2ae80ff-a1ca-47db-9291-f6277d9612a1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bba80bf2-ecf7-651b-9cfe-4f898d27218d" executionId="0eaded53-63d1-4deb-b821-0ae1f7594514" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5afc4375-7129-7ef5-c50f-6ce4e5da374b" executionId="4d2671f0-2797-48cb-8f7e-398aaf49b04f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="58c28c90-7563-184d-f25e-5613e6648fe6" executionId="7c82cea8-3ce8-40e7-9bdb-f883b29c77b4" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="45b1a80e-9bf6-da09-0e9c-6880a78e94f1" executionId="4b7b1de0-7413-4b95-bf21-d9d2b5aeb954" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="4dbbe3a0-abf7-2cfd-0184-054104d6b7e2" executionId="eac7f2ee-42a4-4931-82b5-c570fe85d70b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="bd04bd62-fe36-9d20-5ead-280ba9b1652f" executionId="cf9d09dc-049d-4751-b72e-04e6f61708c1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b3c67d87-4bda-9210-b938-3fa64898e43e" executionId="7f79cec9-e3a2-48a8-8552-1ab1379ab800" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aaee5083-7c62-f01a-0810-77e54a6fe1ed" executionId="0aac54d7-3b2b-4fcb-8deb-e3f82cdcc699" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d5efa00d-3f2f-d454-c0b8-6a11babd9915" executionId="eabed393-36de-4a8b-9e87-50d88e4d751f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d90858fd-026f-6b7a-1b77-8a746f510a69" executionId="e16b3479-7290-48dd-bd3b-c05f7c094959" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ee5aef17-0b59-fdc0-e922-1f37d99a55ff" executionId="a771b35f-b45b-4021-a881-cc910b6b2fdd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a6a375af-991f-4304-d0e3-ae73abc72e2e" executionId="4cb8d8fd-a87e-4b98-a04e-b9c4696aa0d3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b17c52f5-f966-f439-a0c6-35e8686a61bf" executionId="45538275-c233-4be1-bc2b-8e4b6940fb13" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="1e400d23-7430-6e06-2484-48cb4e465c7a" executionId="f475cb5d-9cc2-4708-b1b2-902b7a26b1b1" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="列表中未列出的结果" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="所有已加载的结果" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="15" executed="15" passed="0" failed="15" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>NUnit Adapter 4.6.0.0: Test execution started&#xD;
+Running selected tests in D:\Godot_v4.7.2-stable_mono_win64\Projects\kemo_card\Tests\kemo_card.Ui.Tests\bin\Debug\net8.0\kemo_card.Ui.Tests.dll&#xD;
+   NUnit3TestExecutor discovered 15 of 15 NUnit test cases using Current Discovery mode, Non-Explicit run&#xD;
+NUnit Adapter 4.6.0.0: Test execution complete&#xD;
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.kagi_passive_p2.name",
+  "descId": "buff.kagi_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "kagi_apply_hunting"
+      },
+      {
+        "effectId": "kagi_apply_vigilance"
+      }
+    ]
+  }
+}

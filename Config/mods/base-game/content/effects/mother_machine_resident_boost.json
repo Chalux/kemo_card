@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "mother_machine_team_boost"
+  }
+}

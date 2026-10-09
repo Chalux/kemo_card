@@ -1,0 +1,7 @@
+{
+  "kind": "GainShield",
+  "params": {
+    "amount": 20,
+    "hookTargets": "self"
+  }
+}

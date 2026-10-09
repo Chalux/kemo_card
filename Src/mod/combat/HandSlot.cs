@@ -20,7 +20,7 @@ public sealed class HandSlot
 
     public HandSlot(int slotIndex) => SlotIndex = slotIndex;
 
-    public void PlaceCard(string cardId, string runtimeInstanceId)
+    internal void PlaceCard(string cardId, string runtimeInstanceId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cardId);
         ArgumentException.ThrowIfNullOrWhiteSpace(runtimeInstanceId);
@@ -28,14 +28,14 @@ public sealed class HandSlot
         RuntimeInstanceId = runtimeInstanceId;
     }
 
-    public void ClearCard()
+    internal void ClearCard()
     {
         CardId = null;
         RuntimeInstanceId = null;
         MarkedSequence = null;
     }
 
-    public void Mark(long sequence) => MarkedSequence = sequence;
+    internal void Mark(long sequence) => MarkedSequence = sequence;
 
-    public void Unmark() => MarkedSequence = null;
+    internal void Unmark() => MarkedSequence = null;
 }

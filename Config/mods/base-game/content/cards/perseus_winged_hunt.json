@@ -1,0 +1,29 @@
+{
+  "displayNameId": "card.perseus_winged_hunt.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "perseus_winged_hunt"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Controller",
+  "priority": 8,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

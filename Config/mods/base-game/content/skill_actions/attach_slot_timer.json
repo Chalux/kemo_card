@@ -1,0 +1,9 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "slot_timer",
+    "slotSelection": "random",
+    "timerTurns": 3,
+    "amount": 30
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.fomalhaut_stellar_tide.name",
+  "descId": "skill.fomalhaut_stellar_tide.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "actionRefs": [
+    {
+      "actionId": "fomalhaut_tide_hit"
+    },
+    {
+      "actionId": "fomalhaut_tide_charge"
+    }
+  ],
+  "tags": [
+    "attack"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.weilong_auxiliary_assault.name",
+  "element": 4,
+  "role": "Shield",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "weilong_auxiliary_assault"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalAttack": 1,
+      "PhysicalDefense": 1
+    }
+  },
+  "priority": 11,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

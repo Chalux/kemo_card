@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.hualing_prism_dance.name",
+  "descId": "skill.hualing_prism_dance.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "effectRefs": [
+    {
+      "effectId": "hualing_prism_hit"
+    },
+    {
+      "effectId": "hualing_apply_prism"
+    }
+  ]
+}

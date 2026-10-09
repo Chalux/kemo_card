@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.alpha_centauri_stellar_guard.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "alpha_centauri_stellar_guard"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalDefense": 1,
+      "MagicDefense": 1
+    }
+  },
+  "role": "Support",
+  "priority": 7,
+  "cardType": "Healing",
+  "targetSide": "Ally",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

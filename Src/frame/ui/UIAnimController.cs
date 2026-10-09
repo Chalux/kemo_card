@@ -1,5 +1,6 @@
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
+using KemoCard.Frame.Logging;
 
 namespace KemoCard.Frame.UI;
 
@@ -9,77 +10,59 @@ namespace KemoCard.Frame.UI;
 /// </summary>
 public sealed class UIAnimController
 {
-    private Action? _animCallback;
-    private Action? _maskAnimCallback;
+    private readonly AnimationSlot _uiAnimation = new();
+    private readonly AnimationSlot _maskAnimation = new();
+
+    #region 动画入口
 
     /// <summary>注册 UI 动画清除回调</summary>
-    public void SetAnimCallback(Action? callback)
-    {
-        ClearAnim();
-        _animCallback = callback;
-    }
+    public void SetAnimCallback(Action? callback) => _uiAnimation.SetCallback(callback);
 
     /// <summary>注册 Mask 动画清除回调</summary>
-    public void SetMaskAnimCallback(Action? callback)
-    {
-        ClearMaskAnim();
-        _maskAnimCallback = callback;
-    }
+    public void SetMaskAnimCallback(Action? callback) => _maskAnimation.SetCallback(callback);
 
     /// <summary>清除 UI 动画并调用清除回调</summary>
-    public void ClearAnim()
-    {
-        _animCallback?.Invoke();
-        _animCallback = null;
-    }
+    public void ClearAnim() => _uiAnimation.Clear();
 
     /// <summary>清除 Mask 动画并调用清除回调</summary>
-    public void ClearMaskAnim()
-    {
-        _maskAnimCallback?.Invoke();
-        _maskAnimCallback = null;
-    }
+    public void ClearMaskAnim() => _maskAnimation.Clear();
 
     /// <summary>开始打开动画</summary>
     public void StartOpenAnim(EAnimType animType, OpenTransitionData transition, BaseWin win, Action onDone)
     {
-        if (animType == EAnimType.None)
+        if (animType == EAnimType.None || (animType == EAnimType.SkipReOpen && transition.IsReopen))
         {
+            ClearAnim();
+            win.AnimState = EUIAnimState.None;
             onDone();
             return;
         }
 
-        if (animType == EAnimType.SkipReOpen && transition.IsReopen)
+        _uiAnimation.Play(done =>
         {
-            onDone();
-            return;
-        }
-
-        win.AnimState = EUIAnimState.Open;
-        SetAnimCallback(((IUILifecycleInvoker)win).InvokeOpenAnim(() =>
+            win.AnimState = EUIAnimState.Open;
+            return ((IUILifecycleInvoker)win).InvokeOpenAnim(done);
+        }, () =>
         {
-            if (win.AnimState == EUIAnimState.Open)
-            {
-                win.AnimState = EUIAnimState.None;
-            }
+            win.AnimState = EUIAnimState.None;
             ((IUILifecycleInvoker)win).InvokeOpenAnimDone();
             onDone();
-        }));
+        });
     }
 
     /// <summary>开始 Mask 打开动画</summary>
     public void StartMaskOpenAnim(BaseMask mask, Action onDone)
     {
-        mask.AnimState = EUIAnimState.Open;
-        SetMaskAnimCallback(((IUILifecycleInvoker)mask).InvokeMaskOpenAnim(() =>
+        _maskAnimation.Play(done =>
         {
-            if (mask.AnimState == EUIAnimState.Open)
-            {
-                mask.AnimState = EUIAnimState.None;
-            }
+            mask.AnimState = EUIAnimState.Open;
+            return ((IUILifecycleInvoker)mask).InvokeMaskOpenAnim(done);
+        }, () =>
+        {
+            mask.AnimState = EUIAnimState.None;
             ((IUILifecycleInvoker)mask).InvokeMaskOpenAnimDone();
             onDone();
-        }));
+        });
     }
 
     /// <summary>开始关闭动画</summary>
@@ -87,34 +70,83 @@ public sealed class UIAnimController
     {
         if (animType == EAnimType.None)
         {
+            ClearAnim();
+            win.AnimState = EUIAnimState.None;
             onDone();
             return;
         }
 
-        win.AnimState = EUIAnimState.Close;
-        SetAnimCallback(((IUILifecycleInvoker)win).InvokeCloseAnim(() =>
+        _uiAnimation.Play(done =>
         {
-            if (win.AnimState == EUIAnimState.Close)
-            {
-                win.AnimState = EUIAnimState.None;
-            }
+            win.AnimState = EUIAnimState.Close;
+            return ((IUILifecycleInvoker)win).InvokeCloseAnim(done);
+        }, () =>
+        {
+            win.AnimState = EUIAnimState.None;
             onDone();
-        }));
+        });
     }
 
     /// <summary>开始 Mask 关闭动画</summary>
     public void StartMaskCloseAnim(BaseMask mask, Action onCloseDone)
     {
-        mask.AnimState = EUIAnimState.Close;
-        SetMaskAnimCallback(((IUILifecycleInvoker)mask).InvokeMaskCloseAnim(() =>
+        _maskAnimation.Play(done =>
         {
-            if (mask.AnimState == EUIAnimState.Close)
-            {
-                mask.AnimState = EUIAnimState.None;
-            }
-            ((IUILifecycleInvoker)mask).InvokeMaskClose();
-            mask.QueueFree();
+            mask.AnimState = EUIAnimState.Close;
+            return ((IUILifecycleInvoker)mask).InvokeMaskCloseAnim(done);
+        }, () =>
+        {
+            mask.AnimState = EUIAnimState.None;
+            UIManager.InvokeCallback(() => ((IUILifecycleInvoker)mask).InvokeMaskClose(), mask.UIVo?.Id ?? "Mask", "遮罩关闭回调");
             onCloseDone();
-        }));
+        });
+    }
+
+    #endregion
+
+    /// <summary>一次动画的取消账本；回调只能完成当前动画且只完成一次。</summary>
+    private sealed class AnimationSlot
+    {
+        private Action? _cancel;
+        private int _version;
+
+        public void SetCallback(Action? callback)
+        {
+            int version = Clear();
+            if (version == _version) _cancel = callback;
+        }
+
+        public int Clear()
+        {
+            int version = ++_version;
+            var cancel = _cancel;
+            _cancel = null;
+            try { cancel?.Invoke(); }
+            catch (Exception ex) { AppLog.Error($"UI 动画取消失败：{ex.Message}", "UI"); }
+            return version;
+        }
+
+        public void Play(Func<Action, Action?> play, Action onDone)
+        {
+            int version = Clear();
+            if (version != _version) return;
+            bool completed = false;
+            Action? cancel = play(() =>
+            {
+                if (version != _version || completed) return;
+                completed = true;
+                onDone();
+            });
+            if (version == _version)
+            {
+                _cancel = cancel;
+            }
+            else
+            {
+                // 同步完成回调可能启动另一轮动画；旧取消句柄不能覆盖它。
+                try { cancel?.Invoke(); }
+                catch (Exception ex) { AppLog.Error($"UI 动画取消失败：{ex.Message}", "UI"); }
+            }
+        }
     }
 }

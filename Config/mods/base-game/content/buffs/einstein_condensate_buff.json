@@ -1,0 +1,19 @@
+{
+  "displayNameId": "buff.einstein_condensate.name",
+  "descId": "buff.einstein_condensate.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "hooks": {
+    "onOrbTriggered": [
+      {
+        "effectId": "einstein_orb_shield",
+        "params": {
+          "targetFilter": { "self": true },
+          "oncePerTurn": true
+        }
+      }
+    ]
+  }
+}

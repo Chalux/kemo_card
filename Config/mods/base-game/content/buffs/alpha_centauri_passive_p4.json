@@ -1,0 +1,34 @@
+{
+  "displayNameId": "buff.alpha_centauri_passive_p4.name",
+  "descId": "buff.alpha_centauri_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 3,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      }
+    ],
+    "onActiveSkillCast": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 3,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      }
+    ]
+  }
+}

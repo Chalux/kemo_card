@@ -1,0 +1,17 @@
+{
+  "displayNameId": "buff.mother_machine_passive_p4.name",
+  "descId": "buff.mother_machine_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "mother_machine_attach_resident_charge"
+      }
+    ]
+  }
+}

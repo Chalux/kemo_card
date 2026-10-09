@@ -1,0 +1,134 @@
+{
+  "displayNameId": "buff.mother_machine_passive_p3.name",
+  "descId": "buff.mother_machine_passive_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 2,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Yellow"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Machine"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Academic"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 2,
+          "targetFilter": {
+            "self": true
+          },
+          "turnInterval": 10
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Yellow"
+                ]
+              }
+            }
+          },
+          "turnInterval": 10
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Machine"
+                ]
+              }
+            }
+          },
+          "turnInterval": 10
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Academic"
+                ]
+              }
+            }
+          },
+          "turnInterval": 10
+        }
+      }
+    ]
+  }
+}

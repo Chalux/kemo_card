@@ -1,0 +1,19 @@
+{
+  "displayNameId": "buff.reno_p3.name",
+  "descId": "buff.reno_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onWaveStart": [
+      { "effectId": "gain_skill_counter", "params": { "amount": 3, "targetFilter": { "self": true } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Green"] } } } } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Dragon"] } } } } }
+    ],
+    "onTurnStart": [
+      { "effectId": "gain_skill_counter", "params": { "amount": 3, "targetFilter": { "self": true }, "turnInterval": 9 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "elementAny": ["Green"] } } }, "turnInterval": 9 } },
+      { "effectId": "gain_skill_counter", "params": { "amount": 2, "targetFilter": { "condition": { "kind": "IdentityMatch", "params": { "raceAny": ["Dragon"] } } }, "turnInterval": 9 } }
+    ]
+  }
+}

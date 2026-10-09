@@ -1,0 +1,44 @@
+{
+  "displayNameId": "char.cupid.name",
+  "element": "Blue",
+  "role": "Healer",
+  "race": [
+    "God"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "cupid_discerning_love",
+      "cooldown": 7
+    }
+  ],
+  "cards": [
+    "cupid_love_nectar",
+    "cupid_golden_blessing",
+    "cupid_leaden_peace",
+    "cupid_united_guard"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "requiredPotential": 0,
+      "buffId": "cupid_passive_p1"
+    },
+    {
+      "requiredPotential": 10,
+      "buffId": "cupid_passive_p2"
+    },
+    {
+      "requiredPotential": 30,
+      "buffId": "cupid_passive_p3"
+    },
+    {
+      "requiredPotential": 50,
+      "buffId": "cupid_passive_p4"
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

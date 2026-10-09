@@ -1,0 +1,22 @@
+{
+  "kind": "GainResource",
+  "params": {
+    "resource": "skillcounter",
+    "targetFilter": {
+      "condition": {
+        "params": {
+          "elementAny": [
+            "Green"
+          ],
+          "raceAny": [
+            "Human",
+            "God"
+          ]
+        },
+        "kind": "IdentityMatch"
+      },
+      "excludeSelf": true
+    },
+    "amount": 1
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.anubis_scale_judgment.name",
+  "descId": "skill.anubis_scale_judgment.desc",
+  "actionRefs": [
+    {
+      "actionId": "anubis_judgment_hit"
+    }
+  ]
+}

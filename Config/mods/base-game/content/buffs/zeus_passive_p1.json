@@ -1,0 +1,10 @@
+{
+  "tags": [
+    "buff.passive",
+    "buff.undispellable",
+    "trait.immune_slot_damage"
+  ],
+  "stackRule": "Replace",
+  "descId": "buff.zeus_passive_p1.desc",
+  "durationType": "Permanent"
+}

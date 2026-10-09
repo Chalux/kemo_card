@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "einstein_condensate_buff",
+    "targetFilter": { "self": true }
+  }
+}

@@ -18,6 +18,9 @@ public static class BuiltinCombatConditions
     /// <summary>「本回合打出过 N 张指定属性的卡」：参数 <c>{ count, elementAny? }</c>。</summary>
     public const string CardPlayedThisTurn = "CardPlayedThisTurn";
 
+    /// <summary>「自身当前标记队列有至少 N 张卡」：参数 <c>{ count, elementAny? }</c>。</summary>
+    public const string CardsQueuedForExecution = "CardsQueuedForExecution";
+
     /// <summary>
     /// 「本回合连携达到 N 档」：参数 <c>{ tier, elementAny? }</c>。
     /// <c>tier</c> = 该属性的参与人数下限（2/3/4 = 二/三/四连携档）；
@@ -35,9 +38,41 @@ public static class BuiltinCombatConditions
     /// </summary>
     public const string IdentityMatch = "IdentityMatch";
 
+    /// <summary>
+    /// 「当前充能球触发批次里包含指定球」（2026-09-26 新增）：参数
+    /// <c>{ elementAny?: ["Yellow"], orbTypeId?: "yellow" }</c>（<b>至少一项</b>；两者都给时取"且"）。
+    /// </summary>
+    /// <remarks>
+    /// 判定区间 = 一次触发（<c>OrbRuntime.Trigger</c>）清空队列后、<c>onOrbTriggered</c> 钩子的求值期间：
+    /// 批次记录在钩子前后开关，因此只有挂在 <c>onOrbTriggered</c> 上的效果（含 <c>oncePerTurn</c>）读得到，
+    /// 逐球触发效果与钩子之外一律不通过。「这次触发里有没有黄球 → 给护盾」这类效果用它表达
+    /// （爱因斯坦凝析 buff 即 <c>elementAny: ["Yellow"]</c>）。
+    /// </remarks>
+    public const string OrbTriggered = "OrbTriggered";
+
+    /// <summary>
+    /// 「条件主体上一回合受到过魔法伤害」（2026-09-26 新增）：<b>无参数</b>。
+    /// </summary>
+    /// <remarks>
+    /// 上下文保留主体的阵营与索引（效果条件 = 来源，目标筛选 = 候选，Buff 休眠 = 持有者）；
+    /// 非玩家主体与无模拟上下文一律不通过。记账口径与 <c>onDamaged</c> 一致：
+    /// 玩家槽位 + 敌方来源 + 非自我结算的魔法伤害（护盾完全抵消也算"挨了这一下"）。
+    /// 账期由回合边界滚动——上一回合记的账在下一回合开始时转入可读账（爱因斯坦被动2 用它）。
+    /// 目标筛选逐候选查询，敌方来源不能借用同索引的玩家账本。
+    /// </remarks>
+    public const string TookMagicDamageLastTurn = "TookMagicDamageLastTurn";
+
+    /// <summary>存活敌人中是否存在指定 Buff 标签；params: { tag, exists? }。</summary>
+    public const string EnemyHasBuffTag = "EnemyHasBuffTag";
+
     public static void RegisterAll(ConditionRegistry<ICombatCondContext> registry)
     {
         ArgumentNullException.ThrowIfNull(registry);
+
+        registry.Register(CondTypeHandler.Create<ICombatCondContext, EnemyBuffTagArgs>(
+            EnemyHasBuffTag, "COND_ENEMY_BUFF_TAG_SHORT", "COND_ENEMY_BUFF_TAG_LONG",
+            TryParseEnemyBuffTag, (args, context) => new LeafEvalData
+            { Passed = context.AnyLivingEnemyHasBuffTag(args.Tag) == args.Exists, Fill = [args.Tag, args.Exists] }));
 
         registry.Register(CondTypeHandler.Create<ICombatCondContext, CardPlayedArgs>(
             CardPlayedThisTurn,
@@ -45,6 +80,13 @@ public static class BuiltinCombatConditions
             "COND_CARD_PLAYED_THIS_TURN_LONG",
             TryParseCardPlayed,
             CheckCardPlayed));
+
+        registry.Register(CondTypeHandler.Create<ICombatCondContext, CardPlayedArgs>(
+            CardsQueuedForExecution,
+            "COND_CARDS_QUEUED_SHORT",
+            "COND_CARDS_QUEUED_LONG",
+            TryParseCardPlayed,
+            CheckCardsQueued));
 
         registry.Register(CondTypeHandler.Create<ICombatCondContext, ChainTierArgs>(
             ChainTierAtLeast,
@@ -59,6 +101,20 @@ public static class BuiltinCombatConditions
             "COND_IDENTITY_LONG",
             TryParseIdentity,
             CheckIdentity));
+
+        registry.Register(CondTypeHandler.Create<ICombatCondContext, OrbTriggeredArgs>(
+            OrbTriggered,
+            "COND_ORB_TRIGGERED_SHORT",
+            "COND_ORB_TRIGGERED_LONG",
+            TryParseOrbTriggered,
+            CheckOrbTriggered));
+
+        registry.Register(CondTypeHandler.Create<ICombatCondContext, NoArgs>(
+            TookMagicDamageLastTurn,
+            "COND_TOOK_MAGIC_DAMAGE_SHORT",
+            "COND_TOOK_MAGIC_DAMAGE_LONG",
+            TryParseNoArgs,
+            CheckTookMagicDamageLastTurn));
     }
 
     private sealed record CardPlayedArgs(int Count, int ElementFlags);
@@ -152,6 +208,17 @@ public static class BuiltinCombatConditions
         };
     }
 
+    private static LeafEvalData CheckCardsQueued(CardPlayedArgs args, ICombatCondContext context)
+    {
+        var queued = context.CountCardsQueuedForExecution(context.SourceCharacterIndex, args.ElementFlags);
+        return new LeafEvalData
+        {
+            Passed = queued >= args.Count,
+            Fill = [queued, args.Count],
+            Progress = new ConditionProgress(Math.Min(queued, args.Count), args.Count),
+        };
+    }
+
     private sealed record ChainTierArgs(int Tier, int ElementFlags);
 
     private static bool TryParseChainTier(
@@ -212,6 +279,138 @@ public static class BuiltinCombatConditions
             Progress = new ConditionProgress(Math.Min(participants, args.Tier), args.Tier),
         };
     }
+
+    #region EnemyHasBuffTag（存活敌人标签）
+
+    private sealed record EnemyBuffTagArgs(string Tag, bool Exists);
+
+    private static bool TryParseEnemyBuffTag(JsonElement args, string sourcePath,
+        out EnemyBuffTagArgs? parsed, out string? error)
+    {
+        parsed = null;
+        error = null;
+        if (args.ValueKind != JsonValueKind.Object || !args.TryGetProperty("tag", out var tag) ||
+            tag.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(tag.GetString()))
+        {
+            error = $"{sourcePath}.tag: 须为非空字符串";
+            return false;
+        }
+        var exists = true;
+        foreach (var property in args.EnumerateObject())
+        {
+            if (property.Name == "tag")
+                continue;
+            if (property.Name != "exists" || property.Value.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+            {
+                error = $"{sourcePath}: 仅接受 tag 与布尔 exists";
+                return false;
+            }
+            exists = property.Value.GetBoolean();
+        }
+        parsed = new(tag.GetString()!, exists);
+        return true;
+    }
+
+    #endregion
+
+    #region OrbTriggered（充能球触发批次）
+
+    private sealed record OrbTriggeredArgs(int ElementFlags, string? OrbTypeId);
+
+    private static bool TryParseOrbTriggered(
+        JsonElement args,
+        string sourcePath,
+        out OrbTriggeredArgs? parsed,
+        out string? error)
+    {
+        parsed = null;
+        error = null;
+
+        if (args.ValueKind != JsonValueKind.Object)
+        {
+            error = $"{sourcePath}: 参数须为对象，例如 {{ \"elementAny\": [\"Yellow\"] }} 或 {{ \"orbTypeId\": \"yellow\" }}";
+            return false;
+        }
+
+        var elementFlags = 0;
+        string? orbTypeId = null;
+        foreach (var property in args.EnumerateObject())
+        {
+            switch (property.Name)
+            {
+                case "elementAny":
+                    if (!TryParseElementFlags(property.Value, sourcePath, out elementFlags, out error))
+                        return false;
+                    break;
+                case "orbTypeId":
+                    var id = property.Value.ValueKind == JsonValueKind.String ? property.Value.GetString() : null;
+                    if (string.IsNullOrWhiteSpace(id))
+                    {
+                        error = $"{sourcePath}.orbTypeId: 须为非空字符串（球类型 id，如 \"yellow\"）";
+                        return false;
+                    }
+
+                    orbTypeId = id;
+                    break;
+                default:
+                    error = $"{sourcePath}: 未知参数 '{property.Name}'（可用：elementAny / orbTypeId）";
+                    return false;
+            }
+        }
+
+        if (elementFlags == 0 && orbTypeId is null)
+        {
+            error = $"{sourcePath}: 至少配置 elementAny 或 orbTypeId 之一";
+            return false;
+        }
+
+        parsed = new OrbTriggeredArgs(elementFlags, orbTypeId);
+        return true;
+    }
+
+    private static LeafEvalData CheckOrbTriggered(OrbTriggeredArgs args, ICombatCondContext context) =>
+        new() { Passed = context.OrbTriggeredInBatch(args.ElementFlags, args.OrbTypeId) };
+
+    #endregion
+
+    #region TookMagicDamageLastTurn（上一回合的魔法受击账）
+
+    /// <summary>无参数条件的占位载荷（<see cref="CondTypeHandler"/> 需要一个 <c>TArgs</c>）。</summary>
+    private sealed record NoArgs;
+
+    private static bool TryParseNoArgs(
+        JsonElement args,
+        string sourcePath,
+        out NoArgs? parsed,
+        out string? error)
+    {
+        parsed = null;
+        error = null;
+
+        if (args.ValueKind != JsonValueKind.Object)
+        {
+            error = $"{sourcePath}: 该条件不接受参数（不写 params 即可）";
+            return false;
+        }
+
+        foreach (var property in args.EnumerateObject())
+        {
+            error = $"{sourcePath}: 未知参数 '{property.Name}'（该条件无参数）";
+            return false;
+        }
+
+        parsed = new NoArgs();
+        return true;
+    }
+
+    /// <summary>
+    /// 条件主体由上下文携带：效果读取来源，筛选读取候选，Buff 休眠读取持有者。
+    /// 非玩家主体与无模拟上下文的容器恒为 false。
+    /// </summary>
+    private static LeafEvalData CheckTookMagicDamageLastTurn(NoArgs _, ICombatCondContext context) =>
+        new() { Passed = context.SubjectTookMagicDamageLastTurn() };
+
+    #endregion
 
     #region IdentityMatch（属性/种族身份 + 队伍人数门闩）
 

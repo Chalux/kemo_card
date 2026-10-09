@@ -1,4 +1,5 @@
 using Godot;
+using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Combat.Buffs;
 
@@ -35,7 +36,9 @@ public partial class BuffListCmp : BaseCmp
             if (i < instances.Count)
             {
                 var instance = instances[i];
-                icon.Bind(instance.Def, instance.Stacks, instance.RemainingTurns);
+                icon.Bind(instance.Def, instance.Stacks, instance.RemainingTurns,
+                    instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer)
+                        ? KemoCard.Frame.Content.ContentParameters.ReadFloat(instance.Params ?? new Dictionary<string, object>(), "amount", 0) : null);
                 icon.Visible = true;
             }
             else

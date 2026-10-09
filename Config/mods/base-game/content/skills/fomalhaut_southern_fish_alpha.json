@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.fomalhaut_southern_fish_alpha.name",
+  "descId": "skill.fomalhaut_southern_fish_alpha.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "fomalhaut_apply_alpha"
+    }
+  ],
+  "tags": [
+    "active"
+  ]
+}

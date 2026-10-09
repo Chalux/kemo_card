@@ -1,0 +1,10 @@
+{
+  "params": {
+    "amount": 5,
+    "resource": "energy",
+    "targetFilter": {
+      "self": true
+    }
+  },
+  "kind": "GainResource"
+}

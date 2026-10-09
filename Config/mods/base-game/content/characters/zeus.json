@@ -1,0 +1,48 @@
+{
+  "initialEnergy": 3,
+  "element": "Yellow",
+  "race": [
+    "God"
+  ],
+  "role": "Guard",
+  "tags": [
+    "starter"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "cooldown": 6,
+      "skillId": "zeus_lord_of_gods"
+    },
+    {
+      "cooldown": 4,
+      "skillId": "zeus_charge_one"
+    }
+  ],
+  "maxEnergy": 8,
+  "cards": [
+    "zeus_thunderbolt",
+    "zeus_aegis",
+    "zeus_divine_judgment",
+    "zeus_olympian_edict"
+  ],
+  "displayNameId": "char.zeus.name",
+  "passives": [
+    {
+      "requiredPotential": 0,
+      "buffId": "zeus_passive_p1"
+    },
+    {
+      "requiredPotential": 10,
+      "buffId": "zeus_passive_p2"
+    },
+    {
+      "requiredPotential": 30,
+      "buffId": "zeus_passive_p3"
+    },
+    {
+      "requiredPotential": 50,
+      "buffId": "zeus_passive_p4"
+    }
+  ]
+}

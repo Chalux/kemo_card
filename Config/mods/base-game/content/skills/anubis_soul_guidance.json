@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.anubis_soul_guidance.name",
+  "descId": "skill.anubis_soul_guidance.desc",
+  "actionRefs": [
+    {
+      "actionId": "anubis_guidance_hit"
+    }
+  ]
+}

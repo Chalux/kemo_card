@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.kagi_lockon_pursuit.name",
+  "descId": "skill.kagi_lockon_pursuit.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "kagi_pursuit_hit"
+    }
+  ],
+  "tags": [
+    "exclusive"
+  ]
+}

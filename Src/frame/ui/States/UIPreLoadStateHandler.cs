@@ -25,22 +25,46 @@ public sealed class UIPreLoadStateHandler : IStateHandler<EUIState, IUIStateCont
         win.Payload = vo.Payload;
 
         int preloadFlag = vo.Load.IncrementPreLoadFlag();
-
-        ((IUILifecycleInvoker)win).InvokePreLoad(() =>
+        bool completed = false;
+        bool TryComplete()
         {
-            if (preloadFlag != vo.Load.PreLoadFlag || vo.StateMachine.CurrentState != EUIState.PreLoad)
-            {
-                return;
-            }
+            if (completed || preloadFlag != vo.Load.PreLoadFlag || vo.StateMachine.CurrentState != EUIState.PreLoad)
+                return false;
+            completed = true;
+            return true;
+        }
 
-            bool reopen = payload is OpenTransitionData { IsReopen: true };
-            vo.StateMachine.TransitionTo(reopen ? EUIState.Open : EUIState.Create, context, payload);
-        },
-        () =>
+        void Fail()
         {
+            if (!TryComplete()) return;
             AppLog.Error($"UI 管理器: 预加载UI<{vo.Id}> 失败。", "UI");
-            vo.StateMachine.TransitionTo(EUIState.Destroy, context);
-            context?.OpenNext();
-        });
+            try { vo.StateMachine.TransitionTo(EUIState.Destroy, context); }
+            finally { context?.OpenNext(); }
+        }
+
+        void Abort(Exception ex)
+        {
+            if (preloadFlag != vo.Load.PreLoadFlag || vo.IsClose) return;
+            AppLog.Error($"UI<{vo.Id}> 预加载/创建异常：{ex.Message}", "UI");
+            try { vo.StateMachine.TransitionTo(EUIState.Destroy, context); }
+            finally { context?.OpenNext(); }
+        }
+
+        try
+        {
+            ((IUILifecycleInvoker)win).InvokePreLoad(() =>
+            {
+                if (!TryComplete()) return;
+
+                bool reopen = payload is OpenTransitionData { IsReopen: true };
+                try { vo.StateMachine.TransitionTo(reopen ? EUIState.Open : EUIState.Create, context, payload); }
+                catch (Exception ex) { Abort(ex); }
+            },
+            Fail);
+        }
+        catch (Exception ex)
+        {
+            Abort(ex);
+        }
     }
 }

@@ -1,0 +1,44 @@
+{
+  "displayNameId": "buff.hualing_dance_weakness.name",
+  "descId": "buff.hualing_dance_weakness.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "debuff"
+  ],
+  "duration": 1,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -30
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -30
+      }
+    },
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -30
+      }
+    },
+    {
+      "attributeId": "MagicDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -30
+      }
+    }
+  ]
+}

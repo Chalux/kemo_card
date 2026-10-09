@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "hookTargets": "allEnemies",
+    "buffId": "cupid_peace"
+  }
+}

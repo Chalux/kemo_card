@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "reno_breath_heal",
+    "targetFilter": { "self": true }
+  }
+}

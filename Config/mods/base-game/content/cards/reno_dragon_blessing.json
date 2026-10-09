@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.reno_dragon_blessing.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 12,
+  "skillRefs": [{ "skillId": "reno_dragon_blessing" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "HealPower": 1
+    }
+  },
+  "role": "Support",
+  "priority": 6,
+  "cardType": "Support",
+  "targetSide": "Ally",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

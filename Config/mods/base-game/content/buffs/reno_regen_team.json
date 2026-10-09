@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.reno_regen.name",
+  "descId": "buff.reno_regen.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "hooks": {
+    "onTurnStart": [
+      { "effectId": "reno_regen_heal", "params": { "hookTargets": "team" } }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.hualing_light_curtain.name",
+  "descId": "skill.hualing_light_curtain.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "hualing_curtain_shield"
+    },
+    {
+      "effectId": "hualing_curtain_progress"
+    }
+  ]
+}

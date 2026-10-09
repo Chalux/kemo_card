@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.eta_carinae_orb_boost.name",
+  "descId": "buff.eta_carinae_orb_boost.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 2,
+  "modifiers": [
+    {
+      "attributeId": "OrbDamageScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0.5
+      }
+    },
+    {
+      "attributeId": "OrbHealingScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0.5
+      }
+    }
+  ]
+}

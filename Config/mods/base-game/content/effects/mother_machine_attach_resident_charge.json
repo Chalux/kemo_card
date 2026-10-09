@@ -1,0 +1,8 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "mother_machine_resident_charge",
+    "slotIndex": 1,
+    "charge": 2
+  }
+}

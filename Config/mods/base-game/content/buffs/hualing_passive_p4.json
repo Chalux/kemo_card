@@ -1,0 +1,23 @@
+{
+  "displayNameId": "buff.hualing_passive_p4.name",
+  "descId": "buff.hualing_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onActiveSkillCast": [
+      {
+        "effectId": "hualing_open_illusory_world"
+      },
+      {
+        "effectId": "hualing_apply_zero_defense",
+        "params": {
+          "hookTargets": "allEnemies"
+        }
+      }
+    ]
+  }
+}

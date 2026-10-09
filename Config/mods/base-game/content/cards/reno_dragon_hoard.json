@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.reno_dragon_hoard.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 6,
+  "skillRefs": [{ "skillId": "reno_dragon_hoard" }],
+  "stats": {
+    "attributes": {
+      "HealPower": 1,
+      "MaxHealth": 30
+    }
+  },
+  "role": "Support",
+  "priority": 8,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": ["buff", "heal", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

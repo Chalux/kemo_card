@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.reno_dragon_roar.name",
+  "descId": "skill.reno_dragon_roar.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "reno_apply_roar_team" }
+  ],
+  "tags": ["buff"]
+}

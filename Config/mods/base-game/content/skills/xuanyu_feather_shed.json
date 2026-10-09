@@ -1,0 +1,22 @@
+{
+  "displayNameId": "skill.xuanyu_feather_shed.name",
+  "descId": "skill.xuanyu_feather_shed.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "xuanyu_cleanse"
+    },
+    {
+      "effectId": "gain_skill_counter",
+      "params": {
+        "amount": 1,
+        "targetFilter": {
+          "self": true
+        }
+      }
+    }
+  ]
+}

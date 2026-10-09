@@ -1,0 +1,8 @@
+{
+  "kind": "Damage",
+  "params": {
+    "amount": 12,
+    "AttackScale": 1,
+    "damageGameplayEffectId": "xuanyu_magic_damage"
+  }
+}

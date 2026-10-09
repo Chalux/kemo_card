@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.weilong_armor_defense.name",
+  "descId": "buff.weilong_armor_defense.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 2,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 6
+      }
+    },
+    {
+      "attributeId": "MagicDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 6
+      }
+    }
+  ]
+}

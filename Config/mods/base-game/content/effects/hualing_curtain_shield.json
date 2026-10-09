@@ -1,0 +1,7 @@
+{
+  "kind": "GainShield",
+  "params": {
+    "amount": 25,
+    "hookTargets": "allies"
+  }
+}

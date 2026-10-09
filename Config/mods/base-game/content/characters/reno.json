@@ -1,0 +1,25 @@
+{
+  "displayNameId": "char.reno.name",
+  "element": "Green",
+  "role": "Support",
+  "race": ["Dragon"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "reno_dragon_boon", "cooldown": 9 }
+  ],
+  "cards": [
+    "reno_dragon_hoard",
+    "reno_dragon_blessing",
+    "reno_dragon_breath",
+    "reno_dragon_roar"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "reno_passive_p1", "requiredPotential": 0 },
+    { "buffId": "reno_passive_p2", "requiredPotential": 10 },
+    { "buffId": "reno_passive_p3", "requiredPotential": 30 },
+    { "buffId": "reno_passive_p4", "requiredPotential": 50 }
+  ],
+  "tags": ["starter"]
+}

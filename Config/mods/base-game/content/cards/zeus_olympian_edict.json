@@ -1,0 +1,31 @@
+{
+  "rarity": "Exclusive",
+  "cardType": "Support",
+  "element": 8,
+  "role": "Guard",
+  "targetScope": "All",
+  "isExclusive": true,
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "MagicAttack": 1
+    }
+  },
+  "skillRefs": [
+    {
+      "skillId": "zeus_olympian_edict"
+    }
+  ],
+  "tags": [
+    "buff",
+    "exclusive"
+  ],
+  "baseValue": 0,
+  "targetSide": "Ally",
+  "cost": 2,
+  "costType": "Energy",
+  "priority": 8,
+  "displayNameId": "card.zeus_olympian_edict.name",
+  "retargetPolicy": "Default",
+  "targetCount": 1
+}

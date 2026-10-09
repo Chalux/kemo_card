@@ -1,0 +1,10 @@
+{
+  "kind": "ModifyDrawCountByDiscard",
+  "params": {
+    "perCard": 1,
+    "additive": true,
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

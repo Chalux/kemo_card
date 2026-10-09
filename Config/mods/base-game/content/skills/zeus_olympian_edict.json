@@ -1,0 +1,15 @@
+{
+  "displayNameId": "skill.zeus_olympian_edict.name",
+  "actionRefs": [
+    {
+      "actionId": "zeus_edict_charge"
+    },
+    {
+      "actionId": "zeus_edict_yellow"
+    },
+    {
+      "actionId": "zeus_edict_god"
+    }
+  ],
+  "descId": "skill.zeus_olympian_edict.desc"
+}

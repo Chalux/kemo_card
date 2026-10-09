@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.perseus_hero_blade.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "perseus_hero_blade"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "PhysicalAttack": 2,
+      "MaxHealth": 20
+    }
+  },
+  "role": "Controller",
+  "priority": 4,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

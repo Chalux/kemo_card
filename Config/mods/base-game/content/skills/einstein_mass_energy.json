@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.einstein_mass_energy.name",
+  "descId": "skill.einstein_mass_energy.desc",
+  "targetOverride": { "side": "Enemy", "scope": "RandomN", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "einstein_mass_energy_hit" }
+  ],
+  "tags": ["attack"]
+}

@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.reno_boon_self.name",
+  "descId": "buff.reno_boon_self.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ]
+}

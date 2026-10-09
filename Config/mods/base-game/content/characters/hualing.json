@@ -1,0 +1,45 @@
+{
+  "displayNameId": "char.hualing.name",
+  "element": "Blue",
+  "role": "Controller",
+  "race": [
+    "Machine",
+    "Human"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "hualing_holographic_dance",
+      "cooldown": 6
+    }
+  ],
+  "cards": [
+    "hualing_silent_prelude",
+    "hualing_prism_dance",
+    "hualing_light_curtain",
+    "hualing_final_freeze"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "buffId": "hualing_passive_p1",
+      "requiredPotential": 0
+    },
+    {
+      "buffId": "hualing_passive_p2",
+      "requiredPotential": 10
+    },
+    {
+      "buffId": "hualing_passive_p3",
+      "requiredPotential": 30
+    },
+    {
+      "buffId": "hualing_passive_p4",
+      "requiredPotential": 50
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

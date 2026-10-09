@@ -2,7 +2,7 @@
 
 > Agent 请先读 [AGENT.md](AGENT.md)。本文列出活规格、归档入口与本轮维护约定。
 
-**最后修订**：2026-09-21（活规格收敛为 6 份）
+**最后修订**：2026-10-06（战斗与 UI 审查、差异修复与回归记录）
 
 ---
 
@@ -44,6 +44,12 @@
 原 `Doc/superpowers/{specs,plans}/` 下同名路径为重定向 stub，避免旧链接断裂。
 
 ## 维护
+
+战斗审查与修复记录：[2026-10-06-combat-audit.md](reviews/2026-10-06-combat-audit.md)（原始复现证据、14 类问题修复状态及回归结果）。
+
+Git 差异复查与后续修复：[2026-10-06-git-diff-review.md](reviews/2026-10-06-git-diff-review.md)（7 类差异问题、2 类遗留问题、实现优化及正式回归结果）。
+
+UI 框架审查与修复：[2026-10-06-ui-framework-audit.md](reviews/2026-10-06-ui-framework-audit.md)（10 类原始缺陷、Dlg 并存契约、生命周期加固及回归结果）；真实 Godot 节点检查入口见 [headless 回归说明](../Tests/kemo_card.Ui.Headless/README.md)。
 
 更新地图或归档策略时使用 skill `.cursor/skills/maintain-agent-doc/`，并同步本 INDEX（若增删活规格/归档类别）。
 

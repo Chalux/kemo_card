@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.alpha_centauri_southern_light.name",
+  "descId": "skill.alpha_centauri_southern_light.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "tags": [
+    "support"
+  ],
+  "effectRefs": [
+    {
+      "effectId": "alpha_centauri_light_heal"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.mother_machine_redundant_backup.name",
+  "element": 8,
+  "role": "Healer",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "mother_machine_redundant_backup"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 1,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 10,
+  "cardType": "Healing",
+  "targetSide": "Ally",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.physical_card_attack_count.name",
+  "defaultBase": 0,
+  "allowNegative": false,
+  "isMeta": false
+}

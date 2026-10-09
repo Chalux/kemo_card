@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.xuanyu_tempest_echo.name",
+  "element": 1,
+  "role": "Wizard",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "xuanyu_tempest_echo"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 2
+    }
+  },
+  "priority": 6,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "All",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

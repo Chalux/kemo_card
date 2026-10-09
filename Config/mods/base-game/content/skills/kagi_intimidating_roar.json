@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.kagi_intimidating_roar.name",
+  "descId": "skill.kagi_intimidating_roar.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "kagi_apply_roar"
+    }
+  ],
+  "tags": [
+    "exclusive"
+  ]
+}

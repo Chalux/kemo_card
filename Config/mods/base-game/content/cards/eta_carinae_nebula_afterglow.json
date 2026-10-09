@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.eta_carinae_nebula_afterglow.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "eta_carinae_nebula_afterglow"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 2
+    }
+  },
+  "role": "Elementist",
+  "priority": 8,
+  "cardType": "Healing",
+  "targetSide": "Ally",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

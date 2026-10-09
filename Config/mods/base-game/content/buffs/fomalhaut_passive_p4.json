@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.fomalhaut_passive_p4.name",
+  "descId": "buff.fomalhaut_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable",
+    "trait.follow_up"
+  ]
+}

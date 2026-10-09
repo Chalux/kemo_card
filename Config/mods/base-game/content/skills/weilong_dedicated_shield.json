@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.weilong_dedicated_shield.name",
+  "descId": "skill.weilong_dedicated_shield.desc",
+  "actionRefs": [
+    {
+      "actionId": "weilong_dedicated_shield_stance"
+    },
+    {
+      "actionId": "weilong_dedicated_shield_gain"
+    }
+  ],
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  }
+}

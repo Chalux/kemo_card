@@ -12,7 +12,11 @@ public sealed class CharacterBattleInstance
     private readonly List<CardRuntimeEntry> _drawPile = [];
     private readonly List<CardRuntimeEntry> _graveyard = [];
     private readonly HandSlot[] _handSlots;
+    private readonly IReadOnlyList<HandSlot> _handView;
+    private readonly IReadOnlyList<CardRuntimeEntry> _drawView;
+    private readonly IReadOnlyList<CardRuntimeEntry> _graveyardView;
     private readonly List<int> _drawModifiers = [];
+    private int _extraDrawCount;
     private readonly ActiveSkillTier[] _activeSkillChain;
     private bool _phaseShuffleUsed;
     private Func<int, int, bool, int>? _partyCountQuery;
@@ -20,9 +24,9 @@ public sealed class CharacterBattleInstance
 
     public string SourceInstanceId { get; }
     public string DefinitionId { get; }
-    public IReadOnlyList<CardRuntimeEntry> DrawPile => _drawPile;
-    public IReadOnlyList<CardRuntimeEntry> Graveyard => _graveyard;
-    public IReadOnlyList<HandSlot> HandSlots => _handSlots;
+    public IReadOnlyList<CardRuntimeEntry> DrawPile => _drawView;
+    public IReadOnlyList<CardRuntimeEntry> Graveyard => _graveyardView;
+    public IReadOnlyList<HandSlot> HandSlots => _handView;
 
     /// <summary>
     /// 本场战斗该角色持有的全部卡牌 id（抽牌堆 + 手牌 + 弃牌堆），即"卡组内"的实际口径。
@@ -112,6 +116,9 @@ public sealed class CharacterBattleInstance
         _handSlots = Enumerable.Range(0, CombatConstants.HandSlotCount)
             .Select(index => new HandSlot(index))
             .ToArray();
+        _handView = Array.AsReadOnly(_handSlots);
+        _drawView = _drawPile.AsReadOnly();
+        _graveyardView = _graveyard.AsReadOnly();
     }
 
     /// <summary>
@@ -175,7 +182,8 @@ public sealed class CharacterBattleInstance
         CharacterInstance source,
         GameDefinitionRegistry definitions,
         HostRng rng,
-        out string? error)
+        out string? error,
+        IReadOnlySet<string>? obtainedCardIds = null)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(definitions);
@@ -188,7 +196,7 @@ public sealed class CharacterBattleInstance
             return null;
         }
 
-        var validation = deck.Validate(source.GetBuildableCardIds(new HashSet<string>(StringComparer.Ordinal)));
+        var validation = deck.Validate(source.GetBuildableCardIds(obtainedCardIds ?? new HashSet<string>(StringComparer.Ordinal)));
         if (!validation.IsValid)
         {
             error = "当前卡组构筑非法。";
@@ -338,22 +346,33 @@ public sealed class CharacterBattleInstance
             _drawModifiers.Add(delta);
     }
 
-    public void ClearDrawModifiers() => _drawModifiers.Clear();
+    /// <summary>下次抽牌的额外张数，与普通抽牌修正及其他额外张数累加。</summary>
+    public void AddExtraDrawModifier(int amount)
+    {
+        if (amount > 0)
+            _extraDrawCount = (int)Math.Min(int.MaxValue, (long)_extraDrawCount + amount);
+    }
 
-    /// <summary>规格 §4.2：<c>max(0, 1 + 最大增益 − 最大减益)</c>，同向修正不叠多段。</summary>
+    public void ClearDrawModifiers()
+    {
+        _drawModifiers.Clear();
+        _extraDrawCount = 0;
+    }
+
+    /// <summary>规格 §4.2：<c>max(0, 1 + 最大增益 − 最大减益 + 额外张数之和)</c>。</summary>
     public int ComputeDrawCount()
     {
         var largestBonus = 0;
-        var largestPenalty = 0;
+        var largestPenalty = 0L;
         foreach (var modifier in _drawModifiers)
         {
             if (modifier > largestBonus)
                 largestBonus = modifier;
-            else if (-modifier > largestPenalty)
-                largestPenalty = -modifier;
+            else if (-(long)modifier > largestPenalty)
+                largestPenalty = -(long)modifier;
         }
 
-        return Math.Max(0, 1 + largestBonus - largestPenalty);
+        return (int)Math.Clamp(1L + largestBonus - largestPenalty + _extraDrawCount, 0, int.MaxValue);
     }
 
     public void ResetPhaseShuffleBudget() => _phaseShuffleUsed = false;
@@ -503,7 +522,7 @@ public sealed class CharacterBattleInstance
     }
 
     /// <summary>
-    /// 规格 §4.6 ActiveSkill 通道：从全部非空手牌均匀随机弃一张，返回被弃槽位；池空返回 <c>null</c>。
+    /// 规格 §4.6 显式随机 ActiveSkill 通道：从全部非空手牌均匀随机选一张，返回被弃槽位；池空返回 <c>null</c>。
     /// </summary>
     public HandSlot? PickRandomOccupiedSlot(HostRng rng)
     {

@@ -31,7 +31,7 @@ public sealed class CharacterBattleInstanceTests
         Assert.That(error, Is.Null);
         Assert.That(battle, Is.Not.Null);
         Assert.That(battle!.DrawPile, Has.Count.EqualTo(2));
-        Assert.That(battle.HandSlots, Has.Length.EqualTo(CombatConstants.HandSlotCount));
+        Assert.That(battle.HandSlots, Has.Count.EqualTo(CombatConstants.HandSlotCount));
         Assert.That(battle.HandSlots.All(slot => slot.IsEmpty), Is.True);
         Assert.That(battle.CurrentEnergy, Is.EqualTo(1));
         Assert.That(battle.MaxEnergy, Is.EqualTo(3));

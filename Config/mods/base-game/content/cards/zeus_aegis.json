@@ -1,0 +1,32 @@
+{
+  "rarity": "Exclusive",
+  "cardType": "Guard",
+  "element": 8,
+  "role": "Guard",
+  "targetScope": "Self",
+  "isExclusive": true,
+  "stats": {
+    "attributes": {
+      "MagicDefense": 1,
+      "MaxHealth": 20,
+      "PhysicalDefense": 1
+    }
+  },
+  "skillRefs": [
+    {
+      "skillId": "zeus_aegis"
+    }
+  ],
+  "tags": [
+    "buff",
+    "exclusive"
+  ],
+  "baseValue": 0,
+  "targetSide": "Self",
+  "cost": 1,
+  "costType": "Energy",
+  "priority": 10,
+  "displayNameId": "card.zeus_aegis.name",
+  "retargetPolicy": "Default",
+  "targetCount": 1
+}

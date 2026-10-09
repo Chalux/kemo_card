@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.perseus_battle_pressure.name",
+  "descId": "buff.perseus_battle_pressure.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Replace",
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "callerName": "amount",
+        "kind": "SetByCaller"
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "callerName": "amount",
+        "kind": "SetByCaller"
+      }
+    }
+  ],
+  "tags": [
+    "buff.debuff"
+  ]
+}

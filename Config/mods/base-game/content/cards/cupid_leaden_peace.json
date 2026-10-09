@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.cupid_leaden_peace.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "cupid_leaden_peace"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "PhysicalDefense": 1,
+      "MagicDefense": 1,
+      "MaxHealth": 20
+    }
+  },
+  "role": "Healer",
+  "priority": 7,
+  "cardType": "Weak",
+  "targetSide": "Enemy",
+  "targetScope": "All",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

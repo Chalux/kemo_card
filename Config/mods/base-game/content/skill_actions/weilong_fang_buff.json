@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "weilong_fang_power",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

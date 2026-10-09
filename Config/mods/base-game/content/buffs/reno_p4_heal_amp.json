@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.reno_p4_heal.name",
+  "descId": "buff.reno_p4_heal.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Green"] } }
+  ],
+  "modifiers": [
+    { "attributeId": "HealingDealtScale", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 0.5 } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"]
+}

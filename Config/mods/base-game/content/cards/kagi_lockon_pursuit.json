@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.kagi_lockon_pursuit.name",
+  "element": 1,
+  "role": "Controller",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "kagi_lockon_pursuit"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalAttack": 2
+    }
+  },
+  "priority": 9,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

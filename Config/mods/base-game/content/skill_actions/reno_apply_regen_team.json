@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "reno_regen_team",
+    "targetFilter": { "self": true }
+  }
+}

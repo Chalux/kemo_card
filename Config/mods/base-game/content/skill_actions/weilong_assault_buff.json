@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "weilong_extra_assault",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

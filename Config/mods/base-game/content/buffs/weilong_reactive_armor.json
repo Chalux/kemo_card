@@ -1,0 +1,36 @@
+{
+  "displayNameId": "buff.weilong_reactive_armor.name",
+  "descId": "buff.weilong_reactive_armor.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 1,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 12
+      }
+    },
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 12
+      }
+    },
+    {
+      "attributeId": "Taunt",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 3
+      }
+    }
+  ]
+}

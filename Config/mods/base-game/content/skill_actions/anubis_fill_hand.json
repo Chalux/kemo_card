@@ -1,0 +1,8 @@
+{
+  "params": {
+    "targetFilter": {
+      "self": true
+    }
+  },
+  "kind": "FillHand"
+}

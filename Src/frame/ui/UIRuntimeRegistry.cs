@@ -67,11 +67,23 @@ public sealed class UIRuntimeRegistry
         _map[entry.Id] = entry;
 
         var route = entry.RouteMeta;
+        _parentMap.Remove(entry.Id);
         if (route != null && !string.IsNullOrEmpty(route.ParentId))
         {
             _parentMap[entry.Id] = route.ParentId;
-            _childrenMap = null;
         }
+        _childrenMap = null;
+    }
+
+    /// <summary>移除某功能的声明与父路由关系，阻止卸载后的界面再次打开。</summary>
+    public void UnregisterOwner(string ownerModId)
+    {
+        foreach (var entry in GetByOwner(ownerModId))
+        {
+            _map.Remove(entry.Id);
+            _parentMap.Remove(entry.Id);
+        }
+        _childrenMap = null;
     }
 
     /// <summary>取某功能 Mod 名下的全部注册项。</summary>

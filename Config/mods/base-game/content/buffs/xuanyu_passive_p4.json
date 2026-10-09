@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.xuanyu_passive_p4.name",
+  "descId": "buff.xuanyu_passive_p4.desc",
+  "durationType": "Permanent",
+  "duration": 0,
+  "stackRule": "Replace",
+  "maxStacks": 1,
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "modifiers": [],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "xuanyu_apply_feather"
+      }
+    ]
+  }
+}

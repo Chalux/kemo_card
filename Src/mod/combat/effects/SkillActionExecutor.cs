@@ -38,9 +38,10 @@ public sealed class SkillActionExecutor
         SkillActionRefDto actionRef,
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object>? payloadOverrides = null)
     {
-        ExecuteSkillActionRefCore(actionRef, simulation, source, targets, depth: 0);
+        ExecuteSkillActionRefCore(actionRef, simulation, source, targets, depth: 0, payloadOverrides);
     }
 
     private void ExecuteSkillActionRefCore(
@@ -48,7 +49,8 @@ public sealed class SkillActionExecutor
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
-        int depth)
+        int depth,
+        IReadOnlyDictionary<string, object>? payloadOverrides = null)
     {
         ArgumentNullException.ThrowIfNull(actionRef);
         ArgumentNullException.ThrowIfNull(simulation);
@@ -62,7 +64,7 @@ public sealed class SkillActionExecutor
         if (!_registry.Store.TryGetSkillAction(actionRef.ActionId, out var action))
             return;
 
-        var mergedParams = MergeParams(action.Params, actionRef.Params);
+        var mergedParams = ContentParameters.Merge(action.Params, actionRef.Params, payloadOverrides);
         ExecuteAction(action, mergedParams, simulation, source, targets, depth);
     }
 
@@ -91,13 +93,12 @@ public sealed class SkillActionExecutor
                 EEffectKind.DiscardSlot => ESkillActionKind.DiscardSlot,
                 EEffectKind.ModifyDrawCount => ESkillActionKind.ModifyDrawCount,
                 EEffectKind.GainShield => ESkillActionKind.GainShield,
+                EEffectKind.ModifyDrawCountByDiscard => ESkillActionKind.ModifyDrawCountByDiscard,
+                EEffectKind.DispelDebuffs => ESkillActionKind.DispelDebuffs,
                 _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
             },
             ScriptPath = effect.ScriptPath,
             ScriptEntry = effect.ScriptEntry,
-            ActionRefs = kind == EEffectKind.ChainEffects
-                ? []
-                : [],
         };
 
         if (kind == EEffectKind.ChainEffects)
@@ -107,7 +108,7 @@ public sealed class SkillActionExecutor
             return;
         }
 
-        ExecuteAction(legacyAction, mergedParams, simulation, source, targets, depth);
+        ExecuteAction(legacyAction, mergedParams, simulation, source, targets, depth, EContentCategory.Effect);
     }
 
     private void ExecuteAction(
@@ -116,27 +117,46 @@ public sealed class SkillActionExecutor
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
-        int depth)
+        int depth,
+        EContentCategory originCategory = EContentCategory.SkillAction,
+        string? inheritedOwner = null)
     {
+        using var scope = simulation.EffectBudget.TryEnter();
+        if (scope is null)
+            return;
         switch (action.Kind)
         {
             case ESkillActionKind.Draw:
-                ApplyDraw(simulation, source, targets, ReadInt(mergedParams, "count", 1));
+                ApplyDraw(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1));
                 break;
             case ESkillActionKind.Discard:
-                ApplyDiscard(simulation, source, targets, ReadInt(mergedParams, "count", 1));
+                // 实际弃置张数只有 DiscardAndRecord 需要；本动作保持原语义（不记账）。
+                ApplyDiscard(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1), mergedParams);
+                break;
+            case ESkillActionKind.DiscardAndRecord:
+                simulation.SetLastDiscardCount(
+                    ApplyDiscard(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1), mergedParams));
                 break;
             case ESkillActionKind.GainResource:
                 ApplyGainResource(simulation, source, targets, mergedParams);
                 break;
             case ESkillActionKind.ModifyDrawCount:
-                ApplyModifyDrawCount(simulation, source, targets, mergedParams, ReadInt(mergedParams, "amount", 0));
+                ApplyModifyDrawCount(simulation, source, targets, mergedParams, ContentParameters.ReadInt(mergedParams, "amount", 0));
+                break;
+            case ESkillActionKind.ModifyDrawCountByDiscard:
+                ApplyModifyDrawCountByDiscard(simulation, source, targets, mergedParams);
+                break;
+            case ESkillActionKind.DrawByDiscard:
+                ApplyDrawByDiscard(simulation, source, targets, mergedParams);
+                break;
+            case ESkillActionKind.FillHand:
+                ApplyFillHand(simulation, source, targets, mergedParams);
                 break;
             case ESkillActionKind.GainShield:
-                ApplyGainShield(simulation, source, targets, mergedParams, ReadInt(mergedParams, "amount", 0));
+                ApplyGainShield(simulation, source, targets, mergedParams, ContentParameters.ReadInt(mergedParams, "amount", 0));
                 break;
             case ESkillActionKind.ExecuteScript:
-                ApplyExecuteScript(action, mergedParams, simulation, source, targets);
+                ApplyExecuteScript(action, mergedParams, simulation, source, targets, depth, originCategory, inheritedOwner);
                 break;
             case ESkillActionKind.ChainActions:
                 foreach (var child in action.ActionRefs)
@@ -154,8 +174,14 @@ public sealed class SkillActionExecutor
             case ESkillActionKind.RemoveBuff:
                 RemoveBuff(simulation, targets, mergedParams);
                 break;
+            case ESkillActionKind.DispelDebuffs:
+                var cleanseTargets = BuffActionParams.HasTargetSelector(mergedParams)
+                    ? CombatTargetSelector.Resolve(simulation, source, mergedParams) : targets;
+                foreach (var target in cleanseTargets.Distinct())
+                    simulation.Buffs.DispelDebuffs(simulation, target);
+                break;
             case ESkillActionKind.AttachSlotBuff:
-                AttachSlotBuff(simulation, source, mergedParams);
+                AttachSlotBuff(simulation, source, targets, mergedParams);
                 break;
             case ESkillActionKind.GainOrb:
                 GainOrb(simulation, source, mergedParams);
@@ -182,7 +208,7 @@ public sealed class SkillActionExecutor
         IReadOnlyList<CombatTargetRef> targets,
         IReadOnlyDictionary<string, object> parameters)
     {
-        var count = ReadInt(parameters, "count", 2);
+        var count = ContentParameters.ReadInt(parameters, "count", 2);
 
         // 目标解析优先用 hookTargets / targetFilter（"随机敌方单体"这类钩子载荷），
         // 与伤害、挂 buff 同口径；没配选择器时用调用方给的 targets。
@@ -218,7 +244,7 @@ public sealed class SkillActionExecutor
         var instanceParams = parameters
             .Where(pair => pair.Key is not ("gameplayEffectId" or "turns"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-        var turns = ReadInt(parameters, "turns", 0);
+        var turns = ContentParameters.ReadInt(parameters, "turns", 0);
 
         simulation.DomainManager.TrySetPlayerDomain(
             gameplayEffectId,
@@ -235,7 +261,7 @@ public sealed class SkillActionExecutor
         CombatTargetRef source,
         IReadOnlyDictionary<string, object> parameters)
     {
-        var slotIndex = ReadInt(parameters, "slotIndex", -1);
+        var slotIndex = ContentParameters.ReadInt(parameters, "slotIndex", -1);
         if (source.Side != ECombatSide.Player ||
             source.Index < 0 ||
             source.Index >= simulation.PlayerTeam.Characters.Count)
@@ -254,15 +280,20 @@ public sealed class SkillActionExecutor
         IReadOnlyDictionary<string, object> mergedParams,
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        int depth,
+        EContentCategory originCategory,
+        string? inheritedOwner)
     {
         if (string.IsNullOrWhiteSpace(action.ScriptPath))
             return;
 
         var context = BuildScriptContext(mergedParams, simulation, source);
         var entry = string.IsNullOrWhiteSpace(action.ScriptEntry) ? "execute" : action.ScriptEntry;
+        var owner = inheritedOwner ?? (_registry.TryGetOwnerModId(originCategory, action.Id, out var ownerModId)
+            ? ownerModId : simulation.ModId);
         if (!simulation.ScriptHost.TryExecute(
-                simulation.ModId,
+                owner,
                 action.ScriptPath,
                 entry,
                 context,
@@ -271,14 +302,16 @@ public sealed class SkillActionExecutor
             return;
         }
 
-        ExecuteProposedEffects(proposedEffects, simulation, source, targets);
+        ExecuteProposedEffects(proposedEffects, simulation, source, targets, depth + 1, owner);
     }
 
     private void ExecuteProposedEffects(
         IReadOnlyList<Dictionary<string, object>> proposedEffects,
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        int depth,
+        string owner)
     {
         foreach (var proposed in proposedEffects)
         {
@@ -293,13 +326,13 @@ public sealed class SkillActionExecutor
                     simulation,
                     source,
                     targets,
-                    0);
+                    depth);
                 continue;
             }
 
             if (TryGetString(proposed, "actionId", out var actionId))
             {
-                ExecuteSkillActionRef(
+                ExecuteSkillActionRefCore(
                     new SkillActionRefDto
                     {
                         ActionId = actionId,
@@ -307,7 +340,8 @@ public sealed class SkillActionExecutor
                     },
                     simulation,
                     source,
-                    targets);
+                    targets,
+                    depth);
                 continue;
             }
 
@@ -326,7 +360,7 @@ public sealed class SkillActionExecutor
                 ScriptPath = TryGetString(proposed, "scriptPath", out var scriptPath) ? scriptPath : null,
                 ScriptEntry = TryGetString(proposed, "scriptEntry", out var scriptEntry) ? scriptEntry : null,
             };
-            ExecuteAction(inlineAction, inlineParams, simulation, source, targets, depth: 0);
+            ExecuteAction(inlineAction, inlineParams, simulation, source, targets, depth, inheritedOwner: owner);
         }
     }
 
@@ -340,9 +374,11 @@ public sealed class SkillActionExecutor
             return;
 
         // 动态攻击系数（"本回合每触发 1 个绿球 +100% 魔攻"）在两条通道上必须同口径，
-        // 因此把覆盖值并进 SetByCaller 后再交给应用器。
+        // 因此把覆盖值并进 SetByCaller 后再交给应用器；攻击次数（AttackCount / AttackCountByChain /
+        // AttackCountMinusDiscard）同理——它声明的是"打几次"，由 DamageExecution 逐次结算。
         var setByCaller = new Dictionary<string, object>(parameters, StringComparer.Ordinal);
         DamageScaling.ApplyAttackScaleOverride(simulation, parameters, setByCaller);
+        DamageScaling.ApplyAttackCountOverride(simulation, parameters, setByCaller);
 
         _gameplayEffectApplicator.ApplyToTargets(simulation, source, targets, gameplayEffectId, setByCaller);
     }
@@ -374,7 +410,7 @@ public sealed class SkillActionExecutor
         var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
             ? CombatTargetSelector.Resolve(simulation, source, parameters)
             : targets;
-        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId");
+        var instanceParams = BuffActionParams.BuildScaledInstanceParams(simulation, source, parameters, "buffId");
         foreach (var target in resolvedTargets)
             simulation.Buffs.Apply(simulation, target, buffId, instanceParams);
     }
@@ -388,7 +424,7 @@ public sealed class SkillActionExecutor
         if (!BuffActionParams.TryGetString(parameters, "orbTypeId", out var orbTypeId))
             return;
 
-        var count = BuffActionParams.ReadInt(parameters, "count", 1);
+        var count = ContentParameters.ReadInt(parameters, "count", 1);
         simulation.Orbs.Grant(simulation, orbTypeId, BuffActionParams.ResolveProducerIndex(source), count);
     }
 
@@ -408,37 +444,39 @@ public sealed class SkillActionExecutor
     }
 
     /// <summary>
-    /// 给来源角色的手牌槽位挂 buff：<c>params.buffId</c> + 槽位选择。
+    /// 玩家来源给自身挂槽位 buff；敌方来源给传入的玩家角色目标挂。参数为 buffId + 槽位选择。
     /// 槽位选择：<c>params.slotIndex</c>（0 起，显式指定）；
     /// <c>params.slotSelection: "randomNonEmpty"</c>（当前有牌的槽里随机一个，用于「随机一张手牌费用变为 0」）；
+    /// <c>params.slotSelection: "random"</c>（包含空槽，定时投放使用）；
     /// <c>params.slotSelection: "all"</c>（全部手牌槽，空槽也挂，用于「1~5 号槽都获得充能」）。都不给时零操作。
     /// </summary>
     private static void AttachSlotBuff(
         CombatSimulation simulation,
         CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
         IReadOnlyDictionary<string, object> parameters)
     {
-        if (source.Side != ECombatSide.Player ||
-            source.Index < 0 || source.Index >= simulation.PlayerTeam.Characters.Count)
-            return;
-
         if (!BuffActionParams.TryGetBuffId(parameters, out var buffId))
             return;
 
         var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId", "slotIndex", "slotSelection");
-        foreach (var slotIndex in ResolveSlotIndexes(simulation, source.Index, parameters))
+        var holders = source.Side == ECombatSide.Player ? new[] { source } : targets;
+        foreach (var holder in holders.Distinct())
         {
-            simulation.Buffs.ApplyToSlot(simulation, source.Index, slotIndex, buffId, instanceParams);
+            if (holder.Side != ECombatSide.Player || holder.Index < 0 || holder.Index >= simulation.PlayerTeam.Characters.Count)
+                continue;
+            foreach (var slotIndex in ResolveSlotIndexes(simulation, holder.Index, parameters))
+                simulation.Buffs.ApplyToSlot(simulation, holder.Index, slotIndex, buffId, instanceParams);
         }
     }
 
-    /// <summary>解析目标槽位集合：显式 <c>slotIndex</c> &gt; <c>slotSelection</c>（randomNonEmpty / all）。</summary>
+    /// <summary>解析目标槽位集合：显式 slotIndex 优先，其次 randomNonEmpty / random / all。</summary>
     private static IEnumerable<int> ResolveSlotIndexes(
         CombatSimulation simulation,
         int characterIndex,
         IReadOnlyDictionary<string, object> parameters)
     {
-        var explicitIndex = ReadInt(parameters, "slotIndex", -1);
+        var explicitIndex = ContentParameters.ReadInt(parameters, "slotIndex", -1);
         if (explicitIndex >= 0)
         {
             yield return explicitIndex;
@@ -453,6 +491,14 @@ public sealed class SkillActionExecutor
             var slotCount = simulation.PlayerTeam.Characters[characterIndex].HandSlots.Count;
             for (var index = 0; index < slotCount; index++)
                 yield return index;
+            yield break;
+        }
+
+        if (string.Equals(selection, "random", StringComparison.OrdinalIgnoreCase))
+        {
+            var count = simulation.PlayerTeam.Characters[characterIndex].HandSlots.Count;
+            if (count > 0)
+                yield return simulation.RetargetRng.NextInt(0, count);
             yield break;
         }
 
@@ -489,7 +535,7 @@ public sealed class SkillActionExecutor
         return context;
     }
 
-    /// <summary>规格 §4.3：禁止战斗中途即时抽牌；计诊断并无操作。</summary>
+    /// <summary>规格 §4.3：普通 Draw 禁止战斗中途即时抽牌；计诊断并无操作。</summary>
     private static void ApplyDraw(
         CombatSimulation simulation,
         CombatTargetRef source,
@@ -502,27 +548,85 @@ public sealed class SkillActionExecutor
         simulation.CountBlockedMidDraw();
     }
 
-    /// <summary>规格 §4.6：按 <see cref="CombatSimulation.CurrentDiscardChannel"/> 分流弃牌。</summary>
-    private static void ApplyDiscard(
+    /// <summary>主动技能专用的补满手牌动作：只填空槽，不替换既有牌或重置洗牌预算。</summary>
+    private static void ApplyFillHand(
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
-        int count)
+        IReadOnlyDictionary<string, object> parameters)
     {
-        if (count <= 0)
+        if (simulation.CurrentDiscardChannel != EDiscardChannel.ActiveSkill)
+        {
+            simulation.CountBlockedMidDraw();
+            return;
+        }
+
+        var hasSelector = BuffActionParams.HasTargetSelector(parameters);
+        var resolved = hasSelector ? CombatTargetSelector.Resolve(simulation, source, parameters) : targets;
+        if (hasSelector && resolved.Count == 0)
             return;
 
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolved, allowSourceFallback: !hasSelector))
+            PresentationEmitter.DrawAndEmit(simulation, IndexOfCharacter(simulation, character),
+                character.HandSlots.Count(slot => slot.IsEmpty));
+    }
+
+    /// <summary>规格 §4.3：按实际弃牌数即时补抽，保留弃牌记录供后续伤害读取。</summary>
+    private static void ApplyDrawByDiscard(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        var amount = (int)Math.Min(int.MaxValue,
+            (long)simulation.LastDiscardCount * Math.Max(0, ContentParameters.ReadInt(parameters, "perCard", 1)));
+        if (amount <= 0)
+            return;
+
+        var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
+            ? CombatTargetSelector.Resolve(simulation, source, parameters)
+            : targets;
+
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets,
+                     allowSourceFallback: !BuffActionParams.HasTargetSelector(parameters)))
+            PresentationEmitter.DrawAndEmit(simulation, IndexOfCharacter(simulation, character), amount);
+    }
+
+    /// <summary>规格 §4.6：按 <see cref="CombatSimulation.CurrentDiscardChannel"/> 分流弃牌。</summary>
+    /// <returns>
+    /// 实际移入弃牌堆的总张数（可弃池不足时小于 <paramref name="count"/>，目标多名角色时为各角色之和）。
+    /// <see cref="ESkillActionKind.Discard"/> 忽略它，<see cref="ESkillActionKind.DiscardAndRecord"/> 用它记账。
+    /// </returns>
+    private static int ApplyDiscard(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        int count,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        if (count <= 0)
+            return 0;
+
+        var random = DiscardSelection.ReadFlag(parameters, "random");
+        if (!random && (simulation.CurrentDiscardChannel != EDiscardChannel.ActiveSkill || simulation.SelectedDiscardSlots is null))
+        {
+            simulation.CountBlockedUnselectedDiscard();
+            return 0;
+        }
+        var discarded = 0;
         foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
         {
             var before = PresentationEmitter.SnapshotHand(character);
             if (simulation.CurrentDiscardChannel == EDiscardChannel.ActiveSkill)
-                DiscardViaActiveSkillChannel(simulation, character, count);
-            else
-                character.DiscardRandomUnmarked(count, simulation.DiscardRng);
+                discarded += DiscardViaActiveSkillChannel(simulation, character, count, random);
+            else if (random)
+                discarded += character.DiscardRandomUnmarked(count, simulation.DiscardRng);
 
             var characterIndex = IndexOfCharacter(simulation, character);
             PresentationEmitter.EmitDiscardsByDiff(simulation, characterIndex, before, simulation.CurrentDiscardChannel);
         }
+
+        return discarded;
     }
 
     private static int IndexOfCharacter(CombatSimulation simulation, CharacterBattleInstance character)
@@ -538,18 +642,27 @@ public sealed class SkillActionExecutor
     }
 
     /// <summary>
-    /// ActiveSkill 通道：均匀随机可含已标记；命中标记则取消、退 <c>paid</c>、回退未确认，再进弃牌堆。
+    /// ActiveSkill 通道：选牌或显式随机，可含已标记；命中标记则取消、退 <c>paid</c>、回退未确认，再进弃牌堆。
     /// </summary>
-    private static void DiscardViaActiveSkillChannel(
+    /// <returns>实际移入弃牌堆的张数；选牌不消耗随机流。</returns>
+    private static int DiscardViaActiveSkillChannel(
         CombatSimulation simulation,
         CharacterBattleInstance character,
-        int count)
+        int count, bool random)
     {
+        var discarded = 0;
         for (var i = 0; i < count; i++)
         {
-            var slot = character.PickRandomOccupiedSlot(simulation.DiscardRng);
-            if (slot is null)
-                return;
+            HandSlot? slot;
+            if (random)
+                slot = character.PickRandomOccupiedSlot(simulation.DiscardRng);
+            else if (simulation.SelectedDiscardCharacterIndex == IndexOfCharacter(simulation, character) &&
+                simulation.SelectedDiscardSlots is { Count: > 0 } selected)
+                slot = character.HandSlots[selected.Dequeue()];
+            else
+                break;
+            if (slot is null || slot.IsEmpty)
+                break;
 
             var runtimeId = slot.RuntimeInstanceId!;
             if (slot.IsMarked)
@@ -563,8 +676,11 @@ public sealed class SkillActionExecutor
                 character.SetHasActed(false);
             }
 
-            character.MoveHandCardToGraveyard(runtimeId);
+            if (character.MoveHandCardToGraveyard(runtimeId))
+                discarded++;
         }
+
+        return discarded;
     }
 
     /// <summary>规格 §4.3：投放抽牌数量修正，供阶段开始公式取最大 ±N。</summary>
@@ -587,8 +703,45 @@ public sealed class SkillActionExecutor
             ? CombatTargetSelector.Resolve(simulation, source, parameters)
             : targets;
 
-        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets))
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets,
+                     allowSourceFallback: !BuffActionParams.HasTargetSelector(parameters)))
             character.AddDrawModifier(amount);
+    }
+
+    /// <summary>
+    /// 按"最近一次 <see cref="ESkillActionKind.DiscardAndRecord"/> 实际弃置的张数"投放抽牌数量修正
+    /// （2026-09-27「弃 X 张，则下次抽牌 +X」）：增量 = <see cref="CombatSimulation.LastDiscardCount"/> ×
+    /// <c>params.perCard</c>（缺省 1，负值按 0）；<c>additive: true</c> 则与其他抽牌效果累加。
+    /// </summary>
+    /// <remarks>
+    /// 目标解析与 <see cref="ApplyModifyDrawCount"/> 同口径：带 <c>hookTargets</c> / <c>targetFilter</c> 时按
+    /// 目标选择器重解析，显式筛选未命中时不生效；缺省沿用卡牌/技能解析出的目标（无玩家目标时回退到来源角色）。
+    /// 读取<b>不清账</b>——同一回合内的其它读取方（如按弃牌数扣减行动次数）仍能看到同一数值；
+    /// 弃牌记录由 <c>PlayerPhasePipeline</c> 在每个玩家阶段开始时清零，弃 0 张 / 本回合没弃过牌时零操作。
+    /// </remarks>
+    private static void ApplyModifyDrawCountByDiscard(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object> parameters)
+    {
+        var amount = (int)Math.Min(int.MaxValue, (long)simulation.LastDiscardCount * Math.Max(0, ContentParameters.ReadInt(parameters, "perCard", 1)));
+        if (amount <= 0)
+            return;
+
+        var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
+            ? CombatTargetSelector.Resolve(simulation, source, parameters)
+            : targets;
+
+        var additive = parameters.TryGetValue("additive", out var value) && bool.TryParse(value?.ToString(), out var flag) && flag;
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets,
+                     allowSourceFallback: !BuffActionParams.HasTargetSelector(parameters)))
+        {
+            if (additive)
+                character.AddExtraDrawModifier(amount);
+            else
+                character.AddDrawModifier(amount);
+        }
     }
 
     /// <summary>
@@ -598,7 +751,7 @@ public sealed class SkillActionExecutor
     /// </summary>
     /// <remarks>
     /// 写属性 <b>base</b> 值（<see cref="KemoCard.Frame.Gas.AbilitySystemComponent.SetBaseValue"/>）：
-    /// 护盾是可消耗资源，若写 current 值，任何一次聚合重算都会把它抹回 base。
+    /// 增加基础授予量，聚合后的可用余额由 Aggregator 的消耗记录扣减；不能把 current 的修饰值再写入 base。
     /// </remarks>
     private static void ApplyGainShield(
         CombatSimulation simulation,
@@ -614,10 +767,11 @@ public sealed class SkillActionExecutor
             ? CombatTargetSelector.Resolve(simulation, source, parameters)
             : targets;
 
-        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets))
+        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets,
+                     allowSourceFallback: !BuffActionParams.HasTargetSelector(parameters)))
         {
             var asc = character.Asc;
-            asc.SetBaseValue(AttributeIds.Shield, asc.GetCurrentValue(AttributeIds.Shield) + amount);
+            asc.SetBaseValue(AttributeIds.Shield, asc.GetBaseValue(AttributeIds.Shield) + amount);
         }
     }
 
@@ -631,18 +785,24 @@ public sealed class SkillActionExecutor
         IReadOnlyList<CombatTargetRef> targets,
         IReadOnlyDictionary<string, object> parameters)
     {
-        var amount = ReadInt(parameters, "amount", 0);
+        var amount = ContentParameters.ReadInt(parameters, "amount", 0);
         if (amount <= 0)
+            return;
+
+        var hasSelector = BuffActionParams.HasTargetSelector(parameters);
+        var resolvedTargets = hasSelector ? CombatTargetSelector.Resolve(simulation, source, parameters) : targets;
+        // 显式筛选未命中时不能回落到来源，否则属性/种族充能会错误奖励施法者。
+        if (hasSelector && resolvedTargets.Count == 0)
             return;
 
         switch (ReadResourceName(parameters))
         {
             case "energy":
-                foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
+                foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets, allowSourceFallback: !hasSelector))
                     character.GainAvailableEnergy(amount);
                 break;
             case "skillcounter":
-                foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
+                foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets, allowSourceFallback: !hasSelector))
                     character.GainSkillCounter(amount);
                 break;
         }
@@ -651,7 +811,8 @@ public sealed class SkillActionExecutor
     private static IEnumerable<CharacterBattleInstance> ResolvePlayerCharacters(
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        bool allowSourceFallback = true)
     {
         var indices = new SortedSet<int>();
         foreach (var target in targets)
@@ -660,7 +821,7 @@ public sealed class SkillActionExecutor
                 indices.Add(target.Index);
         }
 
-        if (indices.Count == 0 && source.Side == ECombatSide.Player && source.Index >= 0)
+        if (allowSourceFallback && indices.Count == 0 && source.Side == ECombatSide.Player && source.Index >= 0)
             indices.Add(source.Index);
 
         foreach (var index in indices)
@@ -703,35 +864,4 @@ public sealed class SkillActionExecutor
         return !string.IsNullOrWhiteSpace(result);
     }
 
-    private static IReadOnlyDictionary<string, object> MergeParams(
-        IReadOnlyDictionary<string, object>? baseParams,
-        IReadOnlyDictionary<string, object>? overrideParams)
-    {
-        if (baseParams is null || baseParams.Count == 0)
-            return overrideParams ?? new Dictionary<string, object>(StringComparer.Ordinal);
-
-        if (overrideParams is null || overrideParams.Count == 0)
-            return baseParams;
-
-        var merged = new Dictionary<string, object>(baseParams, StringComparer.Ordinal);
-        foreach (var (key, value) in overrideParams)
-            merged[key] = value;
-        return merged;
-    }
-
-    private static int ReadInt(IReadOnlyDictionary<string, object> parameters, string key, int defaultValue)
-    {
-        if (!parameters.TryGetValue(key, out var value) || value is null)
-            return defaultValue;
-
-        return value switch
-        {
-            int i => i,
-            long l => (int)l,
-            short s => s,
-            byte b => b,
-            JsonElement element when element.ValueKind == JsonValueKind.Number => element.GetInt32(),
-            _ => int.TryParse(value.ToString(), out var parsed) ? parsed : defaultValue,
-        };
-    }
 }

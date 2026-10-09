@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "AttackCount": 2,
+    "gameplayEffectId": "perseus_physical_damage",
+    "AttackScale": 1.0,
+    "Amount": 12
+  }
+}

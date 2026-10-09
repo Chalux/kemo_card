@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.mother_machine_team_boost.name",
+  "descId": "buff.mother_machine_team_boost.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 2,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 12
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 12
+      }
+    }
+  ]
+}

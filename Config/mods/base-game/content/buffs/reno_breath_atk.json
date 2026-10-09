@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.reno_breath_atk.name",
+  "descId": "buff.reno_breath_atk.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } }
+  ]
+}

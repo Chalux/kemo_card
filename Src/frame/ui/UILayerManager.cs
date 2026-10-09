@@ -14,6 +14,7 @@ public sealed class UILayerManager
     private EUILayer[] _layers = [];
     private EUILayer[] _topLayers = [];
     private EUILayer[] _allLayers = [];
+    private int _visibilityVersion;
 
     public IReadOnlyDictionary<EUILayer, UILayer> LayerMap => _layerMap;
 
@@ -38,6 +39,7 @@ public sealed class UILayerManager
 
     public void UpdateLayers()
     {
+        int version = ++_visibilityVersion;
         bool hide = false;
         const string hideKey = "hideBelow";
 
@@ -47,14 +49,19 @@ public sealed class UILayerManager
             if (layer == null) continue;
 
             layer.HideBool.Set(hideKey, hide);
+            if (version != _visibilityVersion) return;
 
-            IReadOnlyList<BaseWin> uis = layer.UISort;
+            // 可见性 hook 可以关闭或重开界面；当前遍历不能持有可变列表。
+            IReadOnlyList<BaseWin> uis = [.. layer.UISort];
             for (int j = uis.Count - 1; j >= 0; j--)
             {
                 UIVo? vo = uis[j].UIVo;
-                if (vo == null) continue;
+                if (vo == null || vo.Runtime.Layer != layer) continue;
 
                 vo.Runtime.HideBool.Set(hideKey, hide);
+                // 重入刷新已按最新层级完成，旧轮次不能再覆盖它。
+                if (version != _visibilityVersion) return;
+                if (vo.Runtime.Layer != layer) continue;
                 if (!hide)
                 {
                     hide = vo.OpenOpt.EffectiveHideBelow;
@@ -79,9 +86,10 @@ public sealed class UILayerManager
     {
         foreach (EUILayer l in layers)
         {
-            openOpts ??= [];
-            openOpts.TryGetValue(l, out UIOpenOpt? opt);
-            UILayer layer = new(l.ToString(), l, opt ?? DefaultUIOpenOpt.Value, isTop);
+            UIOpenOpt? opt = null;
+            openOpts?.TryGetValue(l, out opt);
+            // 层级参数是显式覆盖；完整默认值仅在最终合并的基线中使用。
+            UILayer layer = new(l.ToString(), l, opt?.Clone() ?? new UIOpenOpt(), isTop);
             _layerMap[l] = layer;
             root.AddChild(layer);
             // SetAnchorsPreset 只改锚点；需同时清零 offset 才能铺满父节点

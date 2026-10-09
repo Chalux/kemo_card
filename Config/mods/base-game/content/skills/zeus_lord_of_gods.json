@@ -1,0 +1,17 @@
+{
+  "actionRefs": [
+    {
+      "actionId": "zeus_lord_of_gods-apply"
+    }
+  ],
+  "displayNameId": "skill.zeus_lord_of_gods.name",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "descId": "skill.zeus_lord_of_gods.desc",
+  "tags": [
+    "buff",
+    "counter"
+  ]
+}

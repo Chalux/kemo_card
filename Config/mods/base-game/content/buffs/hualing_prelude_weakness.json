@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.hualing_prelude_weakness.name",
+  "descId": "buff.hualing_prelude_weakness.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "debuff"
+  ],
+  "duration": 2,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -8
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -8
+      }
+    }
+  ]
+}

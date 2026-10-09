@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.eta_carinae_bipolar_jet.name",
+  "descId": "skill.eta_carinae_bipolar_jet.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "eta_carinae_jet_green"
+    },
+    {
+      "actionId": "eta_carinae_jet_magic"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

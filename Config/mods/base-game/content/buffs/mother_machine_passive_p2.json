@@ -1,0 +1,17 @@
+{
+  "displayNameId": "buff.mother_machine_passive_p2.name",
+  "descId": "buff.mother_machine_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onSlotChargeTriggered": [
+      {
+        "effectId": "mother_machine_gain_heal_stack"
+      }
+    ]
+  }
+}

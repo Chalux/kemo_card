@@ -60,7 +60,7 @@ public partial class UILayer : Control
         _uiMap.Remove(id);
         _uiSort.Remove(ui);
 
-        if (ui.UIVo?.Mask != null && ui.UIVo.Mask.AnimState == EUIAnimState.None)
+        if (GodotObject.IsInstanceValid(ui.UIVo?.Mask))
         {
             ui.UIVo.Mask.GetParent()?.RemoveChild(ui.UIVo.Mask);
         }

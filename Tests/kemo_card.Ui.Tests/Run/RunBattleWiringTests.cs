@@ -15,6 +15,24 @@ namespace KemoCard.Ui.Tests.Run;
 [TestFixture]
 public sealed class RunBattleWiringTests
 {
+    [TestCase(true)]
+    [TestCase(false)]
+    public void StartBattle_uses_the_run_owned_card_ledger(bool owned)
+    {
+        var (controller, registry, rng) = BuildReadyRun();
+        registry.Store.CardsMutable["reward"] = new() { Id = "reward", Stats = new() { HpCap = 10 } };
+        var character = controller.State.ActiveParty[0]!;
+        character.GetCurrentDeck()!.TryAddCard("reward", new HashSet<string> { "reward" });
+        if (owned)
+        {
+            controller.State.AddCard("reward");
+            using var sim = controller.StartBattle(registry, rng, runSeed: 1);
+            Assert.That(sim.PlayerTeam.Characters[0].OwnedCardIds, Contains.Item("reward"));
+        }
+        else
+            Assert.Throws<InvalidOperationException>(() => controller.StartBattle(registry, rng, runSeed: 1));
+    }
+
     [Test]
     public void StartBattle_comes_from_content_battle_definition()
     {

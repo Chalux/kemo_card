@@ -1,0 +1,22 @@
+{
+  "displayNameId": "skill.alpha_centauri_centaur_alpha.name",
+  "descId": "skill.alpha_centauri_centaur_alpha.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "tags": [
+    "active"
+  ],
+  "actionRefs": [
+    {
+      "actionId": "alpha_centauri_discard_two"
+    },
+    {
+      "actionId": "alpha_centauri_apply_alpha"
+    },
+    {
+      "actionId": "alpha_centauri_extra_draw"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.cupid_peace.name",
+  "descId": "buff.cupid_peace.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "modifiers": [
+    {
+      "magnitude": {
+        "scalar": -8,
+        "kind": "Scalar"
+      },
+      "attributeId": "PhysicalAttack",
+      "operation": "Add"
+    },
+    {
+      "magnitude": {
+        "scalar": -8,
+        "kind": "Scalar"
+      },
+      "attributeId": "MagicAttack",
+      "operation": "Add"
+    }
+  ],
+  "tags": [
+    "buff.debuff"
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "eta_carinae_double_orbs",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

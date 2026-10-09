@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.alpha_centauri_stellar_guard.name",
+  "descId": "skill.alpha_centauri_stellar_guard.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "tags": [
+    "support"
+  ],
+  "effectRefs": [
+    {
+      "effectId": "alpha_centauri_guard_shield"
+    },
+    {
+      "effectId": "alpha_centauri_guard_heal"
+    }
+  ]
+}

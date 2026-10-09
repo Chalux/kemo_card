@@ -1,0 +1,27 @@
+{
+  "displayNameId": "buff.anubis_frenzy.name",
+  "descId": "buff.anubis_frenzy.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "modifiers": [
+    {
+      "attributeId": "CardDamageDealtScale",
+      "operation": "Add",
+      "magnitude": {
+        "scalar": 0.5,
+        "kind": "Scalar"
+      }
+    }
+  ],
+  "tags": [
+    "buff.passive"
+  ],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "anubis_frenzy_draw"
+      }
+    ]
+  }
+}

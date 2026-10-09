@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "weilong_shield_stance",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

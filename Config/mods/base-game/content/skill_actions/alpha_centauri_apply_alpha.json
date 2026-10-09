@@ -1,0 +1,8 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "alpha_centauri_alpha_blessing",
+    "hookTargets": "allies",
+    "amountPerDiscard": 15
+  }
+}

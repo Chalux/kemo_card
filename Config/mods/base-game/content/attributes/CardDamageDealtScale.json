@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.card_damage_dealt_scale.name",
+  "defaultBase": 0,
+  "allowNegative": true,
+  "isMeta": false
+}

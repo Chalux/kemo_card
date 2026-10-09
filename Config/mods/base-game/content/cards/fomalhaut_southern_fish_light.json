@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.fomalhaut_southern_fish_light.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "fomalhaut_southern_fish_light"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 2
+    }
+  },
+  "role": "Mage",
+  "priority": 8,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

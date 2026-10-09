@@ -94,9 +94,12 @@ public partial class BasePager : Control
     /// <summary>框架唯一离场入口。sealed：子类不得 override —— 请改 override OnExitTree。</summary>
     public sealed override void _ExitTree()
     {
-        OnExitTree();
-        _binder.UnbindAll();
-        base._ExitTree();
+        try { OnExitTree(); }
+        finally
+        {
+            _binder.UnbindAll();
+            base._ExitTree();
+        }
     }
 
     /// <summary>框架级离场生命周期：只做非订阅类清理。</summary>

@@ -53,17 +53,26 @@ public sealed class CombatEffectExecutor
         EffectRefDto effectRef,
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object>? payloadOverrides = null)
     {
-        ExecuteEffectRefCore(effectRef, simulation, source, targets, depth: 0);
+        ExecuteEffectRefCore(effectRef, simulation, source, targets, depth: 0, payloadOverrides);
     }
+
+    /// <summary>钩子次数门闩在条件和执行预算通过之后登记，在载荷开始之前阻断重入。</summary>
+    internal void ExecuteEffectRefWhen(
+        EffectRefDto effectRef, CombatSimulation simulation, CombatTargetRef source,
+        IReadOnlyList<CombatTargetRef> targets, Func<bool> beforeExecution) =>
+        ExecuteEffectRefCore(effectRef, simulation, source, targets, depth: 0, beforeExecution: beforeExecution);
 
     private void ExecuteEffectRefCore(
         EffectRefDto effectRef,
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
-        int depth)
+        int depth,
+        IReadOnlyDictionary<string, object>? payloadOverrides = null,
+        Func<bool>? beforeExecution = null)
     {
         ArgumentNullException.ThrowIfNull(effectRef);
         ArgumentNullException.ThrowIfNull(simulation);
@@ -79,7 +88,11 @@ public sealed class CombatEffectExecutor
         if (!ConditionsPass(effect, simulation, source))
             return;
 
-        var mergedParams = MergeParams(effect.Params, effectRef.Params);
+        using var scope = simulation.EffectBudget.TryEnter();
+        if (scope is null || (beforeExecution is not null && !beforeExecution()))
+            return;
+
+        var mergedParams = ContentParameters.Merge(effect.Params, effectRef.Params, payloadOverrides);
         ExecuteKind(effect.Kind, mergedParams, effect, simulation, source, targets, depth);
     }
 
@@ -97,7 +110,7 @@ public sealed class CombatEffectExecutor
             return true;
 
         var (elementFlags, raceFlags) = CombatIdentity.Resolve(simulation, source);
-        var context = new CombatCondContext(simulation, source.Index, elementFlags, raceFlags);
+        var context = new CombatCondContext(simulation, source, elementFlags, raceFlags);
         return CombatConditionEvaluator.Pass(effect.Conditions, context, $"effect:{effect.Id}:conditions");
     }
 
@@ -105,9 +118,10 @@ public sealed class CombatEffectExecutor
         SkillActionRefDto actionRef,
         CombatSimulation simulation,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets)
+        IReadOnlyList<CombatTargetRef> targets,
+        IReadOnlyDictionary<string, object>? payloadOverrides = null)
     {
-        _skillActionExecutor.ExecuteSkillActionRef(actionRef, simulation, source, targets);
+        _skillActionExecutor.ExecuteSkillActionRef(actionRef, simulation, source, targets, payloadOverrides);
     }
 
     private void ExecuteKind(
@@ -138,6 +152,8 @@ public sealed class CombatEffectExecutor
             case EEffectKind.DiscardSlot:
             case EEffectKind.ModifyDrawCount:
             case EEffectKind.GainShield:
+            case EEffectKind.ModifyDrawCountByDiscard:
+            case EEffectKind.DispelDebuffs:
                 _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets, depth);
                 break;
             case EEffectKind.ApplyBuff:
@@ -178,7 +194,7 @@ public sealed class CombatEffectExecutor
         var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
             ? CombatTargetSelector.Resolve(simulation, source, parameters)
             : targets;
-        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId");
+        var instanceParams = BuffActionParams.BuildScaledInstanceParams(simulation, source, parameters, "buffId");
         foreach (var target in resolvedTargets)
             BuffRuntime.Apply(simulation, target, buffId, instanceParams);
     }
@@ -311,7 +327,10 @@ public sealed class CombatEffectExecutor
         IReadOnlyDictionary<string, object> parameters,
         string? effectId)
     {
-        var amount = ReadFloat(parameters, "amount", 0f);
+        var amount = ContentParameters.ReadFloat(parameters, "amount", 0f);
+        // 攻击次数（2026-09-27）：params 里的 AttackCount / AttackCountByChain / AttackCountMinusDiscard
+        // 解析成总次数；两个通道（GAS 公式 / 直伤）都必须同口径，否则同一条效果换条通道次数就变了。
+        var attackCount = DamageScaling.ResolveAttackCount(sim, parameters);
         if (TryGetGameplayEffectId(parameters, "damageGameplayEffectId", out var gameplayEffectId))
         {
             var setByCaller = new Dictionary<string, object>(StringComparer.Ordinal)
@@ -324,6 +343,8 @@ public sealed class CombatEffectExecutor
                 setByCaller[DamageExecution.SetByCallerChainBonusScale] = sim.CurrentChainBonus;
             // 动态攻击系数（如"本回合每触发 1 个绿球 +100% 魔攻，最多 +300%"）：算好后覆盖 GE 的静态 attackScale。
             DamageScaling.ApplyAttackScaleOverride(sim, parameters, setByCaller);
+            // 解析后的总次数覆盖同名参数（ByChain / MinusDiscard 声明的是"来源"，不是次数本身）。
+            DamageScaling.ApplyAttackCountOverride(sim, parameters, setByCaller);
             if (_gameplayEffectApplicator.ApplyToTargets(sim, source, targets, gameplayEffectId, setByCaller))
                 return;
         }
@@ -331,35 +352,24 @@ public sealed class CombatEffectExecutor
         // 直伤路径与 GAS 通道同口径（见 DamageScaling）：增伤 + 目标受伤增加同桶加算，连携单独乘算。
         var sourceDealtScale =
             CombatGasBridge.ResolveTargetAsc(sim, source)?.GetCurrentValue(AttributeIds.DamageDealtScale) ?? 0f;
+        sourceDealtScale += DamageScaling.ResolveCardDamageBonus(sim, source);
         var chainMultiplier = DamageScaling.ChainMultiplier(sim.CurrentChainBonus);
+        // 伤害维度（2026-09-26 魔法专精受伤倍率）：直伤通道自身不带维度声明，按所引用 GE 的声明取
+        // （魔法 → 追加 MagicDamageTakenScale）；取不到时按物理，与 DamagePipeline.Settle 的缺省一致。
+        var damageType = ResolveDeclaredDamageType(gameplayEffectId);
 
         foreach (var target in targets)
         {
+            var takenScale = DamagePipeline.ResolveTakenScale(sim, target, damageType.Kind);
             var dealt = amount *
-                DamageScaling.CombineBonuses(sourceDealtScale, DamagePipeline.ResolveTakenScale(sim, target)) *
+                DamageScaling.CombineBonuses(sourceDealtScale, takenScale) *
                 chainMultiplier;
 
-            // 规格 §1.3：Team 直伤对账本只结算一次（不分槽逐次）。伤害包仍过规则管线，
-            // 但目标不是槽位，分槽护盾类规则按 target.Index < 0 自然不匹配。
-            if (SharedHpSettlement.IsPlayerTeamLedger(target))
-            {
-                var shared = DamagePipeline.RunBefore(sim, source, target, dealt, effectId);
-                if (shared <= 0f)
-                    continue;
-
-                sim.PlayerTeam.ApplySharedDamage(shared);
-                DamagePipeline.NotifyAfter(sim, source, target, shared, effectId);
-                continue;
-            }
-
-            var applied = DamagePipeline.RunBefore(sim, source, target, dealt, effectId);
-            if (applied <= 0f)
-                continue;
-
-            ApplyAmountToTarget(sim, source, target, applied, effectId);
+            // 逐次结算（每次都是一次独立的伤害事件；数额逐次相同）。
+            for (var hit = 0; hit < attackCount; hit++)
+                DamagePipeline.Settle(sim, source, target, dealt, effectId, damageType.Kind, damageType.Element);
         }
     }
-
     /// <summary>
     /// 定值伤害通道（充能球 / 普通攻击等外部系统）：调用方已算好最终数额（含源侧全伤害增加与目标受伤倍率），
     /// 这里只走伤害规则管线与血量写入——不套 GAS 的物攻/物防公式，也不乘连携。
@@ -379,59 +389,15 @@ public sealed class CombatEffectExecutor
         if (amount <= 0f)
             return 0f;
 
-        var total = 0f;
-        foreach (var target in targets)
-        {
-            var applied = DamagePipeline.RunBefore(sim, source, target, amount, effectId, kind, element);
-            if (applied <= 0f)
-                continue;
-
-            if (SharedHpSettlement.IsPlayerTeamLedger(target))
-            {
-                sim.PlayerTeam.ApplySharedDamage(applied);
-                DamagePipeline.NotifyAfter(sim, source, target, applied, effectId, kind, element);
-                total += applied;
-                continue;
-            }
-
-            total += ApplyAmountToTarget(sim, source, target, applied, effectId, kind, element);
-        }
-
-        return total;
-    }
-
-    /// <summary>
-    /// 把已过规则管线的伤害数额写进目标血量（玩家槽位转共享账本，其余写目标 ASC）。
-    /// </summary>
-    /// <returns>实际写入的数额；目标 ASC 解析不出（例如索引越界）时为 0，不虚报伤害。</returns>
-    private static float ApplyAmountToTarget(
-        CombatSimulation sim,
-        CombatTargetRef source,
-        CombatTargetRef target,
-        float amount,
-        string? effectId,
-        EDamageKind kind = EDamageKind.Physical,
-        EElement element = EElement.None)
-    {
-        // 规格 §1.2：玩家槽位没有 Health 当前值，分槽结算的结果直接扣共享账本。
-        if (SharedHpSettlement.IsPlayerSlot(target))
-        {
-            sim.PlayerTeam.ApplySharedDamage(amount);
-            DamagePipeline.NotifyAfter(sim, source, target, amount, effectId, kind, element);
-            return amount;
-        }
-
-        var targetAsc = CombatGasBridge.ResolveTargetAsc(sim, target);
-        if (targetAsc is null)
+        using var scope = sim.EffectBudget.TryEnter();
+        if (scope is null)
             return 0f;
 
-        var currentHealth = targetAsc.GetCurrentValue(AttributeIds.Health);
-        var updatedHealth = MathF.Max(0f, currentHealth - amount);
-        targetAsc.Attributes.SetCurrentValue(AttributeIds.Health, updatedHealth);
-        DamagePipeline.NotifyAfter(sim, source, target, amount, effectId, kind, element);
-        return amount;
+        var total = 0f;
+        foreach (var target in targets)
+            total += DamagePipeline.Settle(sim, source, target, amount, effectId, kind, element).HealthLoss;
+        return total;
     }
-
     /// <summary>
     /// 规格 §1.3：治疗只回队伍共享账本。点名玩家槽位的治疗是软失败，
     /// 在应用任何 GameplayEffect 之前就被剔除，避免留下半截副作用。
@@ -442,13 +408,17 @@ public sealed class CombatEffectExecutor
         IReadOnlyList<CombatTargetRef> targets,
         IReadOnlyDictionary<string, object> parameters)
     {
-        var amount = ReadFloat(parameters, "amount", 0f);
+        var amount = ContentParameters.ReadFloat(parameters, "amount", 0f);
         // 治疗吃源侧治疗强度（与伤害加 100% 源物攻同构），再吃连携加成；DamageDealtScale 不影响治疗。
         // healPowerScale（2026-09-25）：治疗强度占比，缺省 1（全额）；0 = 不吃回复量（「回复 12 + 0% 回复量」）。
-        var healPowerScale = MathF.Max(0f, ReadFloat(parameters, "healPowerScale", 1f));
-        var sourceHealPower =
-            CombatGasBridge.ResolveTargetAsc(sim, source)?.GetCurrentValue(AttributeIds.HealPower) ?? 0f;
+        var healPowerScale = MathF.Max(0f, ContentParameters.ReadFloat(parameters, "healPowerScale", 1f));
+        var sourceAsc = CombatGasBridge.ResolveTargetAsc(sim, source);
+        var sourceHealPower = sourceAsc?.GetCurrentValue(AttributeIds.HealPower) ?? 0f;
         amount = MathF.Max(0f, amount + sourceHealPower * healPowerScale);
+        // 治疗输出增加（HealingDealtScale，2026-10-06）：与 DamageDealtScale 对伤害的关系同构，
+        // 作用域 = 施疗者；「队伍获得绿属性的恢复的效果 +50%」用它表达。
+        var healingDealtScale = sourceAsc?.GetCurrentValue(AttributeIds.HealingDealtScale) ?? 0f;
+        amount *= MathF.Max(0f, 1f + healingDealtScale + sim.CurrentOrbHealingBonus);
         if (sim.CurrentChainBonus > 0f)
             amount *= 1f + sim.CurrentChainBonus;
         var healableTargets = RejectSlotHealTargets(sim, targets);
@@ -518,6 +488,32 @@ public sealed class CombatEffectExecutor
         return TryGetString(parameters, "gameplayEffectId", out gameplayEffectId);
     }
 
+    /// <summary>
+    /// 直伤通道的伤害维度（2026-09-26 魔法专精受伤倍率用）：直伤本身不带维度声明，
+    /// 按所引用 GE 的第一条 <c>Damage</c> 执行取；无 GE / 无伤害执行时按物理
+    /// （与 <c>DamagePipeline.Settle</c> 的缺省一致，也即历史行为）。
+    /// </summary>
+    /// <remarks>
+    /// GE 通道的维度由 <c>DamageExecution</c> 自己解析（那条路径不会走到这里）；
+    /// 这里只服务"GE 缺失 / 未能应用时回落到直伤"的兜底，避免魔法 GE 的兜底伤害丢掉魔法受伤倍率。
+    /// </remarks>
+    private DamageTypeSpec ResolveDeclaredDamageType(string? gameplayEffectId)
+    {
+        if (string.IsNullOrWhiteSpace(gameplayEffectId) ||
+            !_registry.Store.TryGetGameplayEffect(gameplayEffectId, out var definition))
+        {
+            return DamageTypeSpec.Default;
+        }
+
+        foreach (var execution in definition.Executions)
+        {
+            if (string.Equals(execution.Kind, DamageExecution.DamageKind, StringComparison.OrdinalIgnoreCase))
+                return DamageTypeParser.Parse(execution.DamageType, execution.Element);
+        }
+
+        return DamageTypeSpec.Default;
+    }
+
     private static bool TryGetString(IReadOnlyDictionary<string, object> values, string key, out string result)
     {
         result = string.Empty;
@@ -528,37 +524,4 @@ public sealed class CombatEffectExecutor
         return !string.IsNullOrWhiteSpace(result);
     }
 
-    private static IReadOnlyDictionary<string, object> MergeParams(
-        IReadOnlyDictionary<string, object>? baseParams,
-        IReadOnlyDictionary<string, object>? overrideParams)
-    {
-        if (baseParams is null || baseParams.Count == 0)
-            return overrideParams ?? new Dictionary<string, object>(StringComparer.Ordinal);
-
-        if (overrideParams is null || overrideParams.Count == 0)
-            return baseParams;
-
-        var merged = new Dictionary<string, object>(baseParams, StringComparer.Ordinal);
-        foreach (var (key, value) in overrideParams)
-            merged[key] = value;
-        return merged;
-    }
-
-    private static float ReadFloat(IReadOnlyDictionary<string, object> parameters, string key, float defaultValue)
-    {
-        if (!parameters.TryGetValue(key, out var value) || value is null)
-            return defaultValue;
-
-        return value switch
-        {
-            float f => f,
-            double d => (float)d,
-            int i => i,
-            long l => l,
-            short s => s,
-            byte b => b,
-            JsonElement element when element.ValueKind == JsonValueKind.Number => element.GetSingle(),
-            _ => float.TryParse(value.ToString(), out var parsed) ? parsed : defaultValue,
-        };
-    }
 }

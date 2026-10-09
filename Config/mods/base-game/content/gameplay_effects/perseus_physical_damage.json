@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.perseus_physical_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "damageType": "Physical",
+      "kind": "Damage",
+      "element": "Green"
+    }
+  ]
+}

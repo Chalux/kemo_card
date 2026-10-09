@@ -63,16 +63,16 @@ public sealed class TeamDomainManagerTests
     #region P1：域 GE 的 Hooks 必须真的派发
 
     [Test]
-    public void Domain_manager_installs_hook_dispatcher_on_team_ascs()
+    public void Combat_lifecycle_installs_hook_dispatcher_on_all_ascs()
     {
         var sim = CombatSimulationTestBuilder.Minimal(
             new EnemyUnit("e", "slime", 10),
             CombatTestHelper.CreateFullRegistry());
 
-        var manager = new TeamDomainManager(sim);
-
-        Assert.That(sim.PlayerTeam.Asc.HookDispatcher, Is.SameAs(manager), "队伍 ASC 未挂 HookDispatcher 会让 hooks 静默失效");
-        Assert.That(sim.EnemyTeam.Asc.HookDispatcher, Is.SameAs(manager));
+        Assert.That(sim.PlayerTeam.Asc.HookDispatcher, Is.Not.Null);
+        Assert.That(sim.EnemyTeam.Asc.HookDispatcher, Is.Not.Null);
+        Assert.That(sim.PlayerTeam.Characters.All(character => character.Asc.HookDispatcher is not null), Is.True);
+        Assert.That(sim.EnemyTeam.Enemies.All(enemy => enemy.Asc.HookDispatcher is not null), Is.True);
     }
 
     [Test]

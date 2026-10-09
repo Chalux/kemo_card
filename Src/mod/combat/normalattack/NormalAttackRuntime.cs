@@ -61,7 +61,7 @@ public sealed record NormalAttackResult(
 /// 追打的"系数"来自 <see cref="FollowUpAttack"/>（百分比），归属打击为 1。</para>
 /// <para><b>元素</b>：带出攻击者的<b>全部</b>元素（多元素角色全部生效），只作伤害标签，当前无克制消费方。</para>
 /// <para><b>放大/减免</b>：吃攻击者的全伤害增加、目标的 <c>DamageTakenScale</c> 与
-/// <c>NormalAttackDamageTakenScale</c>（只对普攻生效的受伤倍率），并走统一的伤害包管线
+/// <c>MagicDamageTakenScale</c>（魔法打击）与 <c>NormalAttackDamageTakenScale</c>（普攻受伤倍率），并走统一的伤害包管线
 /// （<c>OnBeforeDamage</c> 可改数额 → 写入 → <c>OnAfterDamage</c>）；<b>不吃连携</b>（连携只作用于伤害/治疗卡）。</para>
 /// <para><b>解耦</b>：不算"打出牌"——不触发槽位 buff（充能/槽位伤害/onSlotCardPlayed），不计入连携人头，
 /// 也不计入回合结束的充能球产出统计；不消耗能量、不占"已行动"、不可取消；被封印的角色仍会普攻。</para>
@@ -162,7 +162,7 @@ public sealed class NormalAttackRuntime
             if (baseDamage <= 0f)
                 continue;
 
-            var multiplier = DamageScaling.CombineBonuses(dealtBonus, ResolveTakenScale(simulation, target));
+            var multiplier = DamageScaling.CombineBonuses(dealtBonus, ResolveTakenScale(simulation, target, kind));
             var applied = simulation.EffectExecutor.ApplyFixedDamage(
                 simulation,
                 source,
@@ -178,6 +178,11 @@ public sealed class NormalAttackRuntime
             hitCount++;
         }
 
+        // 只取本角色本次普攻实际损血；包含追打，不包含过量伤害、反击、卡牌或元素球。
+        var shieldGain = damage * MathF.Max(0f, asc.GetCurrentValue(AttributeIds.NormalAttackShieldGainScale));
+        if (shieldGain > 0f)
+            asc.SetBaseValue(AttributeIds.Shield, asc.GetBaseValue(AttributeIds.Shield) + shieldGain);
+
         strikes.Add(new NormalAttackStrike(
             characterIndex,
             attacker.DefinitionId,
@@ -192,23 +197,15 @@ public sealed class NormalAttackRuntime
     }
 
     /// <summary>
-    /// 目标受伤倍率（普攻口径）：<c>DamageTakenScale + NormalAttackDamageTakenScale</c> 同桶加算，
+    /// 目标受伤倍率（普攻口径）：通用 / 魔法专项倍率与 NormalAttackDamageTakenScale 同桶加算，
     /// 与 <c>DamagePipeline.ResolveTakenScale</c> 的队伍账本回落规则保持一致。
     /// </summary>
-    private static float ResolveTakenScale(CombatSimulation simulation, CombatTargetRef target)
+    private static float ResolveTakenScale(CombatSimulation simulation, CombatTargetRef target, EDamageKind kind)
     {
-        if (SharedHpSettlement.IsPlayerTeamLedger(target))
-        {
-            var teamAsc = simulation.PlayerTeam.Asc;
-            return teamAsc.GetCurrentValue(AttributeIds.DamageTakenScale) +
-                teamAsc.GetCurrentValue(AttributeIds.NormalAttackDamageTakenScale);
-        }
-
-        var asc = CombatGasBridge.ResolveTargetAsc(simulation, target);
-        return asc is null
-            ? 0f
-            : asc.GetCurrentValue(AttributeIds.DamageTakenScale) +
-                asc.GetCurrentValue(AttributeIds.NormalAttackDamageTakenScale);
+        var asc = SharedHpSettlement.IsPlayerTeamLedger(target)
+            ? simulation.PlayerTeam.Asc : CombatGasBridge.ResolveTargetAsc(simulation, target);
+        return DamagePipeline.ResolveTakenScale(simulation, target, kind) +
+            (asc?.GetCurrentValue(AttributeIds.NormalAttackDamageTakenScale) ?? 0f);
     }
 
     /// <summary>物理减物防、魔法减魔防；元素类伤害不吃防御（本机制不会产生元素类）。</summary>

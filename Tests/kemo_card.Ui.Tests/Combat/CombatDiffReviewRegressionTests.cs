@@ -1,0 +1,229 @@
+using KemoCard.Frame.Content;
+using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
+using KemoCard.Mod.Combat.Buffs;
+using KemoCard.Mod.Combat.Effects;
+using NUnit.Framework;
+
+namespace KemoCard.Ui.Tests.Combat;
+
+public sealed partial class CombatAuditRegressionTests
+{
+    #region 差异审查复现
+    [Test]
+    public void DiffReview_finite_ge_self_stack_should_survive_validation()
+    {
+        var ge = new GameplayEffectDefDto
+        {
+            Id = "finite", DurationPolicy = EDurationPolicy.Infinite,
+            StackingPolicy = EStackingPolicy.AggregateByTarget, MaxStacks = 2,
+            Hooks = new() { OnApply = [new() { ActionId = "stack" }] }
+        };
+        var action = new SkillActionDto
+        {
+            Id = "stack", Kind = ESkillActionKind.ApplyGameplayEffect,
+            Params = new() { ["gameplayEffectId"] = ge.Id }
+        };
+        var registry = CombatTestHelper.CreateFullRegistry(
+            gameplayEffects: new Dictionary<string, GameplayEffectDefDto> { [ge.Id] = ge },
+            skillActions: new Dictionary<string, SkillActionDto> { [action.Id] = action });
+        Assert.That(registry.Store.GameplayEffects.ContainsKey(ge.Id), Is.True,
+            "AggregateByTarget only fires onApply for the first instance; this terminates at two stacks");
+        using var sim = Build(registry);
+        Assert.That(new GameplayEffectApplicator(registry).ApplyToTargets(sim, Player(), [Player()], ge.Id), Is.True);
+        Assert.That(sim.PlayerTeam.Characters[0].Asc.ActiveEffects.Single().Stacks, Is.EqualTo(2));
+        Assert.That(sim.RejectedEffectExecutionCount, Is.Zero);
+    }
+
+    [Test]
+    public void DiffReview_refresh_apply_remove_loop_should_be_rejected()
+    {
+        var buff = new BuffDto
+        {
+            Id = "loop", DurationType = EBuffDurationType.Permanent, StackRule = EBuffStackRule.Refresh,
+            Hooks = new()
+            {
+                OnApply = [new() { EffectId = "remove" }],
+                OnRemove = [new() { EffectId = "apply" }]
+            }
+        };
+        var apply = new EffectDto { Id = "apply", Kind = EEffectKind.ApplyBuff, Params = new() { ["buffId"] = buff.Id } };
+        var remove = new EffectDto { Id = "remove", Kind = EEffectKind.RemoveBuff, Params = new() { ["buffId"] = buff.Id } };
+        var registry = CombatTestHelper.CreateFullRegistry(
+            buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff },
+            effects: new Dictionary<string, EffectDto> { [apply.Id] = apply, [remove.Id] = remove });
+        using var sim = Build(registry);
+        if (registry.Store.Buffs.ContainsKey(buff.Id))
+        {
+            sim.Buffs.Apply(sim, Player(), buff.Id);
+            TestContext.WriteLine($"Runtime budget rejection count: {sim.RejectedEffectExecutionCount}");
+        }
+        Assert.That(registry.Store.Buffs.ContainsKey(buff.Id), Is.False,
+            "Removing the instance before re-applying makes Refresh create another instance each time");
+    }
+
+    [Test]
+    public void DiffReview_removal_hook_should_preserve_exclusive_group()
+    {
+        var a = new BuffDto
+        {
+            Id = "a", ExclusiveGroup = "g", DurationType = EBuffDurationType.Permanent,
+            Hooks = new() { OnRemove = [new() { EffectId = "apply_b" }] }
+        };
+        var b = new BuffDto { Id = "b", ExclusiveGroup = "g", DurationType = EBuffDurationType.Permanent };
+        var c = new BuffDto { Id = "c", ExclusiveGroup = "g", DurationType = EBuffDurationType.Permanent };
+        var effect = new EffectDto { Id = "apply_b", Kind = EEffectKind.ApplyBuff, Params = new() { ["buffId"] = b.Id } };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(
+            buffs: new Dictionary<string, BuffDto> { [a.Id] = a, [b.Id] = b, [c.Id] = c },
+            effects: new Dictionary<string, EffectDto> { [effect.Id] = effect }));
+        Assert.That(sim.Buffs.Apply(sim, Player(), a.Id).Success, Is.True);
+        Assert.That(sim.Buffs.Apply(sim, Player(), c.Id).Success, Is.True);
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.All.Count(x => x.Def.ExclusiveGroup == "g"), Is.EqualTo(1));
+        Assert.That(sim.PlayerTeam.Characters[0].Buffs.All.Single().Def.Id, Is.EqualTo(b.Id), "The reentrant removal hook commits after the outer replacement");
+    }
+
+    [Test]
+    public void DiffReview_lifesteal_should_count_only_this_ge_damage()
+    {
+        var child = new GameplayEffectDefDto
+        {
+            Id = "child", DurationPolicy = EDurationPolicy.Instant,
+            Executions = [new() { Kind = "Damage", AttackScale = 0 }]
+        };
+        var parent = new GameplayEffectDefDto
+        {
+            Id = "parent", DurationPolicy = EDurationPolicy.Instant, LifestealScale = 1,
+            Executions = [new() { Kind = "Damage", AttackScale = 0 }],
+            Hooks = new() { OnApply = [new() { ActionId = "child_hit" }] }
+        };
+        var action = new SkillActionDto
+        {
+            Id = "child_hit", Kind = ESkillActionKind.ApplyGameplayEffect,
+            Params = new() { ["gameplayEffectId"] = child.Id, ["Amount"] = 20 }
+        };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(
+            gameplayEffects: new Dictionary<string, GameplayEffectDefDto> { [parent.Id] = parent, [child.Id] = child },
+            skillActions: new Dictionary<string, SkillActionDto> { [action.Id] = action }));
+        sim.PlayerTeam.ApplySharedDamage(50);
+        new GameplayEffectApplicator(sim.Definitions).ApplyToTargets(sim, Player(), [Enemy()], parent.Id,
+            new Dictionary<string, object> { ["Amount"] = 10 });
+        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(70));
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(60), "Only the parent 10-point hit has lifesteal");
+    }
+
+    [Test]
+    public void DiffReview_direct_damage_attack_count_should_have_same_limit_as_gas()
+    {
+        var effect = new EffectDto { Id = "many", Kind = EEffectKind.Damage, Params = new() { ["amount"] = 1 } };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(effects: new Dictionary<string, EffectDto> { [effect.Id] = effect }));
+        sim.EnemyTeam.Enemies[0].Asc.Attributes.SetCurrentValue(AttributeIds.Health, 2000);
+        sim.EffectExecutor.ExecuteEffectRef(new() { EffectId = effect.Id, Params = new() { ["AttackCount"] = 1000 } }, sim, Player(), [Enemy()]);
+        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(1001), "DamageExecution caps the same request at 999 hits");
+    }
+
+    [Test]
+    public void DiffReview_consuming_modifier_shield_should_decrease_current_shield()
+    {
+        var buff = new BuffDto { Id = "shield", DurationType = EBuffDurationType.Permanent, Modifiers = [Add(AttributeIds.Shield, 50)] };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(
+            buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff },
+            attributes: new Dictionary<string, AttributeDefDto> { [AttributeIds.Shield] = new() { Id = AttributeIds.Shield } }));
+        sim.Buffs.Apply(sim, Player(), buff.Id);
+        Assert.That(sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.Shield), Is.EqualTo(50));
+        sim.EffectExecutor.ApplyFixedDamage(sim, Enemy(), [Player()], 10);
+        Assert.That(sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.Shield), Is.EqualTo(40));
+    }
+
+    [Test]
+    public void DiffReview_nested_orb_batch_should_restore_outer_context()
+    {
+        BaseGameContent.RegisterBuiltinConditions();
+        var grant = new EffectDto
+        {
+            Id = "grant", Kind = EEffectKind.GainOrb,
+            Params = new() { ["orbTypeId"] = "green", ["count"] = 7 }
+        };
+        var shield = new EffectDto
+        {
+            Id = "shield", Kind = EEffectKind.GainShield, Params = new() { ["amount"] = 1 },
+            Conditions = [new() { Kind = "OrbTriggered", Params = new() { ["orbTypeId"] = "yellow" } }]
+        };
+        var buff = new BuffDto
+        {
+            Id = "nested", DurationType = EBuffDurationType.Permanent,
+            Hooks = new() { OnOrbTriggered = [new() { EffectId = grant.Id, Params = new() { ["oncePerTurn"] = true } }, new() { EffectId = shield.Id }] }
+        };
+        var registry = CombatTestHelper.CreateFullRegistry(
+            effects: new Dictionary<string, EffectDto> { [grant.Id] = grant, [shield.Id] = shield },
+            buffs: new Dictionary<string, BuffDto> { [buff.Id] = buff },
+            orbs: new Dictionary<string, OrbTypeDto>
+            {
+                ["yellow"] = new() { Id = "yellow", Element = EElement.Yellow, DamageKind = EDamageKind.Elemental },
+                ["green"] = new() { Id = "green", Element = EElement.Green, DamageKind = EDamageKind.Elemental }
+            });
+        using var sim = Build(registry);
+        sim.Buffs.Apply(sim, Player(), buff.Id);
+        sim.Orbs.Grant(sim, "yellow", 0, 7);
+        Assert.That(sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.Shield), Is.EqualTo(1),
+            "Remaining outer onOrbTriggered hooks must retain the outer batch");
+    }
+
+    [Test]
+    public void DiffReview_large_finite_gas_attack_count_should_clamp_before_integer_conversion()
+    {
+        var ge = new GameplayEffectDefDto
+        {
+            Id = "large_count", DurationPolicy = EDurationPolicy.Instant,
+            Executions = [new() { Kind = "Damage", AttackScale = 0 }]
+        };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(gameplayEffects: new Dictionary<string, GameplayEffectDefDto> { [ge.Id] = ge }));
+        sim.EnemyTeam.Enemies[0].Asc.Attributes.SetCurrentValue(AttributeIds.Health, 2000);
+        new GameplayEffectApplicator(sim.Definitions).ApplyToTargets(sim, Player(), [Enemy()], ge.Id,
+            new Dictionary<string, object> { ["Amount"] = 1, ["AttackCount"] = int.MaxValue });
+        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(1001));
+    }
+
+    [Test]
+    public void DiffReview_magical_fallback_should_keep_its_damage_kind()
+    {
+        var ge = new GameplayEffectDefDto
+        {
+            Id = "magic", DurationPolicy = EDurationPolicy.Instant,
+            ApplicationRequiredTags = ["required"],
+            Executions = [new() { Kind = "Damage", DamageType = "Magical", AttackScale = 0 }]
+        };
+        var effect = new EffectDto
+        {
+            Id = "fallback", Kind = EEffectKind.Damage,
+            Params = new() { ["amount"] = 10, ["damageGameplayEffectId"] = ge.Id }
+        };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(
+            effects: new Dictionary<string, EffectDto> { [effect.Id] = effect },
+            gameplayEffects: new Dictionary<string, GameplayEffectDefDto> { [ge.Id] = ge },
+            gameplayTags: new Dictionary<string, GameplayTagDefDto> { ["required"] = new() { Id = "required" } }));
+        sim.PlayerTeam.Characters[0].Asc.SetBaseValue(AttributeIds.MagicDamageTakenScale, -0.5f);
+        sim.EffectExecutor.ExecuteEffectRef(new() { EffectId = effect.Id }, sim, Enemy(), [Player()]);
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(95));
+        sim.RollMagicDamageTurnLedger();
+        Assert.That(sim.TookMagicDamageLastTurn(0), Is.True, "Fallback applies magical scaling, so it must also emit a magical packet");
+    }
+
+    [Test]
+    public void DiffReview_enemy_source_should_not_read_player_magic_damage_ledger()
+    {
+        BaseGameContent.RegisterBuiltinConditions();
+        var effect = new EffectDto
+        {
+            Id = "conditional", Kind = EEffectKind.GainShield, Params = new() { ["amount"] = 1 },
+            Conditions = [new() { Kind = "TookMagicDamageLastTurn" }]
+        };
+        using var sim = Build(CombatTestHelper.CreateFullRegistry(effects: new Dictionary<string, EffectDto> { [effect.Id] = effect }));
+        sim.EffectExecutor.ApplyFixedDamage(sim, Enemy(), [Player()], 1, kind: EDamageKind.Magical);
+        sim.RollMagicDamageTurnLedger();
+        sim.EffectExecutor.ExecuteEffectRef(new() { EffectId = effect.Id }, sim, Enemy(), [Player()]);
+        Assert.That(sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.Shield), Is.Zero,
+            "Enemy index 0 and player index 0 refer to different entities");
+    }
+
+    #endregion
+}

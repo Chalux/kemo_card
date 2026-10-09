@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.xuanyu_wind_thunder.name",
+  "descId": "skill.xuanyu_wind_thunder.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "xuanyu_apply_wind_thunder"
+    },
+    {
+      "effectId": "xuanyu_cleanse"
+    }
+  ]
+}

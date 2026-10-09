@@ -308,6 +308,13 @@ public partial class CombatWin : BaseWin, ICombatStageView
         if (slot.IsEmpty || slot.CardId is null)
             return;
 
+        if (_ui.PendingMode == ECombatPendingMode.PickDiscard)
+        {
+            _ui.ToggleDiscard(handSlotIndex);
+            SyncFromState();
+            return;
+        }
+
         if (character.HasActed)
         {
             ToastService.Show("UI_COMBAT_ALREADY_CONFIRMED");
@@ -334,7 +341,18 @@ public partial class CombatWin : BaseWin, ICombatStageView
     private void OnPlayConfirm()
     {
         var simulation = Simulation;
-        if (simulation is null || _ui is null || _ui.PendingMode != ECombatPendingMode.ConfirmPlay)
+        if (simulation is null || _ui is null)
+            return;
+        if (_ui.PendingMode == ECombatPendingMode.PickDiscard)
+        {
+            if (!_ui.CanConfirmDiscard)
+                return;
+            var command = new CastActiveSkillCommand(_ui.ControlledSlot, [], _ui.DiscardSlots);
+            _ui.ClearPending();
+            ApplyCommand(command);
+            return;
+        }
+        if (_ui.PendingMode != ECombatPendingMode.ConfirmPlay)
             return;
 
         if (!TryGetPendingCard(simulation, out var card))
@@ -346,11 +364,11 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
         var characterIndex = _ui.ControlledSlot;
         var handSlot = _ui.PendingHandSlot;
-        if (!CombatTargeting.TryResolveAutoTargets(simulation, card, characterIndex, out var targets))
+        if (CombatTargeting.RequiresExplicitTarget(card))
             return;
 
         _ui.ClearPending();
-        ApplyCommand(new PlayCardCommand(characterIndex, handSlot, targets));
+        ApplyCommand(new PlayCardCommand(characterIndex, handSlot, []));
     }
 
     private void OnAllyTargetClicked(int slotIndex) =>
@@ -362,7 +380,22 @@ public partial class CombatWin : BaseWin, ICombatStageView
     private void OnTargetPicked(CombatTargetRef target)
     {
         var simulation = Simulation;
-        if (simulation is null || _ui is null || _ui.PendingMode != ECombatPendingMode.PickTarget)
+        if (simulation is null || _ui is null)
+            return;
+
+        if (_ui.PendingMode == ECombatPendingMode.PickActiveTarget)
+        {
+            if (!PendingActiveTargetIsLegal(simulation, target))
+            {
+                ToastService.Show("UI_COMBAT_ILLEGAL_TARGET");
+                return;
+            }
+            var caster = _ui.ControlledSlot;
+            _ui.ClearPending();
+            ApplyCommand(new CastActiveSkillCommand(caster, [target]));
+            return;
+        }
+        if (_ui.PendingMode != ECombatPendingMode.PickTarget)
             return;
 
         if (!TryGetPendingCard(simulation, out var card))
@@ -479,7 +512,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         // 条挂在 FitScale 的 StripLayer（晚于 Root → 拾取优先于战场单位）并跟随队友卡定位；
         // 当前操控角色正在选目标时整条隐藏——选目标态下战场是唯一交互焦点，列表会挡住点击。
         var markedCards = CombatMarkedCards.Resolve(simulation);
-        var hideMarkedCards = pickingTarget;
+        var hideMarkedCards = pickingTarget || _ui.PendingMode == ECombatPendingMode.PickActiveTarget;
 
         // 左栏：非当前操控的角色。
         var benchIndex = 0;
@@ -536,6 +569,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
             _allies[i].Bind(i, characters[i], ResolveCharacter(store, characters[i].DefinitionId));
             var targetable = pendingCard is not null &&
                 CombatTargeting.IsLegalTarget(simulation, pendingCard, controlled, new CombatTargetRef(ECombatSide.Player, i));
+            targetable |= PendingActiveTargetIsLegal(simulation, new CombatTargetRef(ECombatSide.Player, i));
             _allies[i].SetHighlight(i == controlled, targetable);
             _allies[i].SetTauntMark(i < tauntMarks.Length && tauntMarks[i]);
         }
@@ -548,6 +582,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
             _enemies[i].Refresh();
             var targetable = pendingCard is not null &&
                 CombatTargeting.IsLegalTarget(simulation, pendingCard, controlled, new CombatTargetRef(ECombatSide.Enemy, i));
+            targetable |= PendingActiveTargetIsLegal(simulation, new CombatTargetRef(ECombatSide.Enemy, i));
             _enemies[i].SetTargetable(targetable && !_ui.InputLocked);
         }
 
@@ -571,19 +606,21 @@ public partial class CombatWin : BaseWin, ICombatStageView
             {
                 var slot = actor.HandSlots[i];
                 var card = slot.CardId is not null && store.TryGetCard(slot.CardId, out var def) ? def : null;
-                _hands[i].Bind(i, slot, card, _ui.HasPending && _ui.PendingHandSlot == i, canAct);
+                _hands[i].Bind(i, slot, card, (_ui.PendingMode == ECombatPendingMode.PickDiscard ? _ui.DiscardSlots.Contains(i) : _ui.HasPending && _ui.PendingHandSlot == i), canAct);
             }
 
             if (_btnConfirm != null)
             {
                 _btnConfirm.Text = Localization.Tr(actor.HasActed ? "UI_COMBAT_UNCONFIRM" : "UI_COMBAT_CONFIRM");
-                _btnConfirm.Disabled = !canAct;
+                _btnConfirm.Disabled = !canAct || _ui.PendingMode is ECombatPendingMode.PickDiscard or ECombatPendingMode.PickActiveTarget;
             }
 
             if (_btnPlayConfirm != null)
             {
-                _btnPlayConfirm.Visible = _ui.PendingMode == ECombatPendingMode.ConfirmPlay;
-                _btnPlayConfirm.Disabled = !canAct;
+                var discarding = _ui.PendingMode == ECombatPendingMode.PickDiscard;
+                _btnPlayConfirm.Visible = discarding || _ui.PendingMode == ECombatPendingMode.ConfirmPlay;
+                _btnPlayConfirm.Text = Localization.Tr(discarding ? "UI_COMBAT_DISCARD_CONFIRM" : "UI_COMBAT_PLAY_CONFIRM");
+                _btnPlayConfirm.Disabled = !canAct || discarding && !_ui.CanConfirmDiscard;
             }
         }
 
@@ -593,12 +630,16 @@ public partial class CombatWin : BaseWin, ICombatStageView
                 ? "UI_COMBAT_HINT_PLAYING"
                 : _ui.PendingMode switch
                 {
+                    ECombatPendingMode.PickDiscard => "UI_COMBAT_HINT_PICK_DISCARD",
                     ECombatPendingMode.PickTarget => "UI_COMBAT_HINT_PICK_TARGET",
+                    ECombatPendingMode.PickActiveTarget => "UI_COMBAT_HINT_PICK_ACTIVE_TARGET",
                     ECombatPendingMode.ConfirmPlay => "UI_COMBAT_HINT_CONFIRM_PLAY",
                     _ => "",
                 };
             _lblHint.Visible = hintKey.Length > 0;
-            _lblHint.Text = hintKey.Length > 0 ? Localization.Tr(hintKey) : "";
+            _lblHint.Text = _ui.PendingMode == ECombatPendingMode.PickDiscard && !_ui.InputLocked
+                ? string.Format(Localization.Tr(hintKey), _ui.DiscardMinimum, _ui.DiscardMaximum, _ui.DiscardSlots.Count)
+                : hintKey.Length > 0 ? Localization.Tr(hintKey) : "";
         }
 
         if (_btnPause != null)
@@ -862,8 +903,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
     }
 
     /// <summary>
-    /// 确认后释放主动技：目标传空集，由状态机按该档的 <c>targetOverride</c> 解析
-    /// （当前内容全部 Self/Self；非自指档位缺目标会得到可读错误 → Toast）。
+    /// 确认后按技能目标规格进入选牌/选目标，或直接释放可自动解析的技能。
     /// </summary>
     private void CastActiveSkill(int characterIndex)
     {
@@ -871,7 +911,40 @@ public partial class CombatWin : BaseWin, ICombatStageView
         if (!GodotObject.IsInstanceValid(this) || !IsInsideTree())
             return;
 
-        ApplyCommand(new CastActiveSkillCommand(characterIndex, []));
+        var simulation = Simulation;
+        if (simulation is null || _ui is null || _ui.InputLocked || !_ui.CanControl(characterIndex))
+            return;
+        var character = simulation.PlayerTeam.Characters[characterIndex];
+        var tier = character.ResolveCastableTier();
+        if (tier < 0 || !simulation.Definitions.Store.TryGetSkill(character.ActiveSkillChain[tier].SkillId, out var skill))
+            return;
+        if (skill.TargetOverride is { Scope: ETargetScope.Single, Side: not ETargetSide.Self })
+        {
+            _ui.TrySelectSlot(characterIndex);
+            _ui.BeginActiveTarget();
+            SyncFromState();
+            return;
+        }
+        var selection = DiscardSelection.Resolve(simulation, skill, characterIndex);
+        if (selection is { Maximum: > 0 })
+        {
+            _ui.TrySelectSlot(characterIndex);
+            _ui.BeginDiscard(selection.Minimum, selection.Maximum);
+            SyncFromState();
+            return;
+        }
+        ApplyCommand(new CastActiveSkillCommand(characterIndex, [], []));
+    }
+
+    private bool PendingActiveTargetIsLegal(CombatSimulation simulation, CombatTargetRef target)
+    {
+        if (_ui is null || _ui.PendingMode != ECombatPendingMode.PickActiveTarget)
+            return false;
+        var character = simulation.PlayerTeam.Characters[_ui.ControlledSlot];
+        var tier = character.ResolveCastableTier();
+        return tier >= 0 && simulation.Definitions.Store.TryGetSkill(character.ActiveSkillChain[tier].SkillId, out var skill) &&
+            skill.TargetOverride is { } spec && CombatTargeting.CollectLegalTargetsForScope(simulation,
+                spec.Side, spec.Scope, _ui.ControlledSlot).Contains(target);
     }
 
     public void RefreshBuffs(BuffHolderRef holder)

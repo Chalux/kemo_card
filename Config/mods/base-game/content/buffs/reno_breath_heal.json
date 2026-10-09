@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.reno_breath_heal.name",
+  "descId": "buff.reno_breath_heal.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } }
+  ]
+}

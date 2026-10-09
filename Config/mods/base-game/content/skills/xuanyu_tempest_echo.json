@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.xuanyu_tempest_echo.name",
+  "descId": "skill.xuanyu_tempest_echo.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "effectRefs": [
+    {
+      "effectId": "xuanyu_tempest_hit"
+    },
+    {
+      "effectId": "xuanyu_cleanse"
+    }
+  ]
+}

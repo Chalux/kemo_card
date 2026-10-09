@@ -7,6 +7,10 @@
     <Nullable>enable</Nullable>
     <DefaultItemExcludes>$(DefaultItemExcludes);Tests\**;Src\frame\mvc\Generators\**</DefaultItemExcludes>
   </PropertyGroup>
+  <!-- 真实 Godot 节点回归按需编译；正常游戏构建不包含测试脚本。 -->
+  <ItemGroup Condition="'$(IncludeUiHeadlessTests)' == 'true'">
+    <Compile Include="Tests/kemo_card.Ui.Headless/**/*.cs" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Src\frame\mvc\Generators\KemoCard.Mvc.Generators\KemoCard.Mvc.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

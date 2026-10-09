@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.hualing_silent_prelude.name",
+  "element": 2,
+  "role": "Controller",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "hualing_silent_prelude"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 1,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 12,
+  "cardType": "Guard",
+  "targetSide": "Enemy",
+  "targetScope": "All",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

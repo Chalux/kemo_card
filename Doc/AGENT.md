@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-09-25（引擎升至 Godot 4.7.2；战斗位移动画改用 4.7 offset transform）
+**最后修订**：2026-10-06（战斗结算边界、生命周期与指令职责拆分）
 
 ---
 
@@ -82,11 +82,13 @@ Godot 4.7 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 |------|----------|------|
 | 启动 / 服务根 | `Src/MainRoot.cs`，`Src/mod/AppRoot.cs`，`Src/mod/ModFactory.cs` | `AppRoot.Services` 在 Bootstrap 后可用 |
 | 战斗模拟 | `Src/mod/combat/`（`runtime/`、`statemachine/`、`commands/`、`rules/`、`effects/`、`gas/`） | 权威见战斗规格 |
+| 战斗编排边界 | `runtime/CombatTurnCoordinator.cs`、`runtime/CombatEffectLifecycle.cs`、`statemachine/CombatCommandValidator.cs`、`CombatTargeting.cs`、`CombatTargetResolver.cs`、`effects/SkillPayloadExecutor.cs` | 回合边界、GE 持有者驱动、入队验证、目标解析与技能载荷；宿主通过 Simulation 指令入口操作 |
+| 战斗伤害 / 执行保护 | `effects/DamagePipeline.cs`、`effects/EffectExecutionBudget.cs` | 统一实际损血与命中记账；同步钩子、动作与脚本提案共用预算 |
 | Run 编排 | `Src/mod/run/` | 环模型、奖励、存档；`RunRuntime` 会话门面 + `Ui/` 选故事与 Run 主界面壳 |
 | 全局 UI / 图鉴 / 设置 | `Src/mod/global/` | Menu、Codex、Card/Character UI 组件 |
-| 内容管道 | `Src/frame/content/` | 发现、加载、合并、校验（含 Story 类别）；`GameDefinitionStore` 为定义权威，`Registry` 管版本/owner/`Contains` |
+| 内容管道 | `Src/frame/content/` | 发现、加载、合并、校验（含同步触发引用环）；`ContentParameters` 统一数值与覆盖解析；`GameDefinitionStore` 为定义权威，`Registry` 管版本/owner/`Contains` |
 | 条件判断 | `Src/frame/condition/` + `Src/mod/global/Condition/` | 引擎在 frame；Persistent CondType 与 `GlobalPersistentCondContext`（`HasFlag` → 全局 `Unlocks`）在 mod；权威见 UI 与运行时规格「条件系统」 |
-| GAS | `Src/frame/gas/` + `Src/mod/combat/gas/` | 属性、GE、战斗桥接 |
+| GAS | `Src/frame/gas/`（含 `AttributeAggregator.cs`）+ `Src/mod/combat/gas/` | 属性聚合、资源消耗、GE 与战斗桥接 |
 | UI 框架 | `Src/frame/ui/` | `UiManager`、Base*、生命周期状态机 |
 | 事件 | `Src/frame/mvc/` | `EventDispatcher`、源生成器 |
 | UI 订阅生命周期 | `Src/frame/ui/BindingScope.cs`，`BindingScopeSignals.cs` | 订阅登记簿 + 信号糖；框架级 `OnExitTree` 统一解绑（权威见 UI 与运行时规格） |

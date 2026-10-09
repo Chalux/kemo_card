@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.fomalhaut_dust_ring.name",
+  "descId": "skill.fomalhaut_dust_ring.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "fomalhaut_apply_dust"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

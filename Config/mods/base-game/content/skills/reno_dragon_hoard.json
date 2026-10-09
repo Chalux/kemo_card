@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.reno_dragon_hoard.name",
+  "descId": "skill.reno_dragon_hoard.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "reno_apply_hoard_self" },
+    { "actionId": "reno_apply_regen_team" }
+  ],
+  "tags": ["buff", "heal"]
+}

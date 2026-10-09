@@ -1,0 +1,13 @@
+{
+  "displayNameId": "skill.xuanyu_thunder_raid.name",
+  "descId": "skill.xuanyu_thunder_raid.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single"
+  },
+  "effectRefs": [
+    {
+      "effectId": "xuanyu_thunder_hit"
+    }
+  ]
+}

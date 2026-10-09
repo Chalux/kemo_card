@@ -1,0 +1,19 @@
+{
+  "descId": "buff.perseus_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onActiveSkillCast": [
+      {
+        "effectId": "perseus_next_draw"
+      },
+      {
+        "effectId": "perseus_empower_valor"
+      }
+    ]
+  }
+}

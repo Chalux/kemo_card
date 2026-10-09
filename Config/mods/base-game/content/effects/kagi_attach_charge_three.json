@@ -1,0 +1,8 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "kagi_charge_three",
+    "slotIndex": 4,
+    "charge": 3
+  }
+}

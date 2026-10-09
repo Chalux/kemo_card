@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.hualing_magic_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "element": "Blue",
+      "damageType": "Magical",
+      "kind": "Damage"
+    }
+  ]
+}

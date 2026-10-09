@@ -1,0 +1,101 @@
+{
+  "displayNameId": "buff.cupid_passive_p3.name",
+  "descId": "buff.cupid_passive_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "self": true
+          },
+          "turnInterval": 7,
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Blue"
+                ]
+              }
+            }
+          },
+          "turnInterval": 7,
+          "amount": 1
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "God"
+                ]
+              }
+            }
+          },
+          "turnInterval": 7,
+          "amount": 1
+        }
+      }
+    ],
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 2,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Blue"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "God"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

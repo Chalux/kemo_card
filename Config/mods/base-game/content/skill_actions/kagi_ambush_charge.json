@@ -1,0 +1,7 @@
+{
+  "kind": "GainResource",
+  "params": {
+    "resource": "skillcounter",
+    "amount": 2
+  }
+}

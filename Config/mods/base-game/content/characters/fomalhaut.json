@@ -1,0 +1,48 @@
+{
+  "displayNameId": "char.fomalhaut.name",
+  "element": "Blue",
+  "role": "Mage",
+  "race": [
+    "Astronomy",
+    "Unknown"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "fomalhaut_southern_fish_alpha",
+      "cooldown": 8
+    }
+  ],
+  "cards": [
+    "fomalhaut_southern_fish_light",
+    "fomalhaut_dust_ring",
+    "fomalhaut_lone_star_echo",
+    "fomalhaut_stellar_tide"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "requiredPotential": 0,
+      "buffId": "fomalhaut_passive_p1"
+    },
+    {
+      "requiredPotential": 10,
+      "buffId": "fomalhaut_passive_p2"
+    },
+    {
+      "requiredPotential": 30,
+      "buffId": "fomalhaut_passive_p3"
+    },
+    {
+      "requiredPotential": 50,
+      "buffId": "fomalhaut_passive_p4",
+      "params": {
+        "percent": 200
+      }
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

@@ -196,7 +196,7 @@ public sealed class DiscardChannelTests
             {
                 Id = "action.draw",
                 Kind = ESkillActionKind.Draw,
-                Params = new Dictionary<string, object> { ["count"] = 2 },
+                Params = new Dictionary<string, object> { ["count"] = 2, ["random"] = true },
             };
         }
 
@@ -206,7 +206,7 @@ public sealed class DiscardChannelTests
             {
                 Id = "action.discard",
                 Kind = ESkillActionKind.Discard,
-                Params = new Dictionary<string, object> { ["count"] = 1 },
+                Params = new Dictionary<string, object> { ["count"] = 1, ["random"] = true },
             };
         }
 
@@ -226,7 +226,7 @@ public sealed class DiscardChannelTests
             {
                 Id = "action.discard",
                 Kind = ESkillActionKind.Discard,
-                Params = new Dictionary<string, object> { ["count"] = 1 },
+                Params = new Dictionary<string, object> { ["count"] = 1, ["random"] = true },
             };
             skillActions["action.gain"] = new()
             {

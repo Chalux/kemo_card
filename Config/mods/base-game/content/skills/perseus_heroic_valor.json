@@ -1,0 +1,20 @@
+{
+  "displayNameId": "skill.perseus_heroic_valor.name",
+  "descId": "skill.perseus_heroic_valor.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "actionRefs": [
+    {
+      "actionId": "perseus_apply_valor"
+    },
+    {
+      "actionId": "perseus_charge_allies"
+    }
+  ],
+  "tags": [
+    "debuff",
+    "charge"
+  ]
+}

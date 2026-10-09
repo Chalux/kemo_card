@@ -57,7 +57,6 @@ public partial class UIManager : Node, IUIManager
 
     private UIRuntimeRegistry _registry = null!;
     private bool _inited;
-    private EUILayer[] _layers = [];
     private GodotMainThreadSyncContext? _syncContext;
 
     public override void _Ready()
@@ -95,7 +94,6 @@ public partial class UIManager : Node, IUIManager
         _syncContext.Install();
 
         _registry = opt.Registry;
-        _layers = [.. opt.Layers];
         FacadeProvider = opt.FacadeProvider;
 
         var handlers = opt.StateHandlers ?? CreateDefaultStateHandlers();
@@ -122,13 +120,13 @@ public partial class UIManager : Node, IUIManager
 
     public Task<UIVo?> OpenAsync(string id, object? payload = null, UIOpenOpt? openOpt = null)
     {
-        TaskCompletionSource<UIVo?> tcs = new();
+        TaskCompletionSource<UIVo?> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         UIRuntimeEntry? entry = _registry.Get(id);
         if (entry == null)
         {
             AppLog.Error($"UI 管理器: 打开UI<{id}> 失败, 路由未注册", "UI");
-            openOpt?.OnFail?.Invoke();
+            InvokeCallback(openOpt?.OnFail, id, "打开失败回调");
             tcs.SetResult(null);
             return tcs.Task;
         }
@@ -137,7 +135,7 @@ public partial class UIManager : Node, IUIManager
         if (failReason != null)
         {
             AppLog.Error(failReason, "UI");
-            openOpt?.OnFail?.Invoke();
+            InvokeCallback(openOpt?.OnFail, id, "打开失败回调");
             tcs.SetResult(null);
             return tcs.Task;
         }
@@ -146,20 +144,22 @@ public partial class UIManager : Node, IUIManager
 
         if (finalOpt.SkipOpenCheck?.Invoke(payload) == true)
         {
-            finalOpt.OnFail?.Invoke();
+            InvokeCallback(finalOpt.OnFail, id, "打开失败回调");
             tcs.SetResult(null);
             return tcs.Task;
         }
 
         UIVo vo = VoRegistry.GetOrCreate(id, entry.Type, entry.OwnerModId, payload);
 
+        // 被后续请求取代不等于成功打开；先失效旧轮次，再登记新请求。
+        vo.CompleteOpen(null);
+        vo.Load.BeginRequest();
+        vo.Anim.ClearAnim();
+        vo.Anim.ClearMaskAnim();
+
         // 必须写回：状态处理器（层级挂载 / 遮罩 / 动画 / 缓存 / 回调）统一读 vo.OpenOpt，
         // 不写回会让 MergeOpenOpt 的结果被丢弃，整个 UIOpenOpt 参数体系失效，且 await OpenAsync 永不返回。
         vo.OpenOpt = finalOpt;
-
-        // 重用已有 VO：优雅结束上一轮未完成的打开任务
-        vo.OpenTaskSource?.TrySetResult(vo);
-        vo.OpenTaskSource = null;
 
         vo.Payload = payload;
         vo.OpenTaskSource = tcs;
@@ -170,15 +170,15 @@ public partial class UIManager : Node, IUIManager
         {
             finalOpt.OnOpen = null;
             finalOpt.OnFail = null;
-            userOnOpen?.Invoke(opened);
-            tcs.TrySetResult(vo);
+            vo.CompleteOpen(vo, tcs);
+            InvokeCallback(() => userOnOpen?.Invoke(opened), id, "打开成功回调");
         };
         finalOpt.OnFail = () =>
         {
             finalOpt.OnOpen = null;
             finalOpt.OnFail = null;
-            userOnFail?.Invoke();
-            tcs.TrySetResult(null);
+            vo.CompleteOpen(null, tcs);
+            InvokeCallback(userOnFail, id, "打开失败回调");
         };
 
         if (entry.Type is EUIType.Pge or EUIType.Pop)
@@ -248,11 +248,8 @@ public partial class UIManager : Node, IUIManager
         OpenCoordinator.ResetCurrentOpening(vo);
         OpenCoordinator.RemoveFromQueue(vo);
 
-        if (vo.Lifecycle.OpenTime == 0)
-        {
-            vo.OpenTaskSource?.TrySetResult(null);
-            vo.OpenTaskSource = null;
-        }
+        vo.CompleteOpen(null);
+        vo.Load.Cancel();
 
         if (!vo.IsClose)
         {
@@ -337,9 +334,10 @@ public partial class UIManager : Node, IUIManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
 
-        foreach (var vo in SnapshotOpenVos())
+        foreach (var vo in SnapshotVosByOwner(ownerModId))
         {
-            if (!string.Equals(vo.OwnerModId, ownerModId, StringComparison.Ordinal))
+            // 已关闭缓存按自身期限保留（如 StorySelect）；卸载用 UnregisterOwner 清除。
+            if (vo.StateMachine.CurrentState is EUIState.Cache or EUIState.Destroy)
             {
                 continue;
             }
@@ -362,20 +360,32 @@ public partial class UIManager : Node, IUIManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ownerModId);
 
-        foreach (var vo in SnapshotVosByOwner(ownerModId))
+        var vos = SnapshotVosByOwner(ownerModId);
+        // 先删除声明与所有调度项，清理回调不能重新排入这个 owner。
+        _registry.UnregisterOwner(ownerModId);
+        foreach (var vo in vos)
         {
-            if (vo.IsOpen)
+            OpenCoordinator.ResetCurrentOpening(vo);
+            OpenCoordinator.RemoveFromQueue(vo);
+        }
+        try
+        {
+            foreach (var vo in vos)
             {
-                vo.OpenOpt.CacheTime = 0;
-                Close(vo.Id);
-                continue;
-            }
-
-            if (vo.StateMachine.CurrentState != EUIState.Destroy)
-            {
-                vo.StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(vo, this));
+                vo.CompleteOpen(null);
+                if (vo.IsOpen)
+                {
+                    vo.OpenOpt.CacheTime = 0;
+                    vo.Load.Cancel();
+                    vo.StateMachine.TransitionTo(EUIState.Close, new UIStateContext(vo, this));
+                }
+                else if (vo.StateMachine.CurrentState != EUIState.Destroy)
+                {
+                    vo.StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(vo, this));
+                }
             }
         }
+        finally { OpenCoordinator.OpenNext(); }
     }
 
     public async Task<UIVo?> BackAsync()
@@ -419,10 +429,12 @@ public partial class UIManager : Node, IUIManager
         UIVo? vo = VoRegistry.Get(Id);
         if (vo?.Runtime.Layer == null) return false;
 
-        int layerIdx = Array.IndexOf(_layers, vo.Runtime.Layer.Type);
-        for (int i = layerIdx + 1; i < _layers.Length; i++)
+        var allLayers = LayerManager.GetAllLayers();
+        int layerIdx = Array.IndexOf(allLayers, vo.Runtime.Layer.Type);
+        if (layerIdx < 0 || !vo.IsOpen) return false;
+        for (int i = layerIdx + 1; i < allLayers.Length; i++)
         {
-            UILayer? layer = LayerManager.GetLayer(_layers[i]);
+            UILayer? layer = LayerManager.GetLayer(allLayers[i]);
             if (layer != null && layer.UISort.Any(ui => ui.UIVo?.OpenOpt.EffectiveNoCover != true))
                 return false;
         }
@@ -439,6 +451,12 @@ public partial class UIManager : Node, IUIManager
     internal void UpdateLayers() => CallDeferred(MethodName.UpdateLayersDeferred);
 
     private void UpdateLayersDeferred() => LayerManager.UpdateLayers();
+
+    internal static void InvokeCallback(Action? callback, string id, string stage)
+    {
+        try { callback?.Invoke(); }
+        catch (Exception ex) { AppLog.Error($"UI<{id}> {stage}失败：{ex.Message}", "UI"); }
+    }
 
     private static IEnumerable<IStateHandler<EUIState, IUIStateContext>> CreateDefaultStateHandlers()
     {

@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.mother_machine_super_operator.name",
+  "descId": "skill.mother_machine_super_operator.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "mother_machine_operator_slot_1_attach"
+    },
+    {
+      "effectId": "mother_machine_operator_slot_3_attach"
+    },
+    {
+      "effectId": "mother_machine_operator_slot_5_attach"
+    }
+  ]
+}

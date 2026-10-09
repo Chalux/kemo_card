@@ -1,0 +1,29 @@
+{
+  "displayNameId": "card.anubis_tomb_rite.name",
+  "element": 1,
+  "role": "CardPlayer",
+  "costType": "Energy",
+  "cost": 0,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "anubis_tomb_rite"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "priority": 10,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

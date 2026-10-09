@@ -1,4 +1,6 @@
 using System.Text.Json;
+using KemoCard.Frame.Content;
+using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.Buffs;
 
@@ -35,22 +37,8 @@ internal static class BuffActionParams
     }
 
     /// <summary>取整数参数（JSON 数字或字符串皆可）；缺失/非法返回 <paramref name="fallback"/>。</summary>
-    public static int ReadInt(IReadOnlyDictionary<string, object> parameters, string key, int fallback)
-    {
-        if (!parameters.TryGetValue(key, out var raw) || raw is null)
-            return fallback;
-
-        return raw switch
-        {
-            int i => i,
-            long l => l is >= int.MinValue and <= int.MaxValue ? (int)l : fallback,
-            float f => (int)f,
-            double d => (int)d,
-            JsonElement { ValueKind: JsonValueKind.Number } element when element.TryGetInt32(out var parsed) => parsed,
-            _ => int.TryParse(raw.ToString(), out var parsed) ? parsed : fallback,
-        };
-    }
-
+    public static int ReadInt(IReadOnlyDictionary<string, object> parameters, string key, int fallback) =>
+        KemoCard.Frame.Content.ContentParameters.ReadInt(parameters, key, fallback);
     /// <summary>
     /// 参数里是否带目标选择器（<c>hookTargets</c> / <c>targetFilter</c>）：
     /// 带了就按选择器重解析目标，覆盖调用方传入的目标集（"伤害敌方 + 增益自身"这类卡依赖此语义）。
@@ -93,6 +81,27 @@ internal static class BuffActionParams
             instanceParams[key] = value;
         }
 
+        return instanceParams;
+    }
+
+    /// <summary>ApplyBuff 的 amount 按来源本回合出牌数 / 最近实际弃牌数取快照。</summary>
+    public static Dictionary<string, object>? BuildScaledInstanceParams(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        IReadOnlyDictionary<string, object> parameters,
+        params string[] controlKeys)
+    {
+        var instanceParams = BuildInstanceParams(parameters, [.. controlKeys, "amountPerPlayedCard", "amountPerDiscard"]);
+        if (!parameters.ContainsKey("amountPerPlayedCard") && !parameters.ContainsKey("amountPerDiscard"))
+            return instanceParams;
+
+        var count = source.Side == ECombatSide.Player && source.Index >= 0
+            ? simulation.CountCardsPlayedThisTurn(source.Index, 0) : 0;
+        var amount = ContentParameters.ReadFloat(parameters, "amount", 0f) +
+            ContentParameters.ReadFloat(parameters, "amountPerPlayedCard", 0f) * count +
+            ContentParameters.ReadFloat(parameters, "amountPerDiscard", 0f) * simulation.LastDiscardCount;
+        instanceParams ??= new Dictionary<string, object>(StringComparer.Ordinal);
+        instanceParams["amount"] = float.IsFinite(amount) ? amount : 0f;
         return instanceParams;
     }
 

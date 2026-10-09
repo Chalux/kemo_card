@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.reno_dragon_blessing.name",
+  "descId": "skill.reno_dragon_blessing.desc",
+  "targetOverride": { "side": "Ally", "scope": "Single", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "reno_apply_blessing" }
+  ],
+  "tags": ["buff"]
+}

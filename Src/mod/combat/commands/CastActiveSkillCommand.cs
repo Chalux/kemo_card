@@ -8,4 +8,9 @@ namespace KemoCard.Mod.Combat.Commands;
 /// </summary>
 public sealed record CastActiveSkillCommand(
     int CharacterIndex,
-    IReadOnlyList<CombatTargetRef> Targets) : ICombatCommand;
+    IReadOnlyList<CombatTargetRef> Targets,
+    IReadOnlyList<int>? DiscardSlots = null) : ICombatCommand
+{
+    public IReadOnlyList<CombatTargetRef> Targets { get; } = Array.AsReadOnly(Targets.ToArray());
+    public IReadOnlyList<int>? DiscardSlots { get; } = DiscardSlots is null ? null : Array.AsReadOnly(DiscardSlots.ToArray());
+}

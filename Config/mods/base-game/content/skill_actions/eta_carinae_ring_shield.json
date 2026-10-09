@@ -1,0 +1,9 @@
+{
+  "kind": "GainShield",
+  "params": {
+    "amount": 35,
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

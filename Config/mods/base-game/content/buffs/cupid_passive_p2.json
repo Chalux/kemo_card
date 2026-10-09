@@ -1,0 +1,18 @@
+{
+  "displayNameId": "buff.cupid_passive_p2.name",
+  "descId": "buff.cupid_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onCardExecutionEnd": [
+      {
+        "effectId": "cupid_blue_card_heal",
+        "params": { "hookTargets": "team" }
+      }
+    ]
+  }
+}

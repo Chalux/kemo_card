@@ -1,0 +1,22 @@
+{
+  "displayNameId": "buff.eta_carinae_passive_p4.name",
+  "descId": "buff.eta_carinae_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onOrbAutoTriggered": [
+      {
+        "effectId": "eta_carinae_auto_shield"
+      }
+    ],
+    "onShieldDepleted": [
+      {
+        "effectId": "eta_carinae_shieldbreak_boost"
+      }
+    ]
+  }
+}

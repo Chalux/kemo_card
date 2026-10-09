@@ -1,0 +1,26 @@
+{
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "descId": "buff.zeus_passive_p2.desc",
+  "hooks": {
+    "onDamaged": [
+      {
+        "effectId": "zeus_gain_wrath"
+      }
+    ]
+  },
+  "durationType": "Permanent",
+  "modifiers": [
+    {
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 5
+      },
+      "attributeId": "Taunt",
+      "operation": "Add"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "displayNameId": "skill.einstein_myriad_grace.name",
+  "descId": "skill.einstein_myriad_grace.desc",
+  "targetOverride": { "side": "Enemy", "scope": "RandomN", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "einstein_discard_two" },
+    { "actionId": "einstein_draw_by_discard" },
+    { "actionId": "einstein_myriad_grace_hit" }
+  ],
+  "tags": ["active"]
+}

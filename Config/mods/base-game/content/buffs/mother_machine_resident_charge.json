@@ -1,0 +1,26 @@
+{
+  "displayNameId": "buff.mother_machine_resident_charge.name",
+  "descId": "buff.mother_machine_resident_charge.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "slot.charge"
+  ],
+  "hooks": {
+    "onSlotCardPlayed": [
+      {
+        "effectId": "mother_machine_resident_heal",
+        "params": {
+          "hookTargets": "team"
+        }
+      },
+      {
+        "effectId": "mother_machine_resident_boost",
+        "params": {
+          "hookTargets": "allies"
+        }
+      }
+    ]
+  }
+}

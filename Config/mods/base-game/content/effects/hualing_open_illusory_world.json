@@ -1,0 +1,7 @@
+{
+  "kind": "SetDomain",
+  "params": {
+    "gameplayEffectId": "hualing_illusory_world",
+    "turns": 1
+  }
+}

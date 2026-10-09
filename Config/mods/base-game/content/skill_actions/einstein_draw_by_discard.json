@@ -1,0 +1,4 @@
+{
+  "kind": "DrawByDiscard",
+  "params": { "targetFilter": { "self": true } }
+}

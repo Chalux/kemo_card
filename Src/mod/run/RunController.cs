@@ -427,7 +427,8 @@ public sealed class RunController : BaseController<RunMod>
             modId,
             _ruleCatalog,
             out var error,
-            initialBuffs: BuildUnlockedPassiveBuffs());
+            initialBuffs: BuildUnlockedPassiveBuffs(),
+            obtainedCardIds: Model.CardCollection);
         if (simulation is null)
             throw new InvalidOperationException(error ?? $"战斗 '{battle.Id}' 创建失败。");
 

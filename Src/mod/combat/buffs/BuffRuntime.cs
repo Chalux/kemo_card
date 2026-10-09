@@ -21,6 +21,7 @@ public sealed class BuffRuntime
 {
     private readonly GameDefinitionRegistry _registry;
     private readonly CombatEffectExecutor _executor;
+    private bool _refreshingEnemyPresence;
 
     public BuffRuntime(GameDefinitionRegistry registry, CombatEffectExecutor executor)
     {
@@ -47,6 +48,10 @@ public sealed class BuffRuntime
 
         if (!_registry.Store.TryGetBuff(buffId, out var def))
             return new BuffApplyResult(false, Error: $"Unknown buffId '{buffId}'.");
+
+        using var scope = simulation.EffectBudget.TryEnter();
+        if (scope is null)
+            return new BuffApplyResult(false, Error: "Synchronous effect budget exceeded.");
 
         if (def.ApplyScope == EBuffApplyScope.AllAllies && holder.Side == ECombatSide.Player)
         {
@@ -83,6 +88,18 @@ public sealed class BuffRuntime
             return new BuffApplyResult(false, Error: $"Unknown buffId '{buffId}'.");
 
         var container = character.HandSlots[slotIndex].Buffs;
+        if (def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer))
+        {
+            if (character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotTimer))
+                return new BuffApplyResult(true);
+            if (container.FindByTag(BuiltinBuffTags.SlotTimer) is { } timer)
+                return new BuffApplyResult(true, timer);
+        }
+        if (def.EffectiveTags.Contains(CombatConstants.VirusTag) && character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneVirus))
+            return new BuffApplyResult(true);
+        using var scope = simulation.EffectBudget.TryEnter();
+        if (scope is null)
+            return new BuffApplyResult(false, Error: "Synchronous effect budget exceeded.");
         var instance = StackOrAdd(
             simulation,
             container,
@@ -103,7 +120,11 @@ public sealed class BuffRuntime
         if (container is null)
             return new BuffApplyResult(false, Error: "目标没有 buff 容器（队伍账本不是合法挂点）。");
 
+        if (def.EffectiveTags.Contains(CombatConstants.VirusTag) && container.HasTag(BuiltinBuffTags.TraitImmuneVirus))
+            return new BuffApplyResult(true);
+
         var instance = StackOrAdd(simulation, container, holder, def, parameters);
+        RefreshEnemyPresenceConditions(simulation);
         return new BuffApplyResult(true, instance);
     }
 
@@ -118,19 +139,22 @@ public sealed class BuffRuntime
     {
         var holderRef = new BuffHolderRef(holder, slotIndex);
 
-        // 充能互斥优先于一切：同一槽位只允许 1 个充能，新充能无条件覆盖旧的并重置进度。
-        RemoveExistingCharges(simulation, container, holder, def, holderRef);
-
-        if (!string.IsNullOrWhiteSpace(def.ExclusiveGroup))
+        // 先发布完整替换结果，再分发移除钩子；重入投放以最后一次提交为准。
+        var charge = def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal);
+        var conflicts = container.All.Where(instance => !instance.IsDomainOwned && (
+            (charge && instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal)) ||
+            (!string.IsNullOrWhiteSpace(def.ExclusiveGroup) && instance.Def.ExclusiveGroup == def.ExclusiveGroup) ||
+            (def.StackRule == EBuffStackRule.Replace && instance.Def.Id == def.Id))).ToArray();
+        var removedInstances = new List<BuffInstance>(conflicts.Length);
+        foreach (var conflict in conflicts)
         {
-            foreach (var removed in container.RemoveExclusiveGroup(def.ExclusiveGroup))
-            {
-                FireHook(simulation, holder, removed, removed.Def.Hooks.OnRemove);
-                simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, removed.Def.Id));
-            }
+            if (!container.Remove(conflict))
+                continue;
+            removedInstances.Add(conflict);
+            simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, conflict.Def.Id));
         }
 
-        var existing = container.Find(def.Id);
+        var existing = container.All.FirstOrDefault(instance => !instance.IsDomainOwned && instance.Def.Id == def.Id);
         if (existing is not null)
         {
             switch (def.StackRule)
@@ -148,45 +172,20 @@ public sealed class BuffRuntime
                 case EBuffStackRule.Refresh:
                     existing.RefreshDuration();
                     return existing;
-                case EBuffStackRule.Replace:
-                    FireHook(simulation, holder, existing, def.Hooks.OnRemove);
-                    container.Remove(existing);
-                    simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, def.Id));
+                case EBuffStackRule.Independent:
+                    if (container.All.Count(item => !item.IsDomainOwned && item.Def.Id == def.Id) >= Math.Max(1, def.MaxStacks))
+                        return existing;
                     break;
             }
         }
 
         var instance = container.Add(def, FilterInstanceParams(parameters), BuildConditionContext(simulation, holder));
         simulation.Presentation.Emit(new BuffAppliedEvent(holderRef, def.Id, instance.Stacks));
-        FireHook(simulation, holder, instance, def.Hooks.OnApply);
+        foreach (var removed in removedInstances)
+            FireHook(simulation, holder, removed, removed.Def.Hooks.OnRemove);
+        if (container.All.Contains(instance))
+            FireHook(simulation, holder, instance, def.Hooks.OnApply);
         return instance;
-    }
-
-    /// <summary>
-    /// 充能互斥（充能规格 §2）：同一槽位<b>只允许存在 1 个</b> <see cref="BuiltinBuffTags.SlotCharge"/> buff。
-    /// 新的充能<b>无条件覆盖</b>旧的——即使 new 与 old 完全同 id、也即使 <c>stackRule</c> 写的是
-    /// Refresh/Add——并且<b>进度重置</b>（充能计数回到新 buff 声明的值）。
-    /// 覆盖时对旧实例补发 onRemove，与其它移除路径口径一致。
-    /// </summary>
-    private void RemoveExistingCharges(
-        CombatSimulation simulation,
-        BuffContainer container,
-        CombatTargetRef holder,
-        BuffDto def,
-        BuffHolderRef holderRef)
-    {
-        if (!def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal))
-            return;
-
-        var existing = container.All
-            .Where(instance => instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal))
-            .ToList();
-        foreach (var instance in existing)
-        {
-            FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
-            container.Remove(instance);
-            simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, instance.Def.Id));
-        }
     }
 
     /// <summary>驱散：按 buffId 或 tag 集匹配；带 <see cref="BuiltinBuffTags.Undispellable"/> 的一律跳过。</summary>
@@ -201,19 +200,51 @@ public sealed class BuffRuntime
             return 0;
 
         var toRemove = container.All.Where(instance => MatchesDispel(instance, buffId, withTags)).ToList();
+        var removedCount = 0;
         foreach (var instance in toRemove)
         {
-            FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
-            container.Remove(instance);
+            if (!container.Remove(instance))
+                continue;
+            removedCount++;
             simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder), instance.Def.Id));
+            FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
         }
 
-        return toRemove.Count;
+        RefreshEnemyPresenceConditions(simulation);
+        return removedCount;
+    }
+
+    /// <summary>开始时同时快照角色 Buff / GE；移除钩子新建的效果不进入本次驱散。</summary>
+    public int DispelDebuffs(CombatSimulation simulation, CombatTargetRef holder)
+    {
+        var container = TryResolveContainer(simulation, holder);
+        var asc = GetAsc(simulation, holder);
+        if (container is null || asc is null)
+            return 0;
+        var buffs = container.All.Where(instance => !instance.IsDomainOwned &&
+            !instance.Def.EffectiveTags.Contains(BuiltinBuffTags.Undispellable) &&
+            instance.Def.EffectiveTags.Any(BuiltinBuffTags.IsDebuffTag)).ToArray();
+        var effects = asc.ActiveEffects.Where(effect =>
+            !effect.Def.GrantedTags.Contains(BuiltinBuffTags.Undispellable) &&
+            effect.Def.GrantedTags.Any(BuiltinBuffTags.IsDebuffTag)).Select(effect => effect.Handle).ToArray();
+        var removed = 0;
+        foreach (var instance in buffs)
+        {
+            if (!container.Remove(instance))
+                continue;
+            removed++;
+            simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder), instance.Def.Id));
+            FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
+        }
+        foreach (var handle in effects)
+            if (asc.RemoveActiveEffect(handle)) removed++;
+        RefreshEnemyPresenceConditions(simulation);
+        return removed;
     }
 
     private static bool MatchesDispel(BuffInstance instance, string? buffId, IReadOnlyList<string>? withTags)
     {
-        if (instance.Def.EffectiveTags.Contains(BuiltinBuffTags.Undispellable))
+        if (instance.IsDomainOwned || instance.Def.EffectiveTags.Contains(BuiltinBuffTags.Undispellable))
             return false;
 
         if (!string.IsNullOrWhiteSpace(buffId) &&
@@ -231,22 +262,81 @@ public sealed class BuffRuntime
 
     #region 钩子节点
 
-    /// <summary>回合开始：重估休眠 + 触发 onTurnStart（支持 per-effect <c>turnInterval</c> 按波内回合计数分档触发）。</summary>
-    public void FireTurnStart(CombatSimulation simulation)
+    /// <summary>每个入场敌人只作为本次钩子的默认目标，不重放阶层开始钩子。</summary>
+    internal void FireEnemyEntered(CombatSimulation simulation, int enemyIndex)
     {
-        foreach (var (holder, container, _) in EnumerateContainers(simulation))
+        if (enemyIndex < 0 || enemyIndex >= simulation.EnemyTeam.Enemies.Count || !simulation.EnemyTeam.Enemies[enemyIndex].IsAlive)
+            return;
+        var target = new CombatTargetRef(ECombatSide.Enemy, enemyIndex);
+        for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
+        {
+            var character = simulation.PlayerTeam.Characters[i];
+            foreach (var instance in character.Buffs.All.ToArray())
+                if (!instance.IsDormant && character.Buffs.All.Contains(instance))
+                    FireHook(simulation, new(ECombatSide.Player, i), instance, instance.Def.Hooks.OnEnemyEntered, defaultTargets: [target]);
+        }
+    }
+
+    /// <summary>领域持有独立 Buff 实例，不与普通同名投放互相覆盖。</summary>
+    internal BuffInstance? AddDomainBuff(CombatSimulation simulation, CombatTargetRef holder, BuffRefDto reference)
+    {
+        using var scope = simulation.EffectBudget.TryEnter();
+        if (scope is null)
+            return null;
+        var container = TryResolveContainer(simulation, holder);
+        if (container is null || !_registry.Store.TryGetBuff(reference.BuffId, out var def))
+            return null;
+        var instance = container.Add(def, reference.Params, BuildConditionContext(simulation, holder));
+        instance.IsDomainOwned = true;
+        simulation.Presentation.Emit(new BuffAppliedEvent(new BuffHolderRef(holder), def.Id, instance.Stacks));
+        FireHook(simulation, holder, instance, def.Hooks.OnApply);
+        return instance;
+    }
+
+    internal void RemoveDomainBuff(CombatSimulation simulation, CombatTargetRef holder, BuffContainer container, BuffInstance instance)
+    {
+        if (!container.Remove(instance))
+            return;
+        simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder), instance.Def.Id));
+        FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
+    }
+
+    /// <summary>敌方标签/存活状态改变后立即同步存在条件，不提前重估出牌或回合条件。</summary>
+    internal void RefreshEnemyPresenceConditions(CombatSimulation simulation)
+    {
+        if (_refreshingEnemyPresence)
+            return;
+        _refreshingEnemyPresence = true;
+        try
+        {
+            foreach (var (holder, container, _, _) in SnapshotContainers(simulation))
+                container.EvaluateDormancy(BuildConditionContext(simulation, holder), BuiltinCombatConditions.EnemyHasBuffTag);
+        }
+        finally { _refreshingEnemyPresence = false; }
+    }
+
+    /// <summary>回合开始：重估休眠 + 触发 onTurnStart（支持 per-effect <c>turnInterval</c> 按波内回合计数分档触发）。</summary>
+    public void FireTurnStart(CombatSimulation simulation, bool expireBoundary = true)
+    {
+        if (expireBoundary)
+            ExpireTurnStartBuffs(simulation);
+        foreach (var (holder, container, _, instances) in SnapshotContainers(simulation))
         {
             container.EvaluateDormancy(BuildConditionContext(simulation, holder));
             // 钩子可能对自己容器挂/删 buff，必须快照枚举（活列表枚举中修改会抛异常）。
-            foreach (var instance in container.All.ToArray())
+            foreach (var instance in instances)
             {
-                if (instance.IsDormant)
+                if (instance.IsDormant || !container.All.Contains(instance))
                     continue;
                 instance.ResetTurnFlags();
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnTurnStart, gateTurnInterval: true);
             }
         }
     }
+
+    /// <summary>完整标记队列出队前：触发所有角色的 onCardExecutionStart。</summary>
+    public void FireCardExecutionStart(CombatSimulation simulation) =>
+        FireForAllPlayerCharacters(simulation, instance => instance.Def.Hooks.OnCardExecutionStart);
 
     /// <summary>本回合全部卡牌结算结束（普攻之前）：触发所有角色的 onCardExecutionEnd。</summary>
     public void FireCardExecutionEnd(CombatSimulation simulation)
@@ -271,11 +361,22 @@ public sealed class BuffRuntime
             var holder = new CombatTargetRef(ECombatSide.Player, index);
             foreach (var instance in character.Buffs.All.ToArray())
             {
-                if (instance.IsDormant)
+                if (instance.IsDormant || !character.Buffs.All.Contains(instance))
                     continue;
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnOrbTriggered);
             }
         }
+    }
+
+    public void FireOrbAutoTriggered(CombatSimulation simulation) =>
+        FireForAllPlayerCharacters(simulation, instance => instance.Def.Hooks.OnOrbAutoTriggered);
+
+    internal void FireShieldDepleted(CombatSimulation simulation, int index)
+    {
+        var character = simulation.PlayerTeam.Characters[index];
+        foreach (var instance in character.Buffs.All.ToArray())
+            if (!instance.IsDormant && character.Buffs.All.Contains(instance))
+                FireHook(simulation, new(ECombatSide.Player, index), instance, instance.Def.Hooks.OnShieldDepleted);
     }
 
     private void FireForAllPlayerCharacters(
@@ -290,7 +391,7 @@ public sealed class BuffRuntime
             var holder = new CombatTargetRef(ECombatSide.Player, index);
             foreach (var instance in character.Buffs.All.ToArray())
             {
-                if (instance.IsDormant)
+                if (instance.IsDormant || !character.Buffs.All.Contains(instance))
                     continue;
                 FireHook(simulation, holder, instance, selectHooks(instance));
             }
@@ -300,21 +401,23 @@ public sealed class BuffRuntime
     /// <summary>回合结束：先触发 onTurnEnd，再递减时长，到期者触发 onRemove 并移除。</summary>
     public void FireTurnEnd(CombatSimulation simulation)
     {
-        foreach (var (holder, container, slotIndex) in EnumerateContainers(simulation))
+        var expiredTimers = new List<(CombatTargetRef Holder, int Slot, BuffInstance Timer)>();
+        foreach (var (holder, container, slotIndex, instances) in SnapshotContainers(simulation))
         {
             var holderRef = new BuffHolderRef(holder, slotIndex);
             // 以触发前的快照为本回合基准：钩子期间新增的 buff 本回合不 tick（刚挂上不应立刻扣时长）。
-            var instances = container.All.ToArray();
 
             foreach (var instance in instances)
             {
-                if (instance.IsDormant)
+                if (instance.IsDormant || !container.All.Contains(instance))
                     continue;
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnTurnEnd);
             }
 
             foreach (var instance in instances)
             {
+                if (!container.All.Contains(instance))
+                    continue;
                 // 独立计时的层会随时间逐层脱落（2026-09-24）：层数变了必须重算属性修正，
                 // 否则聚合器里还留着旧层数的幅度（例：两层 +6 掉成一层后仍按 +12 结算）。
                 var stacksBefore = instance.Stacks;
@@ -334,21 +437,29 @@ public sealed class BuffRuntime
                 if (!container.All.Contains(instance))
                     continue;
 
+                if (!container.Remove(instance))
+                    continue;
+                if (slotIndex is { } slot && instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer))
+                    expiredTimers.Add((holder, slot, instance));
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
-                container.Remove(instance);
                 simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, instance.Def.Id));
             }
         }
+        RefreshEnemyPresenceConditions(simulation);
+        SlotTimerRuntime.ResolveExpired(simulation, expiredTimers);
+        RefreshEnemyPresenceConditions(simulation);
     }
 
     /// <summary>波次（阶层）开始：触发 onWaveStart。第一波在 RunBattleStart 由状态机补发。</summary>
     public void FireWaveStart(CombatSimulation simulation)
     {
-        foreach (var (holder, container, _) in EnumerateContainers(simulation))
+        ExpireDuration(simulation, EBuffDurationType.Wave);
+        RefreshEnemyPresenceConditions(simulation);
+        foreach (var (holder, container, _, instances) in SnapshotContainers(simulation))
         {
-            foreach (var instance in container.All.ToArray())
+            foreach (var instance in instances)
             {
-                if (instance.IsDormant)
+                if (instance.IsDormant || !container.All.Contains(instance))
                     continue;
                 // 阶层记账在触发前清空：本阶层的"仅 1 次"从这一刻重新计数。
                 instance.ResetWaveFlags();
@@ -356,6 +467,10 @@ public sealed class BuffRuntime
             }
         }
     }
+
+    private (CombatTargetRef Holder, BuffContainer Container, int? SlotIndex, BuffInstance[] Instances)[]
+        SnapshotContainers(CombatSimulation simulation) => EnumerateContainers(simulation)
+            .Select(pair => (pair.Holder, pair.Container, pair.SlotIndex, pair.Container.All.ToArray())).ToArray();
 
     /// <summary>持有者释放主动技后：触发其 onActiveSkillCast。</summary>
     public void FireActiveSkillCast(CombatSimulation simulation, int characterIndex)
@@ -366,7 +481,7 @@ public sealed class BuffRuntime
         var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
         foreach (var instance in character.Buffs.All.ToArray())
         {
-            if (instance.IsDormant)
+            if (instance.IsDormant || !character.Buffs.All.Contains(instance))
                 continue;
             FireHook(simulation, holder, instance, instance.Def.Hooks.OnActiveSkillCast);
         }
@@ -387,7 +502,7 @@ public sealed class BuffRuntime
         var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
         foreach (var instance in character.Buffs.All.ToArray())
         {
-            if (instance.IsDormant)
+            if (instance.IsDormant || !character.Buffs.All.Contains(instance))
                 continue;
 
             FireHook(simulation, holder, instance, instance.Def.Hooks.OnCardSettled);
@@ -399,7 +514,7 @@ public sealed class BuffRuntime
     /// （2026-09-25 新增；批次与记账见 <see cref="CombatSimulation.FlushOnDamagedHits"/>）。
     /// 每次触发独立走 <c>oncePerTurn</c> 门闩——"每次受击回复"应保持默认（不设门闩）。
     /// </summary>
-    public void FireOnDamagedHits(CombatSimulation simulation, int characterIndex, int hits)
+    public void FireOnDamagedHits(CombatSimulation simulation, int characterIndex, int hits, CombatTargetRef? attacker = null)
     {
         ArgumentNullException.ThrowIfNull(simulation);
         if (hits <= 0 || !TryGetCharacter(simulation, characterIndex, out var character, out _))
@@ -408,12 +523,42 @@ public sealed class BuffRuntime
         var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
         foreach (var instance in character.Buffs.All.ToArray())
         {
-            if (instance.IsDormant || instance.Def.Hooks.OnDamaged.Count == 0)
+            if (instance.IsDormant || !character.Buffs.All.Contains(instance) || instance.Def.Hooks.OnDamaged.Count == 0)
                 continue;
 
             // 逐次触发：`oncePerTurn` 之类的门闩由 FireHook 按实例自行处理。
-            for (var hit = 0; hit < hits; hit++)
-                FireHook(simulation, holder, instance, instance.Def.Hooks.OnDamaged);
+            for (var hit = 0; hit < hits && character.Buffs.All.Contains(instance); hit++)
+                FireHook(simulation, holder, instance, instance.Def.Hooks.OnDamaged, attacker: attacker);
+        }
+    }
+
+    /// <summary>致命伤害可由钩子授予免疫抵消；次数门闩按战斗实例保存。</summary>
+    internal void FireBeforeFatalDamage(CombatSimulation simulation, CombatTargetRef holder)
+    {
+        var container = TryResolveContainer(simulation, holder);
+        if (container is null)
+            return;
+        foreach (var instance in container.All.ToArray())
+        {
+            if (!instance.IsDormant && container.All.Contains(instance))
+                FireHook(simulation, holder, instance, instance.Def.Hooks.OnBeforeFatalDamage);
+        }
+    }
+
+    internal void ExpireTurnStartBuffs(CombatSimulation simulation) =>
+        ExpireDuration(simulation, EBuffDurationType.UntilNextTurnStart);
+
+    private void ExpireDuration(CombatSimulation simulation, EBuffDurationType durationType)
+    {
+        foreach (var (holder, container, slotIndex, instances) in SnapshotContainers(simulation))
+        {
+            foreach (var instance in instances)
+            {
+                if (instance.Def.DurationType != durationType || !container.Remove(instance))
+                    continue;
+                simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder, slotIndex), instance.Def.Id));
+                FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
+            }
         }
     }
 
@@ -430,7 +575,7 @@ public sealed class BuffRuntime
         var source = new CombatTargetRef(ECombatSide.Player, characterIndex);
         foreach (var instance in slot.Buffs.All.ToArray())
         {
-            if (instance.IsDormant)
+            if (instance.IsDormant || !slot.Buffs.All.Contains(instance))
                 continue;
 
             var hooks = instance.Def.Hooks.OnSlotCardPlayed;
@@ -455,6 +600,7 @@ public sealed class BuffRuntime
                 // 充能载荷按效果自带的目标参数解析（如 hookTargets: randomEnemy）。
                 FireHook(simulation, source, instance, hooks);
                 instance.ResetCharge();
+                FireSlotChargeTriggered(simulation, characterIndex);
                 continue;
             }
 
@@ -469,6 +615,22 @@ public sealed class BuffRuntime
             }
 
             FireHookList(simulation, source, instance, hooks, [source]);
+        }
+    }
+
+    /// <summary>
+    /// 仅充能持有者的角色 Buff 收到通知，载荷已结算，新的属性加成从下次治疗生效。
+    /// </summary>
+    private void FireSlotChargeTriggered(CombatSimulation simulation, int characterIndex)
+    {
+        if (!TryGetCharacter(simulation, characterIndex, out var character, out _))
+            return;
+
+        var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
+        foreach (var instance in character.Buffs.All.ToArray())
+        {
+            if (!instance.IsDormant && character.Buffs.All.Contains(instance))
+                FireHook(simulation, holder, instance, instance.Def.Hooks.OnSlotChargeTriggered);
         }
     }
 
@@ -570,12 +732,13 @@ public sealed class BuffRuntime
     private static CombatCondContext BuildConditionContext(CombatSimulation simulation, CombatTargetRef holder)
     {
         var (elementFlags, raceFlags) = CombatIdentity.Resolve(simulation, holder);
-        return new CombatCondContext(simulation, holder.Index, elementFlags, raceFlags);
+        return new CombatCondContext(simulation, holder, elementFlags, raceFlags);
     }
 
     /// <summary>全部 buff 容器：角色 / 该角色各手牌槽（带槽位索引，供表现事件定位）/ 敌人。</summary>
     private IEnumerable<(CombatTargetRef Holder, BuffContainer Container, int? SlotIndex)> EnumerateContainers(
-        CombatSimulation simulation)    {
+        CombatSimulation simulation)
+    {
         for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
         {
             var character = simulation.PlayerTeam.Characters[i];
@@ -625,7 +788,9 @@ public sealed class BuffRuntime
         CombatTargetRef holder,
         BuffInstance instance,
         IReadOnlyList<EffectRefDto> hooks,
-        bool gateTurnInterval = false)
+        bool gateTurnInterval = false,
+        CombatTargetRef? attacker = null,
+        IReadOnlyList<CombatTargetRef>? defaultTargets = null)
     {
         if (hooks.Count == 0)
             return;
@@ -636,15 +801,24 @@ public sealed class BuffRuntime
             if (gateTurnInterval && !PassesTurnInterval(simulation, merged))
                 continue;
 
-            // oncePerTurn：同一 buff 实例的同一效果每回合只触发一次（"每回合仅 1 次"类被动）。
-            if (IsOncePerTurn(merged.Params) && !instance.TryMarkHookFiredThisTurn(effectRef.EffectId))
+            var oncePerTurn = IsOncePerTurn(merged.Params);
+            var oncePerWave = IsOncePerWave(merged.Params);
+            var oncePerCombat = IsTrueFlag(merged.Params, "oncePerCombat");
+            if (!instance.CanFireHook(effectRef.EffectId, oncePerTurn, oncePerWave, oncePerCombat))
                 continue;
-
-            // oncePerWave：记账周期为整个阶层（"每个阶层仅 1 次"，冯·诺依曼被动6）。
-            if (IsOncePerWave(merged.Params) && !instance.TryMarkHookFiredThisWave(effectRef.EffectId))
-                continue;
-
-            _executor.ExecuteEffectRef(merged, simulation, holder, ResolveHookTargets(simulation, holder, merged.Params));
+            var targets = merged.Params?.GetValueOrDefault("hookTargets")?.ToString() == "attacker"
+                ? attacker is { Side: ECombatSide.Enemy } target && target.Index >= 0 &&
+                    target.Index < simulation.EnemyTeam.Enemies.Count && simulation.EnemyTeam.Enemies[target.Index].IsAlive
+                    ? new[] { target } : []
+                : defaultTargets is not null && (merged.Params is null || !BuffActionParams.HasTargetSelector(merged.Params))
+                    ? defaultTargets : ResolveHookTargets(simulation, holder, merged.Params);
+            if (oncePerTurn || oncePerWave || oncePerCombat)
+            {
+                _executor.ExecuteEffectRefWhen(merged, simulation, holder, targets,
+                    () => instance.TryMarkHookFired(effectRef.EffectId, oncePerTurn, oncePerWave, oncePerCombat));
+            }
+            else
+                _executor.ExecuteEffectRef(merged, simulation, holder, targets);
         }
     }
 
@@ -727,7 +901,7 @@ public sealed class BuffRuntime
             return null;
 
         var filtered = parameters
-            .Where(pair => pair.Key is not ("hookTargets" or "targetFilter" or "turnInterval" or "oncePerTurn" or "oncePerWave"))
+            .Where(pair => pair.Key is not ("hookTargets" or "targetFilter" or "turnInterval" or "oncePerTurn" or "oncePerWave" or "oncePerCombat"))
             .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
         return filtered.Count > 0 ? filtered : null;
     }

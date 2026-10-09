@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.weilong_dragon_armor.name",
+  "descId": "skill.weilong_dragon_armor.desc",
+  "actionRefs": [
+    {
+      "actionId": "weilong_armor_shield"
+    },
+    {
+      "actionId": "weilong_armor_buff"
+    }
+  ]
+}

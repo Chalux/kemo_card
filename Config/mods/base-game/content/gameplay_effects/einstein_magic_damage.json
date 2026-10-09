@@ -1,0 +1,7 @@
+{
+  "displayNameId": "ge.einstein_magic_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    { "kind": "Damage", "damageType": "Magical", "element": "Yellow" }
+  ]
+}

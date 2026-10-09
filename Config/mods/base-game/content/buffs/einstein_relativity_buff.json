@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.einstein_relativity.name",
+  "descId": "buff.einstein_relativity.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } }
+  ]
+}

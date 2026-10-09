@@ -1,0 +1,8 @@
+{
+  "params": {
+    "gameplayEffectId": "anubis_magic_damage",
+    "Amount": 12,
+    "AttackScale": 0.75
+  },
+  "kind": "ApplyGameplayEffect"
+}

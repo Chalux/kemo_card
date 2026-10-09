@@ -7,25 +7,28 @@ namespace KemoCard.Mod.Combat;
 public sealed class CharacterInstance
 {
     private readonly List<DeckPreset> _decks = [];
+    private readonly IReadOnlyList<DeckPreset> _deckView;
 
     public string InstanceId { get; }
     public string DefinitionId { get; private set; } = "";
     public CharacterDto? Definition { get; private set; }
-    public IReadOnlyList<DeckPreset> Decks => _decks;
+    public IReadOnlyList<DeckPreset> Decks => _deckView;
     public int CurrentDeckIndex { get; private set; }
     public bool IsDeckLocked { get; private set; }
 
     public CharacterInstance(CharacterDto definition, string? instanceId = null)
     {
         ArgumentNullException.ThrowIfNull(definition);
+        _deckView = _decks.AsReadOnly();
         InstanceId = instanceId ?? Guid.NewGuid().ToString("N");
         BindDefinition(definition);
-        _decks.Add(DeckPreset.CreateWithExclusiveCards(definition));
+        AddDeck(DeckPreset.CreateWithExclusiveCards(definition));
         CurrentDeckIndex = 0;
     }
 
     public CharacterInstance()
     {
+        _deckView = _decks.AsReadOnly();
         InstanceId = Guid.NewGuid().ToString("N");
         DefinitionId = "";
     }
@@ -46,7 +49,7 @@ public sealed class CharacterInstance
         if (_decks.Count >= CombatConstants.MaxDecksPerCharacter)
             return false;
 
-        _decks.Add(DeckPreset.CreateWithExclusiveCards(Definition));
+        AddDeck(DeckPreset.CreateWithExclusiveCards(Definition));
         return true;
     }
 
@@ -75,12 +78,14 @@ public sealed class CharacterInstance
     public void ApplyDeckSnapshots(IReadOnlyList<IReadOnlyList<string>> deckSnapshots, int currentDeckIndex)
     {
         ArgumentNullException.ThrowIfNull(deckSnapshots);
+        if (IsDeckLocked)
+            throw new InvalidOperationException("战斗期间不能替换卡组快照。");
         if (deckSnapshots.Count == 0)
             return;
 
         _decks.Clear();
         foreach (var cardIds in deckSnapshots)
-            _decks.Add(new DeckPreset(Guid.NewGuid().ToString("N"), null, cardIds));
+            AddDeck(new DeckPreset(Guid.NewGuid().ToString("N"), null, cardIds));
 
         CurrentDeckIndex = currentDeckIndex >= 0 && currentDeckIndex < _decks.Count
             ? currentDeckIndex
@@ -92,6 +97,12 @@ public sealed class CharacterInstance
         if (_decks.Count == 0 || CurrentDeckIndex < 0 || CurrentDeckIndex >= _decks.Count)
             return null;
         return _decks[CurrentDeckIndex];
+    }
+
+    private void AddDeck(DeckPreset deck)
+    {
+        deck.BindLock(() => IsDeckLocked);
+        _decks.Add(deck);
     }
 
     public HashSet<string> GetBuildableCardIds(IReadOnlySet<string> obtainedCardIds)

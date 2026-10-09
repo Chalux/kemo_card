@@ -77,14 +77,21 @@ public sealed class OrbRuntime
     }
 
     /// <summary>
-    /// 回合结束产出：1 个四属性球 + 1 个物理/魔法球（统计口径见类型注释）。
-    /// 每次产出后按满员规则即时触发；产出顺序固定（先属性球后物理/魔法球）。
+    /// 在回合末 Buff 递减前快照额外副本数量，确保到期回合仍能享受效果。
     /// </summary>
-    public void GrantTurnEndOrbs(CombatSimulation simulation, IReadOnlyList<PlayedCardRecord> playedCards)
+    public IReadOnlyList<(int Producer, int Count)> CaptureTurnEndBonuses(CombatSimulation simulation) =>
+        simulation.PlayerTeam.Characters.Select((character, index) => (Producer: index,
+            Count: (int)Math.Clamp(character.Asc.GetCurrentValue(AttributeIds.TurnEndOrbBonusCount), 0, OrbQueue.Capacity)))
+            .Where(entry => entry.Count > 0).ToArray();
+
+    /// <summary>回合末原属性球 / 副本、原攻击球 / 副本依次授予，满员即时触发。</summary>
+    public void GrantTurnEndOrbs(CombatSimulation simulation, IReadOnlyList<PlayedCardRecord> playedCards,
+        IReadOnlyList<(int Producer, int Count)>? bonusSnapshot = null)
     {
         ArgumentNullException.ThrowIfNull(simulation);
         ArgumentNullException.ThrowIfNull(playedCards);
 
+        var bonuses = bonusSnapshot ?? CaptureTurnEndBonuses(simulation);
         var elementCounts = new Dictionary<EElement, int>(BuiltinOrbTypes.ElementOrbs.Count);
         foreach (var (element, _) in BuiltinOrbTypes.ElementOrbs)
             elementCounts[element] = 0;
@@ -120,6 +127,8 @@ public sealed class OrbRuntime
         {
             var producer = ResolveHighestAttackCharacter(simulation, EOrbAttackSource.Higher);
             Grant(simulation, elementOrb, producer);
+            foreach (var bonus in bonuses)
+                Grant(simulation, elementOrb, bonus.Producer, bonus.Count);
         }
 
         if (attackOrb is not null)
@@ -129,6 +138,8 @@ public sealed class OrbRuntime
                 : EOrbAttackSource.Magic;
             var producer = ResolveHighestAttackCharacter(simulation, attackSource);
             Grant(simulation, attackOrb, producer);
+            foreach (var bonus in bonuses)
+                Grant(simulation, attackOrb, bonus.Producer, bonus.Count);
         }
     }
 
@@ -185,11 +196,16 @@ public sealed class OrbRuntime
 
     /// <summary>
     /// 清空队列并逐球结算（FIFO）。敌方无存活目标时照常清空、不产生伤害
-    /// （避免满员后卡死队列）。自动触发与主动触发行为完全一致。
+    /// （避免满员后卡死队列）。自动触发允许整批加成与全员自动批次钩子，手动触发仅走普通球效果。
     /// </summary>
     public OrbTriggerResult Trigger(CombatSimulation simulation, bool automatic)
     {
         ArgumentNullException.ThrowIfNull(simulation);
+
+        using var budgetScope = simulation.EffectBudget.TryEnter();
+        if (budgetScope is null)
+            return OrbTriggerResult.NotTriggered("Synchronous effect budget exceeded.");
+        using var batchScope = simulation.EnterOrbTriggerScope();
 
         var drained = Queue.DrainAll();
         if (drained.Count == 0)
@@ -200,6 +216,7 @@ public sealed class OrbRuntime
             [.. drained.Select(orb => orb.OrbTypeId)],
             automatic));
 
+        var automaticBonus = automatic ? simulation.PlayerTeam.Characters.Sum(character => character.Asc.GetCurrentValue(AttributeIds.AutoOrbPowerScale)) : 0f;
         var cleared = new Dictionary<string, int>(StringComparer.Ordinal);
         var producers = new List<int>();
         var enemies = AliveEnemies(simulation);
@@ -217,18 +234,43 @@ public sealed class OrbRuntime
             producers.Add(producerIndex);
 
             if (orbType.DealsDamage && enemies.Count > 0)
-                ApplyOrbDamage(simulation, orbType, producerIndex, source, enemies);
+                ApplyOrbDamage(simulation, orbType, producerIndex, source, enemies, automaticBonus);
 
-            foreach (var effectRef in orbType.TriggerEffects)
+            var previousChainBonus = simulation.CurrentChainBonus;
+            simulation.SetChainBonus(0);
+            var previousHealingBonus = simulation.CurrentOrbHealingBonus;
+            simulation.CurrentOrbHealingBonus = automaticBonus + (ResolvePlayerAsc(simulation, producerIndex)?.GetCurrentValue(AttributeIds.OrbHealingScale) ?? 0f);
+            try
             {
-                // 触发效果的目标按效果参数解析（hookTargets / targetFilter），缺省为产球者自身。
-                var targets = CombatTargetSelector.Resolve(simulation, source, effectRef.Params);
-                simulation.EffectExecutor.ExecuteEffectRef(effectRef, simulation, source, targets);
+                foreach (var effectRef in orbType.TriggerEffects)
+                {
+                    // 目标选择与执行载荷共用默认参数 / 引用覆盖，缺省为产球者。
+                    var defaults = _registry.Store.TryGetEffect(effectRef.EffectId, out var effect) ? effect.Params : null;
+                    var targets = CombatTargetSelector.Resolve(simulation, source, ContentParameters.Merge(defaults, effectRef.Params));
+                    simulation.EffectExecutor.ExecuteEffectRef(effectRef, simulation, source, targets);
+                }
+            }
+            finally
+            {
+                simulation.CurrentOrbHealingBonus = previousHealingBonus;
+                simulation.SetChainBonus(previousChainBonus);
             }
         }
 
-        // 触发后钩子（onOrbTriggered）：按产球者去重，配合 oncePerTurn 实现"每回合仅 1 次"。
-        simulation.Buffs.FireOrbTriggered(simulation, producers);
+        // 批次上下文（OrbTriggered 条件，2026-09-26）：钩子求值期间可读到"这次触发里有哪些球/哪些元素"。
+        // 区间只覆盖钩子——逐球触发效果先于本区间执行，读不到批次（见 CombatSimulation.BeginOrbTriggeredBatch）。
+        simulation.BeginOrbTriggeredBatch([.. drained.Select(orb => orb.OrbTypeId)]);
+        try
+        {
+            // 触发后钩子（onOrbTriggered）：按产球者去重，配合 oncePerTurn 实现"每回合仅 1 次"。
+            simulation.Buffs.FireOrbTriggered(simulation, producers);
+            if (automatic)
+                simulation.Buffs.FireOrbAutoTriggered(simulation);
+        }
+        finally
+        {
+            simulation.EndOrbTriggeredBatch();
+        }
         // 回合内统计：供"本回合每触发 N 个 X 球 → 增伤"这类效果读取。
         simulation.RecordOrbsTriggered(cleared);
 
@@ -240,7 +282,7 @@ public sealed class OrbRuntime
         OrbTypeDto orbType,
         int producerIndex,
         CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> enemies)
+        IReadOnlyList<CombatTargetRef> enemies, float automaticBonus)
     {
         var attack = ResolveAttack(simulation, producerIndex, orbType.AttackSource);
         var baseAmount = orbType.PerOrbAmount + (orbType.AttackBonusScale * attack);
@@ -255,7 +297,7 @@ public sealed class OrbRuntime
         }
 
         // 球侧增伤（全伤害增加 + 球伤害增加）与目标受伤增加同桶加算（规格：一律加算），逐目标算。
-        var dealtBonus = dealtScale + orbScale;
+        var dealtBonus = dealtScale + orbScale + automaticBonus;
         if (baseAmount <= 0f)
             return;
 

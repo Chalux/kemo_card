@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.weilong_charged_shield.name",
+  "descId": "skill.weilong_charged_shield.desc",
+  "actionRefs": [
+    {
+      "actionId": "weilong_charged_shield_stance"
+    },
+    {
+      "actionId": "weilong_charged_shield_gain"
+    }
+  ],
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  }
+}

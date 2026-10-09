@@ -52,18 +52,19 @@ public sealed class BindingScope
     /// </remarks>
     public void UnbindAll()
     {
-        for (var i = _unbinders.Count - 1; i >= 0; i--)
+        // 先移交当前账本；递归解绑不会重复执行，清理中新增的绑定留给下一轮。
+        Action[] unbinders = [.. _unbinders];
+        _unbinders.Clear();
+        for (var i = unbinders.Length - 1; i >= 0; i--)
         {
             try
             {
-                _unbinders[i]();
+                unbinders[i]();
             }
             catch (Exception ex)
             {
                 AppLog.Error($"UI 订阅解绑失败（已继续清理其余订阅）：{ex.Message}", "UI");
             }
         }
-
-        _unbinders.Clear();
     }
 }

@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "reno_p4_heal_amp",
+    "hookTargets": "allies"
+  }
+}

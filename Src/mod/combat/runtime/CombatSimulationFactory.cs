@@ -22,7 +22,8 @@ public static class CombatSimulationFactory
         CombatRuleCatalog catalog,
         out string? error,
         IReadOnlyList<BattleStartSkillEntry>? battleStartSkills = null,
-        IReadOnlyList<BattleStartBuffEntry>? initialBuffs = null)
+        IReadOnlyList<BattleStartBuffEntry>? initialBuffs = null,
+        IReadOnlySet<string>? obtainedCardIds = null)
     {
         ArgumentNullException.ThrowIfNull(battle);
         ArgumentNullException.ThrowIfNull(party);
@@ -72,7 +73,7 @@ public static class CombatSimulationFactory
         var battleCharacters = new CharacterBattleInstance[party.Count];
         for (var i = 0; i < party.Count; i++)
         {
-            var battleInstance = CharacterBattleInstance.TryCreate(party[i], definitions, rng, out var memberError);
+            var battleInstance = CharacterBattleInstance.TryCreate(party[i], definitions, rng, out var memberError, obtainedCardIds);
             if (battleInstance is null)
             {
                 error = memberError ?? "角色战斗实例创建失败。";

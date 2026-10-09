@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.perseus_hero_blade.name",
+  "descId": "skill.perseus_hero_blade.desc",
+  "actionRefs": [
+    {
+      "actionId": "perseus_hero_blade_hit"
+    }
+  ]
+}

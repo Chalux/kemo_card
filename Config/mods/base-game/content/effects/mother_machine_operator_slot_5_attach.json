@@ -1,0 +1,8 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "mother_machine_operator_slot_5",
+    "slotIndex": 4,
+    "charge": 1
+  }
+}

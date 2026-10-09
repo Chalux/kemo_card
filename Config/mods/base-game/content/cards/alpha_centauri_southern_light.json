@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.alpha_centauri_southern_light.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "alpha_centauri_southern_light"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 2
+    }
+  },
+  "role": "Support",
+  "priority": 9,
+  "cardType": "Healing",
+  "targetSide": "Ally",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -1,0 +1,45 @@
+{
+  "displayNameId": "char.anubis.name",
+  "element": "Red",
+  "role": "CardPlayer",
+  "race": [
+    "God",
+    "Animal"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "anubis_tomb_officiant",
+      "cooldown": 8
+    }
+  ],
+  "cards": [
+    "anubis_underworld_fang",
+    "anubis_tomb_rite",
+    "anubis_scale_judgment",
+    "anubis_soul_guidance"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "requiredPotential": 0,
+      "buffId": "anubis_passive_p1"
+    },
+    {
+      "requiredPotential": 10,
+      "buffId": "anubis_passive_p2"
+    },
+    {
+      "requiredPotential": 30,
+      "buffId": "anubis_passive_p3"
+    },
+    {
+      "requiredPotential": 50,
+      "buffId": "anubis_passive_p4"
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

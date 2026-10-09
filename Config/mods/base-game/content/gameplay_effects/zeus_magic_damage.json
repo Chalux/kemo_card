@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.zeus_magic_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "element": "Yellow",
+      "damageType": "Magical",
+      "kind": "Damage"
+    }
+  ]
+}

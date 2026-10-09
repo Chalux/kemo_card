@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.xuanyu_feather_shed.name",
+  "element": 1,
+  "role": "Wizard",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "xuanyu_feather_shed"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 1,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 11,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

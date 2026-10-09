@@ -1,0 +1,13 @@
+{
+  "displayNameId": "skill.hualing_silent_prelude.name",
+  "descId": "skill.hualing_silent_prelude.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "effectRefs": [
+    {
+      "effectId": "hualing_apply_prelude"
+    }
+  ]
+}

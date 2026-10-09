@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "hualing_prelude_weakness"
+  }
+}

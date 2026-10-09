@@ -1,0 +1,29 @@
+{
+  "displayNameId": "buff.perseus_valor_empowered.name",
+  "descId": "buff.perseus_valor_empowered.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Refresh",
+  "exclusiveGroup": "perseus_valor",
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -30
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -30
+      }
+    }
+  ],
+  "tags": [
+    "buff.debuff"
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "displayNameId": "buff.weilong_passive_p3.name",
+  "descId": "buff.weilong_passive_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Green"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Machine"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Dragon"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "self": true
+          },
+          "turnInterval": 6
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Green"
+                ]
+              }
+            }
+          },
+          "turnInterval": 6
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Machine"
+                ]
+              }
+            }
+          },
+          "turnInterval": 6
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Dragon"
+                ]
+              }
+            }
+          },
+          "turnInterval": 6
+        }
+      }
+    ]
+  }
+}

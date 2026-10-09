@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "weilong_reactive_armor"
+  }
+}

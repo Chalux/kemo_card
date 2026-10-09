@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.reno_dragon_breath.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 12,
+  "skillRefs": [{ "skillId": "reno_dragon_breath" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 2
+    }
+  },
+  "role": "Support",
+  "priority": 7,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "GainResource",
+  "params": {
+    "resource": "skillcounter",
+    "amount": 1,
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

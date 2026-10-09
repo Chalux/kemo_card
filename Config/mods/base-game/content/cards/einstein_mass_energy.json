@@ -1,0 +1,24 @@
+{
+  "displayNameId": "card.einstein_mass_energy.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 6,
+  "skillRefs": [{ "skillId": "einstein_mass_energy" }],
+  "stats": {
+    "attributes": {
+      "MagicAttack": 2,
+      "MaxHealth": 20
+    }
+  },
+  "role": "Wizard",
+  "priority": 4,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "RandomLegal",
+  "tags": ["attack", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

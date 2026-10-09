@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.cupid_leaden_peace.name",
+  "descId": "skill.cupid_leaden_peace.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "effectRefs": [
+    {
+      "effectId": "cupid_apply_peace"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

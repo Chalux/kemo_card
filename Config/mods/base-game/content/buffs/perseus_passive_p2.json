@@ -1,0 +1,16 @@
+{
+  "descId": "buff.perseus_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onCardExecutionEnd": [
+      {
+        "effectId": "perseus_apply_pressure"
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "Damage",
+  "params": {
+    "amount": 12,
+    "AttackScale": 0.5,
+    "damageGameplayEffectId": "hualing_magic_damage"
+  }
+}

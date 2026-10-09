@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "einstein_relativity_buff",
+    "targetFilter": { "self": true }
+  }
+}

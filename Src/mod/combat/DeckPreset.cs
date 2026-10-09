@@ -5,10 +5,13 @@ namespace KemoCard.Mod.Combat;
 public sealed class DeckPreset
 {
     private readonly List<string> _cardIds;
+    private readonly IReadOnlyList<string> _cardView;
+    private Func<bool>? _isLocked;
 
     public string DeckId { get; }
     public string? DisplayName { get; private set; }
-    public IReadOnlyList<string> CardIds => _cardIds;
+    public IReadOnlyList<string> CardIds => _cardView;
+    internal void BindLock(Func<bool> isLocked) => _isLocked = isLocked;
 
     public DeckPreset(string deckId, string? displayName, IEnumerable<string>? cardIds = null)
     {
@@ -16,6 +19,7 @@ public sealed class DeckPreset
         DeckId = deckId;
         DisplayName = displayName;
         _cardIds = cardIds?.ToList() ?? [];
+        _cardView = _cardIds.AsReadOnly();
     }
 
     public static DeckPreset CreateWithExclusiveCards(CharacterDto definition, string? deckId = null)
@@ -27,6 +31,8 @@ public sealed class DeckPreset
 
     public bool TryAddCard(string cardId, IReadOnlySet<string> buildableCardIds)
     {
+        if (_isLocked?.Invoke() == true)
+            return false;
         if (_cardIds.Count >= CombatConstants.MaxCardsPerDeck)
             return false;
         if (_cardIds.Contains(cardId, StringComparer.Ordinal))
@@ -38,7 +44,7 @@ public sealed class DeckPreset
         return true;
     }
 
-    public bool TryRemoveCard(string cardId) => _cardIds.Remove(cardId);
+    public bool TryRemoveCard(string cardId) => _isLocked?.Invoke() != true && _cardIds.Remove(cardId);
 
     public DeckValidationResult Validate(IReadOnlySet<string> buildableCardIds)
     {

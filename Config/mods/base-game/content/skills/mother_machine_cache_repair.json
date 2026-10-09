@@ -1,0 +1,13 @@
+{
+  "displayNameId": "skill.mother_machine_cache_repair.name",
+  "descId": "skill.mother_machine_cache_repair.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "effectRefs": [
+    {
+      "effectId": "mother_machine_cache_heal"
+    }
+  ]
+}

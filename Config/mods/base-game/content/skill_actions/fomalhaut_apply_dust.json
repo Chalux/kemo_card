@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "fomalhaut_dust_power",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

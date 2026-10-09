@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.kagi_hunters_mark_buff.name",
+  "descId": "buff.kagi_hunters_mark_buff.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active",
+    "debuff.marked"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "DamageTakenScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0.25
+      }
+    }
+  ]
+}

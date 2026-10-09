@@ -16,11 +16,18 @@ public sealed class BuffInstance
 
     public int Stacks { get; private set; } = 1;
 
+    /// <summary>领域生命周期持有的独立实例，普通同名投放和驱散不得覆盖它。</summary>
+    internal bool IsDomainOwned { get; set; }
+
     /// <summary>
     /// 充能（<see cref="BuiltinBuffTags.SlotCharge"/>）触发所需牌数：参数 <c>charge</c>，缺省 1
     /// （即「充能 I / II」的罗马数字）。非充能 buff 无意义。
     /// </summary>
     public int ChargeRequired => Math.Max(1, ReadIntParam("charge") ?? 1);
+
+    /// <summary>定时扩散重用初始时长，不能重用归零后的剩余时长。</summary>
+    public int FullDuration => Math.Max(1, Def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer)
+        ? ReadIntParam("timerTurns") ?? Def.Duration : Def.Duration);
 
     /// <summary>充能进度：已打出的牌数（触发所需 − 剩余计数）；触发并重置后回到 0。</summary>
     public int ChargePlayed => Math.Max(0, ChargeRequired - ChargeCounter);
@@ -42,6 +49,7 @@ public sealed class BuffInstance
     private readonly Func<MagnitudeDefDto, float>? _magnitudeResolver;
     private readonly HashSet<string> _firedThisTurn = new(StringComparer.Ordinal);
     private readonly HashSet<string> _firedThisWave = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _firedThisCombat = new(StringComparer.Ordinal);
 
     /// <summary>
     /// <see cref="EMagnitudeKind.TeamMaxHealthScaled"/> 的快照值（按 MagnitudeDefDto 实例缓存）：
@@ -68,7 +76,7 @@ public sealed class BuffInstance
             ? new Dictionary<string, object>(parameters, StringComparer.Ordinal)
             : null;
         RemainingTurns = def.DurationType == EBuffDurationType.Turns
-            ? Math.Max(1, def.Duration)
+            ? FullDuration
             : null;
         if (RemainingTurns is { } initial)
             _stackTurns.Add(initial);
@@ -88,7 +96,7 @@ public sealed class BuffInstance
         if (Def.DurationType != EBuffDurationType.Turns)
             return;
 
-        _stackTurns.Add(Math.Max(1, Def.Duration));
+        _stackTurns.Add(FullDuration);
         RemainingTurns = _stackTurns.Max();
     }
 
@@ -98,7 +106,7 @@ public sealed class BuffInstance
         if (Def.DurationType != EBuffDurationType.Turns)
             return;
 
-        var full = Math.Max(1, Def.Duration);
+        var full = FullDuration;
         if (_stackTurns.Count == 0)
             _stackTurns.Add(full);
         for (var i = 0; i < _stackTurns.Count; i++)
@@ -139,6 +147,28 @@ public sealed class BuffInstance
 
     public void SetDormant(bool dormant) => IsDormant = dormant;
 
+    #region 钩子次数门闩
+
+    /// <summary>只读检查，重复触发在解析随机目标之前退出。</summary>
+    internal bool CanFireHook(string hookKey, bool oncePerTurn, bool oncePerWave, bool oncePerCombat = false) =>
+        (!oncePerTurn || !_firedThisTurn.Contains(hookKey)) &&
+        (!oncePerWave || !_firedThisWave.Contains(hookKey)) &&
+        (!oncePerCombat || !_firedThisCombat.Contains(hookKey));
+
+    /// <summary>效果条件通过后原子登记各账期；两个门闩同时配置时不能只消耗其中一个。</summary>
+    internal bool TryMarkHookFired(string hookKey, bool oncePerTurn, bool oncePerWave, bool oncePerCombat = false)
+    {
+        if (!CanFireHook(hookKey, oncePerTurn, oncePerWave, oncePerCombat))
+            return false;
+        if (oncePerTurn)
+            _firedThisTurn.Add(hookKey);
+        if (oncePerWave)
+            _firedThisWave.Add(hookKey);
+        if (oncePerCombat)
+            _firedThisCombat.Add(hookKey);
+        return true;
+    }
+
     /// <summary>
     /// "本回合仅 1 次"门闩（钩子参数 <c>oncePerTurn: true</c>）：首次调用返回 true 并记账，
     /// 同回合内再次调用返回 false；<see cref="ResetTurnFlags"/> 在回合开始时清空。
@@ -157,6 +187,8 @@ public sealed class BuffInstance
 
     /// <summary>阶层（波次）开始：清空"本阶层仅 1 次"记账。</summary>
     public void ResetWaveFlags() => _firedThisWave.Clear();
+
+    #endregion
 
     /// <summary>把属性修正（× 层数）注册进持有者 ASC 聚合器；休眠实例或无 ASC 的容器（槽位）为空操作。</summary>
     public void RegisterModifiers(AbilitySystemComponent? asc)
@@ -228,7 +260,7 @@ public sealed class BuffInstance
             case EMagnitudeKind.SetByCaller when Params is not null &&
                 !string.IsNullOrWhiteSpace(magnitudeDef.CallerName) &&
                 Params.TryGetValue(magnitudeDef.CallerName, out var value) &&
-                float.TryParse(value.ToString(), out var parsed):
+                KemoCard.Frame.Content.ContentParameters.TryFloat(value, out var parsed):
                 return parsed;
             case EMagnitudeKind.PartyCountScaled:
                 return _magnitudeResolver?.Invoke(magnitudeDef) ?? 0f;
@@ -251,6 +283,6 @@ public sealed class BuffInstance
         if (Params is null || !Params.TryGetValue(key, out var value) || value is null)
             return null;
 
-        return int.TryParse(value.ToString(), out var parsed) ? parsed : null;
+        return KemoCard.Frame.Content.ContentParameters.TryInt(value, out var parsed) ? parsed : null;
     }
 }

@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.turn_end_orb_bonus_count.name",
+  "defaultBase": 0,
+  "allowNegative": false,
+  "isMeta": false
+}

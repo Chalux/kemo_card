@@ -1,0 +1,31 @@
+{
+  "rarity": "Exclusive",
+  "cardType": "Magical",
+  "element": 8,
+  "role": "Guard",
+  "targetScope": "All",
+  "isExclusive": true,
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 2
+    }
+  },
+  "skillRefs": [
+    {
+      "skillId": "zeus_divine_judgment"
+    }
+  ],
+  "tags": [
+    "damage",
+    "exclusive"
+  ],
+  "baseValue": 12,
+  "targetSide": "Enemy",
+  "cost": 3,
+  "costType": "Energy",
+  "priority": 3,
+  "displayNameId": "card.zeus_divine_judgment.name",
+  "retargetPolicy": "Default",
+  "targetCount": 1
+}

@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.zeus_aegis.name",
+  "actionRefs": [
+    {
+      "actionId": "zeus_aegis_shield"
+    },
+    {
+      "actionId": "zeus_aegis_taunt"
+    }
+  ],
+  "descId": "skill.zeus_aegis.desc"
+}

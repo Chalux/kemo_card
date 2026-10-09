@@ -35,7 +35,8 @@ public sealed class AbilitySystemComponent
     /// </remarks>
     public void SetBaseValue(string attributeId, float baseValue)
     {
-        Attributes.SetBaseValue(attributeId, baseValue);
+        // 只发布最终聚合值，避免观察者把写入基础值的中间状态当成有效属性。
+        Attributes.GetOrCreate(attributeId).SetBase(baseValue);
         Aggregator.Recalculate(attributeId);
     }
 
@@ -45,13 +46,13 @@ public sealed class AbilitySystemComponent
 
     public Action<ActiveGameplayEffect>? OnPeriodicTriggered { get; set; }
 
-    public void OnTurnStart()
+    public void OnTurnStart(IReadOnlyList<ActiveGameplayEffect>? snapshot = null)
     {
         var suspensionChanged = false;
 
-        foreach (var effect in _activeEffects)
+        foreach (var effect in snapshot ?? _activeEffects.ToArray())
         {
-            if (effect.IsExpired)
+            if (effect.IsExpired || !_activeEffects.Contains(effect))
                 continue;
 
             if (UpdateSuspensionState(effect, deferRecalculate: true))
@@ -63,6 +64,8 @@ public sealed class AbilitySystemComponent
             if (effect.OnTurnStart())
                 OnPeriodicTriggered?.Invoke(effect);
 
+            if (!_activeEffects.Contains(effect))
+                continue;
             var hooks = effect.Def.Hooks;
             if (HookDispatcher is not null && hooks.OnTurnStart.Count > 0)
                 HookDispatcher.DispatchTurnStart(effect, hooks.OnTurnStart);
@@ -72,20 +75,20 @@ public sealed class AbilitySystemComponent
             Aggregator.RecalculateAll();
     }
 
-    public void OnTurnEnd()
+    public void OnTurnEnd(IReadOnlyList<ActiveGameplayEffect>? snapshot = null)
     {
         var expired = new List<ActiveGameplayEffect>();
 
-        foreach (var effect in _activeEffects)
+        foreach (var effect in snapshot ?? _activeEffects.ToArray())
         {
-            if (effect.IsExpired)
+            if (effect.IsExpired || !_activeEffects.Contains(effect))
                 continue;
 
             effect.OnTurnEnd();
 
             if (effect.IsExpired)
                 expired.Add(effect);
-            else
+            else if (!effect.IsSuspended)
             {
                 var hooks = effect.Def.Hooks;
                 if (HookDispatcher is not null && hooks.OnTurnEnd.Count > 0)
@@ -95,10 +98,9 @@ public sealed class AbilitySystemComponent
 
         foreach (var effect in expired)
         {
-            var hooks = effect.Def.Hooks;
-            if (HookDispatcher is not null && hooks.OnRemove.Count > 0)
-                HookDispatcher.DispatchRemove(effect, hooks.OnRemove);
-            RemoveActiveEffectInternal(effect.Handle);
+            if (!_activeEffects.Contains(effect))
+                continue;
+            RemoveActiveEffect(effect.Handle);
         }
 
         if (expired.Count > 0)
@@ -130,11 +132,14 @@ public sealed class AbilitySystemComponent
 
     public bool RemoveActiveEffect(Guid handle)
     {
+        var effect = _activeEffects.FirstOrDefault(item => item.Handle == handle);
         if (!RemoveActiveEffectInternal(handle))
             return false;
 
         RefreshGrantedTags();
         Aggregator.RecalculateAll();
+        if (effect is not null && effect.Def.Hooks.OnRemove.Count > 0)
+            HookDispatcher?.DispatchRemove(effect, effect.Def.Hooks.OnRemove);
         return true;
     }
 
@@ -150,6 +155,18 @@ public sealed class AbilitySystemComponent
     }
 
     private ApplyGameplayEffectResult ApplyInstantEffect(GameplayEffectSpec spec)
+    {
+        if (spec.InstantExecutionScope is not null)
+            spec.InstantExecutionScope(() => ExecuteInstantValues(spec));
+        else
+            ExecuteInstantValues(spec);
+
+        if (spec.Def.Hooks.OnApply.Count > 0)
+            HookDispatcher?.DispatchApply(new ActiveGameplayEffect(spec), spec.Def.Hooks.OnApply);
+        return new ApplyGameplayEffectResult(true);
+    }
+
+    private void ExecuteInstantValues(GameplayEffectSpec spec)
     {
         var changedAttributes = new HashSet<string>(StringComparer.Ordinal);
         foreach (var modifierDef in spec.Def.Modifiers)
@@ -168,7 +185,6 @@ public sealed class AbilitySystemComponent
         if (spec.Def.Executions.Count > 0)
             _executionRunner.Run(spec, this);
 
-        return new ApplyGameplayEffectResult(true);
     }
 
     private ApplyGameplayEffectResult ApplyActiveEffect(GameplayEffectSpec spec)
@@ -176,9 +192,12 @@ public sealed class AbilitySystemComponent
         var existing = FindStackTarget(spec);
         if (existing is not null)
         {
-            existing.AddStack();
+            var changed = existing.AddStack();
             RegisterEffectModifiers(existing);
             RefreshGrantedTags();
+            spec.ActiveEffectRegistered?.Invoke(existing);
+            if (changed && !existing.IsSuspended && existing.Def.Hooks.OnStackChanged.Count > 0)
+                HookDispatcher?.DispatchStackChanged(existing, existing.Def.Hooks.OnStackChanged);
             return new ApplyGameplayEffectResult(true, Handle: existing.Handle);
         }
 
@@ -190,6 +209,9 @@ public sealed class AbilitySystemComponent
         _activeEffects.Add(active);
         RegisterEffectModifiers(active);
         RefreshGrantedTags();
+        spec.ActiveEffectRegistered?.Invoke(active);
+        if (_activeEffects.Contains(active) && !active.IsSuspended && active.Def.Hooks.OnApply.Count > 0)
+            HookDispatcher?.DispatchApply(active, active.Def.Hooks.OnApply);
         return new ApplyGameplayEffectResult(true, Handle: active.Handle);
     }
 
@@ -302,7 +324,7 @@ public sealed class AbilitySystemComponent
         }
 
         foreach (var handle in toRemove)
-            RemoveActiveEffectInternal(handle);
+            RemoveActiveEffect(handle);
 
         if (toRemove.Count > 0)
         {

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.hualing_final_freeze.name",
+  "descId": "skill.hualing_final_freeze.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single"
+  },
+  "effectRefs": [
+    {
+      "effectId": "hualing_delay_target"
+    },
+    {
+      "effectId": "hualing_apply_freeze"
+    }
+  ]
+}

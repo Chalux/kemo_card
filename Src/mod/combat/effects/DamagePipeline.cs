@@ -20,18 +20,78 @@ namespace KemoCard.Mod.Combat.Effects;
 /// </remarks>
 internal static class DamagePipeline
 {
+    /// <summary>统一结算入口：未截断数额 → 规则/护盾 → 生命写入 → 命中与实际损血事件。</summary>
+    public static DamageSettlementResult Settle(
+        CombatSimulation simulation, CombatTargetRef source, CombatTargetRef target, float amount,
+        string? effectId = null, EDamageKind kind = EDamageKind.Physical, EElement element = EElement.None)
+    {
+        var asc = CombatGasBridge.ResolveTargetAsc(simulation, target);
+        if (asc is null || !float.IsFinite(amount) || amount < 0f)
+            return default;
+        if (!simulation.EffectBudget.TrySpendStep())
+            return default;
+
+        // 攻防公式把伤害压到零仍是命中，反击/受击成长与护盾全吸收同口径。
+        if (amount == 0f)
+        {
+            NotifyAfter(simulation, source, target, 0f, effectId, kind, element);
+            return default;
+        }
+
+        var shieldBefore = asc.GetCurrentValue(AttributeIds.Shield);
+        var finalAmount = RunBefore(simulation, source, target, amount, effectId, kind, element);
+        var absorbed = MathF.Max(0f, shieldBefore - asc.GetCurrentValue(AttributeIds.Shield));
+        float loss;
+        if (target.Side == ECombatSide.Player)
+        {
+            var before = simulation.PlayerTeam.SharedHpExact;
+            simulation.PlayerTeam.ApplySharedDamage(finalAmount);
+            loss = MathF.Max(0f, before - simulation.PlayerTeam.SharedHpExact);
+        }
+        else
+        {
+            var before = asc.GetCurrentValue(AttributeIds.Health);
+            asc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, before - finalAmount));
+            loss = MathF.Max(0f, before - asc.GetCurrentValue(AttributeIds.Health));
+            if (before > 0f && asc.GetCurrentValue(AttributeIds.Health) <= 0f)
+                simulation.Buffs.RefreshEnemyPresenceConditions(simulation);
+        }
+
+        NotifyAfter(simulation, source, target, loss, effectId, kind, element);
+        return new DamageSettlementResult(amount, absorbed, loss, MathF.Max(0f, finalAmount - loss));
+    }
+
     /// <summary>
     /// 目标受伤倍率（<c>DamageTakenScale</c>）。队伍账本目标没有槽位 ASC，取队伍 ASC 的同名属性
     /// （无该属性时为 0，即不缩放）。
     /// </summary>
-    public static float ResolveTakenScale(CombatSimulation simulation, CombatTargetRef target)
+    /// <param name="kind">伤害包维度（2026-09-26）：<see cref="EDamageKind.Magical"/> 时额外并入
+    /// <see cref="AttributeIds.MagicDamageTakenScale"/>（只吃魔法伤害的受伤倍率）——两者与增伤同桶加算，
+    /// 见 <see cref="DamageScaling.CombineBonuses"/>。缺省 <see cref="EDamageKind.Physical"/> 即"只吃全伤害倍率"，
+    /// 与旧调用点行为完全一致。</param>
+    public static float ResolveTakenScale(
+        CombatSimulation simulation,
+        CombatTargetRef target,
+        EDamageKind kind = EDamageKind.Physical)
     {
         ArgumentNullException.ThrowIfNull(simulation);
+        var scale = ResolveTakenAttribute(simulation, target, AttributeIds.DamageTakenScale);
+        if (kind == EDamageKind.Magical)
+            scale += ResolveTakenAttribute(simulation, target, AttributeIds.MagicDamageTakenScale);
+        return scale;
+    }
+
+    /// <summary>受伤倍率属性取值：队伍账本回落到队伍 ASC，其余目标取槽位 ASC（无 ASC 时为 0）。</summary>
+    private static float ResolveTakenAttribute(
+        CombatSimulation simulation,
+        CombatTargetRef target,
+        string attributeId)
+    {
         if (SharedHpSettlement.IsPlayerTeamLedger(target))
-            return simulation.PlayerTeam.Asc.GetCurrentValue(AttributeIds.DamageTakenScale);
+            return simulation.PlayerTeam.Asc.GetCurrentValue(attributeId);
 
         return CombatGasBridge.ResolveTargetAsc(simulation, target)
-            ?.GetCurrentValue(AttributeIds.DamageTakenScale) ?? 0f;
+            ?.GetCurrentValue(attributeId) ?? 0f;
     }
 
     /// <summary>过 <c>OnBeforeDamage</c>；返回规则修正后（≥ 0）的数额。</summary>
@@ -50,9 +110,28 @@ internal static class DamagePipeline
 
         var packet = CreatePacket(source, target, amount, effectId, kind, element);
         simulation.Rules.DispatchBeforeDamage(simulation.CreateContext(), ref packet);
+        if (IsImmune(simulation, target))
+            return 0f;
         AbsorbByShield(simulation, source, target, ref packet);
+        if (SharedHpSettlement.IsPlayerSlot(target) && !simulation.PlayerTeam.SharedHpLocked &&
+            simulation.PlayerTeam.SharedHpExact > 0f && packet.Amount > 0f &&
+            packet.Amount >= simulation.PlayerTeam.SharedHpExact)
+        {
+            simulation.Buffs.FireBeforeFatalDamage(simulation, target);
+            if (IsImmune(simulation, target))
+                return 0f;
+        }
         return MathF.Max(0f, packet.Amount);
     }
+
+    private static bool IsImmune(CombatSimulation simulation, CombatTargetRef target) => target.Side switch
+    {
+        ECombatSide.Player when target.Index >= 0 && target.Index < simulation.PlayerTeam.Characters.Count =>
+            simulation.PlayerTeam.Characters[target.Index].Buffs.HasTag(BuiltinBuffTags.TraitImmuneDamage),
+        ECombatSide.Enemy when target.Index >= 0 && target.Index < simulation.EnemyTeam.Enemies.Count =>
+            simulation.EnemyTeam.Enemies[target.Index].Buffs.HasTag(BuiltinBuffTags.TraitImmuneDamage),
+        _ => false,
+    };
 
     /// <summary>
     /// 护盾抵扣（2026-09-26）：点名玩家角色槽位、且来源为敌方的伤害，先按 <b>1 点护盾抵 1 点伤害</b>
@@ -90,8 +169,7 @@ internal static class DamagePipeline
         if (shield <= 0f)
             return;
 
-        var absorbed = MathF.Min(shield, packet.Amount);
-        asc.SetBaseValue(AttributeIds.Shield, shield - absorbed);
+        var absorbed = asc.Aggregator.ConsumeCurrentValue(AttributeIds.Shield, packet.Amount);
         packet.Amount -= absorbed;
     }
 
@@ -116,7 +194,11 @@ internal static class DamagePipeline
             source.Side == ECombatSide.Enemy &&
             source != target)
         {
-            simulation.RecordDamagedPlayerHit(target.Index);
+            simulation.RecordDamagedPlayerHit(target.Index, source);
+            // 魔法受击账（TookMagicDamageLastTurn 条件，2026-09-26）：与 onDamaged 同门闩，
+            // 只多一个"伤害维度 = 魔法"；被护盾 / 减伤完全抵消也算挨了这一下（与上一行同口径）。
+            if (kind == EDamageKind.Magical)
+                simulation.RecordMagicDamageTaken(target.Index);
         }
 
         if (appliedAmount <= 0f)

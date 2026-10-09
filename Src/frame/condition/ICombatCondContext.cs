@@ -34,6 +34,9 @@ public interface ICombatCondContext
     /// </summary>
     int CountCardsPlayedThisTurn(int characterIndex, int elementFlags);
 
+    /// <summary>当前完整标记队列中该角色的卡牌张数；0 元素掩码不筛属性，无模拟上下文时为 0。</summary>
+    int CountCardsQueuedForExecution(int characterIndex, int elementFlags) => 0;
+
     /// <summary>
     /// 本回合连携定档的参与人数（不同角色数）：<paramref name="elementFlags"/> 为 0 时取
     /// <b>当前正在结算的卡牌</b>的属性；取这些属性里人头数的最大值（多属性卡取最优）。
@@ -47,4 +50,27 @@ public interface ICombatCondContext
     /// 非玩家侧上下文（槽位等）返回 0。
     /// </summary>
     int CountPartyIdentityMatches(int elementFlags, int raceFlags, bool matchAll);
+
+    /// <summary>
+    /// 当前正在结算的充能球<b>触发批次</b>里是否有匹配的球（2026-09-26 新增，供 <c>OrbTriggered</c> 条件用）：
+    /// <paramref name="elementMask"/> 为 0 时不筛属性、<paramref name="orbTypeId"/> 为空时不筛球类型，
+    /// 两者都给出时须同时命中。
+    /// </summary>
+    /// <remarks>
+    /// 批次区间只在 <c>onOrbTriggered</c> 钩子的效果求值期间有效（逐球触发效果与区间之外一律 false）；
+    /// 无模拟上下文（buff 持有者 / 槽位容器）恒为 false。
+    /// </remarks>
+    bool OrbTriggeredInBatch(int elementMask, string? orbTypeId);
+
+    /// <summary>
+    /// 该槽位角色<b>上一回合</b>是否受到过魔法伤害（2026-09-26 新增，供 <c>TookMagicDamageLastTurn</c> 条件用）。
+    /// </summary>
+    /// <remarks>
+    /// 上下文保留主体身份，只有玩家角色可读该账本；目标筛选读取候选，效果条件读取来源。
+    /// 无模拟上下文与越界主体恒为 false。
+    /// </remarks>
+    bool SubjectTookMagicDamageLastTurn();
+
+    /// <summary>存活敌人中是否存在持有指定有效 Buff 标签的目标。</summary>
+    bool AnyLivingEnemyHasBuffTag(string tag) => false;
 }

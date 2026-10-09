@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.cupid_united_guard.name",
+  "descId": "skill.cupid_united_guard.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "effectRefs": [
+    {
+      "effectId": "cupid_team_shield"
+    },
+    {
+      "effectId": "cupid_guard_heal"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

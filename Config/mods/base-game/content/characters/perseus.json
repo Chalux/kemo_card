@@ -1,0 +1,45 @@
+{
+  "displayNameId": "char.perseus.name",
+  "element": "Green",
+  "role": "Controller",
+  "race": [
+    "Human",
+    "God"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "perseus_heroic_valor",
+      "cooldown": 10
+    }
+  ],
+  "cards": [
+    "perseus_hero_blade",
+    "perseus_mirror_gaze",
+    "perseus_winged_hunt",
+    "perseus_serpent_slayer"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "buffId": "perseus_passive_p1",
+      "requiredPotential": 0
+    },
+    {
+      "buffId": "perseus_passive_p2",
+      "requiredPotential": 10
+    },
+    {
+      "buffId": "perseus_passive_p3",
+      "requiredPotential": 30
+    },
+    {
+      "buffId": "perseus_passive_p4",
+      "requiredPotential": 50
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

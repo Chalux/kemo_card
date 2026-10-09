@@ -1,3 +1,4 @@
+using Godot;
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
@@ -20,23 +21,39 @@ public sealed class UIDestroyStateHandler : IStateHandler<EUIState, IUIStateCont
         UIVo vo = context.UIVo;
         UIManager manager = context.UIManager;
 
+        var task = vo.OpenTaskSource;
+        var onFail = vo.OpenOpt.OnFail;
+        // 先解除寻址，清理 hook 重入 OpenAsync 时会得到新 VO。
+        manager.VoRegistry.Remove(vo.Id);
+        manager.NavStack.Remove(vo.Id);
+        manager.OpenCoordinator.ResetCurrentOpening(vo);
+        manager.OpenCoordinator.RemoveFromQueue(vo);
+
         vo.Load.Cancel();
         vo.Anim.ClearAnim();
         vo.Anim.ClearMaskAnim();
 
         vo.Runtime.HideBool.Destory();
-        ((IUILifecycleInvoker?)vo.Runtime.Mask)?.InvokeMaskUIDestroy();
-        vo.Runtime.Mask?.QueueFree();
-        vo.Runtime.UI?.QueueFree();
-
-        manager.VoRegistry.Remove(vo.Id);
-
-        if (state is EUIState.Load or EUIState.PreLoad)
+        var mask = vo.Runtime.Mask;
+        var ui = vo.Runtime.UI;
+        try
         {
-            vo.OpenOpt.OnFail?.Invoke();
+            vo.Runtime.RemoveFromNode();
+            if (GodotObject.IsInstanceValid(mask))
+                UIManager.InvokeCallback(() => ((IUILifecycleInvoker)mask!).InvokeMaskUIDestroy(), vo.Id, "遮罩销毁回调");
         }
-
-        vo.OpenTaskSource?.TrySetResult(null);
-        vo.OpenTaskSource = null;
+        finally
+        {
+            vo.Runtime.Mask = null;
+            vo.Runtime.UI = null;
+            if (GodotObject.IsInstanceValid(mask) && !mask!.IsQueuedForDeletion()) mask.QueueFree();
+            if (GodotObject.IsInstanceValid(ui) && !ui!.IsQueuedForDeletion()) ui.QueueFree();
+            try
+            {
+                if (task != null) UIManager.InvokeCallback(onFail, vo.Id, "打开失败回调");
+            }
+            finally { vo.CompleteOpen(null, task); }
+            manager.LayerManager.UpdateLayers();
+        }
     }
 }

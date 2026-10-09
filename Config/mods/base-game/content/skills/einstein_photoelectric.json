@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.einstein_photoelectric.name",
+  "descId": "skill.einstein_photoelectric.desc",
+  "targetOverride": { "side": "Enemy", "scope": "RandomN", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "einstein_photoelectric_hit" }
+  ],
+  "tags": ["attack"]
+}

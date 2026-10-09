@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.mother_machine_parallel_schedule.name",
+  "element": 8,
+  "role": "Healer",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "mother_machine_parallel_schedule"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "HealPower": 1
+    }
+  },
+  "priority": 11,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

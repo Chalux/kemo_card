@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "eta_carinae_orb_boost",
+    "targetFilter": {
+      "self": true
+    }
+  }
+}

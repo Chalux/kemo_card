@@ -1,5 +1,5 @@
 {
-  "kind": "ModifyStat",
-  "params": { "statId": "physicalDamageTaken", "delta": 1 },
+  "kind": "ChainEffects",
+  "effectRefs": [],
   "tags": ["weak"]
 }

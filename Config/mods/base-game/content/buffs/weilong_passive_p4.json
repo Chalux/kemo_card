@@ -1,0 +1,17 @@
+{
+  "displayNameId": "buff.weilong_passive_p4.name",
+  "descId": "buff.weilong_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onDamaged": [
+      {
+        "effectId": "weilong_trigger_reactive_armor"
+      }
+    ]
+  }
+}

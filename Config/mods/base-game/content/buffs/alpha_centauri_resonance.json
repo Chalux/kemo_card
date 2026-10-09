@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.alpha_centauri_resonance.name",
+  "descId": "buff.alpha_centauri_resonance.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 2,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 8
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 8
+      }
+    }
+  ]
+}

@@ -5,7 +5,7 @@
 > 本文是 `Src/frame/` **跨域基础**（UI 框架、订阅生命周期、事件分发、条件引擎、脚本宿主）的**唯一权威文档**。四份已实装的下级规格已整篇并入本文 **§14–§17**，原文文件归档（见下表），此后只在本文维护。
 
 **日期**：2026-05-15（原「UI 管理器与 BaseUI」规格首次定稿）  
-**最后修订**：2026-09-21（框架域下级规格合并）  
+**最后修订**：2026-10-06（Dlg 多实例并存、UI 生命周期边界与 headless 回归）
 **状态**：活规格（框架域基础的唯一权威）
 - **§1–§13**（原「UI 管理器与 BaseUI」，2026-05-15）：原状态「已定稿待实现评审」；现已实现并与代码对齐，见 §12 实现备注。
 - **§14**（原 ui-mod-binding，2026-09-15）：原状态「活规格（2026-09-15 起）」；迁移步骤 1–9 已落地，自检见 §14.12。
@@ -239,10 +239,10 @@
 
 ### 3.2 Dlg 行为
 
-- **同一 Dlg 层最多一个** `BaseDlg` 实例处于已打开状态。
+- **同一 Dlg 层允许多个**不同 UI Id 的 `BaseDlg` 实例同时打开，按打开顺序叠放；关闭上层不会关闭下层。图鉴 → 详情、设置 → Alert 等流程按此规则组合。
 - **无遮罩**（不挡全屏点击；业务若需要局部遮罩在子类中自行实现，但不作为 Dlg 默认语义）。
-- **替换策略**：当已存在 Dlg 且要打开 **另一个** Dlg 时：**先异步准备新实例至可展示状态**，再 **切换**：旧实例保持显示直至新实例就绪，然后移除旧、挂上新，避免中间「无 Dlg」空窗。
-- **快速重复打开**：通过 `UIOpenCoordinator.EnqueueOpen` 管理打开队列，**以最后一次有效请求为准**，取消未完成的旧加载任务。
+- **打开调度**：不同 Id 的请求按队列顺序处理，打开新 Dlg 不会取消或替换其他 Dlg。
+- **同 Id 重复打开**：继续复用同一个 UIVo/节点，以最新载荷和参数重开；未完成的旧请求返回 null，并取消旧加载、使旧预加载与动画回调失效。这里的“多个实例”指不同 Id 的界面并存，不为同一 Id 创建多个无法独立寻址的节点。
 
 ### 3.3 Win 行为
 
@@ -257,7 +257,9 @@
 
 - **可无限叠加**（仅受性能与业务约束）。
 - `UIMaskOpt` 控制遮罩行为：`Runtime`（遮罩资源 Id）、`Alpha`（透明度）、`ClickClose`（点击关闭）、`Color` 等。
-- 遮罩层级由 `UILayerManager.UpdateLayers()` 统一刷新：从顶层向下遍历，`HideBelow` 和 `NoCover` 控制界面可见性。
+- 可见性由 `UILayerManager.UpdateLayers()` 从顶层向下刷新，`HideBelow` 控制下层隐藏；`NoCover` 表示顶部判定时可透传，不自动隐藏界面。
+- 窗口与遮罩关闭动画都完成后，统一脱离场景树并一起缓存或销毁；动画控制器不直接释放遮罩。
+- 关闭动画启动抛异常时，记录日志并取消当前动画，继续 CloseDone 的缓存/销毁收尾；过期完成回调不再生效。
 
 ### 4.2 同 Id 再次打开
 
@@ -270,13 +272,17 @@
 
 - Pop 层级 `EUILayer.Pop` 在 `EUILayer.Dlg` 之上（通过 `_layers` 数组顺序保证）；顶层遮罩可拦截对 Dlg 的点击。
 
+### 4.4 参数实现范围
+
+`UIOpenOpt.Align`、`UIPopOpt.Target/Pos`、`UIPopPosOpt.LimitInScreen` 为预留布局参数，当前框架没有自动定位或限制屏幕边界的消费点。界面仍使用自身场景布局；Tooltip/Toast 继续使用各自定位逻辑。`NoCover` 只影响顶部判定，实际隐藏下层由 `HideBelow` 决定。
+
 ---
 
 ## 5. BaseUI 与状态机
 
 ### 5.1 职责划分
 
-- **UI 管理器**：注册校验、`OpenAsync`/`Close` 调度、层级管理、Dlg 替换顺序、导航栈 `Push`/`Back`、层级可见性更新。
+- **UI 管理器**：注册校验、`OpenAsync`/`Close` 调度、层级管理、Dlg 叠放与同 Id 重开、导航栈 `Push`/`Back`、层级可见性更新。
 - **状态处理器**：7 个 `IStateHandler<EUIState, IUIStateContext>` 分别驱动每个状态的进入/退出逻辑。
 - **BaseUI**：自身 **状态** 与 **可覆盖钩子**（`IUILifecycleInvoker` 接口实现）；**不**自行决定挂在哪个层（由管理器传入或查询已注入的层引用）。
 
@@ -383,13 +389,15 @@ UIStack NavStack { get; }
 
 ### 6.4 打开选项合并
 
-`UIOpenOpt` 按优先级链合并：`默认值 → BaseOpenOpt → 层级 → 注册项 OpenOpt → 调用参数`，通过 `MergeInto` 逐级覆盖。
+`UIOpenOpt` 按优先级链合并：`默认值 → BaseOpenOpt → 层级 → 注册项 OpenOpt → 调用参数`，通过 `MergeFrom` 逐级覆盖。未配置层级参数时使用空覆盖对象，不重新注入完整默认值。
 
 > 2026-09-21 合并：原 UI 管理器规格 的旧表述（`UiManager.MergeInto` 对 `CacheTime` / `AnimType` / `HideBelow` / `NoCover` / `Align` 五个字段**无条件覆盖**）已由本文 §14.6.3（字段显式化 + `MergeFrom`，只覆盖显式设置的字段）与 §14.12.2 取代——`UiManager.MergeInto` 已删除，改名为 `UIOpenOpt.MergeFrom`，读取方一律走 `Effective*`（`EffectiveCacheTime` / `EffectiveAnimType` / `EffectiveHideBelow` / `EffectiveNoCover` / `EffectiveAlign`）。合并链本身（`默认值 → BaseOpenOpt → 层级 → 注册项 OpenOpt → 调用参数`）不变。
 
 ### 6.5 Task 完成保证
 
-`UIVo.OpenTaskSource` 关联每次 `OpenAsync` 的 `TaskCompletionSource`，在 `Close`（未打开时）、`Destroy`（加载/预加载失败时）、`OnOpen` 回调、重用时统一 `TrySetResult`，保证 `await OpenAsync` 必定返回。
+`UIVo.OpenTaskSource` 关联本次 `OpenAsync` 的 `TaskCompletionSource`，使用 `RunContinuationsAsynchronously`。成功进入 Open 返回该 VO；关闭未完成请求、加载/预加载失败、同 Id 请求被后续请求取代时返回 null。判断本次请求是否完成不得使用历史 `OpenTime`。
+
+成功/失败结果先完成内部任务，再通知事件或观察回调；调用方的 OnOpen/OnFail/OnOpenBefore 异常记入日志，不阻断内部任务完成和调度。旧回调只完成自己捕获的任务，不能清除重入时创建的新请求。预加载 done/fail 必须使用同一轮次和状态检查。
 
 ---
 
@@ -406,6 +414,8 @@ UIStack NavStack { get; }
 - **未注册 Id**：拒绝打开，记录错误。
 - **异步竞争**：Dlg 连续打开见 §3；Popup 异步若首版同步 `Instantiate`，仍须文档化后续异步资源扩展点。
 - **遮罩点击关闭被禁用**：栈顶仍拦截输入，但点击遮罩不关闭（由参数/子类控制）。
+- **功能卸载**：`UnregisterOwner` 先删除该 owner 的注册声明和调度项，再清理 VO，最后推进其他 owner 的等待请求；清理 hook 无法重新打开已删除的声明。
+- **可见性回调重入**：遍历使用层内快照；嵌套刷新开始后旧轮次立即退出，避免旧结果覆盖最新层级。
 
 ---
 
@@ -413,12 +423,13 @@ UIStack NavStack { get; }
 
 - **注册表**：未注册拒绝打开（`GD.PushError` + `TaskCompletionSource.SetResult(null)`）。
 - **状态机流转**：7 个状态处理器协同工作，`OpenTransitionData` 控制重开/关闭后重开语义。
-- **层级**：`UILayerManager.UpdateLayers()` 从顶层向下遍历，`HideBelow`/`NoCover` 控制可见性。
+- **层级**：`UILayerManager.UpdateLayers()` 从顶层向下遍历，`HideBelow` 更新实际节点可见性；`IsUITop` 使用包含 TopLayers 的相同顺序，并尊重 `NoCover`。
 - **导航栈**：`UIStack.Push`/`Back`/`BackAsync()` 行为。
 - **强类型载荷**：编译期通过 `UiId<TPayload>` 覆盖，运行时通过 `TypedPayload` 属性校验。
 - **缓存超时**：`VORegistry.TickCacheDestroy` 每秒检查 `Cache` 状态 UIVo 是否超时。
 - **加载超时**：`UIOpenCoordinator.CheckLoadTimeout` 每帧检查（10s）。
 - **自动化**：`Tests/kemo_card.Ui.Tests/UiFrameworkTests.cs` 覆盖无 Godot 节点实例化的逻辑。
+- **引擎集成**：`Tests/kemo_card.Ui.Headless/run.ps1 -GodotPath <Mono Godot 可执行文件>` 验证真实节点、场景和原生信号；测试源码按需编译，脚本结束时恢复正常程序集。详见该目录 README。
 - **手动测试**：层级叠放、遮罩点击关闭、动画流程以编辑器运行验证。
 
 ---
@@ -426,7 +437,7 @@ UIStack NavStack { get; }
 ## 10. 自检记录
 
 - **状态**：已实现，本文档 §12 与代码保持一致。
-- **一致性**：Dlg 替换、层级遮挡、强类型载荷、导航栈、缓存策略均已落地。
+- **一致性**：Dlg 多实例叠放、层级遮挡、强类型载荷、导航栈、缓存策略均按当前契约验证。
 - **范围**：对象池与多 Viewport 明确排除在非目标外。
 
 ---
@@ -794,6 +805,7 @@ public sealed class BindingScope
 - **`UnbindAll()` 之后本对象仍可继续登记。** 这是**硬性要求**，不是宽松：关闭走缓存时节点只是 `RemoveChild`（未释放），30 秒内重开会再次 `InvokeInitEvent` 重新订阅——若解绑后禁止订阅，重开必崩。因此 `BindingScope` **不持有"已解绑"状态**，`UnbindAll` 只清空账本。
 - `UnbindAll` **逆序**执行；单个解绑抛异常时记录日志（`AppLog.Error`）并继续，避免一个坏解绑阻断其余清理。
 - `UnbindAll` 幂等：账本已空时再调用是无操作。
+- `UnbindAll` 先清空账本，再逆序执行快照；递归解绑不重复处理旧条目，清理过程中新增的订阅留给下一轮。
 - **不再需要各界面自写 `_eventsBound` / `_bound` 守卫**：D1 的根因就是守卫没复位，而账本式登记不需要守卫。
 
 #### 14.4.2 信号糖：一个扩展方法集，两种宿主共用（原 §4.2）
@@ -834,11 +846,13 @@ protected BindingScope Binder { get; } = new();
 // 唯一入口：子类不得 override（sealed）。引擎回调只做转发。
 public sealed override void _ExitTree()
 {
-    OnExitTree();                    // 1. 子类补充清理（此时订阅仍有效）
-    Binder.UnbindAll();              // 2. 框架保证解绑（子类忘了也解）
-    OwnerBus?.OffCaller(this);       // 3. 功能总线按 caller 清理
-    GlobalEvents.Bus.OffCaller(this);// 4. 跨功能总线
-    base._ExitTree();
+    try { OnExitTree(); }            // 子类补充清理（此时订阅仍有效）
+    finally
+    {
+        Binder.UnbindAll();          // hook 抛异常也必须解绑
+        GlobalEvents.Bus.OffCaller(this);
+        base._ExitTree();
+    }
 }
 
 /// <summary>框架级离场生命周期：子类只做非订阅类清理。订阅请一律走 Binder。</summary>
@@ -866,9 +880,12 @@ public partial class BaseKemoButton : Button
     // 唯一入口，sealed：子类改 override OnExitTree
     public sealed override void _ExitTree()
     {
-        OnExitTree();
-        _binder.UnbindAll();
-        base._ExitTree();
+        try { OnExitTree(); }
+        finally
+        {
+            _binder.UnbindAll();
+            base._ExitTree();
+        }
     }
 
     protected virtual void OnExitTree() { }

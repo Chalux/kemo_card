@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.mother_machine_cache_repair.name",
+  "element": 8,
+  "role": "Healer",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "mother_machine_cache_repair"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "HealPower": 2
+    }
+  },
+  "priority": 9,
+  "cardType": "Healing",
+  "targetSide": "Ally",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

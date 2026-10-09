@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.weilong_dragon_fang.name",
+  "descId": "skill.weilong_dragon_fang.desc",
+  "actionRefs": [
+    {
+      "actionId": "weilong_fang_hit"
+    },
+    {
+      "actionId": "weilong_fang_buff"
+    }
+  ]
+}

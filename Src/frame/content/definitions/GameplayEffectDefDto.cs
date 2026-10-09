@@ -59,4 +59,8 @@ public sealed class GameplayEffectDefDto
 
     [JsonPropertyName("hooks")]
     public GameplayEffectHooksDto Hooks { get; init; } = new();
+
+    /// <summary>作为领域展开时，向双方所有角色附加的 Buff；领域收起/替换时按实例撤销。</summary>
+    [JsonPropertyName("domainBuffRefs")]
+    public List<BuffRefDto> DomainBuffRefs { get; init; } = [];
 }

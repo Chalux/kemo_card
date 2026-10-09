@@ -1,0 +1,45 @@
+{
+  "displayNameId": "char.mother_machine.name",
+  "element": "Yellow",
+  "role": "Healer",
+  "race": [
+    "Machine",
+    "Academic"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "mother_machine_super_operator",
+      "cooldown": 10
+    }
+  ],
+  "cards": [
+    "mother_machine_cache_repair",
+    "mother_machine_redundant_backup",
+    "mother_machine_parallel_schedule",
+    "mother_machine_compute_preload"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "buffId": "mother_machine_passive_p1",
+      "requiredPotential": 0
+    },
+    {
+      "buffId": "mother_machine_passive_p2",
+      "requiredPotential": 10
+    },
+    {
+      "buffId": "mother_machine_passive_p3",
+      "requiredPotential": 30
+    },
+    {
+      "buffId": "mother_machine_passive_p4",
+      "requiredPotential": 50
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

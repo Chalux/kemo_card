@@ -8,6 +8,9 @@ namespace KemoCard.Frame.Content.Definitions;
 /// </summary>
 public static class BuiltinBuffTags
 {
+    /// <summary>免疫伤害；伤害管线在生命写入前检查。</summary>
+    public const string TraitImmuneDamage = "trait.immune_damage";
+
     /// <summary>被动来源（角色被动等）；"被动无效"类效果按此筛选。</summary>
     public const string Passive = "buff.passive";
 
@@ -20,11 +23,21 @@ public static class BuiltinBuffTags
     /// <summary>不可驱散：任何清除增益的效果都不移除带此 tag 的 buff。</summary>
     public const string Undispellable = "buff.undispellable";
 
+    /// <summary>角色负面效果的公共分类，封印兼容既有 combat.state 标签。</summary>
+    public static bool IsDebuffTag(string tag) => tag == "debuff" ||
+        tag.StartsWith("debuff.", StringComparison.Ordinal) || tag == "combat.state.sealed";
+
     /// <summary>槽位伤害效果：该槽打出卡牌时，打出者受到参数伤害（结算前触发）。</summary>
     public const string SlotDamage = "slot.damage";
 
     /// <summary>充能：该槽打出卡牌时计数递减，归零触发载荷并重置。</summary>
     public const string SlotCharge = "slot.charge";
+
+    /// <summary>定时：回合末倒计时归零后造成伤害，并扩散到左右相邻手牌槽。</summary>
+    public const string SlotTimer = "slot.timer";
+    public const string TraitImmuneSlotTimer = "trait.immune_slot_timer";
+    /// <summary>敌方标记；存在判定只查询存活敌人的有效 Buff。</summary>
+    public const string Marked = "debuff.marked";
 
     /// <summary>
     /// 暴风（2026-09-23）：该槽打出卡牌时，把附近手牌槽的牌吹散（弃置）。
@@ -53,6 +66,9 @@ public static class BuiltinBuffTags
 
     /// <summary>特征：免疫中毒（带 <c>debuff.poison</c> 标签的效果对该角色无效）。</summary>
     public const string TraitImmunePoison = "trait.immune_poison";
+
+    /// <summary>特征：免疫带 debuff.virus 标签的病毒效果。</summary>
+    public const string TraitImmuneVirus = "trait.immune_virus";
 }
 
 /// <summary>buff 的投放范围：被动等团队型 buff 声明挂到每个队友。</summary>
@@ -106,9 +122,21 @@ public sealed class BuffEffectHooksDto
     [JsonPropertyName("onSlotCardPlayed")]
     public List<EffectRefDto> OnSlotCardPlayed { get; init; } = [];
 
+    /// <summary>持有者自身手牌槽充能归零并结算载荷后触发一次；未完成充能不触发。</summary>
+    [JsonPropertyName("onSlotChargeTriggered")]
+    public List<EffectRefDto> OnSlotChargeTriggered { get; init; } = [];
+
+    /// <summary>每名敌人完成入场初始化后，向玩家角色分发；默认目标为该入场敌人。</summary>
+    [JsonPropertyName("onEnemyEntered")]
+    public List<EffectRefDto> OnEnemyEntered { get; init; } = [];
+
     /// <summary>持有者打出的卡牌<b>结算完成后</b>触发（逐张，本回合内累计；2026-09-21 新增）。</summary>
     [JsonPropertyName("onCardSettled")]
     public List<EffectRefDto> OnCardSettled { get; init; } = [];
+
+    /// <summary>全部卡牌执行前触发一次，此时完整标记队列尚未出队。</summary>
+    [JsonPropertyName("onCardExecutionStart")]
+    public List<EffectRefDto> OnCardExecutionStart { get; init; } = [];
 
     /// <summary>
     /// <b>本回合全部卡牌结算结束</b>后触发一次（普攻之前；2026-09-21 新增）。
@@ -116,6 +144,14 @@ public sealed class BuffEffectHooksDto
     /// </summary>
     [JsonPropertyName("onCardExecutionEnd")]
     public List<EffectRefDto> OnCardExecutionEnd { get; init; } = [];
+
+    /// <summary>充能球整批自动触发结算后，对全队角色各触发一次。</summary>
+    [JsonPropertyName("onOrbAutoTriggered")]
+    public List<EffectRefDto> OnOrbAutoTriggered { get; init; } = [];
+
+    /// <summary>持有者最终护盾值由正数降至零时触发。</summary>
+    [JsonPropertyName("onShieldDepleted")]
+    public List<EffectRefDto> OnShieldDepleted { get; init; } = [];
 
     /// <summary>充能球触发结算后触发（每个参与产球的角色各一次；2026-09-21 新增）。</summary>
     [JsonPropertyName("onOrbTriggered")]
@@ -128,6 +164,10 @@ public sealed class BuffEffectHooksDto
     /// </summary>
     [JsonPropertyName("onDamaged")]
     public List<EffectRefDto> OnDamaged { get; init; } = [];
+
+    /// <summary>规则与护盾结算后、致命伤害写入前触发。</summary>
+    [JsonPropertyName("onBeforeFatalDamage")]
+    public List<EffectRefDto> OnBeforeFatalDamage { get; init; } = [];
 }
 
 public sealed class BuffDto

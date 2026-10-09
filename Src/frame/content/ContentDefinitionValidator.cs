@@ -444,6 +444,10 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var buff in store.Buffs.Values)
         {
+            foreach (var modifier in buff.Modifiers)
+                if (modifier.Magnitude.Kind is not (EMagnitudeKind.Scalar or EMagnitudeKind.SetByCaller or
+                    EMagnitudeKind.PartyCountScaled or EMagnitudeKind.TeamMaxHealthScaled))
+                    errors.Add(new(EContentCategory.Buff, buff.Id, $"Unsupported buff magnitude kind '{modifier.Magnitude.Kind}'."));
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnApply, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnTurnStart, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnTurnEnd, store, errors);
@@ -454,11 +458,17 @@ public sealed class ContentDefinitionValidator
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnWaveStart, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnActiveSkillCast, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnSlotCardPlayed, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnSlotChargeTriggered, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnEnemyEntered, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardSettled, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardExecutionStart, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardExecutionEnd, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbTriggered, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbAutoTriggered, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnShieldDepleted, store, errors);
             // 2026-09-25 受击钩子（参宿四被动4）：悬空 effectId 会让"受击回血"完全静默。
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnDamaged, store, errors);
+            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnBeforeFatalDamage, store, errors);
 
             // 持有者条件（2026-09-26 统一为战斗条件列表）与连携属性注入：
             // 条件写错 = buff 永远休眠，注入写错 = 连携统计静默缺属性，都必须拦下。
@@ -480,6 +490,8 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var effect in store.Effects.Values)
         {
+            if (effect.Kind == EEffectKind.ModifyStat)
+                errors.Add(new(EContentCategory.Effect, effect.Id, "ModifyStat is not implemented; use buff modifiers or ApplyGameplayEffect."));
             if (effect.Kind == EEffectKind.ExecuteScript && string.IsNullOrWhiteSpace(effect.ScriptPath))
             {
                 errors.Add(new ContentDefinitionValidationError(
@@ -524,6 +536,13 @@ public sealed class ContentDefinitionValidator
             if (effect.Kind == EEffectKind.GainShield && effect.Params is not null)
             {
                 ValidateIntParam(EContentCategory.Effect, effect.Id, effect.Params, "amount", errors, allowNegative: false);
+            }
+
+            // 按弃牌数补抽（2026-09-27 效果通道）：perCard 非整数 / 为负 ⇒ 运行期回落缺省或按 0 处理
+            // （"弃 X 张抽 X 张"静默变成不补抽），与 ModifyDrawCount 的 amount 同口径拦下。
+            if (effect.Kind == EEffectKind.ModifyDrawCountByDiscard && effect.Params is not null)
+            {
+                ValidateIntParam(EContentCategory.Effect, effect.Id, effect.Params, "perCard", errors, allowNegative: false);
             }
 
             ValidateCombatConditions(EContentCategory.Effect, effect.Id, effect.Conditions, errors);
@@ -734,6 +753,13 @@ public sealed class ContentDefinitionValidator
                 ValidateIntParam(EContentCategory.SkillAction, action.Id, action.Params, "amount", errors, allowNegative: false);
             }
 
+            // 按弃牌数补抽（2026-09-27）：perCard 非整数 / 为负 ⇒ "弃 X 张抽 X 张"静默不补抽或反向减抽。
+            // DiscardAndRecord 的 count 由 ValidateScaledRuntimeParams 统一校验（>= 0），与 Discard 同口径。
+            if (action.Kind is ESkillActionKind.ModifyDrawCountByDiscard or ESkillActionKind.DrawByDiscard && action.Params is not null)
+            {
+                ValidateIntParam(EContentCategory.SkillAction, action.Id, action.Params, "perCard", errors, allowNegative: false);
+            }
+
             if (action.Kind == ESkillActionKind.GainOrb)
             {
                 ValidateOrbTypeIdInParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
@@ -754,6 +780,8 @@ public sealed class ContentDefinitionValidator
     /// <item><c>oncePerWave</c> 非布尔 ⇒ 恒为 false（"每阶层仅 1 次"失效）。</item>
     /// <item><c>count</c>（SetActionCount）非整数 ⇒ 回落 2；<c>turns</c>（SetDomain）非整数 ⇒ 领域不自动收起。</item>
     /// <item><c>slotIndex</c>（DiscardSlot / 暴风载荷）非整数 ⇒ 弃不掉任何牌；<c>adjacentSlots</c> 同理。</item>
+    /// <item><c>AttackCount</c> / <c>AttackCountMinusDiscard</c> 非整数 ⇒ 次数回落 1（"打 N 次"静默变成打 1 次）；
+    /// <c>AttackCountByChain</c> 非布尔 ⇒ 恒为 false（"按连携人数打"静默变成固定 1 次）。</item>
     /// </list>
     /// 与 <c>damageType</c> / 效果条件的校验同口径：这类"静默失败"必须在内容准入阶段拦下。
     /// </summary>
@@ -775,9 +803,19 @@ public sealed class ContentDefinitionValidator
         ValidateIntParam(category, definitionId, parameters, "turns", errors, allowNegative: false);
         ValidateIntParam(category, definitionId, parameters, "slotIndex", errors, allowNegative: false);
         ValidateIntParam(category, definitionId, parameters, "adjacentSlots", errors, allowNegative: false);
+        // 攻击次数（2026-09-27）：固定次数与"基准次数"都必须是 >= 0 的整数，按连携人数取次数必须是布尔。
+        ValidateIntParam(category, definitionId, parameters, "AttackCount", errors, allowNegative: false, maximum: DamageExecution.MaxAttackCount);
+        ValidateIntParam(category, definitionId, parameters, "AttackCountMinusDiscard", errors, allowNegative: false, maximum: DamageExecution.MaxAttackCount);
+        ValidateBoolParam(category, definitionId, parameters, "AttackCountByChain", errors);
         ValidateNumberParam(category, definitionId, parameters, "healPowerScale", errors, allowNegative: false);
+        ValidateNumberParam(category, definitionId, parameters, "amountPerPlayedCard", errors, allowNegative: true);
+        ValidateNumberParam(category, definitionId, parameters, "amountPerDiscard", errors, allowNegative: true);
+        ValidateBoolParam(category, definitionId, parameters, "additive", errors);
+        ValidateBoolParam(category, definitionId, parameters, "random", errors);
+        ValidateBoolParam(category, definitionId, parameters, "allowFewer", errors);
         ValidateBoolParam(category, definitionId, parameters, "oncePerTurn", errors);
         ValidateBoolParam(category, definitionId, parameters, "oncePerWave", errors);
+        ValidateBoolParam(category, definitionId, parameters, "oncePerCombat", errors);
         ValidateOrbTiers(category, definitionId, parameters, errors);
         ValidateAttackScaleFromOrbs(category, definitionId, parameters, errors);
     }
@@ -835,7 +873,8 @@ public sealed class ContentDefinitionValidator
         Dictionary<string, object> parameters,
         string key,
         List<ContentDefinitionValidationError> errors,
-        bool allowNegative)
+        bool allowNegative,
+        int? maximum = null)
     {
         if (!parameters.ContainsKey(key) || parameters[key] is null)
         {
@@ -854,6 +893,8 @@ public sealed class ContentDefinitionValidator
             errors.Add(new ContentDefinitionValidationError(
                 category, definitionId, $"params.{key} must be >= 0."));
         }
+        if (maximum is { } limit && parsed > limit)
+            errors.Add(new(category, definitionId, $"params.{key} must be <= {limit}."));
     }
 
     private static void ValidateBoolParam(
@@ -1101,8 +1142,13 @@ public sealed class ContentDefinitionValidator
             errors.Add(new ContentDefinitionValidationError(
                 category,
                 definitionId,
-                "AttachSlotBuff requires a non-negative params.slotIndex or params.slotSelection = \"randomNonEmpty\"/\"all\"."));
+                "AttachSlotBuff requires a non-negative params.slotIndex or params.slotSelection = \"randomNonEmpty\"/\"random\"/\"all\"."));
         }
+        if (parameters is not null && parameters.ContainsKey("timerTurns") && GetIntParam(parameters, "timerTurns") is not > 0)
+            errors.Add(new ContentDefinitionValidationError(category, definitionId, "timerTurns must be a positive integer."));
+        if (parameters is not null && !string.IsNullOrWhiteSpace(buffId) && store.TryGetBuff(buffId, out var buff) && buff.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer) &&
+            (!TryGetFloatMember(parameters, "amount", out var timerDamage) || !float.IsFinite(timerDamage) || timerDamage < 0))
+            errors.Add(new ContentDefinitionValidationError(category, definitionId, "Slot timer amount must be finite and non-negative."));
     }
 
     /// <summary><c>params.slotSelection</c> 取值判定（AttachSlotBuff 的槽位选择写法）。</summary>
@@ -1110,6 +1156,7 @@ public sealed class ContentDefinitionValidator
     {
         var selection = GetStringParam(parameters, "slotSelection");
         return string.Equals(selection, "randomNonEmpty", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(selection, "random", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(selection, "all", StringComparison.OrdinalIgnoreCase);
     }
 
@@ -1206,6 +1253,13 @@ public sealed class ContentDefinitionValidator
         foreach (var gameplayEffect in store.GameplayEffects.Values)
         {
             ValidateDamageExecutions(gameplayEffect, errors);
+            ValidateBuffRefs(EContentCategory.GameplayEffect, gameplayEffect.Id, gameplayEffect.DomainBuffRefs, store, errors);
+            foreach (var reference in gameplayEffect.DomainBuffRefs)
+                if (store.TryGetBuff(reference.BuffId, out var domainBuff) &&
+                    (domainBuff.DurationType != EBuffDurationType.Permanent || domainBuff.ApplyScope != EBuffApplyScope.Self ||
+                        domainBuff.EffectiveTags.Any(tag => tag.StartsWith("slot.", StringComparison.Ordinal))))
+                    errors.Add(new(EContentCategory.GameplayEffect, gameplayEffect.Id,
+                        $"Domain buff '{reference.BuffId}' must be permanent, applyScope Self, and not a slot effect."));
 
             foreach (var modifier in gameplayEffect.Modifiers)
             {
@@ -1348,120 +1402,13 @@ public sealed class ContentDefinitionValidator
 
             // 钩子 ref 的 targetFilter 也可能带条件（2026-09-26 统一）：同样在准入阶段校验。
             ValidateTargetFilterCondition(category, definitionId, effectRef.Params, errors);
+            if (effectRef.Params is not null)
+                ValidateBoolParam(category, definitionId, effectRef.Params, "oncePerCombat", errors);
         }
     }
 
-    /// <summary>
-    /// 链式引用环检测：<c>ChainEffects</c> / <c>ChainActions</c> 在执行侧是直接递归
-    /// （mod 层的 <c>CombatEffectExecutor</c> / <c>SkillActionExecutor</c>），且没有深度守卫，
-    /// a↔b 互引会让游戏进程 StackOverflow（.NET 不可捕获）。
-    /// 必须在内容准入阶段拒绝：这里报出的 id 会被 <c>GameDefinitionRegistry.RemoveInvalidDefinitions</c> 剔除。
-    /// </summary>
-    private static void ValidateReferenceCycles(GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
-    {
-        foreach (var effect in store.Effects.Values)
-        {
-            if (effect.Kind != EEffectKind.ChainEffects)
-            {
-                continue;
-            }
-
-            var path = new List<string>();
-            if (FindEffectCycle(effect.Id, store, [], path))
-            {
-                errors.Add(new ContentDefinitionValidationError(
-                    EContentCategory.Effect,
-                    effect.Id,
-                    $"ChainEffects contains a reference cycle: {string.Join(" -> ", path)}."));
-            }
-        }
-
-        foreach (var action in store.SkillActions.Values)
-        {
-            if (action.Kind != ESkillActionKind.ChainActions)
-            {
-                continue;
-            }
-
-            var path = new List<string>();
-            if (FindActionCycle(action.Id, store, [], path))
-            {
-                errors.Add(new ContentDefinitionValidationError(
-                    EContentCategory.SkillAction,
-                    action.Id,
-                    $"ChainActions contains a reference cycle: {string.Join(" -> ", path)}."));
-            }
-        }
-    }
-
-    private static bool FindEffectCycle(
-        string effectId,
-        GameDefinitionStore store,
-        HashSet<string> visiting,
-        List<string> path)
-    {
-        path.Add(effectId);
-        if (!visiting.Add(effectId))
-        {
-            return true;
-        }
-
-        var hasCycle = false;
-        if (store.TryGetEffect(effectId, out var effect) && effect.Kind == EEffectKind.ChainEffects)
-        {
-            foreach (var child in effect.EffectRefs)
-            {
-                if (FindEffectCycle(child.EffectId, store, visiting, path))
-                {
-                    hasCycle = true;
-                    break;
-                }
-            }
-        }
-
-        if (!hasCycle)
-        {
-            visiting.Remove(effectId);
-            path.RemoveAt(path.Count - 1);
-        }
-
-        return hasCycle;
-    }
-
-    private static bool FindActionCycle(
-        string actionId,
-        GameDefinitionStore store,
-        HashSet<string> visiting,
-        List<string> path)
-    {
-        path.Add(actionId);
-        if (!visiting.Add(actionId))
-        {
-            return true;
-        }
-
-        var hasCycle = false;
-        if (store.TryGetSkillAction(actionId, out var action) && action.Kind == ESkillActionKind.ChainActions)
-        {
-            foreach (var child in action.ActionRefs)
-            {
-                if (FindActionCycle(child.ActionId, store, visiting, path))
-                {
-                    hasCycle = true;
-                    break;
-                }
-            }
-        }
-
-        if (!hasCycle)
-        {
-            visiting.Remove(actionId);
-            path.RemoveAt(path.Count - 1);
-        }
-
-        return hasCycle;
-    }
-
+    private static void ValidateReferenceCycles(GameDefinitionStore store, List<ContentDefinitionValidationError> errors) =>
+        ContentSynchronousCycleValidator.Validate(store, errors);
     private static void ValidateActionRefs(
         EContentCategory category,
         string definitionId,
@@ -1566,14 +1513,7 @@ public sealed class ContentDefinitionValidator
             return null;
         }
 
-        return value switch
-        {
-            int i => i,
-            long l => l is >= int.MinValue and <= int.MaxValue ? (int)l : null,
-            System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Number } element
-                when element.TryGetInt32(out var parsed) => parsed,
-            _ => int.TryParse(value.ToString(), out var parsed) ? parsed : null,
-        };
+        return ContentParameters.TryInt(value, out var parsed) ? parsed : null;
     }
 
     private static IReadOnlyList<string>? GetStringListParam(Dictionary<string, object>? parameters, string key)

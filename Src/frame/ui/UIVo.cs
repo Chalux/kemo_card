@@ -59,7 +59,7 @@ public sealed class UIVo : IUIStateContext, IUIVoHandle
         Type = type;
         Payload = payload;
         Manager = manager;
-        OpenOpt = openOpt ?? DefaultUIOpenOpt.Value;
+        OpenOpt = openOpt?.Clone() ?? DefaultUIOpenOpt.Value.Clone();
         Runtime = new UIRuntimeData(this);
 
         foreach (var handler in handlers)
@@ -71,5 +71,12 @@ public sealed class UIVo : IUIStateContext, IUIVoHandle
     public void OpenNext()
     {
         Manager.OpenNext();
+    }
+
+    internal void CompleteOpen(UIVo? result, TaskCompletionSource<UIVo?>? source = null)
+    {
+        source ??= OpenTaskSource;
+        if (ReferenceEquals(OpenTaskSource, source)) OpenTaskSource = null;
+        source?.TrySetResult(result);
     }
 }

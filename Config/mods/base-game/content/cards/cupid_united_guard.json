@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.cupid_united_guard.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "cupid_united_guard"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "HealPower": 2,
+      "MaxHealth": 20
+    }
+  },
+  "role": "Healer",
+  "priority": 6,
+  "cardType": "Healing",
+  "targetSide": "Ally",
+  "targetScope": "Team",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

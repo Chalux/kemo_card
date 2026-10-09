@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.perseus_mirror_gaze.name",
+  "descId": "skill.perseus_mirror_gaze.desc",
+  "actionRefs": [
+    {
+      "actionId": "perseus_mirror_delay"
+    },
+    {
+      "actionId": "perseus_mirror_weaken"
+    }
+  ]
+}

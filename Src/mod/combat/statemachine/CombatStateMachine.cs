@@ -19,7 +19,7 @@ public sealed class CombatStateMachine
         Phase = initialPhase;
     }
 
-    public void TransitionTo(ECombatPhase phase) => Phase = phase;
+    internal void TransitionTo(ECombatPhase phase) => Phase = phase;
 
     public void Advance(CombatSimulation simulation)
     {
@@ -82,10 +82,7 @@ public sealed class CombatStateMachine
         simulation.Buffs.FireWaveStart(simulation);
 
         // 经仿真切相位：相位变化的表现事件（PhaseChanged）由 CombatSimulation.TransitionTo 统一记录。
-        simulation.TransitionTo(ECombatPhase.Player);
-        simulation.DomainManager.FireTurnStartHooks();
-        simulation.Buffs.FireTurnStart(simulation);
-        PlayerPhasePipeline.Run(simulation, isFirstPlayerPhase: true);
+        simulation.RunTurnStart();
     }
 
     private static void ExecuteBattleStartSkill(CombatSimulation simulation, BattleStartSkillEntry entry)
@@ -97,7 +94,7 @@ public sealed class CombatStateMachine
         var source = entry.SourceCharacterIndex >= 0
             ? new CombatTargetRef(ECombatSide.Player, entry.SourceCharacterIndex)
             : CombatTargetRef.PlayerTeam;
-        ExecuteSkillPayload(simulation, skill, source, ResolveBattleStartTargets(simulation, skill, source));
+        SkillPayloadExecutor.Execute(simulation, skill, source, ResolveBattleStartTargets(simulation, skill, source));
     }
 
     /// <summary>
@@ -205,7 +202,7 @@ public sealed class CombatStateMachine
     public static void EnforceSeal(CombatSimulation simulation, int characterIndex)
     {
         ArgumentNullException.ThrowIfNull(simulation);
-        if (!TryGetCharacter(simulation, characterIndex, out var character, out _))
+        if (!CombatCommandValidator.TryGetCharacter(simulation, characterIndex, out var character, out _))
             return;
         if (!character.IsSealed)
             return;
@@ -228,36 +225,21 @@ public sealed class CombatStateMachine
 
     private static CombatApplyResult ApplyPlayCard(CombatSimulation simulation, PlayCardCommand command)
     {
-        if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
-            return new CombatApplyResult(false, error);
-        if (character.IsSealed)
-            return new CombatApplyResult(false, "角色处于封印，无法标记卡牌。");
-        if (character.HasActed)
-            return new CombatApplyResult(false, "角色已确认，须先取消确认才能标记卡牌。");
-        if (command.HandSlotIndex < 0 || command.HandSlotIndex >= character.HandSlots.Count)
-            return new CombatApplyResult(false, "手牌槽位无效。");
+        var validation = CombatCommandValidator.ValidateCardMark(simulation, command,
+            out var character, out var slot, out var card, out var targets, out var paid);
+        if (!validation.Success)
+            return validation;
 
-        var slot = character.HandSlots[command.HandSlotIndex];
-        if (slot.IsEmpty || slot.CardId is null || slot.RuntimeInstanceId is null)
-            return new CombatApplyResult(false, "指定槽位没有卡牌。");
-        if (slot.IsMarked)
-            return new CombatApplyResult(false, "该卡牌已标记入队。");
-        if (!simulation.Definitions.Store.TryGetCard(slot.CardId, out var card))
-            return new CombatApplyResult(false, "卡牌定义不存在。");
-        if (card.CostType is not (ECostType.None or ECostType.Energy))
-            return new CombatApplyResult(false, "该费用类型尚未实装，无法标记入队。");
-
-        var paid = CardCostCalculator.Compute(simulation, command.CharacterIndex, card, slot.RuntimeInstanceId);
         if (!character.TryConsumeAvailableEnergy(paid))
             return new CombatApplyResult(false, "可用能量不足。");
 
         var sequence = simulation.AllocateQueueSequence();
         simulation.CardQueue.Enqueue(new QueuedCardEntry(
             command.CharacterIndex,
-            slot.CardId,
-            slot.RuntimeInstanceId,
+            slot.CardId!,
+            slot.RuntimeInstanceId!,
             card.Priority,
-            command.Targets,
+            targets,
             sequence,
             paid));
         slot.Mark(sequence);
@@ -273,7 +255,7 @@ public sealed class CombatStateMachine
     /// </summary>
     private static CombatApplyResult ApplyCastActiveSkill(CombatSimulation simulation, CastActiveSkillCommand command)
     {
-        if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
+        if (!CombatCommandValidator.TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
             return new CombatApplyResult(false, error);
         if (character.IsSealed)
             return new CombatApplyResult(false, "角色处于封印，无法释放主动技。");
@@ -297,19 +279,30 @@ public sealed class CombatStateMachine
         if (resolvedTargets is null)
             return new CombatApplyResult(false, targetError);
 
+        var selection = DiscardSelection.Resolve(simulation, skill, command.CharacterIndex);
+        if (selection is not null && !selection.Validate(character, command.DiscardSlots) ||
+            selection is null && command.DiscardSlots is { Count: > 0 })
+            return new CombatApplyResult(false, "请选择合法数量的手牌进行弃置。");
+
         // 先扣阈值再跑载荷：载荷里可显式 +S 做连发（规格 §5.3）。
         character.PaySkillCounter(character.GetTierThreshold(tierIndex));
 
         var source = new CombatTargetRef(ECombatSide.Player, command.CharacterIndex);
         var previousChannel = simulation.CurrentDiscardChannel;
+        var previousSelection = simulation.SelectedDiscardSlots;
+        var previousSelectionOwner = simulation.SelectedDiscardCharacterIndex;
+        simulation.SelectedDiscardSlots = new Queue<int>(command.DiscardSlots ?? []);
+        simulation.SelectedDiscardCharacterIndex = command.CharacterIndex;
         simulation.SetDiscardChannel(EDiscardChannel.ActiveSkill);
         try
         {
-            ExecuteSkillPayload(simulation, skill, source, resolvedTargets);
+            SkillPayloadExecutor.Execute(simulation, skill, source, resolvedTargets);
         }
         finally
         {
             simulation.SetDiscardChannel(previousChannel);
+            simulation.SelectedDiscardSlots = previousSelection;
+            simulation.SelectedDiscardCharacterIndex = previousSelectionOwner;
         }
 
         // 被动钩子：持有者释放主动技后触发（如 chalux 被动6）。
@@ -330,67 +323,11 @@ public sealed class CombatStateMachine
         IReadOnlyList<CombatTargetRef> targets,
         out string error)
     {
-        error = string.Empty;
-        var self = new CombatTargetRef(ECombatSide.Player, characterIndex);
         var spec = skill.TargetOverride;
-        if (spec is null || spec.Scope is ETargetScope.Self)
-        {
-            if (targets.Count == 0 || (targets.Count == 1 && targets[0] == self))
-                return [self];
-
-            error = "该档主动技只能指向自己。";
-            return null;
-        }
-
-        if (spec.Scope is ETargetScope.Team)
-        {
-            if (spec.Side is ETargetSide.Enemy)
-            {
-                error = "敌方队伍账本尚未实装，该档主动技不能使用 Team 目标。";
-                return null;
-            }
-
-            if (targets.Count == 0 || (targets.Count == 1 && targets[0] == CombatTargetRef.PlayerTeam))
-                return [CombatTargetRef.PlayerTeam];
-
-            error = "该档主动技结算到己方队伍账本，只接受队伍目标。";
-            return null;
-        }
-
-        var legal = CollectLegalTargets(simulation, spec.Side, characterIndex);
-        if (legal.Count == 0)
-        {
-            error = "没有合法目标。";
-            return null;
-        }
-
-        if (spec.Scope is ETargetScope.All)
-        {
-            if (targets.Count == 0)
-                return legal;
-            if (targets.Count == legal.Count && targets.All(legal.Contains))
-                return targets;
-
-            error = "该档主动技作用于全体，目标集合与合法目标不一致。";
-            return null;
-        }
-
-        var maxTargets = spec.Scope is ETargetScope.RandomN ? Math.Max(1, spec.TargetCount) : 1;
-        if (targets.Count == 0 || targets.Count > maxTargets || targets.Distinct().Count() != targets.Count)
-        {
-            error = $"该档主动技需要 1 到 {maxTargets} 个互不重复的目标。";
-            return null;
-        }
-
-        if (!targets.All(legal.Contains))
-        {
-            error = "目标不在该档主动技的合法目标范围内。";
-            return null;
-        }
-
-        return targets;
+        return CombatTargeting.ResolvePlayerTargets(simulation, spec?.Side ?? ETargetSide.Self,
+            spec?.Scope ?? ETargetScope.Self, spec?.TargetCount ?? 1, characterIndex, targets,
+            out error);
     }
-
     #endregion
 
     private static HashSet<int> SnapshotAliveEnemyIndices(CombatSimulation simulation)
@@ -456,7 +393,7 @@ public sealed class CombatStateMachine
         CombatSimulation simulation,
         UnconfirmCharacterCommand command)
     {
-        if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
+        if (!CombatCommandValidator.TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
             return new CombatApplyResult(false, error);
         if (character.IsSealed)
             return new CombatApplyResult(false, "角色处于封印，无法取消确认。");
@@ -467,7 +404,7 @@ public sealed class CombatStateMachine
 
     private static CombatApplyResult ApplyCancelQueuedCard(CombatSimulation simulation, CancelQueuedCardCommand command)
     {
-        if (!TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
+        if (!CombatCommandValidator.TryGetCharacter(simulation, command.CharacterIndex, out var character, out var error))
             return new CombatApplyResult(false, error);
         if (character.HasActed)
             return new CombatApplyResult(false, "角色已确认，须先取消确认才能取消标记。");
@@ -491,7 +428,8 @@ public sealed class CombatStateMachine
         ArgumentNullException.ThrowIfNull(simulation);
         ArgumentNullException.ThrowIfNull(entry);
 
-        simulation.CardQueue.TryRemove(candidate => candidate.Sequence == entry.Sequence, out _);
+        if (!simulation.CardQueue.TryRemove(candidate => candidate.Sequence == entry.Sequence, out _))
+            return;
 
         var characters = simulation.PlayerTeam.Characters;
         if (entry.CharacterIndex < 0 || entry.CharacterIndex >= characters.Count)
@@ -530,6 +468,7 @@ public sealed class CombatStateMachine
         simulation.SetChainCounts(chainCounts);
         try
         {
+            simulation.Buffs.FireCardExecutionStart(simulation);
             while (simulation.CardQueue.TryDequeue(out var dequeued) && dequeued is not null)
             {
                 SettleQueuedCard(simulation, dequeued, chainCounts);
@@ -590,18 +529,18 @@ public sealed class CombatStateMachine
         // 槽位 buff（槽位伤害 / 充能）在此手牌结算前触发（打出即触发，含后续空放）。
         FireSlotBuffsForEntry(simulation, entry);
 
-        // 连携定档需要一个角色实例（读 trait.chain_inject_red）。槽位非法时按"无加成"处理，
+        // 连携定档需要角色实例（读取 chainElementInject）。槽位非法时按"无加成"处理，
         // 既不回落到 0 号角色（口径与实际来源不一致），也不索引越界。
         var characters = simulation.PlayerTeam.Characters;
         var sourceIndexValid = entry.CharacterIndex >= 0 && entry.CharacterIndex < characters.Count;
-        // 单卡结算区间：连携条件（ChainTierAtLeast）用"这张牌的属性"取人头数。
-        simulation.SetChainCardElementFlags(card.Element);
-        simulation.SetChainBonus(sourceIndexValid
+        // 单卡结算区间：连携条件（ChainTierAtLeast）用"这张牌的属性"取人头数；
+        // 卡牌类型与打出者供「物理攻击的卡牌攻击次数 +N」（PhysicalCardAttackCount）判定。
+        using var cardScope = simulation.EnterCardContext(card.CardType, entry.CharacterIndex, card.Element, sourceIndexValid
             ? ChainCalculator.BonusForCard(chainCounts, card, characters[entry.CharacterIndex])
             : 0f);
         try
         {
-            var resolvedTargets = ResolveCardTargets(simulation, entry, card);
+            var resolvedTargets = CombatTargetResolver.ResolveCardTargets(simulation, entry, card);
             if (resolvedTargets.Count > 0)
             {
                 var sourceRef = new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex);
@@ -609,7 +548,7 @@ public sealed class CombatStateMachine
                 {
                     if (!simulation.Definitions.Store.TryGetSkill(skillRef.SkillId, out var skill))
                         continue;
-                    ExecuteSkillPayload(simulation, skill, sourceRef, resolvedTargets, skillRef?.Params);
+                    SkillPayloadExecutor.Execute(simulation, skill, sourceRef, resolvedTargets, skillRef?.Params);
                 }
             }
         }
@@ -623,7 +562,6 @@ public sealed class CombatStateMachine
         // 若这里跳过，莱因哈特被动2 这类"第 N 张牌触发"的判定会与出牌统计口径不一致（延迟到下一张牌）。
         // 单卡连携上下文必须撑到本钩子之后：ChainTierAtLeast 读的就是"这张牌所属属性的连携人头数"。
         simulation.Buffs.FireCardSettled(simulation, entry.CharacterIndex);
-        simulation.SetChainCardElementFlags(0);
         simulation.Presentation.Emit(new CardSettleEndedEvent(entry.CharacterIndex, settleSlotIndex, entry.CardId));
     }
 
@@ -732,361 +670,12 @@ public sealed class CombatStateMachine
         }
 
         var source = new CombatTargetRef(ECombatSide.Enemy, enemyIndex);
-        var targets = ResolveEnemySkillTargets(simulation, skill, enemyIndex);
-        ExecuteSkillPayload(simulation, skill, source, targets, skillRef?.Params);
+        var targets = CombatTargetResolver.ResolveEnemySkillTargets(simulation, skill, enemyIndex);
+        SkillPayloadExecutor.Execute(simulation, skill, source, targets, skillRef?.Params);
         // 受击钩子（onDamaged）：一次敌方技能的全部伤害先结算完，再按受击次数补触发。
         simulation.FlushOnDamagedHits();
     }
 
-    private static void ExecuteSkillPayload(
-        CombatSimulation simulation,
-        SkillDto skill,
-        CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets,
-        Dictionary<string, object>? skillParams = null)
-    {
-        if (skill.ActionRefs.Count > 0)
-        {
-            foreach (var actionRef in skill.ActionRefs)
-            {
-                var resolvedActionRef = skillParams is not null
-                    ? MergeActionRefParams(actionRef, skillParams)
-                    : actionRef;
-                simulation.EffectExecutor.ExecuteSkillActionRef(resolvedActionRef, simulation, source, targets);
-            }
-            return;
-        }
-
-        foreach (var effectRef in skill.EffectRefs)
-        {
-            var resolvedEffectRef = skillParams is not null
-                ? MergeEffectRefParams(effectRef, skillParams)
-                : effectRef;
-            simulation.EffectExecutor.ExecuteEffectRef(resolvedEffectRef, simulation, source, targets);
-        }
-    }
-
-    private static IReadOnlyList<CombatTargetRef> ResolveEnemySkillTargets(
-        CombatSimulation simulation,
-        SkillDto skill,
-        int enemyIndex)
-    {
-        var spec = skill.TargetOverride;
-        if (spec is null)
-            return [CombatTargetRef.PlayerTeam];
-
-        return ResolveTargetsFromSpec(simulation, spec, enemyIndex);
-    }
-
-    private static IReadOnlyList<CombatTargetRef> ResolveTargetsFromSpec(
-        CombatSimulation simulation,
-        TargetSpecDto spec,
-        int sourceEnemyIndex)
-    {
-        // 规格 §1.3：scope: Team 对该侧队伍账本一次结算（敌方来源时「Enemy 侧」即玩家队伍）。
-        if (spec.Scope is ETargetScope.Team)
-            return ResolveTeamLedgerTarget(simulation, spec.Side is ETargetSide.Enemy or ETargetSide.Any);
-
-        var legal = CollectLegalTargetsForEnemy(simulation, spec.Side, sourceEnemyIndex);
-        if (legal.Count == 0)
-            return [];
-
-        // 嘲讽（2026-09-25）：指向玩家角色的单体 / 随机挑选只从"嘲讽值最高"的合法目标里取；
-        // 范围（All）与账本（Team）不受影响——嘲讽吸引的是点名攻击。
-        if (spec.Scope is not ETargetScope.All)
-            legal = ApplyTauntPriority(simulation, legal);
-
-        return spec.Scope switch
-        {
-            ETargetScope.All => legal,
-            ETargetScope.RandomN => PickRandomTargets(legal, Math.Max(1, spec.TargetCount), simulation.RetargetRng),
-            _ => legal.Count <= spec.TargetCount || spec.TargetCount <= 0
-                ? [legal[0]]
-                : legal.Take(spec.TargetCount).ToList(),
-        };
-    }
-
-    /// <summary>
-    /// 嘲讽优先（2026-09-25，见战斗规格「嘲讽」）：合法目标里存在嘲讽值 &gt; 0 的角色时，
-    /// 只保留嘲讽值最高的那些（并列时保持原顺序）；没有嘲讽者时原样返回。
-    /// </summary>
-    private static List<CombatTargetRef> ApplyTauntPriority(
-        CombatSimulation simulation,
-        List<CombatTargetRef> legal)
-    {
-        var highest = 0f;
-        foreach (var target in legal)
-        {
-            if (target.Side != ECombatSide.Player || target.Index < 0 ||
-                target.Index >= simulation.PlayerTeam.Characters.Count)
-            {
-                continue;
-            }
-
-            var taunt = simulation.PlayerTeam.Characters[target.Index].Asc.GetCurrentValue(AttributeIds.Taunt);
-            if (taunt > highest)
-                highest = taunt;
-        }
-
-        if (highest <= 0f)
-            return legal;
-
-        var filtered = new List<CombatTargetRef>(legal.Count);
-        foreach (var target in legal)
-        {
-            if (target.Side != ECombatSide.Player || target.Index < 0 ||
-                target.Index >= simulation.PlayerTeam.Characters.Count)
-            {
-                // 非玩家侧目标（如敌方自身指向）不参与嘲讽筛选。
-                filtered.Add(target);
-                continue;
-            }
-
-            if (Math.Abs(simulation.PlayerTeam.Characters[target.Index].Asc.GetCurrentValue(AttributeIds.Taunt) - highest) <= 0.0001f)
-                filtered.Add(target);
-        }
-
-        return filtered.Count > 0 ? filtered : legal;
-    }
-
-    /// <summary>
-    /// 规格 §6.3：<c>scope: RandomN</c> 从合法目标中<b>无放回随机</b>抽取 N 个。
-    /// </summary>
-    /// <remarks>
-    /// 不能退化成 <c>legal.Take(N)</c>：那样「随机」会变成固定取前 N 个（敌方技能永远打 0 号槽），
-    /// 枚举名与规格承诺都与行为不符。
-    /// </remarks>
-    internal static List<CombatTargetRef> PickRandomTargets(
-        List<CombatTargetRef> legal,
-        int count,
-        HostRng rng)
-    {
-        if (count >= legal.Count)
-            return [.. legal];
-
-        // 部分 Fisher-Yates：只需洗出前 count 个，避免整表全量打乱。
-        var pool = legal.ToArray();
-        for (var i = 0; i < count; i++)
-        {
-            var j = rng.NextInt(i, pool.Length);
-            (pool[i], pool[j]) = (pool[j], pool[i]);
-        }
-
-        return [.. pool[..count]];
-    }
-
-    private static List<CombatTargetRef> CollectLegalTargetsForEnemy(
-        CombatSimulation simulation,
-        ETargetSide side,
-        int sourceEnemyIndex)
-    {
-        var legal = new List<CombatTargetRef>();
-        if (side is ETargetSide.Self)
-        {
-            if (sourceEnemyIndex >= 0 && sourceEnemyIndex < simulation.EnemyTeam.Enemies.Count &&
-                simulation.EnemyTeam.Enemies[sourceEnemyIndex].IsAlive)
-            {
-                legal.Add(new CombatTargetRef(ECombatSide.Enemy, sourceEnemyIndex));
-            }
-
-            return legal;
-        }
-
-        if (side is ETargetSide.Ally or ETargetSide.Any)
-        {
-            for (var i = 0; i < simulation.EnemyTeam.Enemies.Count; i++)
-            {
-                if (side == ETargetSide.Ally && i == sourceEnemyIndex)
-                    continue;
-                if (!simulation.EnemyTeam.Enemies[i].IsAlive)
-                    continue;
-                legal.Add(new CombatTargetRef(ECombatSide.Enemy, i));
-            }
-        }
-
-        if (side is ETargetSide.Enemy or ETargetSide.Any && !simulation.PlayerTeam.IsDefeated)
-        {
-            // 规格 §1.3：玩家侧点选的是槽位角色（分槽结算 D2）；要打账本必须显式写 scope: Team。
-            for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
-                legal.Add(new CombatTargetRef(ECombatSide.Player, i));
-        }
-
-        return legal;
-    }
-
-    /// <summary>规格 §1.3：v1 只有玩家侧有队伍账本；指向敌方队伍的 Team 目标无处结算，退化为空放。</summary>
-    private static IReadOnlyList<CombatTargetRef> ResolveTeamLedgerTarget(
-        CombatSimulation simulation,
-        bool isPlayerSide)
-    {
-        if (!isPlayerSide || simulation.PlayerTeam.IsDefeated)
-            return [];
-
-        return [CombatTargetRef.PlayerTeam];
-    }
-
-    /// <summary>
-    /// 规格 §2.4：单体在合法池中按 <see cref="ERetargetPolicy"/> 重选，池空即空放；
-    /// 多目标去掉非法目标后对剩余合法子集结算，子集为空即空放。两者都不回滚已行动。
-    /// </summary>
-    private static IReadOnlyList<CombatTargetRef> ResolveCardTargets(
-        CombatSimulation simulation,
-        QueuedCardEntry entry,
-        CardDto card)
-    {
-        // 规格 §1.3：scope: Team 的卡牌恒结算到队伍账本，标记时点选的槽位不参与。
-        if (card.TargetScope is ETargetScope.Team)
-            return ResolveTeamLedgerTarget(simulation, card.TargetSide is not ETargetSide.Enemy);
-
-        if (entry.Targets.Count == 0)
-            return [];
-
-        var validTargets = entry.Targets
-            .Where(target => IsValidTarget(simulation, card, entry.CharacterIndex, target))
-            .ToList();
-        if (validTargets.Count == entry.Targets.Count)
-            return validTargets;
-        if (!IsSingleTargetCard(card))
-            return validTargets;
-        if (validTargets.Count > 0)
-            return [validTargets[0]];
-
-        var retargeted = TryRetargetSingleTarget(simulation, card, entry.CharacterIndex);
-        return retargeted.HasValue ? [retargeted.Value] : [];
-    }
-
-    private static EffectRefDto MergeEffectRefParams(EffectRefDto effectRef, Dictionary<string, object>? skillParams)
-    {
-        if (skillParams is null || skillParams.Count == 0)
-            return effectRef;
-        if (effectRef.Params is null || effectRef.Params.Count == 0)
-        {
-            return new EffectRefDto
-            {
-                EffectId = effectRef.EffectId,
-                Params = new Dictionary<string, object>(skillParams, StringComparer.Ordinal),
-            };
-        }
-
-        var merged = new Dictionary<string, object>(effectRef.Params, StringComparer.Ordinal);
-        foreach (var (key, value) in skillParams)
-            merged[key] = value;
-        return new EffectRefDto
-        {
-            EffectId = effectRef.EffectId,
-            Params = merged,
-        };
-    }
-
-    private static SkillActionRefDto MergeActionRefParams(SkillActionRefDto actionRef, Dictionary<string, object>? skillParams)
-    {
-        if (skillParams is null || skillParams.Count == 0)
-            return actionRef;
-        if (actionRef.Params is null || actionRef.Params.Count == 0)
-        {
-            return new SkillActionRefDto
-            {
-                ActionId = actionRef.ActionId,
-                Params = new Dictionary<string, object>(skillParams, StringComparer.Ordinal),
-            };
-        }
-
-        var merged = new Dictionary<string, object>(actionRef.Params, StringComparer.Ordinal);
-        foreach (var (key, value) in skillParams)
-            merged[key] = value;
-        return new SkillActionRefDto
-        {
-            ActionId = actionRef.ActionId,
-            Params = merged,
-        };
-    }
-
-    private static bool TryGetCharacter(
-        CombatSimulation simulation,
-        int characterIndex,
-        out CharacterBattleInstance character,
-        out string error)
-    {
-        var characters = simulation.PlayerTeam.Characters;
-        if (characterIndex < 0 || characterIndex >= characters.Count)
-        {
-            character = null!;
-            error = "角色索引无效。";
-            return false;
-        }
-
-        character = characters[characterIndex];
-        error = string.Empty;
-        return true;
-    }
-
-    private static bool IsSingleTargetCard(CardDto card) =>
-        card.TargetScope is ETargetScope.Single or ETargetScope.Self || card.TargetCount <= 1;
-
-    /// <summary>规格 §2.4：缺省与 <see cref="ERetargetPolicy.RandomLegal"/> 都走 Run RNG 在合法池均匀取一。</summary>
-    private static CombatTargetRef? TryRetargetSingleTarget(CombatSimulation simulation, CardDto card, int sourceCharacterIndex)
-    {
-        if (card.RetargetPolicy == ERetargetPolicy.Skip)
-            return null;
-
-        var legal = CollectLegalTargets(simulation, card.TargetSide, sourceCharacterIndex);
-        if (legal.Count == 0)
-            return null;
-
-        return card.RetargetPolicy switch
-        {
-            ERetargetPolicy.HighestHp => legal.MaxBy(target => GetTargetHp(simulation, target)),
-            ERetargetPolicy.LowestHp => legal.MinBy(target => GetTargetHp(simulation, target)),
-            _ => legal[simulation.RetargetRng.NextInt(0, legal.Count)],
-        };
-    }
-
-    /// <summary>合法目标口径与界面共用一份（<see cref="CombatTargeting.CollectLegalTargets"/>）。</summary>
-    private static List<CombatTargetRef> CollectLegalTargets(
-        CombatSimulation simulation,
-        ETargetSide side,
-        int sourceCharacterIndex) =>
-        CombatTargeting.CollectLegalTargets(simulation, side, sourceCharacterIndex);
-
-    private static bool IsValidTarget(
-        CombatSimulation simulation,
-        CardDto card,
-        int sourceCharacterIndex,
-        CombatTargetRef target)
-    {
-        return card.TargetSide switch
-        {
-            ETargetSide.Self => target.Side == ECombatSide.Player && target.Index == sourceCharacterIndex,
-            ETargetSide.Ally => target.Side == ECombatSide.Player &&
-                target.Index >= 0 &&
-                target.Index < simulation.PlayerTeam.Characters.Count,
-            ETargetSide.Enemy => target.Side == ECombatSide.Enemy &&
-                target.Index >= 0 &&
-                target.Index < simulation.EnemyTeam.Enemies.Count &&
-                simulation.EnemyTeam.Enemies[target.Index].IsAlive,
-            ETargetSide.Any => IsValidAnyTarget(simulation, target),
-            _ => false,
-        };
-    }
-
-    private static bool IsValidAnyTarget(CombatSimulation simulation, CombatTargetRef target)
-    {
-        if (target.Side == ECombatSide.Player)
-        {
-            return target.Index >= 0 &&
-                target.Index < simulation.PlayerTeam.Characters.Count;
-        }
-
-        return target.Side == ECombatSide.Enemy &&
-            target.Index >= 0 &&
-            target.Index < simulation.EnemyTeam.Enemies.Count &&
-            simulation.EnemyTeam.Enemies[target.Index].IsAlive;
-    }
-
-    private static int GetTargetHp(CombatSimulation simulation, CombatTargetRef target)
-    {
-        if (target.Side == ECombatSide.Enemy)
-            return simulation.EnemyTeam.Enemies[target.Index].CurrentHp;
-        return simulation.PlayerTeam.SharedHp;
-    }
+    internal static List<CombatTargetRef> PickRandomTargets(List<CombatTargetRef> legal, int count, HostRng rng) =>
+        CombatTargetResolver.PickRandomTargets(legal, count, rng);
 }

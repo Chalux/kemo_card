@@ -1,71 +1,24 @@
+using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
+using KemoCard.Mod.Combat.Buffs;
 
 namespace KemoCard.Mod.Combat.Runtime;
 
-public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
+public sealed class TeamDomainManager
 {
     private readonly CombatSimulation _sim;
 
     /// <summary>带时长的玩家领域剩余回合数（<c>null</c> = 不自动收起）；回合结束时递减，归零收起。</summary>
     private int? _playerDomainTurnsLeft;
+    private readonly Dictionary<Guid, List<OwnedDomainBuff>> _domainBuffs = [];
 
     public TeamDomainManager(CombatSimulation simulation)
     {
         ArgumentNullException.ThrowIfNull(simulation);
         _sim = simulation;
 
-        // 域 GE 挂在队伍 ASC 上，其 Hooks 需要能执行技能动作。生产环境此前从未给任何 ASC
-        // 设置 HookDispatcher，导致内容里声明的 hooks.turnStart / turnEnd / onRemove 静默失效。
-        // 说明：目前只有队伍 ASC 会被 FireTurnStartHooks / FireTurnEndHooks 驱动；
-        // 角色与敌人 ASC 的 GameplayEffect 回合管线尚未接入，属未完成功能，不在本处覆盖范围。
-        _sim.PlayerTeam.Asc.HookDispatcher = this;
-        _sim.EnemyTeam.Asc.HookDispatcher = this;
     }
-
-    #region IGameplayEffectHookDispatcher
-
-    public void DispatchTurnStart(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions) =>
-        DispatchHooks(effect, actions);
-
-    public void DispatchTurnEnd(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions) =>
-        DispatchHooks(effect, actions);
-
-    public void DispatchRemove(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions) =>
-        DispatchHooks(effect, actions);
-
-    /// <summary>
-    /// 执行 GE 声明的技能动作链，目标固定为队伍账本。
-    /// </summary>
-    /// <remarks>
-    /// 规格 §1.3：v1 只有玩家侧存在队伍账本目标（<see cref="CombatTargetRef.PlayerTeam"/>），
-    /// 敌方队伍账本尚未实装，因此敌方域 GE 的钩子退化为空放（与 <c>ResolveTeamLedgerTarget</c> 的既有语义一致）。
-    /// </remarks>
-    private void DispatchHooks(ActiveGameplayEffect effect, IReadOnlyList<SkillActionRefDto> actions)
-    {
-        ArgumentNullException.ThrowIfNull(effect);
-        ArgumentNullException.ThrowIfNull(actions);
-        if (actions.Count == 0)
-        {
-            return;
-        }
-
-        if (!ReferenceEquals(effect.Spec.TargetAsc, _sim.PlayerTeam.Asc))
-        {
-            return;
-        }
-
-        foreach (var actionRef in actions)
-        {
-            _sim.EffectExecutor.ExecuteSkillActionRef(
-                actionRef,
-                _sim,
-                CombatTargetRef.PlayerTeam,
-                [CombatTargetRef.PlayerTeam]);
-        }
-    }
-
-    #endregion
 
     public bool TrySetPlayerDomain(string gameplayEffectId, IReadOnlyDictionary<string, object>? parameters = null)
         => TrySetPlayerDomain(gameplayEffectId, parameters, turns: null);
@@ -79,30 +32,27 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
         IReadOnlyDictionary<string, object>? parameters,
         int? turns)
     {
-        var ok = TrySetDomain(_sim.PlayerTeam, gameplayEffectId, parameters);
-        _playerDomainTurnsLeft = ok && turns is > 0 ? turns : null;
-        return ok;
+        var success = TrySetDomain(_sim.PlayerTeam, gameplayEffectId, parameters, turns);
+        RefreshDomainBuffs();
+        return success;
     }
 
     public bool TrySetEnemyDomain(string gameplayEffectId, IReadOnlyDictionary<string, object>? parameters = null)
-        => TrySetDomain(_sim.EnemyTeam, gameplayEffectId, parameters);
-
-    public void FireTurnStartHooks()
     {
-        _sim.PlayerTeam.Asc.OnTurnStart();
-        _sim.EnemyTeam.Asc.OnTurnStart();
+        var success = TrySetDomain(_sim.EnemyTeam, gameplayEffectId, parameters);
+        RefreshDomainBuffs();
+        return success;
     }
+
+    public void FireTurnStartHooks() => _sim.EffectLifecycle.TurnStart();
 
     public void FireTurnEndHooks()
     {
-        if (_sim.PlayerTeam.ActiveDomain is not null)
-            _sim.PlayerTeam.Asc.OnTurnEnd();
-        if (_sim.EnemyTeam.ActiveDomain is not null)
-            _sim.EnemyTeam.Asc.OnTurnEnd();
-
-        TickPlayerDomainDuration();
+        var handle = _sim.PlayerTeam.ActiveDomain?.ActiveEffectHandle;
+        _sim.EffectLifecycle.TurnEnd();
+        if (_sim.PlayerTeam.ActiveDomain?.ActiveEffectHandle == handle)
+            TickPlayerDomainDuration();
     }
-
     /// <summary>
     /// 带时长的领域在回合结束时递减，归零则收起（移除 GE + 清空领域槽）。
     /// 无时长的领域（<c>turns</c> 缺省）不受影响，直到被新领域顶替。
@@ -127,9 +77,10 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
         if (domain is null)
             return;
 
-        _sim.PlayerTeam.Asc.RemoveActiveEffect(domain.ActiveEffectHandle);
         _sim.PlayerTeam.ActiveDomain = null;
         _playerDomainTurnsLeft = null;
+        RemoveDomainBuffs(domain.ActiveEffectHandle);
+        _sim.PlayerTeam.Asc.RemoveActiveEffect(domain.ActiveEffectHandle);
     }
 
     #region domain replacement
@@ -137,12 +88,23 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
     private bool TrySetDomain(
         PlayerTeamState team,
         string gameplayEffectId,
-        IReadOnlyDictionary<string, object>? parameters)
+        IReadOnlyDictionary<string, object>? parameters,
+        int? turns)
     {
         return TrySetDomain(
             team.Asc,
             team.ActiveDomain,
-            newDomain => team.ActiveDomain = newDomain,
+            newDomain =>
+            {
+                var previous = team.ActiveDomain;
+                team.ActiveDomain = newDomain;
+                _playerDomainTurnsLeft = newDomain is not null && turns is > 0 ? turns : null;
+                if (previous is not null && previous.ActiveEffectHandle != newDomain?.ActiveEffectHandle)
+                {
+                    RemoveDomainBuffs(previous.ActiveEffectHandle);
+                    team.Asc.RemoveActiveEffect(previous.ActiveEffectHandle);
+                }
+            },
             gameplayEffectId,
             parameters);
     }
@@ -155,7 +117,16 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
         return TrySetDomain(
             team.Asc,
             team.ActiveDomain,
-            newDomain => team.ActiveDomain = newDomain,
+            newDomain =>
+            {
+                var previous = team.ActiveDomain;
+                team.ActiveDomain = newDomain;
+                if (previous is not null && previous.ActiveEffectHandle != newDomain?.ActiveEffectHandle)
+                {
+                    RemoveDomainBuffs(previous.ActiveEffectHandle);
+                    team.Asc.RemoveActiveEffect(previous.ActiveEffectHandle);
+                }
+            },
             gameplayEffectId,
             parameters);
     }
@@ -173,21 +144,22 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
             return false;
 
         if (oldDomain is not null)
-            teamAsc.RemoveActiveEffect(oldDomain.ActiveEffectHandle);
+            setDomain(null);
 
         var result = teamAsc.ApplyGameplayEffect(
             new GameplayEffectSpec(
                 BuildInfiniteDomainEffect(gameplayEffectDef),
                 sourceAsc: teamAsc,
                 targetAsc: teamAsc,
-                setByCaller: BuildSetByCaller(parameters)));
+                setByCaller: ContentParameters.ToSetByCaller(parameters),
+                activeEffectRegistered: active => setDomain(new CombatDomain(gameplayEffectId, active.Handle,
+                    parameters is null ? null : ContentParameters.Merge(null, parameters)))));
         if (!result.Success || result.Handle is null)
         {
             setDomain(null);
             return false;
         }
 
-        setDomain(new CombatDomain(gameplayEffectId, result.Handle.Value, parameters));
         return true;
     }
 
@@ -211,55 +183,70 @@ public sealed class TeamDomainManager : IGameplayEffectHookDispatcher
             ImmunityTags = [.. source.ImmunityTags],
             RemoveEffectsWithTags = [.. source.RemoveEffectsWithTags],
             Hooks = source.Hooks,
+            DomainBuffRefs = [.. source.DomainBuffRefs],
         };
     }
 
-    private static Dictionary<string, float>? BuildSetByCaller(IReadOnlyDictionary<string, object>? parameters)
+    #region domain owned buffs
+
+    /// <summary>领域 Buff 覆盖双方；新敌人入场后补齐，原有实例不重复投放。</summary>
+    internal void RefreshDomainBuffs()
     {
-        if (parameters is null || parameters.Count == 0)
-            return null;
-
-        var result = new Dictionary<string, float>(StringComparer.Ordinal);
-        foreach (var (key, value) in parameters)
+        using var scope = _sim.EffectBudget.TryEnter();
+        if (scope is null)
+            return;
+        foreach (var domain in new[] { _sim.PlayerTeam.ActiveDomain, _sim.EnemyTeam.ActiveDomain })
         {
-            if (TryConvertFloat(value, out var number))
-                result[key] = number;
-        }
-
-        return result.Count == 0 ? null : result;
-    }
-
-    private static bool TryConvertFloat(object? value, out float number)
-    {
-        number = 0f;
-        if (value is null)
-            return false;
-
-        switch (value)
-        {
-            case int intValue:
-                number = intValue;
-                return true;
-            case long longValue:
-                number = longValue;
-                return true;
-            case short shortValue:
-                number = shortValue;
-                return true;
-            case byte byteValue:
-                number = byteValue;
-                return true;
-            case float floatValue:
-                number = floatValue;
-                return true;
-            case double doubleValue:
-                number = (float)doubleValue;
-                return true;
-            case decimal decimalValue:
-                number = (float)decimalValue;
-                return true;
-            default:
-                return float.TryParse(value.ToString(), out number);
+            if (domain is null || !_sim.Definitions.Store.TryGetGameplayEffect(domain.GameplayEffectId, out var def) || def.DomainBuffRefs.Count == 0)
+                continue;
+            if (!_domainBuffs.TryGetValue(domain.ActiveEffectHandle, out var owned))
+                _domainBuffs[domain.ActiveEffectHandle] = owned = [];
+            foreach (var (holder, container) in EnumerateCombatants())
+            {
+                if (!IsDomainActive(domain.ActiveEffectHandle))
+                    break;
+                foreach (var reference in def.DomainBuffRefs)
+                {
+                    if (!IsDomainActive(domain.ActiveEffectHandle))
+                        break;
+                    if (owned.Any(entry => ReferenceEquals(entry.Container, container) && entry.Instance.Def.Id == reference.BuffId && container.All.Contains(entry.Instance)))
+                        continue;
+                    var instance = _sim.Buffs.AddDomainBuff(_sim, holder, reference);
+                    if (instance is null)
+                        continue;
+                    // onApply 可顶替领域：撤销刚创建的实例，避免旧领域留下孤立加成。
+                    if (!IsDomainActive(domain.ActiveEffectHandle))
+                    {
+                        _sim.Buffs.RemoveDomainBuff(_sim, holder, container, instance);
+                        break;
+                    }
+                    owned.Add(new(holder, container, instance));
+                }
+            }
         }
     }
+
+    private bool IsDomainActive(Guid handle) =>
+        _sim.PlayerTeam.ActiveDomain?.ActiveEffectHandle == handle || _sim.EnemyTeam.ActiveDomain?.ActiveEffectHandle == handle;
+
+    private IEnumerable<(CombatTargetRef Holder, BuffContainer Container)> EnumerateCombatants()
+    {
+        for (var i = 0; i < _sim.PlayerTeam.Characters.Count; i++)
+            yield return (new(ECombatSide.Player, i), _sim.PlayerTeam.Characters[i].Buffs);
+        for (var i = 0; i < _sim.EnemyTeam.Enemies.Count; i++)
+            if (_sim.EnemyTeam.Enemies[i].IsAlive)
+                yield return (new(ECombatSide.Enemy, i), _sim.EnemyTeam.Enemies[i].Buffs);
+    }
+
+    private void RemoveDomainBuffs(Guid handle)
+    {
+        if (!_domainBuffs.Remove(handle, out var owned))
+            return;
+        foreach (var entry in owned)
+            _sim.Buffs.RemoveDomainBuff(_sim, entry.Holder, entry.Container, entry.Instance);
+    }
+
+    private sealed record OwnedDomainBuff(CombatTargetRef Holder, BuffContainer Container, BuffInstance Instance);
+
+    #endregion
 }

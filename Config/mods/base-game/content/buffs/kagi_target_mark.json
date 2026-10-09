@@ -1,0 +1,29 @@
+{
+  "displayNameId": "buff.kagi_target_mark.name",
+  "descId": "buff.kagi_target_mark.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active",
+    "debuff.marked"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "Taunt",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 5
+      }
+    },
+    {
+      "attributeId": "DamageTakenScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0.5
+      }
+    }
+  ]
+}

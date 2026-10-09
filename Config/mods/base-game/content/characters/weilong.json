@@ -1,0 +1,49 @@
+{
+  "displayNameId": "char.weilong.name",
+  "element": "Green",
+  "role": "Shield",
+  "race": [
+    "Machine",
+    "Dragon"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "weilong_dedicated_shield",
+      "cooldown": 6
+    },
+    {
+      "skillId": "weilong_charged_shield",
+      "cooldown": 6
+    }
+  ],
+  "cards": [
+    "weilong_dragon_armor",
+    "weilong_dragon_fang",
+    "weilong_auxiliary_assault",
+    "weilong_core_recharge"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "buffId": "weilong_passive_p1",
+      "requiredPotential": 0
+    },
+    {
+      "buffId": "weilong_passive_p2",
+      "requiredPotential": 10
+    },
+    {
+      "buffId": "weilong_passive_p3",
+      "requiredPotential": 30
+    },
+    {
+      "buffId": "weilong_passive_p4",
+      "requiredPotential": 50
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

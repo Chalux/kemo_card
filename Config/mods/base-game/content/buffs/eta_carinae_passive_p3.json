@@ -1,0 +1,134 @@
+{
+  "displayNameId": "buff.eta_carinae_passive_p3.name",
+  "descId": "buff.eta_carinae_passive_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Green"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Astronomy"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Calamity"
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "self": true
+          },
+          "turnInterval": 8
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Green"
+                ]
+              }
+            }
+          },
+          "turnInterval": 8
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Astronomy"
+                ]
+              }
+            }
+          },
+          "turnInterval": 8
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Calamity"
+                ]
+              }
+            }
+          },
+          "turnInterval": 8
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.alpha_centauri_binary_resonance.name",
+  "descId": "skill.alpha_centauri_binary_resonance.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "tags": [
+    "support"
+  ],
+  "actionRefs": [
+    {
+      "actionId": "alpha_centauri_apply_resonance"
+    }
+  ]
+}

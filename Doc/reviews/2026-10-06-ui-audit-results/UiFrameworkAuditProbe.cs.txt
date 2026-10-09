@@ -1,0 +1,262 @@
+using Godot;
+using KemoCard.Frame.UI.Base;
+using KemoCard.Frame.UI.Def;
+
+namespace KemoCard.Frame.UI;
+
+// Temporary review harness. Archived as text after the headless run.
+public partial class UiFrameworkAuditProbe : Node
+{
+    private readonly UIRuntimeRegistry _registry = new();
+    private UIManager _manager = null!;
+    private int _checks;
+    private int _failures;
+
+    public override void _Ready() => _ = RunAsync();
+
+    private async Task RunAsync()
+    {
+        try
+        {
+            var stage = new Control();
+            AddChild(stage);
+            _manager = new UIManager();
+            AddChild(_manager);
+            _manager.Init(new UIManagerInitOpt
+            {
+                Registry = _registry,
+                StageRoot = stage,
+                Layers = [EUILayer.Win, EUILayer.Dlg, EUILayer.Pop],
+                TopLayers = [EUILayer.Debug],
+                KnownOwnerModIds = ["audit"],
+            });
+
+            CheckSameLayerVisibility();
+            CheckTopLayerQuery();
+            await CheckMaskCacheAsync();
+            CheckStalePreloadFailure();
+            CheckCloseDuringCachedPreload();
+            CheckThrowingOpenCallback();
+            CheckThrowingFailCallback();
+            CheckExitCleanup();
+            CheckOwnerUnregisterQueue();
+            GD.Print($"UI_AUDIT_SUMMARY checks={_checks} failures={_failures}");
+            GetTree().Quit();
+        }
+        catch (Exception ex)
+        {
+            GD.PrintErr($"UI_AUDIT_HARNESS_ERROR {ex}");
+            GetTree().Quit(1);
+        }
+    }
+
+    private (UIVo Vo, UiAuditWin Win) Seed(string id, EUIType type = EUIType.Win)
+    {
+        _registry.Register(new UIRuntimeEntry
+        {
+            Id = id, OwnerModId = "audit", Dir = "unused-audit-scene", Type = type,
+            BaseOpenOpt = DefaultUIOpenOpt.ForType(type),
+        });
+        var vo = _manager.VoRegistry.GetOrCreate(id, type, "audit", null);
+        var win = new UiAuditWin { AuditId = id, UIVo = vo };
+        vo.Runtime.UI = win;
+        vo.Lifecycle.OpenTime = 1;
+        vo.Lifecycle.DestroyTime = -1;
+        vo.StateMachine.SetInitialState(EUIState.Cache);
+        return (vo, win);
+    }
+
+    private void Check(string name, bool success, string observed)
+    {
+        _checks++;
+        if (!success) _failures++;
+        GD.Print($"UI_AUDIT {(success ? "PASS" : "FAIL")} {name}: {observed}");
+    }
+
+    private void Clean(UIVo vo)
+    {
+        var mask = vo.Runtime.Mask;
+        vo.Runtime.Mask = null;
+        vo.Runtime.Layer?.RemoveUI(vo.Id);
+        if (GodotObject.IsInstanceValid(mask) && !mask!.IsQueuedForDeletion()) mask.QueueFree();
+        if (GodotObject.IsInstanceValid(vo.Runtime.UI) && !vo.Runtime.UI!.IsQueuedForDeletion())
+            vo.Runtime.UI.QueueFree();
+        vo.OpenTaskSource?.TrySetResult(null);
+        _manager.VoRegistry.Remove(vo.Id);
+        _manager.OpenCoordinator.ResetCurrentOpening(vo);
+        _manager.OpenCoordinator.RemoveFromQueue(vo);
+        _manager.NavStack.Remove(vo.Id);
+        _manager.OpenCoordinator.OpenNext();
+    }
+
+    private void CheckSameLayerVisibility()
+    {
+        var lower = Seed("audit.lower");
+        var upper = Seed("audit.upper");
+        _ = _manager.OpenAsync(lower.Vo.Id);
+        Check("window-keeps-type-defaults", lower.Vo.OpenOpt.EffectiveHideBelow && lower.Vo.OpenOpt.EffectiveAlign == EUIAlign.Full,
+            $"layer={lower.Vo.OpenOpt.Layer}, HideBelow={lower.Vo.OpenOpt.EffectiveHideBelow}, Align={lower.Vo.OpenOpt.EffectiveAlign}, inNavStack={_manager.NavStack.Contains(lower.Vo.Id)}");
+        _ = _manager.OpenAsync(upper.Vo.Id, openOpt: new UIOpenOpt { HideBelow = true });
+        Check("same-layer-hide-below", !lower.Win.Visible,
+            $"hideFlag={lower.Vo.Runtime.HideBool.Value}, lower.Visible={lower.Win.Visible}");
+        _manager.Close(upper.Vo.Id);
+        Check("restore-lower-window-control", lower.Win.Visible,
+            $"lower.Visible={lower.Win.Visible}");
+        Clean(lower.Vo);
+        Clean(upper.Vo);
+    }
+
+    private async Task CheckMaskCacheAsync()
+    {
+        var seeded = Seed("audit.mask-cache");
+        var mask = new UiAuditMask();
+        seeded.Vo.Runtime.Mask = mask;
+        _ = _manager.OpenAsync(seeded.Vo.Id);
+        _manager.Close(seeded.Vo.Id);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        Check("cache-retains-valid-mask", GodotObject.IsInstanceValid(mask),
+            $"state={seeded.Vo.StateMachine.CurrentState}, validUI={GodotObject.IsInstanceValid(seeded.Win)}, validMask={GodotObject.IsInstanceValid(mask)}");
+        Exception? error = null;
+        Task<UIVo?>? reopened = null;
+        try { reopened = _manager.OpenAsync(seeded.Vo.Id); }
+        catch (Exception ex) { error = ex; }
+        Check("masked-cache-reopens", error is null && reopened?.IsCompletedSuccessfully == true,
+            $"exception={error?.GetType().Name ?? "none"}, taskCompleted={reopened?.IsCompleted ?? false}");
+        Clean(seeded.Vo);
+    }
+
+    private void CheckTopLayerQuery()
+    {
+        var lower = Seed("audit.top-query-lower");
+        var debug = Seed("audit.top-query-debug", EUIType.Dlg);
+        _ = _manager.OpenAsync(lower.Vo.Id);
+        _ = _manager.OpenAsync(debug.Vo.Id, openOpt: new UIOpenOpt { Layer = EUILayer.Debug });
+        var lowerIsTop = _manager.IsUITop(lower.Vo.Id);
+        var debugIsTop = _manager.IsUITop(debug.Vo.Id);
+        Check("top-query-includes-top-layers", !lowerIsTop && debugIsTop,
+            $"lowerIsTop={lowerIsTop}, debugIsTop={debugIsTop}, debugNoCover={debug.Vo.OpenOpt.EffectiveNoCover}");
+        Clean(lower.Vo);
+        Clean(debug.Vo);
+    }
+
+    private void CheckStalePreloadFailure()
+    {
+        var seeded = Seed("audit.stale-failure");
+        seeded.Win.DelayPreload = true;
+        _ = _manager.OpenAsync(seeded.Vo.Id);
+        var latest = _manager.OpenAsync(seeded.Vo.Id);
+        seeded.Win.Completions[1].Done();
+        seeded.Win.Completions[0].Fail();
+        Check("ignore-stale-preload-failure", _manager.GetUIVo(seeded.Vo.Id) == seeded.Vo && seeded.Vo.IsOpen,
+            $"latestTaskCompleted={latest.IsCompleted}, state={seeded.Vo.StateMachine.CurrentState}, registered={_manager.GetUIVo(seeded.Vo.Id) is not null}");
+        Clean(seeded.Vo);
+    }
+
+    private void CheckCloseDuringCachedPreload()
+    {
+        var seeded = Seed("audit.close-preload");
+        _ = _manager.OpenAsync(seeded.Vo.Id);
+        _manager.Close(seeded.Vo.Id);
+        seeded.Win.DelayPreload = true;
+        var pending = _manager.OpenAsync(seeded.Vo.Id);
+        _manager.Close(seeded.Vo.Id);
+        Check("close-settles-cached-preload-task", pending.IsCompleted,
+            $"state={seeded.Vo.StateMachine.CurrentState}, pending.IsCompleted={pending.IsCompleted}");
+        Clean(seeded.Vo);
+    }
+
+    private void CheckThrowingOpenCallback()
+    {
+        var seeded = Seed("audit.open-callback");
+        seeded.Win.DelayPreload = true;
+        var pending = _manager.OpenAsync(seeded.Vo.Id, openOpt: new UIOpenOpt
+        {
+            OnOpen = _ => throw new InvalidOperationException("audit callback failure"),
+        });
+        try { seeded.Win.Completions[0].Done(); }
+        catch (InvalidOperationException) { }
+        Check("throwing-open-callback-settles-task", pending.IsCompleted,
+            $"state={seeded.Vo.StateMachine.CurrentState}, pending.IsCompleted={pending.IsCompleted}");
+        Clean(seeded.Vo);
+    }
+
+    private void CheckThrowingFailCallback()
+    {
+        var seeded = Seed("audit.fail-callback");
+        seeded.Win.DelayPreload = true;
+        var pending = _manager.OpenAsync(seeded.Vo.Id, openOpt: new UIOpenOpt
+        {
+            OnFail = () => throw new InvalidOperationException("audit callback failure"),
+        });
+        try { seeded.Win.Completions[0].Fail(); }
+        catch (InvalidOperationException) { }
+        Check("throwing-fail-callback-settles-task", pending.IsCompleted,
+            $"state={seeded.Vo.StateMachine.CurrentState}, pending.IsCompleted={pending.IsCompleted}");
+        Clean(seeded.Vo);
+    }
+
+    private void CheckExitCleanup()
+    {
+        var seeded = Seed("audit.exit-cleanup");
+        _ = _manager.OpenAsync(seeded.Vo.Id);
+        seeded.Win.AddProbeBinding();
+        seeded.Win.ThrowOnExit = true;
+        seeded.Win.GetParent().RemoveChild(seeded.Win);
+        Check("exit-hook-failure-does-not-skip-unbind", seeded.Win.BindingCount == 0,
+            $"BindingCount={seeded.Win.BindingCount}");
+        seeded.Win.ThrowOnExit = false;
+        ((IUILifecycleInvoker)seeded.Win).InvokeResetBindings();
+        Clean(seeded.Vo);
+    }
+
+    private void CheckOwnerUnregisterQueue()
+    {
+        var old = Seed("audit.unregister-current");
+        old.Win.DelayPreload = true;
+        _ = _manager.OpenAsync(old.Vo.Id);
+        var queued = Seed("audit.queued-next");
+        // The second owner isolates the queued UI from the owner being removed.
+        _registry.Register(new UIRuntimeEntry
+        {
+            Id = "audit.other-owner", OwnerModId = "other", Dir = "unused-audit-scene", Type = EUIType.Win,
+            BaseOpenOpt = DefaultUIOpenOpt.ForType(EUIType.Win),
+        });
+        var nextVo = _manager.VoRegistry.GetOrCreate("audit.other-owner", EUIType.Win, "other", null);
+        var nextWin = new UiAuditWin { AuditId = nextVo.Id, UIVo = nextVo };
+        nextVo.Runtime.UI = nextWin;
+        nextVo.StateMachine.SetInitialState(EUIState.Cache);
+        _ = _manager.OpenAsync(nextVo.Id);
+        _manager.UnregisterOwner("audit");
+        Check("unregister-advances-opening-queue", nextVo.IsOpen,
+            $"current={_manager.OpenCoordinator.CurrentOpening?.Id}, currentState={_manager.OpenCoordinator.CurrentOpening?.StateMachine.CurrentState}, queuedState={nextVo.StateMachine.CurrentState}");
+        Clean(old.Vo);
+        Clean(queued.Vo);
+        Clean(nextVo);
+    }
+}
+
+public partial class UiAuditWin : BaseWin
+{
+    public string AuditId { get; set; } = "audit";
+    public override string UIId => AuditId;
+    public override string UIDir => "unused-audit-scene";
+    public bool DelayPreload { get; set; }
+    public bool ThrowOnExit { get; set; }
+    public int BindingCount => Binder.Count;
+    public List<(Action Done, Action Fail)> Completions { get; } = [];
+    public void AddProbeBinding() => Binder.Add(() => { });
+    protected override void OnPreLoad(Action done, Action fail)
+    {
+        if (DelayPreload) Completions.Add((done, fail));
+        else done();
+    }
+    protected override void OnOpen() { }
+    protected override void UpdateView() { }
+    protected override void OnExitTree()
+    {
+        if (ThrowOnExit) throw new InvalidOperationException("audit exit failure");
+    }
+}
+
+public partial class UiAuditMask : BaseMask { }

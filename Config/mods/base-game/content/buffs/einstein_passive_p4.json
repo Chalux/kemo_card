@@ -1,0 +1,17 @@
+{
+  "descId": "buff.einstein_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Yellow"] } }
+  ],
+  "chainElementInject": [
+    { "from": ["Yellow"], "add": ["Red", "Blue", "Green"] }
+  ],
+  "modifiers": [
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } },
+    { "attributeId": "HealPower", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 6 } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"]
+}

@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.perseus_mirror_weakness.name",
+  "descId": "buff.perseus_mirror_weakness.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "modifiers": [
+    {
+      "attributeId": "MagicDefense",
+      "magnitude": {
+        "scalar": -8,
+        "kind": "Scalar"
+      },
+      "operation": "Add"
+    }
+  ],
+  "tags": [
+    "buff.debuff"
+  ]
+}

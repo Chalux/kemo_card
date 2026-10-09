@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "alpha_centauri_resonance",
+    "hookTargets": "allies"
+  }
+}

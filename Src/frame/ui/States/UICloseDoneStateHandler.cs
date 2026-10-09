@@ -28,17 +28,15 @@ public sealed class UICloseDoneStateHandler : IStateHandler<EUIState, IUIStateCo
         if (manager == null) return;
 
         vo.Lifecycle.CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        ((IUILifecycleInvoker)vo.Runtime.UI!).InvokeClose();
-        ((IUILifecycleInvoker?)vo.Runtime.Mask)?.InvokeMaskUIClose();
+        UIManager.InvokeCallback(() => ((IUILifecycleInvoker)vo.Runtime.UI!).InvokeClose(), vo.Id, "关闭回调");
+        UIManager.InvokeCallback(() => ((IUILifecycleInvoker?)vo.Runtime.Mask)?.InvokeMaskUIClose(), vo.Id, "遮罩界面关闭回调");
 
         if (vo.StateMachine.CurrentState != EUIState.CloseDone)
         {
             return;
         }
 
-        UILayer? layer = manager.LayerManager.GetLayer(vo.OpenOpt.Layer ?? EUILayer.Dlg);
-        layer?.RemoveUI(vo.Id);
-        vo.Runtime.UI!.GetParent()?.RemoveChild(vo.Runtime.UI);
+        vo.Runtime.RemoveFromNode();
 
         if (vo.OpenOpt.EffectiveCacheTime == -1)
         {

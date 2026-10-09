@@ -1,0 +1,11 @@
+{
+  "displayNameId": "buff.cupid_passive_p1.name",
+  "descId": "buff.cupid_passive_p1.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable",
+    "trait.immune_slot_storm"
+  ]
+}

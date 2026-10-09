@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.anubis_underworld_fang.name",
+  "element": 1,
+  "role": "CardPlayer",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "anubis_underworld_fang"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "PhysicalAttack": 2,
+      "MaxHealth": 20
+    }
+  },
+  "priority": 6,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -1,0 +1,73 @@
+using KemoCard.Frame.UI;
+using KemoCard.Frame.UI.Def;
+using KemoCard.Frame.UI.States;
+using NUnit.Framework;
+
+namespace KemoCard.Ui.Tests;
+
+// Temporary audit probes. Failures represent review findings; archive as text after execution.
+[TestFixture]
+public sealed class UiFrameworkAuditProbeTests
+{
+    [Test]
+    public void Same_owner_replacement_without_parent_removes_old_route()
+    {
+        var registry = new UIRuntimeRegistry();
+        registry.Register(Entry("root"));
+        registry.Register(Entry("child", "root"));
+        _ = registry.GetChildren("root");
+        registry.Register(Entry("child"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(registry.GetParentId("child"), Is.Null);
+            Assert.That(registry.GetChildren("root"), Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Latest_dialog_request_supersedes_unfinished_previous_request_per_spec()
+    {
+        var coordinator = new UIOpenCoordinator(null!);
+        var old = Vo("old");
+        var latest = Vo("latest");
+        coordinator.EnqueueOpen(old);
+        coordinator.EnqueueOpen(latest);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(coordinator.CurrentOpening, Is.SameAs(latest));
+            Assert.That(old.Load.LoadToken.IsCancellationRequested, Is.True);
+        });
+    }
+
+    [Test]
+    public void Recursive_unbind_does_not_invoke_same_unbinder_twice()
+    {
+        var scope = new BindingScope();
+        var calls = 0;
+        scope.Add(() =>
+        {
+            calls++;
+            if (calls == 1) scope.UnbindAll();
+        });
+
+        scope.UnbindAll();
+
+        Assert.That(calls, Is.EqualTo(1));
+    }
+
+    private static UIRuntimeEntry Entry(string id, string? parent = null) => new()
+    {
+        Id = id, OwnerModId = "audit", Dir = "audit", Type = EUIType.Dlg,
+        RouteMeta = parent is null ? null : new UIRouteMeta { ParentId = parent },
+    };
+
+    private static UIVo Vo(string id)
+    {
+        var vo = new UIVo(id, EUIType.Dlg, "audit", null, null!, []);
+        vo.StateMachine.Configure(EUIState.Load, (_, context, _) =>
+            vo.StateMachine.TransitionTo(EUIState.PreLoad, context));
+        return vo;
+    }
+}

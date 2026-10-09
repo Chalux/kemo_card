@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.einstein_relativity.name",
+  "descId": "skill.einstein_relativity.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "einstein_apply_relativity" }
+  ],
+  "tags": ["buff"]
+}

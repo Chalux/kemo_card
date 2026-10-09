@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "xuanyu_wind_thunder_power",
+    "hookTargets": "self"
+  }
+}

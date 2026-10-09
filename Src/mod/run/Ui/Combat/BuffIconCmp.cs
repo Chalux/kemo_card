@@ -23,6 +23,7 @@ public partial class BuffIconCmp : BaseCmp
     private BuffDto? _def;
     private int _stacks;
     private int? _remainingTurns;
+    private float? _timerDamage;
 
     public string? BuffId => _def?.Id;
 
@@ -36,11 +37,12 @@ public partial class BuffIconCmp : BaseCmp
         KeywordTipService.Current?.HideTips(this);
     }
 
-    public void Bind(BuffDto def, int stacks, int? remainingTurns)
+    public void Bind(BuffDto def, int stacks, int? remainingTurns, float? timerDamage = null)
     {
         _def = def;
         _stacks = stacks;
         _remainingTurns = remainingTurns;
+        _timerDamage = timerDamage;
         var name = string.IsNullOrWhiteSpace(def.DisplayNameId) ? def.Id : Localization.Tr(def.DisplayNameId);
 
         Texture2D? texture = null;
@@ -84,6 +86,8 @@ public partial class BuffIconCmp : BaseCmp
         var lines = new List<string>();
         if (desc.Length > 0)
             lines.Add(desc);
+        if (_timerDamage is { } damage)
+            lines.Add(string.Format(Localization.Tr("UI_COMBAT_SLOT_TIMER_DETAIL"), _remainingTurns ?? 0, damage));
 
         // 剩余时间按时长类型分派；Turns 用实例的剩余回合（叠层独立计时取最大值）。
         switch (_def.DurationType)
@@ -99,6 +103,12 @@ public partial class BuffIconCmp : BaseCmp
                 break;
             case EBuffDurationType.UntilDispelled:
                 lines.Add(Localization.Tr("UI_COMBAT_BUFF_UNTIL_DISPELLED"));
+                break;
+            case EBuffDurationType.UntilNextTurnStart:
+                lines.Add(Localization.Tr("UI_COMBAT_BUFF_UNTIL_NEXT_TURN"));
+                break;
+            case EBuffDurationType.Wave:
+                lines.Add(Localization.Tr("UI_COMBAT_BUFF_WAVE"));
                 break;
         }
 

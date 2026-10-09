@@ -1,0 +1,7 @@
+{
+  "kind": "GainShield",
+  "params": { "amount": 10 },
+  "conditions": [
+    { "kind": "OrbTriggered", "params": { "elementAny": ["Yellow"] } }
+  ]
+}

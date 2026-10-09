@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "onBeforeFatalDamage": [
+      {
+        "effectId": "zeus_gain_immunity",
+        "params": {
+          "oncePerCombat": true
+        }
+      }
+    ]
+  },
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "stackRule": "Replace",
+  "descId": "buff.zeus_passive_p4.desc",
+  "durationType": "Permanent"
+}

@@ -1,6 +1,7 @@
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Frame.UI.States;
+using KemoCard.Frame.UI;
 using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests;
@@ -12,6 +13,46 @@ namespace KemoCard.Ui.Tests;
 [TestFixture]
 public sealed class UiManagerDlgSwitchTests
 {
+    [Test]
+    public void Different_dialogs_are_queued_without_canceling_existing_dialog()
+    {
+        var coordinator = new UIOpenCoordinator(null!);
+        var first = Dialog("first");
+        var second = Dialog("second");
+        coordinator.EnqueueOpen(first);
+        coordinator.EnqueueOpen(second);
+        Assert.That(coordinator.CurrentOpening, Is.SameAs(first));
+        Assert.That(first.Load.LoadToken.IsCancellationRequested, Is.False);
+        first.StateMachine.TransitionTo(EUIState.Open);
+        coordinator.OpenNext();
+        Assert.That(coordinator.CurrentOpening, Is.SameAs(second));
+        Assert.That(first.IsOpen, Is.True, "打开新 Dlg 不关闭已有 Dlg");
+    }
+
+    [Test]
+    public void Repeated_queued_dialog_occupies_only_one_queue_entry()
+    {
+        var coordinator = new UIOpenCoordinator(null!);
+        var first = Dialog("first");
+        var second = Dialog("second");
+        coordinator.EnqueueOpen(first);
+        coordinator.EnqueueOpen(second);
+        coordinator.EnqueueOpen(second);
+        first.StateMachine.TransitionTo(EUIState.Open);
+        coordinator.OpenNext();
+        second.StateMachine.TransitionTo(EUIState.Open);
+        coordinator.OpenNext();
+        Assert.That(coordinator.CurrentOpening, Is.Null);
+        Assert.That(first.IsOpen && second.IsOpen, Is.True);
+    }
+
+    private static UIVo Dialog(string id)
+    {
+        var vo = new UIVo(id, EUIType.Dlg, "tests", null, null!, []);
+        vo.StateMachine.Configure(EUIState.Load, (_, context, _) => vo.StateMachine.TransitionTo(EUIState.PreLoad, context));
+        return vo;
+    }
+
     [Test]
     public void Full_open_lifecycle_sequence_transitions_correctly()
     {

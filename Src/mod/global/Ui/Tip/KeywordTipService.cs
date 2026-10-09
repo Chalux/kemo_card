@@ -39,19 +39,17 @@ public partial class KeywordTipService : CanvasLayer
     /// <summary>框架唯一离场入口。sealed：子类不得 override —— 请改 override OnExitTree。</summary>
     public sealed override void _ExitTree()
     {
-        OnExitTree();
-        base._ExitTree();
+        try { OnExitTree(); }
+        finally
+        {
+            DetachAnchorWatcher();
+            if (Current == this) Current = null;
+            base._ExitTree();
+        }
     }
 
     /// <summary>框架级离场生命周期：订阅由 _anchorBinder 负责，这里只做非订阅类清理。</summary>
-    protected virtual void OnExitTree()
-    {
-        DetachAnchorWatcher();
-        if (Current == this)
-        {
-            Current = null;
-        }
-    }
+    protected virtual void OnExitTree() { }
 
     public void ShowTips(Control anchor, IReadOnlyList<KeywordTipRequest> tips, TipSide preferSide = TipSide.Right)
     {

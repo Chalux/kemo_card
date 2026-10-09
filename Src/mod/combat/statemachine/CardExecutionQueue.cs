@@ -4,13 +4,13 @@ public sealed class CardExecutionQueue
 {
     private readonly SortedSet<QueuedCardEntry> _heap = new(ExecutionOrderComparer.Instance);
 
-    public void Enqueue(QueuedCardEntry entry)
+    internal void Enqueue(QueuedCardEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
-        _heap.Add(entry);
+        _heap.Add(entry with { Targets = Array.AsReadOnly(entry.Targets.ToArray()) });
     }
 
-    public bool TryDequeue(out QueuedCardEntry? entry)
+    internal bool TryDequeue(out QueuedCardEntry? entry)
     {
         if (_heap.Count == 0)
         {
@@ -25,9 +25,9 @@ public sealed class CardExecutionQueue
 
     public int Count => _heap.Count;
 
-    public IEnumerable<QueuedCardEntry> PeekAllOrdered() => _heap;
+    public IEnumerable<QueuedCardEntry> PeekAllOrdered() => _heap.ToArray();
 
-    public bool TryRemove(Predicate<QueuedCardEntry> predicate, out QueuedCardEntry? removed)
+    internal bool TryRemove(Predicate<QueuedCardEntry> predicate, out QueuedCardEntry? removed)
     {
         ArgumentNullException.ThrowIfNull(predicate);
 

@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.perseus_serpent_slayer.name",
+  "descId": "skill.perseus_serpent_slayer.desc",
+  "actionRefs": [
+    {
+      "actionId": "perseus_serpent_hit"
+    }
+  ]
+}

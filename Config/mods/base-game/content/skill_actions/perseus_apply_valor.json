@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "perseus_valor_debuff"
+  }
+}

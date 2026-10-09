@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.anubis_scale_judgment.name",
+  "element": 1,
+  "role": "CardPlayer",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "anubis_scale_judgment"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MagicAttack": 2,
+      "MaxHealth": 20
+    }
+  },
+  "priority": 4,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "All",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

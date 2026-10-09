@@ -1,0 +1,34 @@
+{
+  "displayNameId": "buff.hualing_illusory_protection.name",
+  "descId": "buff.hualing_illusory_protection.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.domain",
+    "buff.undispellable"
+  ],
+  "conditions": [
+    {
+      "kind": "IdentityMatch",
+      "params": {
+        "elementAny": [
+          "Blue"
+        ],
+        "raceAny": [
+          "Machine",
+          "Human"
+        ]
+      }
+    }
+  ],
+  "modifiers": [
+    {
+      "attributeId": "DamageTakenScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -0.5
+      }
+    }
+  ]
+}

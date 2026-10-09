@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.xuanyu_aerial_patrol.name",
+  "element": 1,
+  "role": "Wizard",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "xuanyu_aerial_patrol"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 1,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 13,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

@@ -82,7 +82,7 @@ public sealed class CardExecutionRetargetTests
     [Test]
     public void Multi_target_with_an_empty_subset_fires_blank()
     {
-        using var sim = Build(scope: ETargetScope.All, targetCount: 3);
+        using var sim = Build(scope: ETargetScope.RandomN, targetCount: 2);
         MarkCard(sim, slotIndex: 0, [Enemy(0), Enemy(1)]);
         sim.EnemyTeam.Enemies[0].ApplyDamage(999);
         sim.EnemyTeam.Enemies[1].ApplyDamage(999);

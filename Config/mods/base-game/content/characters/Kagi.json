@@ -1,0 +1,44 @@
+{
+  "displayNameId": "char.Kagi.name",
+  "element": "Red",
+  "role": "Controller",
+  "race": [
+    "Animal"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "kagi_target_lock",
+      "cooldown": 8
+    }
+  ],
+  "cards": [
+    "kagi_hunters_mark",
+    "kagi_lockon_pursuit",
+    "kagi_intimidating_roar",
+    "kagi_ambush_preparation"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "buffId": "kagi_passive_p1",
+      "requiredPotential": 0
+    },
+    {
+      "buffId": "kagi_passive_p2",
+      "requiredPotential": 10
+    },
+    {
+      "buffId": "kagi_passive_p3",
+      "requiredPotential": 30
+    },
+    {
+      "buffId": "kagi_passive_p4",
+      "requiredPotential": 50
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

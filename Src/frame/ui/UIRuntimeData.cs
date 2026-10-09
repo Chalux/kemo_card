@@ -9,9 +9,15 @@ namespace KemoCard.Frame.UI;
 /// <summary>
 /// UI 运行时引用数据（Node、遮罩、层级），从 UIVo 中拆出的组合对象。
 /// </summary>
-public sealed class UIRuntimeData(UIVo owner)
+public sealed class UIRuntimeData
 {
-    private readonly UIVo _owner = owner;
+    private readonly UIVo _owner;
+
+    public UIRuntimeData(UIVo owner)
+    {
+        _owner = owner;
+        HideBool.OnChange = UpdateVisible;
+    }
 
     public BaseWin? UI { get; set; }
     public BaseMask? Mask { get; set; }
@@ -46,6 +52,11 @@ public sealed class UIRuntimeData(UIVo owner)
         {
             oldLayer.RemoveUI(_owner.Id);
         }
+        else
+        {
+            UI.GetParent()?.RemoveChild(UI);
+            if (GodotObject.IsInstanceValid(Mask)) Mask!.GetParent()?.RemoveChild(Mask);
+        }
 
         if (_owner.OpenOpt.Parent != null)
         {
@@ -65,14 +76,23 @@ public sealed class UIRuntimeData(UIVo owner)
 
     public void UpdateVisible()
     {
-        if (UI == null) return;
+        var ui = UI;
+        if (ui == null || !GodotObject.IsInstanceValid(ui)) return;
 
-        UI.Visible = !HideBool.Value;
-        if (Mask != null)
+        ui.Visible = !HideBool.Value;
+        var mask = Mask;
+        if (mask != null && GodotObject.IsInstanceValid(mask))
         {
-            Mask.Visible = UI.Visible;
+            mask.Visible = ui.Visible;
         }
 
-        ((IUILifecycleInvoker)UI).InvokeLayerVisibleUpdate();
+        UIManager.InvokeCallback(() => ((IUILifecycleInvoker)ui).InvokeLayerVisibleUpdate(), _owner.Id, "可见性回调");
+    }
+
+    public void RemoveFromNode()
+    {
+        Layer?.RemoveUI(_owner.Id);
+        if (GodotObject.IsInstanceValid(Mask)) Mask!.GetParent()?.RemoveChild(Mask);
+        if (GodotObject.IsInstanceValid(UI)) UI!.GetParent()?.RemoveChild(UI);
     }
 }

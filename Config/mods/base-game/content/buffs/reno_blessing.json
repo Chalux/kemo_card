@@ -1,0 +1,12 @@
+{
+  "displayNameId": "buff.reno_blessing.name",
+  "descId": "buff.reno_blessing.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } },
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } }
+  ]
+}

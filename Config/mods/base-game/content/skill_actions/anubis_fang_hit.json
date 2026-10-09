@@ -1,0 +1,8 @@
+{
+  "params": {
+    "gameplayEffectId": "anubis_physical_damage",
+    "Amount": 6,
+    "AttackScale": 0.75
+  },
+  "kind": "ApplyGameplayEffect"
+}

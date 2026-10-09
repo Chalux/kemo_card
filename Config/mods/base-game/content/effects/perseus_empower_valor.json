@@ -1,0 +1,7 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "perseus_valor_empowered",
+    "hookTargets": "allEnemies"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "Heal",
+  "params": {
+    "amount": 15,
+    "healPowerScale": 1,
+    "hookTargets": "team"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.fomalhaut_lone_star_echo.name",
+  "descId": "skill.fomalhaut_lone_star_echo.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "fomalhaut_apply_echo"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

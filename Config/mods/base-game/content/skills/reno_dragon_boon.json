@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.reno_dragon_boon.name",
+  "descId": "skill.reno_dragon_boon.desc",
+  "targetOverride": { "side": "Ally", "scope": "Single", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "reno_apply_boon_ally" },
+    { "actionId": "reno_apply_boon_self" }
+  ],
+  "tags": ["active", "buff"]
+}

@@ -1,0 +1,7 @@
+{
+  "kind": "DiscardAndRecord",
+  "params": {
+    "count": 2,
+    "allowFewer": true
+  }
+}

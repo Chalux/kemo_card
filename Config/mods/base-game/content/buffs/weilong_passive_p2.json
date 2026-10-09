@@ -1,0 +1,31 @@
+{
+  "displayNameId": "buff.weilong_passive_p2.name",
+  "descId": "buff.weilong_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "NormalAttackShieldGainScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 1
+      }
+    }
+  ],
+  "hooks": {
+    "onDamaged": [
+      {
+        "effectId": "weilong_counterattack",
+        "params": {
+          "AttackScale": 1,
+          "hookTargets": "attacker"
+        }
+      }
+    ]
+  }
+}

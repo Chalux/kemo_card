@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.zeus_thunderbolt.name",
+  "actionRefs": [
+    {
+      "actionId": "zeus_thunderbolt_hit"
+    }
+  ],
+  "descId": "skill.zeus_thunderbolt.desc"
+}

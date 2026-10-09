@@ -1,0 +1,28 @@
+{
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "hidden": true,
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "conditions": [
+    {
+      "kind": "EnemyHasBuffTag",
+      "params": {
+        "tag": "debuff.marked",
+        "exists": true
+      }
+    }
+  ],
+  "modifiers": [
+    {
+      "attributeId": "DamageDealtScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0.25
+      }
+    }
+  ]
+}

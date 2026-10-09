@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "buffId": "hualing_prism_weakness"
+  }
+}

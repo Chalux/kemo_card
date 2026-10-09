@@ -1,0 +1,100 @@
+{
+  "hooks": {
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "self": true
+          },
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Yellow"
+                ]
+              }
+            }
+          },
+          "amount": 1
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "God"
+                ]
+              }
+            }
+          },
+          "amount": 1
+        }
+      }
+    ],
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "self": true
+          },
+          "turnInterval": 6,
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Yellow"
+                ]
+              }
+            }
+          },
+          "turnInterval": 6,
+          "amount": 1
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "God"
+                ]
+              }
+            }
+          },
+          "turnInterval": 6,
+          "amount": 1
+        }
+      }
+    ]
+  },
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "stackRule": "Replace",
+  "descId": "buff.zeus_passive_p3.desc",
+  "durationType": "Permanent"
+}

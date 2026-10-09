@@ -1,0 +1,101 @@
+{
+  "displayNameId": "buff.kagi_passive_p3.name",
+  "descId": "buff.kagi_passive_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "self": true
+          },
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Red"
+                ]
+              }
+            }
+          },
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Animal"
+                ]
+              }
+            }
+          },
+          "amount": 2
+        }
+      }
+    ],
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "self": true
+          },
+          "amount": 2,
+          "turnInterval": 8
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "elementAny": [
+                  "Red"
+                ]
+              }
+            }
+          },
+          "amount": 2,
+          "turnInterval": 8
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "kind": "IdentityMatch",
+              "params": {
+                "raceAny": [
+                  "Animal"
+                ]
+              }
+            }
+          },
+          "amount": 2,
+          "turnInterval": 8
+        }
+      }
+    ]
+  }
+}

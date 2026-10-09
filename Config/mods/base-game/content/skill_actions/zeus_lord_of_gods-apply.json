@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyBuff",
+  "params": {
+    "targetFilter": {
+      "self": true
+    },
+    "buffId": "zeus_lord_guard"
+  }
+}

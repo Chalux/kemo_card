@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.eta_carinae_cataclysm_ring.name",
+  "descId": "skill.eta_carinae_cataclysm_ring.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "eta_carinae_ring_shield"
+    },
+    {
+      "actionId": "eta_carinae_ring_charge"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

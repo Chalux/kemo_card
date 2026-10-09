@@ -1,0 +1,37 @@
+{
+  "displayNameId": "buff.weilong_charged_stance.name",
+  "descId": "buff.weilong_charged_stance.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 4,
+  "modifiers": [
+    {
+      "attributeId": "Taunt",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 3
+      }
+    },
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 6
+      }
+    },
+    {
+      "attributeId": "MagicDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 6
+      }
+    }
+  ],
+  "exclusiveGroup": "weilong_dedicated_shield"
+}

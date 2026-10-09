@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.eta_carinae_carina_eta.name",
+  "descId": "skill.eta_carinae_carina_eta.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "actionRefs": [
+    {
+      "actionId": "eta_carinae_apply_double"
+    }
+  ],
+  "tags": [
+    "active"
+  ]
+}

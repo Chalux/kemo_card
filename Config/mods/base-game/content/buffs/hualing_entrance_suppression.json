@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.hualing_entrance_suppression.name",
+  "descId": "buff.hualing_entrance_suppression.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "debuff",
+    "buff.undispellable"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -12
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -12
+      }
+    }
+  ]
+}

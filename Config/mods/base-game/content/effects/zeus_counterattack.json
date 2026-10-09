@@ -1,0 +1,7 @@
+{
+  "kind": "Damage",
+  "params": {
+    "damageGameplayEffectId": "zeus_magic_damage",
+    "amount": 0
+  }
+}

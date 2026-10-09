@@ -1,0 +1,28 @@
+{
+  "displayNameId": "buff.hualing_zero_defense.name",
+  "descId": "buff.hualing_zero_defense.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "debuff"
+  ],
+  "duration": 1,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Override",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0
+      }
+    },
+    {
+      "attributeId": "MagicDefense",
+      "operation": "Override",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0
+      }
+    }
+  ]
+}

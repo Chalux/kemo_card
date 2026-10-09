@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.xuanyu_wind_thunder_power.name",
+  "descId": "buff.xuanyu_wind_thunder_power.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Replace",
+  "maxStacks": 1,
+  "tags": [],
+  "modifiers": [
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 12
+      }
+    }
+  ],
+  "hooks": {}
+}

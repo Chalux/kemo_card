@@ -1,0 +1,20 @@
+{
+  "stackRule": "Add",
+  "descId": "buff.zeus_wrath.desc",
+  "tags": [
+    "buff.undispellable"
+  ],
+  "displayNameId": "buff.zeus_wrath.name",
+  "maxStacks": 30,
+  "durationType": "Wave",
+  "modifiers": [
+    {
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 1
+      },
+      "attributeId": "MagicAttack",
+      "operation": "Add"
+    }
+  ]
+}

@@ -14,6 +14,11 @@ public static class PlayerPhasePipeline
         ArgumentNullException.ThrowIfNull(simulation);
 
         var characters = simulation.PlayerTeam.Characters;
+
+        // 弃牌记账（DiscardAndRecord）账期 = 本玩家阶段：主动技在玩家阶段内释放，
+        // 其"实际弃置张数"只对本回合的读取方（按弃牌数补抽 / 扣减行动次数）有效。
+        simulation.ClearLastDiscardCount();
+
         for (var characterIndex = 0; characterIndex < characters.Count; characterIndex++)
         {
             var character = characters[characterIndex];

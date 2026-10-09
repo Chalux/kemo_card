@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.weilong_physical_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "element": "Green",
+      "damageType": "Physical",
+      "kind": "Damage"
+    }
+  ]
+}

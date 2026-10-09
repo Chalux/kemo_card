@@ -1,0 +1,8 @@
+{
+  "kind": "GainResource",
+  "params": {
+    "resource": "energy",
+    "hookTargets": "allies",
+    "amount": 1
+  }
+}

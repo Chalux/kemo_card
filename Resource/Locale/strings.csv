@@ -132,6 +132,10 @@ COND_CHAIN_TIER_SHORT,连携不足,Chain tier too low
 COND_CHAIN_TIER_LONG,本回合需要达到指定连携档位（按参与角色数）,Requires the chain tier to reach the listed number of participating characters this turn
 COND_IDENTITY_SHORT,身份不符,Identity mismatch
 COND_IDENTITY_LONG,需要满足属性与种族条件（或显式的「且」组合）,Requires the element and race conditions (or the explicit AND combination)
+COND_ORB_TRIGGERED_SHORT,球不对,No matching orb
+COND_ORB_TRIGGERED_LONG,本次充能球触发需要包含指定属性或指定类型的球,Requires the current orb trigger to include an orb of the listed element or type
+COND_TOOK_MAGIC_DAMAGE_SHORT,未受魔法伤害,No magic damage taken
+COND_TOOK_MAGIC_DAMAGE_LONG,上一回合需要受到过魔法伤害,Requires taking magic damage during the previous turn
 UI_RUN_STORY_SELECT_TITLE,选择故事,Select Story
 UI_STORY_LIST,故事列表,Stories
 UI_STORY_DETAILS,故事详情,Story Details
@@ -394,3 +398,396 @@ UI_DEBUG_BATTLE_RANDOM_SEED,随机种子,Random Seed
 UI_PAUSE_EXIT_BATTLE,退出战斗,Leave Battle
 UI_PAUSE_EXIT_BATTLE_TITLE,退出战斗,Leave Battle
 UI_PAUSE_EXIT_BATTLE_DESC,将放弃当前战斗并回到战前状态，确定退出吗？,Abandon this battle and return to the pre-battle state?
+"char.zeus.name","宙斯","Zeus"
+"ge.zeus_magic_damage.name","宙斯雷霆","Zeus's Thunder"
+"buff.zeus_passive_p1.desc","免疫手牌槽伤害效果。","Immune to hand-slot damage effects."
+"buff.zeus_passive_p2.desc","自身嘲讽 +5。阶层内每次受到攻击，魔法攻击 +1（最多 +30）；转换阶层后清除。","Gain +5 Taunt. Each enemy hit grants +1 M.Atk this floor (maximum +30). Cleared on floor transition."
+"buff.zeus_wrath.name","神王之怒","Divine Wrath"
+"buff.zeus_wrath.desc","每层魔法攻击 +1，最多 30 层；转换阶层后清除。","Gain +1 M.Atk per stack (maximum 30). Cleared on floor transition."
+"buff.zeus_passive_p3.desc","阶层开始时或阶层内每 6 回合开始时：自身技能进度 +2，黄属性角色 +1，神族角色 +1（可叠加）。","At floor start and every 6 turns within the floor: gain +2 skill progress; Yellow allies gain +1; God allies gain +1. Bonuses stack."
+"buff.zeus_passive_p4.desc","每场战斗仅 1 次。受到致命伤害时，抵消该次伤害，并获得不可驱散的伤害免疫，直到下个己方回合开始前。","Once per battle: negate a lethal hit and gain undispellable damage immunity until the start of the next allied turn."
+"buff.zeus_immortality.name","不朽神躯","Immortality"
+"buff.zeus_immortality.desc","免疫伤害，不可被驱散；下个己方回合开始时解除。","Immune to damage and cannot be dispelled. Expires at the start of the next allied turn."
+"buff.zeus_lord_guard.name","众神之主","Lord of the Gods"
+"buff.zeus_lord_guard.desc","物防·魔防 +15；受到攻击后，以 50% 魔法攻击对攻击者造成黄属性魔法伤害。持续 2 回合。","Gain +15 P.Def and M.Def for 2 turns. Counter each enemy hit with 50% M.Atk Yellow magical damage to the attacker."
+"buff.zeus_charged_guard.name","众神之主","Lord of the Gods"
+"buff.zeus_charged_guard.desc","物防·魔防 +20；受到攻击后，以 100% 魔法攻击对攻击者造成黄属性魔法伤害。持续 2 回合。","Gain +20 P.Def and M.Def for 2 turns. Counter each enemy hit with 100% M.Atk Yellow magical damage to the attacker."
+"skill.zeus_lord_of_gods.name","众神之主","Lord of the Gods"
+"skill.zeus_lord_of_gods.desc","自身 2 回合【物防·魔防 +15，受到攻击后以 50% 魔法攻击反击攻击者】。","For 2 turns: gain +15 P.Def and M.Def and counter each enemy hit with 50% M.Atk Yellow magical damage."
+"skill.zeus_charge_one.name","充能I","Charge I"
+"skill.zeus_charge_one.desc","自身 2 回合【物防·魔防 +20，受到攻击后以 100% 魔法攻击反击攻击者】。","For 2 turns: gain +20 P.Def and M.Def and counter each enemy hit with 100% M.Atk Yellow magical damage."
+"buff.zeus_aegis_guard.name","埃癸斯护佑","Aegis Protection"
+"buff.zeus_aegis_guard.desc","自身嘲讽 +3，持续 2 回合。","Gain +3 Taunt for 2 turns."
+"card.zeus_thunderbolt.name","雷霆之矛","Thunderbolt"
+"skill.zeus_thunderbolt.name","雷霆之矛","Thunderbolt"
+"skill.zeus_thunderbolt.desc","对单体敌人造成 8 + 100% 魔法攻击的黄属性魔法伤害。","Deal 8 + 100% M.Atk Yellow magical damage to one enemy."
+"card.zeus_aegis.name","埃癸斯神盾","Aegis"
+"skill.zeus_aegis.name","埃癸斯神盾","Aegis"
+"skill.zeus_aegis.desc","自身获得 30 点护盾；自身嘲讽 +3，持续 2 回合。","Gain 30 Shield and +3 Taunt for 2 turns."
+"card.zeus_divine_judgment.name","神罚降临","Divine Judgment"
+"skill.zeus_divine_judgment.name","神罚降临","Divine Judgment"
+"skill.zeus_divine_judgment.desc","对敌方全体造成 12 + 100% 魔法攻击的黄属性魔法伤害；自身技能进度 +2。","Deal 12 + 100% M.Atk Yellow magical damage to all enemies. Gain +2 skill progress."
+"card.zeus_olympian_edict.name","奥林匹斯敕令","Olympian Edict"
+"skill.zeus_olympian_edict.name","奥林匹斯敕令","Olympian Edict"
+"skill.zeus_olympian_edict.desc","己方全体技能进度 +1，黄属性角色额外 +1，神族角色额外 +1（可叠加）。","All allies gain +1 skill progress. Yellow allies gain an additional +1; God allies gain an additional +1. Bonuses stack."
+"UI_COMBAT_BUFF_UNTIL_NEXT_TURN","直到下个己方回合开始","Until the next allied turn starts"
+"UI_COMBAT_BUFF_WAVE","本阶层","Until floor transition"
+"char.perseus.name","珀尔修斯","Perseus"
+"skill.perseus_heroic_valor.name","敢勇之英神","Heroic Valor"
+"skill.perseus_heroic_valor.desc","敌方全体 3 回合【物攻·魔攻 -15】；自身以外满足绿属性、人类或神族任一条件的角色技能进度 +1（每人仅 1 次）。","All enemies suffer -15 P.Atk and M.Atk for 3 turns. Other allies who are Green, Human, or God gain +1 skill progress once each."
+"buff.perseus_valor_debuff.name","敢勇威慑","Heroic Intimidation"
+"buff.perseus_valor_debuff.desc","物攻·魔攻 -15，持续 3 回合。","P.Atk and M.Atk -15 for 3 turns."
+"buff.perseus_valor_empowered.name","敢勇威慑","Heroic Intimidation"
+"buff.perseus_valor_empowered.desc","物攻·魔攻 -30，持续 3 回合。","P.Atk and M.Atk -30 for 3 turns."
+"buff.perseus_battle_pressure.name","英神压制","Heroic Pressure"
+"buff.perseus_battle_pressure.desc","物攻·魔攻降低 6 × 珀尔修斯本回合打出的卡牌数量，持续 1 回合；数值在卡牌执行结束时取快照。","P.Atk and M.Atk are reduced by 6 times Perseus's cards played this turn for 1 turn. Snapshotted at card execution end."
+"buff.perseus_passive_p1.desc","免疫病毒。","Immune to Virus."
+"buff.perseus_passive_p2.desc","卡牌执行结束后，敌方全体 1 回合【物攻·魔攻 -6 × X】（X 为本回合自身打出的卡牌数量）。","At card execution end, all enemies suffer -6 × X P.Atk and M.Atk for 1 turn (X = your cards played this turn)."
+"buff.perseus_passive_p3.desc","阶层开始时或阶层内每 10 回合开始时：自身技能进度 +1，绿属性角色 +2，人类角色 +2，神族角色 +2（各项可叠加）。","At floor start and every 10 turns within the floor: gain +1 skill progress; Green allies gain +2, Human allies +2, and God allies +2. Bonuses stack."
+"buff.perseus_passive_p4.desc","自身释放主动技能后，1 回合【抽卡 +5】（作用于下次己方回合抽牌）。自身主动技能施加的减益替换为 3 回合【物攻·魔攻 -30】。","After casting your active skill, gain +5 draw for the next allied draw step. Replace your active skill debuff with -30 P.Atk and M.Atk for 3 turns."
+"ge.perseus_physical_damage.name","英神之刃","Heroic Blade"
+"buff.perseus_mirror_weakness.name","镜盾凝视","Mirror Gaze"
+"buff.perseus_mirror_weakness.desc","魔法防御 -8，持续 2 回合。","M.Def -8 for 2 turns."
+"card.perseus_hero_blade.name","英雄之刃","Heroic Blade"
+"skill.perseus_hero_blade.name","英雄之刃","Heroic Blade"
+"skill.perseus_hero_blade.desc","对单体敌人造成 6 + 75% 物理攻击的绿属性物理伤害。","Deal 6 + 75% P.Atk Green physical damage to one enemy."
+"card.perseus_mirror_gaze.name","镜盾凝视","Mirror Gaze"
+"skill.perseus_mirror_gaze.name","镜盾凝视","Mirror Gaze"
+"skill.perseus_mirror_gaze.desc","将单体敌人的行动计数设为 2（下一次敌方阶段不行动）；该敌人 2 回合【魔防 -8】。","Set one enemy action count to 2 (skip its next enemy phase). That enemy suffers -8 M.Def for 2 turns."
+"card.perseus_winged_hunt.name","飞翼追猎","Winged Pursuit"
+"skill.perseus_winged_hunt.name","飞翼追猎","Winged Pursuit"
+"skill.perseus_winged_hunt.desc","自身技能进度 +2；下次己方回合抽牌数量 +1。","Gain +2 skill progress and +1 draw at the next allied draw step."
+"card.perseus_serpent_slayer.name","斩蛇之锋","Serpent Slayer"
+"skill.perseus_serpent_slayer.name","斩蛇之锋","Serpent Slayer"
+"skill.perseus_serpent_slayer.desc","对单体敌人造成 2 次 12 + 100% 物理攻击的绿属性物理伤害。","Deal 2 hits of 12 + 100% P.Atk Green physical damage to one enemy."
+"char.cupid.name","丘比特","Cupid"
+"skill.cupid_discerning_love.name","透厌爱神","Discerning Love"
+"skill.cupid_discerning_love.desc","CD7：队伍恢复100点生命，队伍所有角色获得1点临时能量。","CD7: Restore 100 team HP. All allies gain 1 temporary energy."
+"buff.cupid_passive_p1.name","暴风免疫","Storm Immunity"
+"buff.cupid_passive_p1.desc","免疫暴风。","Immune to hand-slot storm effects."
+"buff.cupid_passive_p2.name","蔚蓝爱意","Azure Affection"
+"buff.cupid_passive_p2.desc","卡牌执行结束后，如果本回合自身打出过至少1张蓝元素卡牌，则队伍恢复50点生命。","At the end of card execution: if Cupid played at least 1 blue card this turn, restore 50 team HP."
+"buff.cupid_passive_p3.name","爱神共鸣","Divine Resonance"
+"buff.cupid_passive_p3.desc","阶层开始时或阶层内每7回合开始时：自身技能进度+2，蓝元素角色+1，神族角色+1。各项独立叠加。","At floor start and every 7 turns: gain 2 skill progress; blue allies gain 1; God allies gain 1. Bonuses stack."
+"buff.cupid_passive_p4.name","爱神恩泽","Blessing of Love"
+"buff.cupid_passive_p4.desc","队伍所有角色【物攻·魔攻·恢复量+12】。","All allies gain +12 physical attack, magic attack, and healing power."
+"buff.cupid_peace.name","铅矢止战","Leaden Peace"
+"buff.cupid_peace.desc","2回合【物攻·魔攻-8】。","Physical and magic attack -8 for 2 turns."
+"card.cupid_love_nectar.name","爱之甘露","Nectar of Love"
+"skill.cupid_love_nectar.name","爱之甘露","Nectar of Love"
+"skill.cupid_love_nectar.desc","队伍恢复40+100%恢复量点生命。","Restore 40 + 100% healing power team HP."
+"card.cupid_golden_blessing.name","金矢祝福","Golden Arrow Blessing"
+"skill.cupid_golden_blessing.name","金矢祝福","Golden Arrow Blessing"
+"skill.cupid_golden_blessing.desc","队伍所有角色获得1点临时能量，自身技能进度+1。","All allies gain 1 temporary energy. Gain 1 skill progress."
+"card.cupid_leaden_peace.name","铅矢止战","Leaden Arrow Truce"
+"skill.cupid_leaden_peace.name","铅矢止战","Leaden Arrow Truce"
+"skill.cupid_leaden_peace.desc","敌方全体2回合【物攻·魔攻-8】。","All enemies suffer physical and magic attack -8 for 2 turns."
+"card.cupid_united_guard.name","同心守护","United Hearts"
+"skill.cupid_united_guard.name","同心守护","United Hearts"
+"skill.cupid_united_guard.desc","队伍所有角色获得40点护盾，队伍恢复30+100%恢复量点生命。","All allies gain 40 shield. Restore 30 + 100% healing power team HP."
+"attr.card_damage_dealt_scale.name","卡牌伤害增加","Card Damage Increase"
+"char.anubis.name","阿努比斯","Anubis"
+"skill.anubis_tomb_officiant.name","祭冥墓者","Tomb Officiant"
+"skill.anubis_tomb_officiant.desc","CD8：补满自身手牌，本回合获得5点临时能量。","CD8: Fill your empty hand slots. Gain 5 temporary energy this turn."
+"buff.anubis_passive_p1.name","封印免疫","Seal Immunity"
+"buff.anubis_passive_p1.desc","免疫封印。","Immune to seal."
+"buff.anubis_passive_p2.name","冥界威仪","Underworld Might"
+"buff.anubis_passive_p2.desc","自身的卡牌伤害+50%。","Your card damage +50%."
+"buff.anubis_passive_p3.name","冥神兽鸣","Divine Beast Resonance"
+"buff.anubis_passive_p3.desc","阶层开始时或阶层内每8回合开始时：自身技能进度+2，红元素角色+1，神族角色+1，动物角色+1。各项独立叠加。","At floor start and every 8 turns: gain 2 skill progress; red allies gain 1; God allies gain 1; Animal allies gain 1. Bonuses stack."
+"buff.anubis_passive_p4.name","葬仪连奏","Funerary Frenzy"
+"buff.anubis_passive_p4.desc","每回合仅1次：卡牌执行之前，若自身本回合已标记至少3张卡牌，自身1回合【卡牌伤害+50%】，下一次己方抽牌数量+3。","Once per turn, before card execution: if at least 3 of your cards are queued, gain +50% card damage for 1 turn and +3 cards on your next draw."
+"buff.anubis_frenzy.name","葬仪连奏","Funerary Frenzy"
+"buff.anubis_frenzy.desc","1回合【卡牌伤害+50%】，下一次己方抽牌数量+3。","Card damage +50% for 1 turn; next draw +3."
+"ge.anubis_physical_damage.name","冥界物理伤害","Underworld Physical Damage"
+"ge.anubis_magic_damage.name","冥界魔法伤害","Underworld Magic Damage"
+"card.anubis_underworld_fang.name","冥界牙刃","Underworld Fang"
+"skill.anubis_underworld_fang.name","冥界牙刃","Underworld Fang"
+"skill.anubis_underworld_fang.desc","对敌方单体造成6+75%物攻的红属性物理伤害。","Deal 6 + 75% physical attack red physical damage to one enemy."
+"card.anubis_tomb_rite.name","墓门启仪","Tomb Gate Rite"
+"skill.anubis_tomb_rite.name","墓门启仪","Tomb Gate Rite"
+"skill.anubis_tomb_rite.desc","自身技能进度+1，下一次己方抽牌数量+1。","Gain 1 skill progress. Next draw +1."
+"card.anubis_scale_judgment.name","天秤裁决","Judgment of the Scales"
+"skill.anubis_scale_judgment.name","天秤裁决","Judgment of the Scales"
+"skill.anubis_scale_judgment.desc","对敌方全体造成12+75%魔攻的红属性魔法伤害。","Deal 12 + 75% magic attack red magic damage to all enemies."
+"card.anubis_soul_guidance.name","亡灵引渡","Guidance of Souls"
+"skill.anubis_soul_guidance.name","亡灵引渡","Guidance of Souls"
+"skill.anubis_soul_guidance.desc","对敌方单体造成2次3+50%物攻的红属性物理伤害。","Deal 2 hits of 3 + 50% physical attack red physical damage to one enemy."
+COND_CARDS_QUEUED_SHORT,标记牌不足,Not enough queued cards
+COND_CARDS_QUEUED_LONG,需要自身标记至少指定数量的卡牌,Requires at least the specified number of your queued cards
+char.alpha_centauri.name,南门二,Alpha Centauri
+buff.alpha_centauri_passive_p1.name,中毒免疫,Poison Immunity
+buff.alpha_centauri_passive_p1.desc,免疫中毒。,Immune to poison.
+buff.alpha_centauri_passive_p2.name,星光疗愈,Starlight Healing
+buff.alpha_centauri_passive_p2.desc,自身造成的恢复效果+25%，自身恢复量+6。,Healing caused by this character +25%; Heal Power +6.
+buff.alpha_centauri_passive_p3.name,南天领航,Southern Navigator
+buff.alpha_centauri_passive_p3.desc,阶层开始时或阶层内每9回合开始时：自身技能进度+2，黄元素角色+1，天文角色+1，学术角色+1（可叠加）。,"At floor start and every 9 floor turns: skill progress +2 to self; +1 each to Yellow, Astronomy and Academic allies, stacking."
+buff.alpha_centauri_passive_p4.name,恒星循环,Stellar Cycle
+buff.alpha_centauri_passive_p4.desc,战斗开始时或自身释放主动技能后，自身技能进度+3。,"At battle start or after casting the active skill, skill progress +3 to self."
+buff.alpha_centauri_alpha_blessing.name,半人马α增益,Alpha Blessing
+buff.alpha_centauri_alpha_blessing.desc,2回合内，物攻·魔攻+15×实际弃牌数。,Physical and Magic Attack +15 per card actually discarded for 2 turns.
+buff.alpha_centauri_resonance.name,双星共鸣,Binary Resonance
+buff.alpha_centauri_resonance.desc,2回合内，物攻·魔攻+8。,Physical and Magic Attack +8 for 2 turns.
+skill.alpha_centauri_centaur_alpha.name,半人马α,Centaur Alpha
+skill.alpha_centauri_centaur_alpha.desc,CD9：选牌丢弃至多2张手牌，己方全体2回合【物攻·魔攻+15×X】，自身下回合额外抽X张卡（可叠加）。X为实际弃牌数。,"CD9: choose up to 2 hand cards to discard. All allies gain Physical and Magic Attack +15×X for 2 turns. Draw X extra cards next turn, stacking. X is the actual discard count."
+skill.alpha_centauri_southern_light.name,南天星光,Southern Starlight
+skill.alpha_centauri_southern_light.desc,队伍恢复12+100%自身恢复量的生命。,Heal the team for 12 + 100% of own Heal Power.
+card.alpha_centauri_southern_light.name,南天星光,Southern Starlight
+skill.alpha_centauri_binary_resonance.name,双星共鸣,Binary Resonance
+skill.alpha_centauri_binary_resonance.desc,己方全体2回合【物攻·魔攻+8】。,All allies gain Physical and Magic Attack +8 for 2 turns.
+card.alpha_centauri_binary_resonance.name,双星共鸣,Binary Resonance
+skill.alpha_centauri_centaur_guidance.name,半人马引航,Centaur Guidance
+skill.alpha_centauri_centaur_guidance.desc,自身本回合获得2点临时能量，技能进度+1。,Gain 2 temporary energy this turn and skill progress +1.
+card.alpha_centauri_centaur_guidance.name,半人马引航,Centaur Guidance
+skill.alpha_centauri_stellar_guard.name,星轨护佑,Stellar Guard
+skill.alpha_centauri_stellar_guard.desc,己方全体获得25点护盾，队伍恢复6+100%自身恢复量的生命。,All allies gain 25 Shield. Heal the team for 6 + 100% of own Heal Power.
+card.alpha_centauri_stellar_guard.name,星轨护佑,Stellar Guard
+char.fomalhaut.name,北落师门,Fomalhaut
+buff.fomalhaut_passive_p1.name,槽伤免疫,Slot Damage Immunity
+buff.fomalhaut_passive_p1.desc,免疫手牌槽伤害效果。,Immune to hand-slot damage effects.
+buff.fomalhaut_passive_p2.name,双重星击,Double Star Strike
+buff.fomalhaut_passive_p2.desc,自身普通攻击次数+1。,Own normal attack count +1.
+buff.fomalhaut_passive_p3.name,南鱼领航,Southern Fish Navigator
+buff.fomalhaut_passive_p3.desc,阶层开始时或阶层内每8回合开始时：自身技能进度+1，蓝元素角色+2，天文角色+1，未知角色+1（可叠加）。,"At floor start and every 8 floor turns: skill progress +1 to self, +2 to Blue allies, +1 each to Astronomy and Unknown allies, stacking."
+buff.fomalhaut_passive_p4.name,孤星追击,Lone Star Pursuit
+buff.fomalhaut_passive_p4.desc,自身200%追打。,Participate in follow-up attacks at 200% attack power.
+buff.fomalhaut_alpha_power.name,南鱼座α增益,Southern Fish Alpha Power
+buff.fomalhaut_alpha_power.desc,3回合内，自身魔攻+15。,Own Magic Attack +15 for 3 turns.
+buff.fomalhaut_dust_power.name,尘环观测,Dust Ring Observation
+buff.fomalhaut_dust_power.desc,3回合内，自身魔攻+8。,Own Magic Attack +8 for 3 turns.
+buff.fomalhaut_echo_power.name,孤星连耀,Lone Star Echo
+buff.fomalhaut_echo_power.desc,2回合内，自身普通攻击伤害+50%（包含追打）。,"Own normal attack damage +50% for 2 turns, including follow-up attacks."
+ge.fomalhaut_magic_damage.name,北落师门魔法伤害,Fomalhaut Magic Damage
+skill.fomalhaut_southern_fish_alpha.name,南鱼座α,Southern Fish Alpha
+skill.fomalhaut_southern_fish_alpha.desc,CD8：自身3回合【魔攻+15】。,CD8: own Magic Attack +15 for 3 turns.
+skill.fomalhaut_southern_fish_light.name,南鱼星辉,Southern Fish Starlight
+skill.fomalhaut_southern_fish_light.desc,对敌方单体造成8+100%魔攻的蓝属性魔法伤害。,Deal 8 + 100% Magic Attack as Blue magical damage to one enemy.
+card.fomalhaut_southern_fish_light.name,南鱼星辉,Southern Fish Starlight
+skill.fomalhaut_dust_ring.name,尘环观测,Dust Ring Observation
+skill.fomalhaut_dust_ring.desc,自身3回合【魔攻+8】。,Own Magic Attack +8 for 3 turns.
+card.fomalhaut_dust_ring.name,尘环观测,Dust Ring Observation
+skill.fomalhaut_lone_star_echo.name,孤星连耀,Lone Star Echo
+skill.fomalhaut_lone_star_echo.desc,自身2回合【普通攻击伤害+50%】（包含追打）。,"Own normal attack damage +50% for 2 turns, including follow-up attacks."
+card.fomalhaut_lone_star_echo.name,孤星连耀,Lone Star Echo
+skill.fomalhaut_stellar_tide.name,星海潮汐,Stellar Tide
+skill.fomalhaut_stellar_tide.desc,对敌方全体造成4+75%魔攻的蓝属性魔法伤害，自身技能进度+1。,Deal 4 + 75% Magic Attack as Blue magical damage to all enemies; own skill progress +1.
+card.fomalhaut_stellar_tide.name,星海潮汐,Stellar Tide
+char.eta_carinae.name,海山二,Eta Carinae
+attr.turn_end_orb_bonus_count.name,回合结束额外产球数,Extra Turn-end Orbs
+attr.auto_orb_power_scale.name,自动元素球伤害与恢复增加,Automatic Orb Damage and Healing Bonus
+attr.orb_healing_scale.name,元素球恢复增加,Orb Healing Bonus
+buff.eta_carinae_passive_p1.name,暴风免疫,Storm Immunity
+buff.eta_carinae_passive_p1.desc,免疫暴风。,Immune to hand-slot storms.
+buff.eta_carinae_passive_p2.name,被动星爆,Automatic Starburst
+buff.eta_carinae_passive_p2.desc,满7球自动触发时，整批元素球伤害或恢复量+50%。,"When a full queue automatically triggers, all orbs in the batch gain +50% damage or healing."
+buff.eta_carinae_passive_p3.name,船底领航,Carina Navigator
+buff.eta_carinae_passive_p3.desc,阶层开始时或阶层内每8回合开始时：自身技能进度+1，绿元素角色+1，天文角色+1，灾厄角色+1（可叠加）。,"At floor start and every 8 floor turns: skill progress +1 each to self, Green, Astronomy and Calamity allies, stacking."
+buff.eta_carinae_passive_p4.name,破盾星辉,Shieldbreak Starlight
+buff.eta_carinae_passive_p4.desc,每批元素球自动触发后，自身护盾+50。自身失去所有护盾时，获得2回合【自身元素球伤害或恢复量+50%】。,"After each automatic orb batch, gain 50 Shield. When own Shield falls to zero, own orbs gain +50% damage or healing for 2 turns."
+buff.eta_carinae_double_orbs.name,船底座η增益,Carina Eta Bonus
+buff.eta_carinae_double_orbs.desc,4回合内，每个回合结束产出的元素球额外获得1个副本，副本产球者为海山二。,"For 4 turns, each turn-end orb grants one extra copy produced by Eta Carinae."
+buff.eta_carinae_orb_boost.name,破盾元素强化,Shieldbreak Orb Boost
+buff.eta_carinae_orb_boost.desc,2回合内，自身元素球伤害或恢复量+50%。,Own orb damage or healing +50% for 2 turns.
+skill.eta_carinae_carina_eta.name,船底座η,Carina Eta
+skill.eta_carinae_carina_eta.desc,CD6：自身4回合【回合结束获得的每个元素球额外获得一个】，额外球产球者为海山二。,"CD6: for 4 turns, each turn-end orb grants an extra copy produced by Eta Carinae."
+skill.eta_carinae_carina_nova.name,船底新星,Carina Nova
+skill.eta_carinae_carina_nova.desc,获得2个由自身产生的绿元素球。,Gain 2 Green orbs produced by self.
+card.eta_carinae_carina_nova.name,船底新星,Carina Nova
+skill.eta_carinae_bipolar_jet.name,双极喷流,Bipolar Jet
+skill.eta_carinae_bipolar_jet.desc,获得1个绿元素球和1个魔法球，产球者为自身。,Gain 1 Green orb and 1 Magic orb produced by self.
+card.eta_carinae_bipolar_jet.name,双极喷流,Bipolar Jet
+skill.eta_carinae_cataclysm_ring.name,灾变尘环,Cataclysm Ring
+skill.eta_carinae_cataclysm_ring.desc,自身获得35点护盾，技能进度+1。,Gain 35 Shield and skill progress +1.
+card.eta_carinae_cataclysm_ring.name,灾变尘环,Cataclysm Ring
+skill.eta_carinae_nebula_afterglow.name,星云余辉,Nebula Afterglow
+skill.eta_carinae_nebula_afterglow.desc,队伍恢复15+100%自身恢复量，获得1个由自身产生的绿元素球。,Heal the team for 15 + 100% own Heal Power; gain 1 Green orb produced by self.
+card.eta_carinae_nebula_afterglow.name,星云余辉,Nebula Afterglow
+UI_COMBAT_DISCARD_CONFIRM,确认弃牌并释放,Discard and Cast
+UI_COMBAT_HINT_PICK_DISCARD,请选择{0}～{1}张手牌丢弃（已选{2}张，ESC取消）,Choose {0}–{1} cards to discard ({2} selected; ESC cancels)
+"char.Kagi.name","嘉极","Kagi"
+"buff.kagi_passive_p1.name","定时免疫","Timer Immunity"
+"buff.kagi_passive_p1.desc","免疫手牌槽定时效果。","Immune to hand-slot timers."
+"buff.kagi_passive_p2.name","猎手攻守","Hunter's Stance"
+"buff.kagi_passive_p2.desc","存在存活的标记敌人时，自身造成的全部伤害+25%；否则，自身受到的全部伤害-25%。","While a living marked enemy exists, own damage dealt +25%; otherwise, own damage taken -25%."
+"buff.kagi_passive_p3.name","赤兽领航","Crimson Beast Guide"
+"buff.kagi_passive_p3.desc","阶层开始时或阶层内每8回合开始时：自身技能进度+2，红元素角色+2，动物角色+2（可叠加）。","At floor start and every 8 floor turns: skill progress +2 each to self, Red allies and Animal allies, stacking."
+"buff.kagi_passive_p4.name","五槽伏击","Fifth-Slot Ambush"
+"buff.kagi_passive_p4.desc","战斗开始时，第5号手牌槽永久充能III：每打出3张牌，使随机一名敌人的行动计数改为2。","At battle start, slot 5 gains permanent Charge III: every 3 cards played there set one random enemy's Action Count to 2."
+"buff.kagi_charge_three.name","伏击充能III","Ambush Charge III"
+"buff.kagi_charge_three.desc","本槽每打出3张牌，使随机一名存活敌人的行动计数改为2，然后重置充能计数。","Every 3 cards played in this slot set one random living enemy's Action Count to 2, then reset the charge."
+"buff.kagi_target_mark.name","目标锁定标记","Target Lock Mark"
+"buff.kagi_target_mark.desc","3回合【嘲讽+5，受到的全伤害+50%】。","For 3 turns: Taunt +5 and all damage taken +50%."
+"buff.kagi_hunters_mark_buff.name","猎踪标记","Hunter's Mark"
+"buff.kagi_hunters_mark_buff.desc","2回合【受到的全伤害+25%】；可与目标锁定标记叠加。","All damage taken +25% for 2 turns; stacks with Target Lock Mark."
+"buff.kagi_roar_weakness.name","威慑压制","Intimidation"
+"buff.kagi_roar_weakness.desc","2回合【物攻·魔攻-12】。","Physical and Magic Attack -12 for 2 turns."
+"skill.kagi_target_lock.name","目标锁定","Target Lock"
+"skill.kagi_target_lock.desc","CD8：敌方单体3回合【嘲讽+5】，并施加3回合标记【受到的全伤害+50%】。","CD8: mark one enemy for 3 turns, granting Taunt +5 and all damage taken +50%."
+"skill.kagi_hunters_mark.name","猎踪印记","Hunter's Mark"
+"skill.kagi_hunters_mark.desc","敌方单体2回合标记【受到的全伤害+25%】。","Mark one enemy for 2 turns: all damage taken +25%."
+"card.kagi_hunters_mark.name","猎踪印记","Hunter's Mark"
+"skill.kagi_lockon_pursuit.name","锁定追击","Lock-On Pursuit"
+"skill.kagi_lockon_pursuit.desc","对敌方单体造成2段红元素物理伤害，每段为10+100%自身物攻。","Deal 2 hits of Red physical damage to one enemy, each for 10 + 100% own Physical Attack."
+"card.kagi_lockon_pursuit.name","锁定追击","Lock-On Pursuit"
+"skill.kagi_intimidating_roar.name","威慑低吼","Intimidating Roar"
+"skill.kagi_intimidating_roar.desc","敌方全体2回合【物攻·魔攻-12】。","All enemies gain Physical and Magic Attack -12 for 2 turns."
+"card.kagi_intimidating_roar.name","威慑低吼","Intimidating Roar"
+"skill.kagi_ambush_preparation.name","伏击准备","Ambush Preparation"
+"skill.kagi_ambush_preparation.desc","自身获得25点护盾，技能进度+2。","Gain 25 Shield and skill progress +2."
+"card.kagi_ambush_preparation.name","伏击准备","Ambush Preparation"
+"ge.kagi_physical_damage.name","嘉极红元素物理伤害","Kagi Red Physical Damage"
+"buff.slot_timer.name","手牌槽定时","Hand-Slot Timer"
+"buff.slot_timer.desc","己方回合结束倒计时减1；归零时受到定值伤害，然后扩散到左右相邻槽，沿用初始回合数与伤害量。已有定时的槽位不覆盖。","At allied turn end, count down by 1. At zero, take fixed damage and spread to adjacent slots using the original duration and damage. Existing timers are retained."
+"skill.slot_timer_attack.name","定时引爆","Timed Detonation"
+"skill.slot_timer_attack.desc","为目标角色随机一个手牌槽施加3回合、30伤害的定时效果；到期后向左右相邻槽继续扩散。","Apply a 3-turn, 30-damage timer to one random slot of the target character; keep spreading to adjacent slots on expiration."
+"UI_COMBAT_SLOT_TIMER_DETAIL","倒计时：{0}回合；引爆伤害：{1}","Countdown: {0} turns; detonation damage: {1}"
+"UI_COMBAT_HINT_PICK_ACTIVE_TARGET","请选择主动技能的目标（ESC取消）","Choose an active skill target (ESC cancels)"
+"COND_ENEMY_BUFF_TAG_SHORT","存活敌人标签{0}存在：{1}","Living enemy tag {0} present: {1}"
+"COND_ENEMY_BUFF_TAG_LONG","检查存活敌人是否持有有效的{0}标签，要求存在状态为{1}。","Check whether a living enemy has the active tag {0}; expected presence is {1}."
+"attr.normal_attack_shield_gain_scale.name","普攻伤害获得护盾比例","Normal Attack Shield Gain Ratio"
+"char.weilong.name","自主战斗型机甲——威龙","Autonomous Combat Mecha — Weilong"
+"buff.weilong_passive_p1.name","定时屏蔽","Timer Shielding"
+"buff.weilong_passive_p1.desc","免疫手牌槽定时效果。","Immune to hand-slot timer effects."
+"buff.weilong_passive_p2.name","攻防转换","Offense to Defense"
+"buff.weilong_passive_p2.desc","受到攻击时，以自身100%物理攻击力反击攻击者。自身普攻仍造成伤害，并额外获得实际伤害等额护盾（含追打）。","Counter the attacker with 100% Physical Attack when attacked. Normal attacks, including follow-ups, also grant shield equal to actual health damage."
+"buff.weilong_passive_p3.name","龙机协同","Dragon Machine Coordination"
+"buff.weilong_passive_p3.desc","阶层开始时或阶层内每6回合开始时：自身技能进度+1，绿元素角色+1，机械角色+1，龙族角色+1；各条件独立叠加。","At floor start and every 6 floor turns: self gains 1 skill progress; Green, Machine and Dragon characters each gain 1. Matching categories stack."
+"buff.weilong_passive_p4.name","应激战甲","Reactive Armor"
+"buff.weilong_passive_p4.desc","受到攻击后，自身1回合【物防·物攻+12，嘲讽+3】；完全抵消伤害也触发。","After being attacked, gain +12 Physical Defense and Physical Attack and +3 Taunt for 1 turn, even if damage is fully negated."
+"ge.weilong_physical_damage.name","威龙物理伤害","Weilong Physical Damage"
+"buff.weilong_shield_stance.name","专用型威龙护盾","Dedicated Weilong Shield"
+"buff.weilong_shield_stance.desc","2回合嘲讽+3。","+3 Taunt for 2 turns."
+"buff.weilong_charged_stance.name","专用型威龙护盾·充能I","Dedicated Weilong Shield · Charge I"
+"buff.weilong_charged_stance.desc","4回合嘲讽+3，物防·魔防+6。","+3 Taunt and +6 Physical and Magic Defense for 4 turns."
+"buff.weilong_reactive_armor.name","应激战甲","Reactive Armor"
+"buff.weilong_reactive_armor.desc","1回合物防·物攻+12，嘲讽+3；重复受击刷新，不叠加。","+12 Physical Defense and Physical Attack and +3 Taunt for 1 turn; repeated hits refresh."
+"buff.weilong_armor_defense.name","龙鳞防御","Dragon Scale Defense"
+"buff.weilong_armor_defense.desc","2回合物防·魔防+6。","+6 Physical and Magic Defense for 2 turns."
+"buff.weilong_fang_power.name","龙牙驱动","Dragon Fang Drive"
+"buff.weilong_fang_power.desc","2回合物攻+12。","+12 Physical Attack for 2 turns."
+"buff.weilong_extra_assault.name","副臂强袭","Auxiliary Assault"
+"buff.weilong_extra_assault.desc","1回合普通攻击次数+1。","+1 normal attack for 1 turn."
+"skill.weilong_dedicated_shield.name","专用型威龙护盾","Dedicated Weilong Shield"
+"skill.weilong_dedicated_shield.desc","自身2回合【嘲讽+3】，自身获得50点护盾。","Gain +3 Taunt for 2 turns and 50 shield."
+"skill.weilong_charged_shield.name","专用型威龙护盾·充能I","Dedicated Weilong Shield · Charge I"
+"skill.weilong_charged_shield.desc","自身4回合【嘲讽+3，物防·魔防+6】，自身获得100点护盾。","Gain +3 Taunt and +6 Physical and Magic Defense for 4 turns and 100 shield."
+"skill.weilong_dragon_armor.name","龙鳞装甲","Dragon Scale Armor"
+"skill.weilong_dragon_armor.desc","自身获得40点护盾，2回合【物防·魔防+6】。","Gain 40 shield and +6 Physical and Magic Defense for 2 turns."
+"card.weilong_dragon_armor.name","龙鳞装甲","Dragon Scale Armor"
+"skill.weilong_dragon_fang.name","龙牙突击","Dragon Fang Strike"
+"skill.weilong_dragon_fang.desc","敌方单体受到20+100%物攻的绿元素物理伤害；随后自身2回合【物攻+12】。","Deal 20 + 100% Physical Attack as Green physical damage to one enemy, then gain +12 Physical Attack for 2 turns."
+"card.weilong_dragon_fang.name","龙牙突击","Dragon Fang Strike"
+"skill.weilong_auxiliary_assault.name","副臂强袭","Auxiliary Assault"
+"skill.weilong_auxiliary_assault.desc","自身获得30点护盾，1回合【普通攻击次数+1】。","Gain 30 shield and +1 normal attack for 1 turn."
+"card.weilong_auxiliary_assault.name","副臂强袭","Auxiliary Assault"
+"skill.weilong_core_recharge.name","核心回充","Core Recharge"
+"skill.weilong_core_recharge.desc","自身获得20点护盾，技能进度+2。","Gain 20 shield and 2 skill progress."
+"card.weilong_core_recharge.name","核心回充","Core Recharge"
+"char.mother_machine.name","最高人工智能——母机","Supreme Artificial Intelligence — Mother Machine"
+"buff.mother_machine_passive_p1.name","定时屏蔽","Timer Shielding"
+"buff.mother_machine_passive_p1.desc","免疫手牌槽定时效果。","Immune to hand-slot timer effects."
+"buff.mother_machine_passive_p2.name","自适应恢复","Adaptive Recovery"
+"buff.mother_machine_passive_p2.desc","自身手牌槽充能载荷结算后，自身获得5回合【恢复量+2】，最多3层，每层独立计时。","After an own hand-slot charge payload resolves, gain +2 Heal Power for 5 turns, up to 3 independently timed stacks."
+"buff.mother_machine_heal_stack.name","自适应恢复","Adaptive Recovery"
+"buff.mother_machine_heal_stack.desc","恢复量每层+2，最多3层，每层持续5回合。","+2 Heal Power per stack, up to 3 stacks, each lasting 5 turns."
+"buff.mother_machine_passive_p3.name","计算集群","Computing Cluster"
+"buff.mother_machine_passive_p3.desc","阶层开始时或阶层内每10回合开始时：自身技能进度+2，黄元素角色+1，机械角色+1，学术角色+1；各条件独立叠加。","At floor start and every 10 floor turns: self gains 2 skill progress; Yellow, Machine and Scholar characters each gain 1. Matching categories stack."
+"buff.mother_machine_passive_p4.name","常驻维护进程","Resident Maintenance Process"
+"buff.mother_machine_passive_p4.desc","战斗开始时，自身2号手牌槽永久充能II：队伍恢复15+100%恢复量点生命，己方全体2回合【物攻·魔攻+12】。","At battle start, grant permanent Charge II to own slot 2: heal the team for 15 + 100% Heal Power and grant all allies +12 Physical and Magic Attack for 2 turns."
+"buff.mother_machine_team_boost.name","维护增幅","Maintenance Amplification"
+"buff.mother_machine_team_boost.desc","2回合物攻·魔攻+12。","+12 Physical and Magic Attack for 2 turns."
+"buff.mother_machine_resident_charge.name","常驻维护充能II","Resident Maintenance Charge II"
+"buff.mother_machine_resident_charge.desc","永久充能II：队伍恢复15+100%恢复量点生命，己方全体2回合物攻·魔攻+12。","Permanent Charge II: heal the team for 15 + 100% Heal Power and grant all allies +12 Physical and Magic Attack for 2 turns."
+"buff.mother_machine_operator_slot_1.name","超级算子进程·1号槽","Super Operator Process · Slot 1"
+"buff.mother_machine_operator_slot_1.desc","1回合充能I：队伍恢复100点生命。","Charge I for 1 turns: heal the team for 100."
+"buff.mother_machine_operator_slot_3.name","超级算子进程·3号槽","Super Operator Process · Slot 3"
+"buff.mother_machine_operator_slot_3.desc","3回合充能I：队伍恢复75点生命。","Charge I for 3 turns: heal the team for 75."
+"buff.mother_machine_operator_slot_5.name","超级算子进程·5号槽","Super Operator Process · Slot 5"
+"buff.mother_machine_operator_slot_5.desc","5回合充能I：队伍恢复50点生命。","Charge I for 5 turns: heal the team for 50."
+"skill.mother_machine_super_operator.name","超级算子进程","Super Operator Process"
+"skill.mother_machine_super_operator.desc","自身1号手牌槽1回合充能I【队伍恢复100点生命】，3号手牌槽3回合充能I【队伍恢复75点生命】，5号手牌槽5回合充能I【队伍恢复50点生命】。","Grant Charge I to own slots 1, 3 and 5 for 1, 3 and 5 turns, healing the team for 100, 75 and 50 respectively."
+"buff.mother_machine_preload_power.name","算力预载","Compute Preload"
+"buff.mother_machine_preload_power.desc","2回合恢复量+4。","+4 Heal Power for 2 turns."
+"skill.mother_machine_cache_repair.name","缓存修复","Cache Repair"
+"skill.mother_machine_cache_repair.desc","队伍恢复40+100%恢复量点生命。","Heal the team for 40 + 100% Heal Power."
+"card.mother_machine_cache_repair.name","缓存修复","Cache Repair"
+"skill.mother_machine_redundant_backup.name","冗余备份","Redundant Backup"
+"skill.mother_machine_redundant_backup.desc","己方全体获得20点护盾，队伍恢复25+100%恢复量点生命。","Grant all allies 20 shield and heal the team for 25 + 100% Heal Power."
+"card.mother_machine_redundant_backup.name","冗余备份","Redundant Backup"
+"skill.mother_machine_parallel_schedule.name","并行调度","Parallel Scheduling"
+"skill.mother_machine_parallel_schedule.desc","自身下回合抽卡+2，本回合获得1点临时能量。","Gain +2 card draws next turn and 1 temporary energy this turn."
+"card.mother_machine_parallel_schedule.name","并行调度","Parallel Scheduling"
+"skill.mother_machine_compute_preload.name","算力预载","Compute Preload"
+"skill.mother_machine_compute_preload.desc","自身2回合【恢复量+4】，技能进度+2。","Gain +4 Heal Power for 2 turns and 2 skill progress."
+"card.mother_machine_compute_preload.name","算力预载","Compute Preload"
+"char.hualing.name","自主表演型机甲——花伶","Autonomous Performance Mecha — Hualing"
+"buff.hualing_passive_p1.name","净化机体","Purified Frame"
+"buff.hualing_passive_p1.desc","免疫中毒。","Immune to poison."
+"buff.hualing_passive_p2.name","登场压制","Entrance Suppression"
+"buff.hualing_passive_p2.desc","敌方入场时，使其永久物攻·魔攻-12，不可驱散。","Whenever an enemy enters, permanently reduce its Physical and Magic Attack by 12. Cannot be dispelled."
+"buff.hualing_entrance_suppression.name","登场压制","Entrance Suppression"
+"buff.hualing_entrance_suppression.desc","永久物攻·魔攻-12，不可驱散。","Permanently -12 Physical and Magic Attack. Cannot be dispelled."
+"buff.hualing_passive_p3.name","舞台协同","Stage Coordination"
+"buff.hualing_passive_p3.desc","阶层开始时或阶层内每6回合开始时：自身技能进度+1，蓝元素角色+1，机械角色+1，人类角色+1；各条件独立叠加。","At floor start and every 6 floor turns: self, Blue, Machine and Human characters each gain 1 skill progress. Matching categories stack."
+"buff.hualing_passive_p4.name","虚幻世界","Illusory World"
+"buff.hualing_passive_p4.desc","自身释放主动技能后，展开1回合领域【虚幻世界】：双方满足蓝元素、机械、人类任一条件的角色受到伤害-50%；敌方全体1回合物防·魔防变为0。","After casting the active skill, open Illusory World for 1 turn: Blue, Machine or Human combatants on either side take 50% less damage. All enemies have 0 Physical and Magic Defense for 1 turn."
+"buff.hualing_illusory_protection.name","虚幻世界·减伤","Illusory World · Protection"
+"buff.hualing_illusory_protection.desc","领域内，蓝元素、机械、人类任一条件的角色受到伤害-50%，多条件命中只生效一次。","While the domain is active, Blue, Machine or Human combatants take 50% less damage, once per combatant."
+"ge.hualing_illusory_world.name","虚幻世界","Illusory World"
+"buff.hualing_zero_defense.name","虚幻破甲","Illusory Armor Break"
+"buff.hualing_zero_defense.desc","1回合物防·魔防变为0。","Set Physical and Magic Defense to 0 for 1 turn."
+"buff.hualing_dance_weakness.name","全息舞艺","Holographic Dance"
+"buff.hualing_dance_weakness.desc","1回合物攻·魔攻·物防·魔防-30。","-30 Physical Attack, Magic Attack, Physical Defense and Magic Defense for 1 turn."
+"skill.hualing_holographic_dance.name","全息舞艺","Holographic Dance"
+"skill.hualing_holographic_dance.desc","敌方全体1回合【物攻·魔攻·物防·魔防-30】。","All enemies lose 30 Physical Attack, Magic Attack, Physical Defense and Magic Defense for 1 turn."
+"buff.hualing_prelude_weakness.name","静默序曲","Silent Prelude"
+"buff.hualing_prelude_weakness.desc","2回合物攻·魔攻-8。","-8 Physical and Magic Attack for 2 turns."
+"buff.hualing_prism_weakness.name","棱镜折射","Prism Refraction"
+"buff.hualing_prism_weakness.desc","2回合魔防-6。","-6 Magic Defense for 2 turns."
+"buff.hualing_freeze_weakness.name","终幕定格","Final Freeze"
+"buff.hualing_freeze_weakness.desc","2回合物防·魔防-12。","-12 Physical and Magic Defense for 2 turns."
+"ge.hualing_magic_damage.name","花伶魔法伤害","Hualing Magic Damage"
+"skill.hualing_silent_prelude.name","静默序曲","Silent Prelude"
+"skill.hualing_silent_prelude.desc","敌方全体2回合【物攻·魔攻-8】。","All enemies lose 8 Physical and Magic Attack for 2 turns."
+"card.hualing_silent_prelude.name","静默序曲","Silent Prelude"
+"skill.hualing_prism_dance.name","棱镜舞步","Prism Dance"
+"skill.hualing_prism_dance.desc","敌方全体受到12+50%魔攻的蓝元素魔法伤害，随后2回合【魔防-6】。","Deal 12 + 50% Magic Attack as Blue magic damage to all enemies, then reduce their Magic Defense by 6 for 2 turns."
+"card.hualing_prism_dance.name","棱镜舞步","Prism Dance"
+"skill.hualing_light_curtain.name","光幕谢礼","Light Curtain Encore"
+"skill.hualing_light_curtain.desc","己方全体获得25点护盾，自身技能进度+1。","Grant all allies 25 shield and gain 1 skill progress."
+"card.hualing_light_curtain.name","光幕谢礼","Light Curtain Encore"
+"skill.hualing_final_freeze.name","终幕定格","Final Freeze"
+"skill.hualing_final_freeze.desc","使目标敌人的行动计数变为2，2回合【物防·魔防-12】。","Set one enemy's action count to 2 and reduce its Physical and Magic Defense by 12 for 2 turns."
+"card.hualing_final_freeze.name","终幕定格","Final Freeze"
+"buff.xuanyu_crow_feather.name","乌翎","Crow Feather"
+"buff.xuanyu_crow_feather.desc","3回合负面效果。结束或被驱散时：对敌方全体造成12＋100%魔法攻击的红元素魔法伤害，然后重新添加自身。每层独立计算。","After 3 turns or when dispelled, deal 12 + 100% Magic Attack as red magical damage to all enemies, then reapply this instance. Each instance resolves independently."
+"ge.xuanyu_magic_damage.name","玄羽红元素魔法伤害","Xuanyu Red Magical Damage"
+"buff.xuanyu_passive_p1.name","乌翎机翼","Crow Wing"
+"buff.xuanyu_passive_p1.desc","免疫手牌槽伤害效果。战斗开始时自身获得1层3回合乌翎。","Immune to hand-slot damage effects. At battle start, gain one 3-turn Crow Feather."
+"buff.xuanyu_passive_p2.name","自动净化","Automatic Purification"
+"buff.xuanyu_passive_p2.desc","战斗开始时：自身1号手牌槽永久充能II，触发时驱散自身所有可驱散负面效果。","At battle start, slot 1 gains permanent Charge II: dispel all dispellable debuffs on self."
+"buff.xuanyu_cleanse_charge.name","净化充能II","Purification Charge II"
+"buff.xuanyu_cleanse_charge.desc","每在此槽打出2张卡：驱散自身所有可驱散负面效果，然后重置计数。","After every 2 cards played from this slot, dispel all dispellable debuffs on self and reset the counter."
+"buff.xuanyu_passive_p3.name","风雷协同","Wind and Thunder Synergy"
+"buff.xuanyu_passive_p3.desc","阶层开始时或阶层内每9回合开始时：自身技能进度＋2，红元素角色＋1，机械角色＋1，动物角色＋1。分别计算，可叠加。","At floor start and every 9 floor turns: self gains 2 skill progress; red, Machine, and Animal characters each gain 1 independently."
+"buff.xuanyu_passive_p4.name","双重乌翎","Twin Crow Feathers"
+"buff.xuanyu_passive_p4.desc","战斗开始时：自身额外获得1层乌翎。","At battle start, gain one additional Crow Feather."
+"buff.xuanyu_wind_thunder_power.name","风雷","Wind and Thunder"
+"buff.xuanyu_wind_thunder_power.desc","自身3回合魔法攻击＋12。","Self gains 12 Magic Attack for 3 turns."
+"buff.xuanyu_patrol_power.name","高空巡弋","Aerial Patrol"
+"buff.xuanyu_patrol_power.desc","自身2回合魔法攻击＋8。","Self gains 8 Magic Attack for 2 turns."
+"skill.xuanyu_wind_thunder.name","风雷","Wind and Thunder"
+"skill.xuanyu_wind_thunder.desc","自身3回合魔法攻击＋12，然后驱散自身所有可驱散负面效果（不含手牌槽）。","Gain 12 Magic Attack for 3 turns, then dispel all dispellable debuffs on self (excluding hand slots)."
+"skill.xuanyu_feather_shed.name","乌羽振落","Feather Shed"
+"skill.xuanyu_feather_shed.desc","驱散自身所有可驱散负面效果，自身技能进度＋1。","Dispel all dispellable debuffs on self and gain 1 skill progress."
+"card.xuanyu_feather_shed.name","乌羽振落","Feather Shed"
+"skill.xuanyu_thunder_raid.name","雷光侦袭","Thunder Raid"
+"skill.xuanyu_thunder_raid.desc","对敌方单体造成20＋100%魔法攻击的红元素魔法伤害。","Deal 20 + 100% Magic Attack as red magical damage to one enemy."
+"card.xuanyu_thunder_raid.name","雷光侦袭","Thunder Raid"
+"skill.xuanyu_aerial_patrol.name","高空巡弋","Aerial Patrol"
+"skill.xuanyu_aerial_patrol.desc","自身2回合魔法攻击＋8，并获得20点护盾。","Gain 8 Magic Attack for 2 turns and 20 shield."
+"card.xuanyu_aerial_patrol.name","高空巡弋","Aerial Patrol"
+"skill.xuanyu_tempest_echo.name","风暴回响","Tempest Echo"
+"skill.xuanyu_tempest_echo.desc","对敌方全体造成12＋50%魔法攻击的红元素魔法伤害，然后驱散自身所有可驱散负面效果。","Deal 12 + 50% Magic Attack as red magical damage to all enemies, then dispel all dispellable debuffs on self."
+"card.xuanyu_tempest_echo.name","风暴回响","Tempest Echo"
+"char.xuanyu.name","自主侦查型机甲——玄羽","Autonomous Reconnaissance Mecha — Xuanyu"

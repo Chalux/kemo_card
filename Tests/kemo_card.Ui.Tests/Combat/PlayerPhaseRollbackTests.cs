@@ -143,7 +143,7 @@ public sealed class PlayerPhaseRollbackTests
                     Cost = 1,
                     Priority = 100,
                     TargetSide = ETargetSide.Enemy,
-                    TargetScope = ETargetScope.All,
+                    TargetScope = ETargetScope.RandomN,
                     TargetCount = 2,
                     SkillRefs = [new SkillRefDto { SkillId = "skill.poke" }],
                 },

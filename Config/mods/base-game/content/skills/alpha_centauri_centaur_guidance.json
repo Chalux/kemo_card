@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.alpha_centauri_centaur_guidance.name",
+  "descId": "skill.alpha_centauri_centaur_guidance.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "tags": [
+    "support"
+  ],
+  "actionRefs": [
+    {
+      "actionId": "alpha_centauri_guidance_energy"
+    },
+    {
+      "actionId": "alpha_centauri_guidance_charge"
+    }
+  ]
+}

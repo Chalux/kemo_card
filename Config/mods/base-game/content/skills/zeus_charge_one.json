@@ -1,0 +1,17 @@
+{
+  "actionRefs": [
+    {
+      "actionId": "zeus_charge_one-apply"
+    }
+  ],
+  "displayNameId": "skill.zeus_charge_one.name",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "descId": "skill.zeus_charge_one.desc",
+  "tags": [
+    "buff",
+    "counter"
+  ]
+}

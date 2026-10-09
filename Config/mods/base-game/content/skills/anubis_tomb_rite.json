@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.anubis_tomb_rite.name",
+  "descId": "skill.anubis_tomb_rite.desc",
+  "actionRefs": [
+    {
+      "actionId": "anubis_rite_charge"
+    },
+    {
+      "actionId": "anubis_rite_draw"
+    }
+  ]
+}

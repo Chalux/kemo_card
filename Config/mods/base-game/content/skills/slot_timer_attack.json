@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.slot_timer_attack.name",
+  "descId": "skill.slot_timer_attack.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "attach_slot_timer"
+    }
+  ],
+  "tags": [
+    "enemy"
+  ]
+}

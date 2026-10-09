@@ -1,0 +1,16 @@
+{
+  "kind": "ApplyBuff",
+  "conditions": [
+    {
+      "params": {
+        "count": 1
+      },
+      "kind": "CardPlayedThisTurn"
+    }
+  ],
+  "params": {
+    "amountPerPlayedCard": -6,
+    "buffId": "perseus_battle_pressure",
+    "hookTargets": "allEnemies"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.zeus_divine_judgment.name",
+  "actionRefs": [
+    {
+      "actionId": "zeus_divine_judgment_hit"
+    },
+    {
+      "actionId": "zeus_judgment_charge"
+    }
+  ],
+  "descId": "skill.zeus_divine_judgment.desc"
+}

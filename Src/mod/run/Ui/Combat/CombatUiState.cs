@@ -10,6 +10,10 @@ public enum ECombatPendingMode
 
     /// <summary>需要玩家点选一个合法单位作为目标。</summary>
     PickTarget,
+
+    PickDiscard,
+
+    PickActiveTarget,
 }
 
 /// <summary>
@@ -19,6 +23,8 @@ public enum ECombatPendingMode
 public sealed class CombatUiState
 {
     private readonly Func<int, bool> _canControl;
+
+    #region 操控与待操作状态
 
     public CombatUiState(int slotCount, Func<int, bool> canControl)
     {
@@ -39,6 +45,34 @@ public sealed class CombatUiState
 
     /// <summary>待出牌的手牌槽索引；无待出牌时为 -1。</summary>
     public int PendingHandSlot { get; private set; } = -1;
+
+    private readonly List<int> _discardSlots = [];
+    public IReadOnlyList<int> DiscardSlots => _discardSlots.AsReadOnly();
+    public int DiscardMinimum { get; private set; }
+    public int DiscardMaximum { get; private set; }
+    public bool CanConfirmDiscard => PendingMode == ECombatPendingMode.PickDiscard && _discardSlots.Count >= DiscardMinimum;
+
+    public void BeginDiscard(int minimum, int maximum)
+    {
+        ClearPending();
+        PendingMode = ECombatPendingMode.PickDiscard;
+        DiscardMinimum = minimum;
+        DiscardMaximum = maximum;
+    }
+
+    public void BeginActiveTarget()
+    {
+        ClearPending();
+        PendingMode = ECombatPendingMode.PickActiveTarget;
+    }
+
+    public void ToggleDiscard(int slot)
+    {
+        if (InputLocked || PendingMode != ECombatPendingMode.PickDiscard)
+            return;
+        if (!_discardSlots.Remove(slot) && _discardSlots.Count < DiscardMaximum)
+            _discardSlots.Add(slot);
+    }
 
     public bool HasPending => PendingMode != ECombatPendingMode.None;
 
@@ -87,6 +121,8 @@ public sealed class CombatUiState
     {
         PendingMode = ECombatPendingMode.None;
         PendingHandSlot = -1;
+        _discardSlots.Clear();
+        DiscardMinimum = DiscardMaximum = 0;
     }
 
     private int FirstControllableSlot()
@@ -99,6 +135,8 @@ public sealed class CombatUiState
 
         return 0;
     }
+
+    #endregion
 
     #region 与 Run 的接线
 

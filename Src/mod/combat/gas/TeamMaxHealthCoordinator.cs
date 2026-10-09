@@ -15,6 +15,7 @@ public sealed class TeamMaxHealthCoordinator : IDisposable
         _characters = _team.Characters.ToArray();
         foreach (var character in _characters)
             character.Asc.Attributes.AttributeChanged += OnCharacterAttributeChanged;
+        _team.Asc.Attributes.AttributeChanged += OnTeamAttributeChanged;
 
         RecomputeAndClamp();
     }
@@ -26,6 +27,7 @@ public sealed class TeamMaxHealthCoordinator : IDisposable
 
         foreach (var character in _characters)
             character.Asc.Attributes.AttributeChanged -= OnCharacterAttributeChanged;
+        _team.Asc.Attributes.AttributeChanged -= OnTeamAttributeChanged;
         _disposed = true;
     }
 
@@ -42,13 +44,20 @@ public sealed class TeamMaxHealthCoordinator : IDisposable
     /// </summary>
     private void RecomputeAndClamp()
     {
-        var oldHealth = _team.Asc.GetCurrentValue(AttributeIds.Health);
         var newMax = _characters.Sum(character => character.Asc.GetCurrentValue(AttributeIds.MaxHealth));
-        var newHealth = MathF.Min(oldHealth, newMax);
 
         // 必须走 ASC 的重算入口：直接写 Attributes.SetBaseValue 会把队伍 ASC 的 MaxHealth
         // 当前值覆盖成新 base，抹掉域 GE 提供的 MaxHealth 修饰符贡献。
         _team.Asc.SetBaseValue(AttributeIds.MaxHealth, newMax);
-        _team.Asc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, newHealth));
+        ClampHealth();
     }
+
+    private void OnTeamAttributeChanged(object? sender, AttributeChangedEventArgs args)
+    {
+        if (args.AttributeId == AttributeIds.MaxHealth)
+            ClampHealth();
+    }
+
+    private void ClampHealth() => _team.Asc.Attributes.SetCurrentValue(AttributeIds.Health,
+        Math.Clamp(_team.SharedHpExact, 0f, MathF.Max(0f, _team.Asc.GetCurrentValue(AttributeIds.MaxHealth))));
 }

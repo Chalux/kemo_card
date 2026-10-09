@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.xuanyu_passive_p2.name",
+  "descId": "buff.xuanyu_passive_p2.desc",
+  "durationType": "Permanent",
+  "duration": 0,
+  "stackRule": "Replace",
+  "maxStacks": 1,
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "modifiers": [],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "xuanyu_attach_cleanse_charge"
+      }
+    ]
+  }
+}

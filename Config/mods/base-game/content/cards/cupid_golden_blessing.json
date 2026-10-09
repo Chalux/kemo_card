@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.cupid_golden_blessing.name",
+  "element": 2,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "cupid_golden_blessing"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "HealPower": 1,
+      "MaxHealth": 30
+    }
+  },
+  "role": "Healer",
+  "priority": 8,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

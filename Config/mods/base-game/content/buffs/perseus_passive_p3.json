@@ -1,0 +1,133 @@
+{
+  "descId": "buff.perseus_passive_p3.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onTurnStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 1,
+          "turnInterval": 10,
+          "targetFilter": {
+            "self": true
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 2,
+          "turnInterval": 10,
+          "targetFilter": {
+            "condition": {
+              "params": {
+                "elementAny": [
+                  "Green"
+                ]
+              },
+              "kind": "IdentityMatch"
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 2,
+          "turnInterval": 10,
+          "targetFilter": {
+            "condition": {
+              "params": {
+                "raceAny": [
+                  "Human"
+                ]
+              },
+              "kind": "IdentityMatch"
+            }
+          }
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "amount": 2,
+          "turnInterval": 10,
+          "targetFilter": {
+            "condition": {
+              "params": {
+                "raceAny": [
+                  "God"
+                ]
+              },
+              "kind": "IdentityMatch"
+            }
+          }
+        }
+      }
+    ],
+    "onWaveStart": [
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "self": true
+          },
+          "amount": 1
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "params": {
+                "elementAny": [
+                  "Green"
+                ]
+              },
+              "kind": "IdentityMatch"
+            }
+          },
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "params": {
+                "raceAny": [
+                  "Human"
+                ]
+              },
+              "kind": "IdentityMatch"
+            }
+          },
+          "amount": 2
+        }
+      },
+      {
+        "effectId": "gain_skill_counter",
+        "params": {
+          "targetFilter": {
+            "condition": {
+              "params": {
+                "raceAny": [
+                  "God"
+                ]
+              },
+              "kind": "IdentityMatch"
+            }
+          },
+          "amount": 2
+        }
+      }
+    ]
+  }
+}

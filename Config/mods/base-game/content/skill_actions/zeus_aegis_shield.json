@@ -1,0 +1,6 @@
+{
+  "kind": "GainShield",
+  "params": {
+    "amount": 30
+  }
+}

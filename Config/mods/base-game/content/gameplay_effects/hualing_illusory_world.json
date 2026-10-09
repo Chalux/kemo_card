@@ -1,0 +1,9 @@
+{
+  "displayNameId": "ge.hualing_illusory_world.name",
+  "durationPolicy": "Infinite",
+  "domainBuffRefs": [
+    {
+      "buffId": "hualing_illusory_protection"
+    }
+  ]
+}

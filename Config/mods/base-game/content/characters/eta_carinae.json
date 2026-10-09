@@ -1,0 +1,45 @@
+{
+  "displayNameId": "char.eta_carinae.name",
+  "element": "Green",
+  "role": "Elementist",
+  "race": [
+    "Astronomy",
+    "Calamity"
+  ],
+  "skillRefs": [],
+  "activeSkillChain": [
+    {
+      "skillId": "eta_carinae_carina_eta",
+      "cooldown": 6
+    }
+  ],
+  "cards": [
+    "eta_carinae_carina_nova",
+    "eta_carinae_bipolar_jet",
+    "eta_carinae_cataclysm_ring",
+    "eta_carinae_nebula_afterglow"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    {
+      "buffId": "eta_carinae_passive_p1",
+      "requiredPotential": 0
+    },
+    {
+      "buffId": "eta_carinae_passive_p2",
+      "requiredPotential": 10
+    },
+    {
+      "buffId": "eta_carinae_passive_p3",
+      "requiredPotential": 30
+    },
+    {
+      "buffId": "eta_carinae_passive_p4",
+      "requiredPotential": 50
+    }
+  ],
+  "tags": [
+    "starter"
+  ]
+}

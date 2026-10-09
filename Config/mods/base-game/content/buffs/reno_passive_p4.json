@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.reno_p4.name",
+  "descId": "buff.reno_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "applyScope": "AllAllies",
+  "conditions": [
+    { "kind": "IdentityMatch", "params": { "elementAny": ["Green"], "raceAny": ["Dragon"] } }
+  ],
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } },
+    { "attributeId": "MagicAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 12 } }
+  ],
+  "tags": ["buff.passive", "buff.undispellable"],
+  "hooks": {
+    "onApply": [
+      { "effectId": "reno_p4_apply_heal_amp" }
+    ]
+  }
+}

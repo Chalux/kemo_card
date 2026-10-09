@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.anubis_physical_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "element": "Red",
+      "kind": "Damage",
+      "damageType": "Physical"
+    }
+  ]
+}

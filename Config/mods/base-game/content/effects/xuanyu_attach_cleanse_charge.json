@@ -1,0 +1,8 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "xuanyu_cleanse_charge",
+    "slotIndex": 0,
+    "charge": 2
+  }
+}

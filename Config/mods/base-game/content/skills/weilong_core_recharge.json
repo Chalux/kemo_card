@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.weilong_core_recharge.name",
+  "descId": "skill.weilong_core_recharge.desc",
+  "actionRefs": [
+    {
+      "actionId": "weilong_recharge_shield"
+    },
+    {
+      "actionId": "weilong_recharge_progress"
+    }
+  ]
+}

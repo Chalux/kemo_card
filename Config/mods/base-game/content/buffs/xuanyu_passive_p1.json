@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.xuanyu_passive_p1.name",
+  "descId": "buff.xuanyu_passive_p1.desc",
+  "durationType": "Permanent",
+  "duration": 0,
+  "stackRule": "Replace",
+  "maxStacks": 1,
+  "tags": [
+    "buff.passive",
+    "buff.undispellable",
+    "trait.immune_slot_damage"
+  ],
+  "modifiers": [],
+  "hooks": {
+    "onApply": [
+      {
+        "effectId": "xuanyu_apply_feather"
+      }
+    ]
+  }
+}

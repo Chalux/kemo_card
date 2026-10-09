@@ -1,0 +1,25 @@
+{
+  "displayNameId": "skill.cupid_golden_blessing.name",
+  "descId": "skill.cupid_golden_blessing.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "cupid_team_energy"
+    },
+    {
+      "effectId": "gain_skill_counter",
+      "params": {
+        "amount": 1,
+        "targetFilter": {
+          "self": true
+        }
+      }
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

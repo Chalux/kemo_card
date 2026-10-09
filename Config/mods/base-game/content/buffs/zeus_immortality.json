@@ -1,0 +1,13 @@
+{
+  "stackRule": "Refresh",
+  "displayNameId": "buff.zeus_immortality.name",
+  "durationType": "UntilNextTurnStart",
+  "modifiers": [],
+  "hooks": {},
+  "descId": "buff.zeus_immortality.desc",
+  "tags": [
+    "trait.immune_damage",
+    "buff.undispellable"
+  ],
+  "duration": 0
+}

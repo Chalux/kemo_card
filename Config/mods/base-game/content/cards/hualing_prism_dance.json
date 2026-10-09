@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.hualing_prism_dance.name",
+  "element": 2,
+  "role": "Controller",
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "hualing_prism_dance"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 2
+    }
+  },
+  "priority": 9,
+  "cardType": "Magical",
+  "targetSide": "Enemy",
+  "targetScope": "All",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

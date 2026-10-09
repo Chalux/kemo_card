@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.weilong_auxiliary_assault.name",
+  "descId": "skill.weilong_auxiliary_assault.desc",
+  "actionRefs": [
+    {
+      "actionId": "weilong_assault_shield"
+    },
+    {
+      "actionId": "weilong_assault_buff"
+    }
+  ]
+}

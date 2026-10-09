@@ -1,0 +1,7 @@
+{
+  "kind": "Heal",
+  "params": {
+    "amount": 12,
+    "healPowerScale": 1
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.xuanyu_aerial_patrol.name",
+  "descId": "skill.xuanyu_aerial_patrol.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Self"
+  },
+  "effectRefs": [
+    {
+      "effectId": "xuanyu_apply_patrol"
+    },
+    {
+      "effectId": "xuanyu_patrol_shield"
+    }
+  ]
+}

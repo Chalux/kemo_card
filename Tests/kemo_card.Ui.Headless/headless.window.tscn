@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Tests/kemo_card.Ui.Headless/TestWindow.cs" id="1"]
+
+[node name="TestWindow" type="Control"]
+script = ExtResource("1")

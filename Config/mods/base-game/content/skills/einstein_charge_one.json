@@ -1,0 +1,11 @@
+{
+  "displayNameId": "skill.einstein_charge_one.name",
+  "descId": "skill.einstein_charge_one.desc",
+  "targetOverride": { "side": "Enemy", "scope": "RandomN", "targetCount": 1 },
+  "actionRefs": [
+    { "actionId": "einstein_discard_three" },
+    { "actionId": "einstein_draw_by_discard" },
+    { "actionId": "einstein_charge_one_hit" }
+  ],
+  "tags": ["active"]
+}

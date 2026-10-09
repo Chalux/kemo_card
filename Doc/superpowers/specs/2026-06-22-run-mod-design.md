@@ -1121,8 +1121,12 @@ CombatWin
 
 ### 14.3 交互状态（`CombatUiState`，纯 C#）
 
+- **选牌弃置（2026-10-08）**：主动释放确认后，若需要非随机弃牌，切换操控到该角色并进入 `PickDiscard`。点击非空手牌（含已标记）切换选择，选中高亮，确认按钮显示“确认弃牌并释放”，提示显示允许数量及已选数量；确认前不改模拟器。固定数量与至多数量由内容规则决定，未达到最小值时确认禁用；ESC/切换角色清空选牌态。确认发送不可变的 `DiscardSlots` 快照，状态机先验证再扣进度。
+
 - **操控槽**：`ControlledSlot` 初始为首个有权控制的槽位；`CanControl(slot)` = `RunMod.SlotOwnership[slot] == 本地玩家 id`（本地玩家 = `PlayerControllers` 中 `IsOwner`；单人四槽皆有权）。
-- **待出牌**：`PendingMode ∈ { None, ConfirmPlay, PickTarget }` + `PendingSlot`。
+- **待操作**：`PendingMode ∈ { None, ConfirmPlay, PickTarget, PickDiscard, PickActiveTarget }` + `PendingSlot`。
+- **主动技能选目标（2026-10-09）**：释放确认后，非自身的单体主动技能进入 `PickActiveTarget`，切换到施法角色，高亮合法目标，点击目标后发送 `CastActiveSkillCommand`。选目标前不扣进度，ESC / 切换角色清除待操作。嘉极目标锁定走此路径；合法池与指令共用敌方嘲讽筛选，全体技能不受嘲讽限制。
+- **定时槽位展示（2026-10-09）**：定时为普通槽位 Buff 图标，下方显示剩余回合，悬停附加实例倒计时与引爆伤害；与充能光晕/进度条同时存在，互不替代。
   - 点未标记手牌 → `CombatTargeting.RequiresExplicitTarget(card)`：需要 → `PickTarget`（合法单位高亮，点单位即出牌）；不需要 → `ConfirmPlay`（显示「确认出牌」按钮，点它以 `TryResolveAutoTargets` 的结果出牌）。
   - 再点同一张 / 点别的牌 / ESC / 切换角色 → 清待出牌态。
 - **确定按钮**：当前角色未确认 → `ConfirmCharacterCommand`；已确认 → 显示「取消确认」→ `UnconfirmCharacterCommand`。

@@ -1,0 +1,12 @@
+{
+  "displayNameId": "skill.perseus_winged_hunt.name",
+  "descId": "skill.perseus_winged_hunt.desc",
+  "actionRefs": [
+    {
+      "actionId": "perseus_wing_charge"
+    },
+    {
+      "actionId": "perseus_wing_draw"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "conditions": [
+    {
+      "kind": "CardPlayedThisTurn",
+      "params": {
+        "count": 1,
+        "elementAny": [
+          "Blue"
+        ]
+      }
+    }
+  ],
+  "kind": "Heal",
+  "params": {
+    "healPowerScale": 0,
+    "amount": 50
+  }
+}

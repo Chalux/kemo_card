@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.xuanyu_magic_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "element": "Red",
+      "damageType": "Magical",
+      "kind": "Damage"
+    }
+  ]
+}

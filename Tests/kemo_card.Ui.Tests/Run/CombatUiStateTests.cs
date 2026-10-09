@@ -9,6 +9,29 @@ namespace KemoCard.Ui.Tests.Run;
 public sealed class CombatUiStateTests
 {
     [Test]
+    public void Discard_selection_toggles_up_to_limit_and_cancels_without_changing_control()
+    {
+        var state = new CombatUiState(4, _ => true);
+        state.BeginDiscard(0, 2);
+        Assert.That(state.CanConfirmDiscard, Is.True);
+        state.ToggleDiscard(0);
+        state.ToggleDiscard(2);
+        state.ToggleDiscard(4);
+        Assert.That(state.DiscardSlots, Is.EqualTo(new[] { 0, 2 }));
+        state.ToggleDiscard(0);
+        Assert.That(state.DiscardSlots, Is.EqualTo(new[] { 2 }));
+        state.ClearPending();
+        Assert.That(state.DiscardSlots, Is.Empty);
+        Assert.That(state.HasPending, Is.False);
+        state.BeginDiscard(2, 2);
+        state.ToggleDiscard(0);
+        Assert.That(state.CanConfirmDiscard, Is.False);
+        state.ToggleDiscard(1);
+        Assert.That(state.CanConfirmDiscard, Is.True);
+        state.TrySelectSlot(1);
+        Assert.That(state.HasPending, Is.False);
+    }
+    [Test]
     public void Initial_controlled_slot_is_first_controllable()
     {
         var state = new CombatUiState(4, slot => slot >= 2);
@@ -42,6 +65,20 @@ public sealed class CombatUiStateTests
 
         Assert.That(state.TrySelectSlot(3), Is.False);
         Assert.That(state.ControlledSlot, Is.Zero);
+    }
+
+    [Test]
+    public void Active_target_selection_clears_previous_pending_state_and_can_be_cancelled()
+    {
+        var state = new CombatUiState(4, _ => true);
+        state.BeginDiscard(0, 2);
+        state.ToggleDiscard(1);
+        state.BeginActiveTarget();
+        Assert.That(state.PendingMode, Is.EqualTo(ECombatPendingMode.PickActiveTarget));
+        Assert.That(state.PendingHandSlot, Is.EqualTo(-1));
+        Assert.That(state.DiscardSlots, Is.Empty);
+        state.TrySelectSlot(2);
+        Assert.That(state.HasPending, Is.False);
     }
 
     [Test]

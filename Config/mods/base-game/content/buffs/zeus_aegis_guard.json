@@ -1,0 +1,21 @@
+{
+  "stackRule": "Refresh",
+  "displayNameId": "buff.zeus_aegis_guard.name",
+  "durationType": "Turns",
+  "modifiers": [
+    {
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 3
+      },
+      "attributeId": "Taunt",
+      "operation": "Add"
+    }
+  ],
+  "hooks": {},
+  "descId": "buff.zeus_aegis_guard.desc",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 2
+}

@@ -128,7 +128,7 @@ public sealed class VonNeumannExclusiveCardContentTests
         using var sim = BuildPlayerPhase(DirectDeduction);
         sim.PlayerTeam.ApplySharedDamage(LedgerDamage);
 
-        MarkAndExecute(sim, DirectDeduction, [Player(0)]);
+        MarkAndExecute(sim, DirectDeduction, [CombatTargetRef.PlayerTeam]);
 
         Assert.That(
             Ledger(sim),
@@ -222,7 +222,7 @@ public sealed class VonNeumannExclusiveCardContentTests
         var caster = sim.PlayerTeam.Characters[0];
         sim.PlayerTeam.ApplySharedDamage(LedgerDamage);
 
-        MarkAndExecute(sim, MergeSort, [Player(0)]);
+        MarkAndExecute(sim, MergeSort, [CombatTargetRef.PlayerTeam]);
 
         // ChainEffects 顺序：先治疗（此时回复量还是 10）再挂增幅。
         Assert.That(

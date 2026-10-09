@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.fomalhaut_dust_power.name",
+  "descId": "buff.fomalhaut_dust_power.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 3,
+  "modifiers": [
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 8
+      }
+    }
+  ]
+}

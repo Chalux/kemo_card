@@ -1,0 +1,6 @@
+{
+  "displayNameId": "attr.healing_dealt_scale.name",
+  "defaultBase": 0,
+  "allowNegative": true,
+  "isMeta": false
+}

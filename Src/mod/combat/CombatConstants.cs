@@ -19,6 +19,9 @@ public static class CombatConstants
     /// </summary>
     public const string PoisonTag = "debuff.poison";
 
+    /// <summary>病毒标记：病毒免疫在 Buff / GE 投放前拦截该标签的效果。</summary>
+    public const string VirusTag = "debuff.virus";
+
     /// <summary>
     /// 普通攻击的伤害系数：1 = 100% 攻击力，再减目标对应防御（见普通攻击规格）。
     /// 调到 0 可临时关闭普攻的伤害（仍会执行并消耗本回合的普攻机会）。

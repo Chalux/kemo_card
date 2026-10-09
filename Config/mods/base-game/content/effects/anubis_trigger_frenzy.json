@@ -1,0 +1,14 @@
+{
+  "params": {
+    "buffId": "anubis_frenzy"
+  },
+  "kind": "ApplyBuff",
+  "conditions": [
+    {
+      "params": {
+        "count": 3
+      },
+      "kind": "CardsQueuedForExecution"
+    }
+  ]
+}

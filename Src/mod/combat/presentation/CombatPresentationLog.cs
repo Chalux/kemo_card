@@ -7,16 +7,26 @@ namespace KemoCard.Mod.Combat.Presentation;
 public sealed class CombatPresentationLog
 {
     private readonly List<CombatPresentationEvent> _events = [];
+    private readonly IReadOnlyList<CombatPresentationEvent> _pendingView;
+
+    public CombatPresentationLog() => _pendingView = _events.AsReadOnly();
 
     public int Count => _events.Count;
 
     /// <summary>尚未取走的事件只读视图（测试与界面对账用）。</summary>
-    public IReadOnlyList<CombatPresentationEvent> Pending => _events;
+    public IReadOnlyList<CombatPresentationEvent> Pending => _pendingView;
 
     public void Emit(CombatPresentationEvent presentationEvent)
     {
         ArgumentNullException.ThrowIfNull(presentationEvent);
-        _events.Add(presentationEvent);
+        _events.Add(presentationEvent switch
+        {
+            CardsDrawnEvent drawn => drawn with { Cards = Array.AsReadOnly(drawn.Cards.ToArray()) },
+            CardSettleStartedEvent card => card with { Targets = Array.AsReadOnly(card.Targets.ToArray()) },
+            NormalAttackStrikeEvent strike => strike with { Targets = Array.AsReadOnly(strike.Targets.ToArray()) },
+            OrbsTriggeredEvent orbs => orbs with { OrbTypeIds = Array.AsReadOnly(orbs.OrbTypeIds.ToArray()) },
+            _ => presentationEvent,
+        });
     }
 
     /// <summary>取走全部待播放事件并清空。</summary>
@@ -27,7 +37,7 @@ public sealed class CombatPresentationLog
 
         var drained = _events.ToArray();
         _events.Clear();
-        return drained;
+        return Array.AsReadOnly(drained);
     }
 
     public void Clear() => _events.Clear();

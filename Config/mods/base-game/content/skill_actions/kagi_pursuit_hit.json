@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "kagi_physical_damage",
+    "Amount": 10,
+    "AttackScale": 1,
+    "AttackCount": 2
+  }
+}

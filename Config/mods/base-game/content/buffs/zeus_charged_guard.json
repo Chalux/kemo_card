@@ -1,0 +1,40 @@
+{
+  "descId": "buff.zeus_charged_guard.desc",
+  "tags": [
+    "buff.active"
+  ],
+  "modifiers": [
+    {
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 20
+      },
+      "attributeId": "PhysicalDefense",
+      "operation": "Add"
+    },
+    {
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 20
+      },
+      "attributeId": "MagicDefense",
+      "operation": "Add"
+    }
+  ],
+  "durationType": "Turns",
+  "duration": 2,
+  "displayNameId": "buff.zeus_charged_guard.name",
+  "hooks": {
+    "onDamaged": [
+      {
+        "effectId": "zeus_counterattack",
+        "params": {
+          "AttackScale": 1.0,
+          "hookTargets": "attacker"
+        }
+      }
+    ]
+  },
+  "stackRule": "Refresh",
+  "exclusiveGroup": "zeus_lord_guard"
+}

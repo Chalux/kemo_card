@@ -92,10 +92,14 @@ public sealed class BuffContainer
     /// 重新评估全部实例的休眠状态并同步修正注册。
     /// 每回合开始时调用一次；持有者属性/种族战斗中变化后下一回合自动生效。
     /// </summary>
-    public void EvaluateDormancy(ICombatCondContext? context = null)
+    public void EvaluateDormancy(ICombatCondContext? context = null, string? conditionKind = null)
     {
-        foreach (var instance in _instances)
+        foreach (var instance in _instances.ToArray())
+        {
+            if (conditionKind is not null && !instance.Def.Conditions.Any(condition => condition.Kind == conditionKind))
+                continue;
             EvaluateDormancy(instance, context);
+        }
     }
 
     private void EvaluateDormancy(BuffInstance instance, ICombatCondContext? context)
@@ -164,5 +168,10 @@ public sealed class BuffContainer
 
         public int CountPartyIdentityMatches(int elementFlags, int raceFlags, bool matchAll) =>
             _partyCountQuery?.Invoke(elementFlags, raceFlags, matchAll) ?? 0;
+
+        /// <summary>没有模拟上下文：球触发批次 / 上一回合魔法受击账都读不到（恒 false，与出牌/连携查询同口径）。</summary>
+        public bool OrbTriggeredInBatch(int elementMask, string? orbTypeId) => false;
+
+        public bool SubjectTookMagicDamageLastTurn() => false;
     }
 }

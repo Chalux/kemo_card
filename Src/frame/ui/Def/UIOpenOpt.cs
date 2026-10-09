@@ -20,6 +20,7 @@ public class UIMaskOpt
 /// <summary>
 /// 气泡选项
 /// </summary>
+/// <remarks>预留定位参数；框架当前不自动定位，业务界面自行使用。</remarks>
 public class UIPopOpt
 {
     public Control? Target { get; set; }
@@ -29,6 +30,7 @@ public class UIPopOpt
 /// <summary>
 /// 气泡位置参数
 /// </summary>
+/// <remarks>预留能力；框架当前不计算锚点、偏移或屏幕边界限制。</remarks>
 public class UIPopPosOpt
 {
     public Vector2 TargetAnchor { get; set; } = new(0, 0);
@@ -79,11 +81,11 @@ public class UIOpenOpt
     public bool? HideBelow { get; set; }
 
     /// <summary>
-    /// 是否不遮挡下面的界面（null：未指定）
+    /// 是否从顶部判定中排除（null：未指定）；可见性由 HideBelow 控制。
     /// </summary>
     public bool? NoCover { get; set; }
     /// <summary>
-    /// 界面对齐方式（null：未指定）
+    /// 界面对齐方式（null：未指定）；预留参数，框架当前不自动修改场景布局。
     /// </summary>
     public EUIAlign? Align { get; set; }
     /// <summary>

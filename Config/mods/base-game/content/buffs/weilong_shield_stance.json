@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.weilong_shield_stance.name",
+  "descId": "buff.weilong_shield_stance.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 2,
+  "modifiers": [
+    {
+      "attributeId": "Taunt",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 3
+      }
+    }
+  ],
+  "exclusiveGroup": "weilong_dedicated_shield"
+}

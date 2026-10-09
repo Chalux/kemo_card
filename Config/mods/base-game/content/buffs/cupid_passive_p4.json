@@ -1,0 +1,37 @@
+{
+  "displayNameId": "buff.cupid_passive_p4.name",
+  "descId": "buff.cupid_passive_p4.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "applyScope": "AllAllies",
+  "modifiers": [
+    {
+      "magnitude": {
+        "scalar": 12,
+        "kind": "Scalar"
+      },
+      "attributeId": "PhysicalAttack",
+      "operation": "Add"
+    },
+    {
+      "magnitude": {
+        "scalar": 12,
+        "kind": "Scalar"
+      },
+      "attributeId": "MagicAttack",
+      "operation": "Add"
+    },
+    {
+      "magnitude": {
+        "scalar": 12,
+        "kind": "Scalar"
+      },
+      "attributeId": "HealPower",
+      "operation": "Add"
+    }
+  ]
+}

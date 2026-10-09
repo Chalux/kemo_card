@@ -43,7 +43,8 @@ public sealed class EnemyAiController
                 Registry = _registry,
                 CallerId = enemy.RuntimeId,
             };
-            if (_scriptInvoker.TryChooseSkill(_modId, def.ScriptPath, "execute", callContext, out var aiResult))
+            var owner = _registry.TryGetOwnerModId(EContentCategory.Enemy, def.Id, out var ownerModId) ? ownerModId : _modId;
+            if (_scriptInvoker.TryChooseSkill(owner, def.ScriptPath, "execute", callContext, out var aiResult))
             {
                 if (!string.IsNullOrWhiteSpace(aiResult.SkillId) && IsLegalSkill(def, aiResult.SkillId))
                     return aiResult.SkillId;

@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.kagi_target_lock.name",
+  "descId": "skill.kagi_target_lock.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "kagi_apply_target_mark"
+    }
+  ],
+  "tags": [
+    "active"
+  ]
+}

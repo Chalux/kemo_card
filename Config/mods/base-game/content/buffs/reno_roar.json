@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.reno_roar.name",
+  "descId": "buff.reno_roar.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "stackRule": "Refresh",
+  "tags": ["buff.active"],
+  "modifiers": [
+    { "attributeId": "PhysicalAttack", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 50 } },
+    { "attributeId": "PhysicalCardAttackCount", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 1 } },
+    { "attributeId": "NormalAttackCount", "operation": "Add", "magnitude": { "kind": "Scalar", "scalar": 1 } }
+  ]
+}

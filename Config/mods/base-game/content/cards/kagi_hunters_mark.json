@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.kagi_hunters_mark.name",
+  "element": 1,
+  "role": "Controller",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "kagi_hunters_mark"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalAttack": 1,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 12,
+  "cardType": "Support",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

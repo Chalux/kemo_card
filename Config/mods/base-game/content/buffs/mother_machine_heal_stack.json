@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.mother_machine_heal_stack.name",
+  "descId": "buff.mother_machine_heal_stack.desc",
+  "durationType": "Turns",
+  "stackRule": "Add",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 5,
+  "maxStacks": 3,
+  "modifiers": [
+    {
+      "attributeId": "HealPower",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 2
+      }
+    }
+  ]
+}

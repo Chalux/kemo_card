@@ -57,10 +57,13 @@ public abstract partial class BaseUI : Control, IUIMeta
     /// </summary>
     public sealed override void _ExitTree()
     {
-        OnExitTree();                       // 1. 子类补充清理（此时订阅仍有效）
-        Binder.UnbindAll();                 // 2. 框架保证解绑（子类忘了也解）
-        GlobalEvents.Bus.OffCaller(this);   // 3. 跨功能总线按 caller 清理
-        base._ExitTree();
+        try { OnExitTree(); }              // 子类清理时订阅仍有效
+        finally
+        {
+            Binder.UnbindAll();            // hook 抛异常也必须解绑
+            GlobalEvents.Bus.OffCaller(this);
+            base._ExitTree();
+        }
     }
 
     protected virtual void OnReady()

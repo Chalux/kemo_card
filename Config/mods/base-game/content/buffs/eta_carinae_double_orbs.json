@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.eta_carinae_double_orbs.name",
+  "descId": "buff.eta_carinae_double_orbs.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active"
+  ],
+  "duration": 4,
+  "modifiers": [
+    {
+      "attributeId": "TurnEndOrbBonusCount",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 1
+      }
+    }
+  ]
+}

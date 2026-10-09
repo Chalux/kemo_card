@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.cupid_discerning_love.name",
+  "descId": "skill.cupid_discerning_love.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "effectRefs": [
+    {
+      "effectId": "cupid_active_heal"
+    },
+    {
+      "effectId": "cupid_team_energy"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

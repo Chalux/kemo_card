@@ -18,16 +18,28 @@ namespace KemoCard.Mod.Combat.Condition;
 internal sealed class CombatCondContext : ICombatCondContext
 {
     private readonly CombatSimulation _simulation;
+    private readonly CombatTargetRef _subject;
 
     public CombatCondContext(
         CombatSimulation simulation,
         int sourceCharacterIndex,
         int subjectElementFlags = 0,
         int subjectRaceFlags = 0)
+        : this(simulation, new CombatTargetRef(ECombatSide.Player, sourceCharacterIndex), subjectElementFlags, subjectRaceFlags)
+    {
+    }
+
+    public CombatCondContext(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        int subjectElementFlags = 0,
+        int subjectRaceFlags = 0,
+        CombatTargetRef? subject = null)
     {
         ArgumentNullException.ThrowIfNull(simulation);
         _simulation = simulation;
-        SourceCharacterIndex = sourceCharacterIndex;
+        SourceCharacterIndex = source.Side == ECombatSide.Player ? source.Index : -1;
+        _subject = subject ?? source;
         SubjectElementFlags = subjectElementFlags;
         SubjectRaceFlags = subjectRaceFlags;
     }
@@ -44,7 +56,12 @@ internal sealed class CombatCondContext : ICombatCondContext
 
     /// <summary>结算期间记录尚未被取走（<c>TakePlayedThisTurn</c> 在回合结束产球时才清空），此处只读。</summary>
     public int CountCardsPlayedThisTurn(int characterIndex, int elementFlags) =>
-        _simulation.CountCardsPlayedThisTurn(characterIndex, elementFlags);
+        characterIndex >= 0 ? _simulation.CountCardsPlayedThisTurn(characterIndex, elementFlags) : 0;
+
+    public int CountCardsQueuedForExecution(int characterIndex, int elementFlags) =>
+        characterIndex >= 0 ? _simulation.CardQueue.PeekAllOrdered().Count(entry =>
+            entry.CharacterIndex == characterIndex && (elementFlags == 0 ||
+                (_simulation.Definitions.Store.TryGetCard(entry.CardId, out var card) && (card.Element & elementFlags) != 0))) : 0;
 
     /// <summary>本回合连携定档的参与人数：<paramref name="elementFlags"/> 为 0 时取当前结算卡牌的属性。</summary>
     public int CountChainParticipants(int elementFlags) =>
@@ -52,4 +69,15 @@ internal sealed class CombatCondContext : ICombatCondContext
 
     public int CountPartyIdentityMatches(int elementFlags, int raceFlags, bool matchAll) =>
         _simulation.PlayerTeam.CountMatchingMembers(elementFlags, raceFlags, matchAll);
+
+    /// <summary>充能球触发批次（区间由 <c>OrbRuntime.Trigger</c> 在 onOrbTriggered 钩子前后开关）。</summary>
+    public bool OrbTriggeredInBatch(int elementMask, string? orbTypeId) =>
+        _simulation.OrbBatchMatches(elementMask, orbTypeId);
+
+    /// <summary>上一回合的魔法受击账（回合边界由 <c>CombatTurnCoordinator.BeginNext</c> 滚动）。</summary>
+    public bool SubjectTookMagicDamageLastTurn() =>
+        _subject.Side == ECombatSide.Player && _simulation.TookMagicDamageLastTurn(_subject.Index);
+
+    public bool AnyLivingEnemyHasBuffTag(string tag) =>
+        _simulation.EnemyTeam.Enemies.Any(enemy => enemy.IsAlive && enemy.Buffs.HasTag(tag));
 }

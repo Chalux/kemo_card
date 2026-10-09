@@ -6,8 +6,14 @@ public sealed class AttributeAggregator
     private readonly Dictionary<string, List<AttributeModifier>> _baseModifiers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, List<AttributeModifier>> _modifiers = new(StringComparer.Ordinal);
     private readonly Dictionary<string, Dictionary<Guid, List<AttributeModifier>>> _modifiersByHandle = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, float> _consumed = new(StringComparer.Ordinal);
+
+    /// <summary>最终聚合值发布后通知，基础值写入的中间态不通知。</summary>
+    public event Action<string>? CurrentValuePublished;
 
     public AttributeAggregator(AttributeSet set) => _set = set;
+
+    #region 聚合与资源消耗
 
     public void SetModifiers(string attributeId, IReadOnlyList<AttributeModifier> modifiers)
     {
@@ -21,14 +27,14 @@ public sealed class AttributeAggregator
         var baseValue = _set.GetBaseValue(attributeId);
         if (!_modifiers.TryGetValue(attributeId, out var list) || list.Count == 0)
         {
-            _set.SetCurrentValue(attributeId, baseValue);
+            PublishCurrentValue(attributeId, baseValue);
             return;
         }
 
         if (list.Any(m => m.Op == EAttributeModifierOp.Override))
         {
             var lastOverride = list.Last(m => m.Op == EAttributeModifierOp.Override);
-            _set.SetCurrentValue(attributeId, lastOverride.Magnitude);
+            PublishCurrentValue(attributeId, lastOverride.Magnitude);
             return;
         }
 
@@ -42,14 +48,45 @@ public sealed class AttributeAggregator
                 current /= modifier.Magnitude;
         }
 
-        _set.SetCurrentValue(attributeId, current);
+        PublishCurrentValue(attributeId, current);
+    }
+
+    /// <summary>在最终聚合值之后记录实际消耗；重算与 Override 都不能补回已消耗的余量。</summary>
+    public float ConsumeCurrentValue(string attributeId, float amount)
+    {
+        if (!float.IsFinite(amount) || amount <= 0f)
+            return 0f;
+        var current = _set.GetCurrentValue(attributeId);
+        if (!float.IsFinite(current) || current <= 0f)
+            return 0f;
+        var consumed = MathF.Min(current, amount);
+        _consumed[attributeId] = _consumed.GetValueOrDefault(attributeId) + consumed;
+        Recalculate(attributeId);
+        return consumed;
+    }
+
+    private void PublishCurrentValue(string attributeId, float aggregated)
+    {
+        if (_consumed.TryGetValue(attributeId, out var consumed))
+        {
+            // 临时修饰被移除时抹掉不再有额度承载的消耗，避免形成后续授予的债务。
+            var capacity = MathF.Max(0f, aggregated);
+            _consumed[attributeId] = consumed = MathF.Min(consumed, capacity);
+            aggregated = capacity - consumed;
+        }
+        _set.SetCurrentValue(attributeId, aggregated);
+        CurrentValuePublished?.Invoke(attributeId);
     }
 
     public void RecalculateAll()
     {
-        foreach (var attributeId in _modifiers.Keys)
+        foreach (var attributeId in _modifiers.Keys.ToArray())
             Recalculate(attributeId);
     }
+
+    #endregion
+
+    #region 修正句柄
 
     public void SetModifiersForHandle(string attributeId, Guid handle, IReadOnlyList<AttributeModifier> modifiers, bool recalculate = true)
     {
@@ -98,4 +135,6 @@ public sealed class AttributeAggregator
 
         _modifiers[attributeId] = combined.OrderBy(m => m.Order).ToList();
     }
+
+    #endregion
 }

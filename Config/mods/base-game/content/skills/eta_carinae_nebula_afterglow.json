@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.eta_carinae_nebula_afterglow.name",
+  "descId": "skill.eta_carinae_nebula_afterglow.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "tags": [
+    "support"
+  ],
+  "effectRefs": [
+    {
+      "effectId": "eta_carinae_afterglow_heal"
+    },
+    {
+      "effectId": "eta_carinae_afterglow_orb"
+    }
+  ]
+}

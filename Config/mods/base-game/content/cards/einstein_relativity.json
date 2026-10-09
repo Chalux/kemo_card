@@ -1,0 +1,23 @@
+{
+  "displayNameId": "card.einstein_relativity.name",
+  "element": 8,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [{ "skillId": "einstein_relativity" }],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 40
+    }
+  },
+  "role": "Wizard",
+  "priority": 8,
+  "cardType": "Support",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": ["buff", "exclusive"],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

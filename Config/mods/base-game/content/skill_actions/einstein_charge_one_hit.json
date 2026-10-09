@@ -1,0 +1,9 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "einstein_magic_damage",
+    "hookTargets": "randomEnemy",
+    "Amount": 15,
+    "AttackCountMinusDiscard": 3
+  }
+}

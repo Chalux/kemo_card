@@ -1,0 +1,31 @@
+{
+  "rarity": "Exclusive",
+  "cardType": "Magical",
+  "element": 8,
+  "role": "Guard",
+  "targetScope": "Single",
+  "isExclusive": true,
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicAttack": 2
+    }
+  },
+  "skillRefs": [
+    {
+      "skillId": "zeus_thunderbolt"
+    }
+  ],
+  "tags": [
+    "damage",
+    "exclusive"
+  ],
+  "baseValue": 8,
+  "targetSide": "Enemy",
+  "cost": 2,
+  "costType": "Energy",
+  "priority": 4,
+  "displayNameId": "card.zeus_thunderbolt.name",
+  "retargetPolicy": "Default",
+  "targetCount": 1
+}

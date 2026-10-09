@@ -1,0 +1,10 @@
+{
+  "displayNameId": "skill.einstein_condensate.name",
+  "descId": "skill.einstein_condensate.desc",
+  "targetOverride": { "side": "Self", "scope": "Self" },
+  "actionRefs": [
+    { "actionId": "einstein_apply_condensate" },
+    { "actionId": "einstein_gain_yellow_orb" }
+  ],
+  "tags": ["buff", "orb"]
+}

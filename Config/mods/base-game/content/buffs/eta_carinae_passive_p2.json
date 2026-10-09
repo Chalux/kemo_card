@@ -1,0 +1,20 @@
+{
+  "displayNameId": "buff.eta_carinae_passive_p2.name",
+  "descId": "buff.eta_carinae_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "AutoOrbPowerScale",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 0.5
+      }
+    }
+  ]
+}

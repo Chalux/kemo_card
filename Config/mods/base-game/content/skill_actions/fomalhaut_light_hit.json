@@ -1,0 +1,8 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "fomalhaut_magic_damage",
+    "Amount": 8,
+    "AttackScale": 1
+  }
+}

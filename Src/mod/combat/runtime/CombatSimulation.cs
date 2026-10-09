@@ -16,14 +16,20 @@ namespace KemoCard.Mod.Combat.Runtime;
 
 public sealed class CombatSimulation : IDisposable
 {
+    public int BlockedUnselectedDiscardCount { get; private set; }
+    internal void CountBlockedUnselectedDiscard() => BlockedUnselectedDiscardCount++;
+    internal Queue<int>? SelectedDiscardSlots { get; set; }
+    internal int SelectedDiscardCharacterIndex { get; set; } = -1;
+    private readonly ShieldLifecycle _shieldLifecycle;
+    internal float CurrentOrbHealingBonus { get; set; }
     private readonly CombatStateMachine _stateMachine;
     private readonly TeamMaxHealthCoordinator _teamMaxHealthCoordinator;
     private readonly List<PlayedCardRecord> _playedThisTurn = [];
     private readonly Dictionary<string, int> _orbsTriggeredThisTurn = new(StringComparer.Ordinal);
     private long _nextQueueSequence = 1;
 
-    /// <summary>本回合的回合结束管线是否已结算（每回合只允许一次，见 <see cref="ResolveTurnEnd"/>）。</summary>
-    private bool _turnEndResolved;
+    /// <summary>统一回合边界，包含幂等收尾、钩子与终局检查。</summary>
+    private readonly CombatTurnCoordinator _turnCoordinator;
 
     public PlayerTeamState PlayerTeam { get; }
     public EnemyTeamState EnemyTeam { get; }
@@ -31,7 +37,10 @@ public sealed class CombatSimulation : IDisposable
     public GameDefinitionRegistry Definitions { get; }
     public CardExecutionQueue CardQueue { get; }
     public CombatEffectExecutor EffectExecutor { get; }
+    internal EffectExecutionBudget EffectBudget { get; } = new();
+    public int RejectedEffectExecutionCount => EffectBudget.RejectedCount;
     public TeamDomainManager DomainManager { get; }
+    internal CombatEffectLifecycle EffectLifecycle { get; }
     public EnemyAiController EnemyAi { get; }
     public IContentEffectScriptHost ScriptHost { get; }
 
@@ -76,7 +85,7 @@ public sealed class CombatSimulation : IDisposable
     public EDiscardChannel CurrentDiscardChannel { get; private set; } = EDiscardChannel.Other;
 
     /// <summary>
-    /// 当前结算卡牌适用的连携加成（与 DamageDealtScale 同桶加算）。
+    /// 当前结算卡牌适用的连携加成（独立乘算）。
     /// 由状态机在单卡结算区间设置，结算完归零——卡牌上下文之外恒为 0。
     /// </summary>
     public float CurrentChainBonus { get; private set; }
@@ -86,6 +95,15 @@ public sealed class CombatSimulation : IDisposable
 
     /// <summary>当前正在结算的卡牌属性位（0 = 不在单卡结算区间内）；连携条件按它取"这张牌的属性"。</summary>
     public int CurrentChainCardElementFlags { get; private set; }
+
+    /// <summary>
+    /// 当前正在结算的卡牌类型（<c>null</c> = 不在单卡结算区间内）。
+    /// 供「物理攻击的卡牌攻击次数 +N」这类按卡牌类型生效的加成判定（<c>PhysicalCardAttackCount</c>）。
+    /// </summary>
+    public KemoCard.Frame.Content.Definitions.ECardType? CurrentCardType { get; private set; }
+
+    /// <summary>当前正在结算卡牌的打出者槽位（-1 = 不在单卡结算区间内）。</summary>
+    public int CurrentCardSourceIndex { get; private set; } = -1;
 
     private IReadOnlyDictionary<EElement, int> _currentChainCounts =
         new Dictionary<EElement, int>();
@@ -148,9 +166,13 @@ public sealed class CombatSimulation : IDisposable
         Orbs = new OrbRuntime(definitions);
         NormalAttacks = new NormalAttackRuntime();
         DomainManager = new TeamDomainManager(this);
+        EffectLifecycle = new CombatEffectLifecycle(this);
+        EffectLifecycle.AttachHolders();
         EnemyAi = new EnemyAiController(definitions, enemyAiScriptInvoker, modId, runSeed);
         _teamMaxHealthCoordinator = new TeamMaxHealthCoordinator(PlayerTeam);
         _stateMachine = new CombatStateMachine(initialPhase);
+        _turnCoordinator = new CombatTurnCoordinator(this);
+        _shieldLifecycle = new ShieldLifecycle(this);
     }
 
     public CombatApplyResult TryApply(ICombatCommand command)
@@ -161,7 +183,7 @@ public sealed class CombatSimulation : IDisposable
 
     public CombatContext CreateContext() => new(this, TurnNumber);
 
-    public void TransitionTo(ECombatPhase phase)
+    internal void TransitionTo(ECombatPhase phase)
     {
         var previous = _stateMachine.Phase;
         _stateMachine.TransitionTo(phase);
@@ -197,6 +219,26 @@ public sealed class CombatSimulation : IDisposable
     /// <summary>测试与状态机共用：切换当前弃牌通道。</summary>
     public void SetDiscardChannel(EDiscardChannel channel) => CurrentDiscardChannel = channel;
 
+    /// <summary>
+    /// 最近一次 <c>DiscardAndRecord</c>（技能动作）<b>实际</b>弃置的张数：请求弃 N 张但可弃池不足时为实际张数，
+    /// 一张没弃到记 0。未写入时为 0。
+    /// </summary>
+    /// <remarks>
+    /// 记账语义（2026-09-27「弃 X 张，则下次抽牌 +X」）：<c>DiscardAndRecord</c> 写入
+    /// （<see cref="SetLastDiscardCount"/>）；读取方<b>不清账</b>，因此同一账期内可以有多个读取者
+    /// （如「按弃牌数补抽」与「按弃牌数扣减行动次数」）看到同一个数值。
+    /// 账期与玩家阶段对齐：<c>PlayerPhasePipeline</c> 在每个玩家阶段开始时清一次
+    /// （<see cref="ClearLastDiscardCount"/>），主动技在玩家阶段内释放、其弃牌记录因此只在本回合有效，
+    /// 不会把上一回合的弃牌数泄漏给下一次读取。
+    /// </remarks>
+    public int LastDiscardCount { get; private set; }
+
+    /// <summary><c>DiscardAndRecord</c> 专用：登记本次实际弃置的张数（负数按 0 处理）。</summary>
+    internal void SetLastDiscardCount(int count) => LastDiscardCount = Math.Max(0, count);
+
+    /// <summary>玩家阶段开始清账：弃牌记录只在本回合内有效（由 <c>PlayerPhasePipeline</c> 调用）。</summary>
+    internal void ClearLastDiscardCount() => LastDiscardCount = 0;
+
     /// <summary>状态机专用：设置/清零当前结算卡牌的连携加成（结算区间之外恒为 0）。</summary>
     internal void SetChainBonus(float bonus) => CurrentChainBonus = bonus;
 
@@ -206,6 +248,35 @@ public sealed class CombatSimulation : IDisposable
 
     /// <summary>状态机专用：登记当前正在结算的卡牌属性位（0 = 离开单卡结算区间）。</summary>
     internal void SetChainCardElementFlags(int elementFlags) => CurrentChainCardElementFlags = elementFlags;
+
+    /// <summary>状态机专用：登记当前正在结算的卡牌类型与打出者（null / -1 = 离开单卡结算区间）。</summary>
+    internal void SetCurrentCardContext(
+        KemoCard.Frame.Content.Definitions.ECardType? cardType,
+        int sourceIndex)
+    {
+        CurrentCardType = cardType;
+        CurrentCardSourceIndex = cardType is null ? -1 : sourceIndex;
+    }
+
+    /// <summary>单卡上下文覆盖到结算后钩子；异常退出或嵌套结算后恢复调用方上下文。</summary>
+    internal CardContextScope EnterCardContext(ECardType cardType, int sourceIndex, int elementFlags, float chainBonus)
+    {
+        var scope = new CardContextScope(this, CurrentCardType, CurrentCardSourceIndex, CurrentChainCardElementFlags, CurrentChainBonus);
+        SetCurrentCardContext(cardType, sourceIndex);
+        SetChainCardElementFlags(elementFlags);
+        SetChainBonus(chainBonus);
+        return scope;
+    }
+
+    internal readonly struct CardContextScope(CombatSimulation simulation, ECardType? cardType, int sourceIndex, int elementFlags, float chainBonus) : IDisposable
+    {
+        public void Dispose()
+        {
+            simulation.SetCurrentCardContext(cardType, sourceIndex);
+            simulation.SetChainCardElementFlags(elementFlags);
+            simulation.SetChainBonus(chainBonus);
+        }
+    }
 
     /// <summary>
     /// 连携人头数查询（战斗条件 <c>ChainTierAtLeast</c> 读它）：
@@ -235,7 +306,7 @@ public sealed class CombatSimulation : IDisposable
     internal void CountBlockedMidDraw() => BlockedMidDrawCount++;
 
     /// <summary>当前批次内每个角色被敌方攻击命中的次数（一次敌方技能 = 一个批次）。</summary>
-    private readonly Dictionary<int, int> _pendingDamagedHits = [];
+    private readonly Dictionary<int, List<CombatTargetRef?>> _pendingDamagedHits = [];
 
     /// <summary>
     /// 记一次玩家角色的受击。调用点是伤害统一落点 <c>DamagePipeline.NotifyAfter</c>，
@@ -243,13 +314,14 @@ public sealed class CombatSimulation : IDisposable
     /// 由 <see cref="FlushOnDamagedHits"/> 在批次结束时按次数逐次触发 onDamaged——
     /// 「先结算完全部伤害，再按受击次数回复生命」。
     /// </summary>
-    internal void RecordDamagedPlayerHit(int characterIndex)
+    internal void RecordDamagedPlayerHit(int characterIndex, CombatTargetRef? attacker = null)
     {
         if (characterIndex < 0 || characterIndex >= PlayerTeam.Characters.Count)
             return;
 
-        _pendingDamagedHits.TryGetValue(characterIndex, out var count);
-        _pendingDamagedHits[characterIndex] = count + 1;
+        if (!_pendingDamagedHits.TryGetValue(characterIndex, out var hits))
+            _pendingDamagedHits[characterIndex] = hits = [];
+        hits.Add(attacker);
     }
 
     /// <summary>批次结束：逐角色按其受击次数触发 onDamaged 钩子并清账（无待处理时零操作）。</summary>
@@ -262,8 +334,123 @@ public sealed class CombatSimulation : IDisposable
         var pending = _pendingDamagedHits.ToArray();
         _pendingDamagedHits.Clear();
         foreach (var (characterIndex, hits) in pending)
-            Buffs.FireOnDamagedHits(this, characterIndex, hits);
+            foreach (var attacker in hits)
+                Buffs.FireOnDamagedHits(this, characterIndex, 1, attacker);
     }
+
+    #region 充能球触发批次（OrbTriggered 条件）
+
+    /// <summary>批次区间是否有效（只在 onOrbTriggered 钩子求值期间为 true）。</summary>
+    private readonly Stack<OrbTriggerBatch?> _orbTriggeredBatches = new();
+
+    private sealed record OrbTriggerBatch(int ElementFlags, IReadOnlySet<string> OrbTypeIds);
+
+    /// <summary>进入触发流程时遮蔽外层批次，避免内层逐球效果误读外层钩子的批次。</summary>
+    internal OrbTriggerScope EnterOrbTriggerScope()
+    {
+        _orbTriggeredBatches.Push(null);
+        return new OrbTriggerScope(this);
+    }
+
+    internal readonly struct OrbTriggerScope(CombatSimulation simulation) : IDisposable
+    {
+        public void Dispose() => simulation.EndOrbTriggeredBatch();
+    }
+
+    /// <summary>
+    /// 开始记录一次充能球触发批次（<c>OrbRuntime.Trigger</c> 在 <c>FireOrbTriggered</c> 之前调用）：
+    /// 汇总本次清空队列里所有球的类型 id 与元素位，供 <c>OrbTriggered</c> 条件判断"这次触发里有没有某种球"。
+    /// </summary>
+    /// <remarks>
+    /// 区间只覆盖 onOrbTriggered 钩子的求值：逐球触发效果（<c>orbType.triggerEffects</c>）在批次记录之前执行，
+    /// 读不到批次——它们的条件按"这一颗球"的上下文（源 = 产球者）表达，不需要批次信息。
+    /// 嵌套触发使用独立批次；内层结束后恢复外层，后续钩子仍读取原批次。
+    /// </remarks>
+    internal void BeginOrbTriggeredBatch(IReadOnlyCollection<string> orbTypeIds)
+    {
+        ArgumentNullException.ThrowIfNull(orbTypeIds);
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        var elements = 0;
+        foreach (var orbTypeId in orbTypeIds)
+        {
+            if (string.IsNullOrWhiteSpace(orbTypeId))
+                continue;
+
+            ids.Add(orbTypeId);
+            if (Definitions.Store.TryGetOrbType(orbTypeId, out var orbType))
+                elements |= (int)orbType.Element;
+        }
+        _orbTriggeredBatches.Push(new(elements, ids));
+    }
+
+    /// <summary>结束批次记录（钩子求值结束后调用）；区间之外 <see cref="OrbBatchMatches"/> 一律 false。</summary>
+    internal void EndOrbTriggeredBatch()
+    {
+        _orbTriggeredBatches.TryPop(out _);
+    }
+
+    /// <summary>
+    /// 当前触发批次里是否有匹配的充能球（<c>OrbTriggered</c> 条件读它）：
+    /// <paramref name="elementMask"/> 为 0 时不筛属性、<paramref name="orbTypeId"/> 为空时不筛球类型；
+    /// 两者都给出时须<b>同时</b>命中（"且"）。批次之外（含逐球触发效果区间）恒为 false。
+    /// </summary>
+    public bool OrbBatchMatches(int elementMask, string? orbTypeId)
+    {
+        if (!_orbTriggeredBatches.TryPeek(out var batch) || batch is null)
+            return false;
+
+        if (elementMask != 0 && (batch.ElementFlags & elementMask) == 0)
+            return false;
+
+        return string.IsNullOrWhiteSpace(orbTypeId) || batch.OrbTypeIds.Contains(orbTypeId);
+    }
+
+    #endregion
+
+    #region 魔法受击账（TookMagicDamageLastTurn 条件）
+
+    /// <summary>本回合受到魔法伤害的玩家角色槽位。</summary>
+    private readonly HashSet<int> _magicDamagedThisTurn = [];
+
+    /// <summary>上一回合受到魔法伤害的玩家角色槽位（回合边界由本回合账滚动而来）。</summary>
+    private readonly HashSet<int> _magicDamagedLastTurn = [];
+
+    /// <summary>
+    /// 记一次玩家角色的魔法受击。调用点与 onDamaged 记账同处（<c>DamagePipeline.NotifyAfter</c>：
+    /// 玩家槽位 + 敌方来源 + 非自我结算），只多一个"伤害维度 = 魔法"的门闩；
+    /// 同一角色一回合内多次受击只记一次（条件是布尔语义）。
+    /// </summary>
+    internal void RecordMagicDamageTaken(int characterIndex)
+    {
+        if (characterIndex < 0 || characterIndex >= PlayerTeam.Characters.Count)
+            return;
+
+        _magicDamagedThisTurn.Add(characterIndex);
+    }
+
+    /// <summary>
+    /// 回合边界滚动魔法受击账：本回合账转为"上一回合"账，新回合从零累计
+    /// （与 <see cref="ResetOrbsTriggeredThisTurn"/> 同一时点，由 <c>CombatTurnCoordinator.BeginNext</c> 调用）。
+    /// </summary>
+    /// <remarks>
+    /// 必须双缓冲：条件语义是"<b>上一回合</b>受到过魔法伤害"，若像球数统计那样单账在回合开始清零，
+    /// 上回合的记录会在被读取之前就抹掉，条件永远为假。滚动发生在 <c>Start()</c> 之前，
+    /// 因此回合开始的钩子（如爱因斯坦被动2 的 onTurnStart）读到的是上一回合的账。
+    /// </remarks>
+    internal void RollMagicDamageTurnLedger()
+    {
+        _magicDamagedLastTurn.Clear();
+        _magicDamagedLastTurn.UnionWith(_magicDamagedThisTurn);
+        _magicDamagedThisTurn.Clear();
+    }
+
+    /// <summary>该槽位角色上一回合是否受到过魔法伤害（<c>TookMagicDamageLastTurn</c> 条件读它）。</summary>
+    public bool TookMagicDamageLastTurn(int characterIndex) =>
+        characterIndex >= 0 &&
+        characterIndex < PlayerTeam.Characters.Count &&
+        _magicDamagedLastTurn.Contains(characterIndex);
+
+    #endregion
 
     /// <summary>本回合已打出的卡牌登记（充能球回合结束统计口径；含空放——牌已离手即算打出）。</summary>
     internal void RecordPlayedCard(string cardId, int characterIndex) =>
@@ -426,6 +613,7 @@ public sealed class CombatSimulation : IDisposable
             throw new InvalidOperationException(error ?? "下一波敌人生成失败。");
 
         EnemyTeam.ReplaceEnemies(enemies);
+        EffectLifecycle.AttachHolders();
         TurnsIntoWave = 0;
         Presentation.Emit(new WaveStartedEvent(CurrentWaveIndex));
         // 新波次的敌人是全新的实例（buff 容器为空）：必须重新挂载内容声明的开战 buff，
@@ -439,45 +627,9 @@ public sealed class CombatSimulation : IDisposable
         BeginNextTurn(incrementTurnsIntoWave: false);
     }
 
-    /// <summary>
-    /// 回合结束管线（规格 §2.1）：turn-end 规则 → 领域时长 → buff 时长 tick（含到期 onRemove）→
-    /// 充能球回合产出。每回合只结算一次（<see cref="_turnEndResolved"/> 守卫）：敌方阶段末尾正常跑，
-    /// 玩家阶段 / 卡牌执行阶段清波时由 <see cref="AdvanceToNextWave"/> 补跑，两条路径不会重复。
-    /// </summary>
-    internal void ResolveTurnEnd()
-    {
-        if (_turnEndResolved)
-            return;
-
-        _turnEndResolved = true;
-        Rules.DispatchTurnEnd(CreateContext());
-        DomainManager.FireTurnEndHooks();
-        Buffs.FireTurnEnd(this);
-        // 充能球回合结束产出（固定 1 个四属性球 + 1 个物理/魔法球）：满员时会即时自动触发，
-        // 因此必须排在结束判定之前——触发伤害可能直接结束战斗。
-        Orbs.GrantTurnEndOrbs(this, TakePlayedThisTurn());
-    }
-
-    /// <summary>
-    /// 回合开始管线（规格 §2.1）：回合数 +1（换波时波内计数保持 0，由下一次回合结束再递增）→
-    /// 清充能球回合账 → turn-start 钩子 → 进入玩家阶段并跑完整玩家阶段管线。
-    /// </summary>
-    internal void BeginNextTurn(bool incrementTurnsIntoWave)
-    {
-        _turnEndResolved = false;
-        IncrementTurnNumber();
-        if (incrementTurnsIntoWave)
-            IncrementTurnsIntoWave();
-
-        // "本回合已触发充能球"与回合边界对齐地清账（见 ResetOrbsTriggeredThisTurn 注释）：
-        // 上一回合结束产出并即时触发的球不得算进本回合。
-        ResetOrbsTriggeredThisTurn();
-        DomainManager.FireTurnStartHooks();
-        Buffs.FireTurnStart(this);
-        TransitionTo(ECombatPhase.Player);
-        PlayerPhasePipeline.Run(this, IsFirstPlayerPhase);
-    }
-
+    internal void ResolveTurnEnd() => _turnCoordinator.End();
+    internal void BeginNextTurn(bool incrementTurnsIntoWave) => _turnCoordinator.BeginNext(incrementTurnsIntoWave);
+    internal void RunTurnStart() => _turnCoordinator.Start();
     /// <summary>
     /// 把每个敌人 <c>buffRefs</c> 声明的 buff 挂到它自己身上（与玩家侧开战被动注入对称）。
     /// 未找到敌人定义时软失败跳过。BattleStart 与每次换波都要调用一次。
@@ -487,22 +639,19 @@ public sealed class CombatSimulation : IDisposable
         for (var i = 0; i < EnemyTeam.Enemies.Count; i++)
         {
             var enemy = EnemyTeam.Enemies[i];
-            if (!Definitions.Store.TryGetEnemy(enemy.DefinitionId, out var definition))
-                continue;
-
-            foreach (var buffRef in definition.BuffRefs)
+            if (Definitions.Store.TryGetEnemy(enemy.DefinitionId, out var definition))
             {
-                Buffs.Apply(
-                    this,
-                    new CombatTargetRef(ECombatSide.Enemy, i),
-                    buffRef.BuffId,
-                    buffRef.Params);
+                foreach (var buffRef in definition.BuffRefs)
+                    Buffs.Apply(this, new CombatTargetRef(ECombatSide.Enemy, i), buffRef.BuffId, buffRef.Params);
             }
+            Buffs.FireEnemyEntered(this, i);
         }
+        DomainManager.RefreshDomainBuffs();
     }
 
     public void Dispose()
     {
         _teamMaxHealthCoordinator.Dispose();
+        _shieldLifecycle.Dispose();
     }
 }

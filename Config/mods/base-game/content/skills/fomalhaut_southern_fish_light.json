@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.fomalhaut_southern_fish_light.name",
+  "descId": "skill.fomalhaut_southern_fish_light.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "Single"
+  },
+  "actionRefs": [
+    {
+      "actionId": "fomalhaut_light_hit"
+    }
+  ],
+  "tags": [
+    "attack"
+  ]
+}

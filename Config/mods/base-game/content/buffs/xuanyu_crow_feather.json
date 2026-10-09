@@ -1,0 +1,25 @@
+{
+  "displayNameId": "buff.xuanyu_crow_feather.name",
+  "descId": "buff.xuanyu_crow_feather.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Independent",
+  "maxStacks": 2,
+  "tags": [
+    "debuff"
+  ],
+  "modifiers": [],
+  "hooks": {
+    "onRemove": [
+      {
+        "effectId": "xuanyu_feather_burst",
+        "params": {
+          "hookTargets": "allEnemies"
+        }
+      },
+      {
+        "effectId": "xuanyu_apply_feather"
+      }
+    ]
+  }
+}

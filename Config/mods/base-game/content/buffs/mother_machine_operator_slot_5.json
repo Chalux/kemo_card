@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.mother_machine_operator_slot_5.name",
+  "descId": "buff.mother_machine_operator_slot_5.desc",
+  "durationType": "Turns",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.active",
+    "slot.charge"
+  ],
+  "duration": 5,
+  "hooks": {
+    "onSlotCardPlayed": [
+      {
+        "effectId": "mother_machine_operator_slot_5_heal",
+        "params": {
+          "hookTargets": "team"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "weilong_physical_damage",
+    "Amount": 20,
+    "AttackScale": 1
+  }
+}

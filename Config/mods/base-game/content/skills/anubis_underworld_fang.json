@@ -1,0 +1,9 @@
+{
+  "displayNameId": "skill.anubis_underworld_fang.name",
+  "descId": "skill.anubis_underworld_fang.desc",
+  "actionRefs": [
+    {
+      "actionId": "anubis_fang_hit"
+    }
+  ]
+}

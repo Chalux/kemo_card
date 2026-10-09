@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.hualing_light_curtain.name",
+  "element": 2,
+  "role": "Controller",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "hualing_light_curtain"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 30,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 13,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

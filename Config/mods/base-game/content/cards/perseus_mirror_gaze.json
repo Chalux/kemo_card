@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.perseus_mirror_gaze.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 2,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "perseus_mirror_gaze"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "MagicDefense": 1,
+      "PhysicalDefense": 1
+    }
+  },
+  "role": "Controller",
+  "priority": 9,
+  "cardType": "Weak",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

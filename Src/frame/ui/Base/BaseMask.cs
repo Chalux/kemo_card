@@ -61,10 +61,13 @@ public abstract partial class BaseMask : Control, IUILifecycleInvoker
     /// <summary>框架唯一离场入口。<b>sealed：子类不得 override</b> — 请改 override <see cref="OnExitTree"/>。</summary>
     public sealed override void _ExitTree()
     {
-        OnExitTree();
-        Binder.UnbindAll();
-        GlobalEvents.Bus.OffCaller(this);
-        base._ExitTree();
+        try { OnExitTree(); }
+        finally
+        {
+            Binder.UnbindAll();
+            GlobalEvents.Bus.OffCaller(this);
+            base._ExitTree();
+        }
     }
 
     /// <summary>框架级离场生命周期：子类只做非订阅类清理。</summary>

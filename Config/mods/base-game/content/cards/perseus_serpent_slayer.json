@@ -1,0 +1,30 @@
+{
+  "displayNameId": "card.perseus_serpent_slayer.name",
+  "element": 4,
+  "costType": "Energy",
+  "cost": 3,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "perseus_serpent_slayer"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "PhysicalAttack": 2,
+      "MaxHealth": 20
+    }
+  },
+  "role": "Controller",
+  "priority": 3,
+  "cardType": "Physics",
+  "targetSide": "Enemy",
+  "targetScope": "Single",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}

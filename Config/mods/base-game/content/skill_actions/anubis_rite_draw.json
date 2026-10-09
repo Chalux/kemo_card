@@ -1,0 +1,9 @@
+{
+  "params": {
+    "amount": 1,
+    "targetFilter": {
+      "self": true
+    }
+  },
+  "kind": "ModifyDrawCount"
+}

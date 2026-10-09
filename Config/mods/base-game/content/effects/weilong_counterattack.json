@@ -1,0 +1,7 @@
+{
+  "kind": "Damage",
+  "params": {
+    "damageGameplayEffectId": "weilong_physical_damage",
+    "amount": 0
+  }
+}

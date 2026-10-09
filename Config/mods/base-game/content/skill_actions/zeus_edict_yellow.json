@@ -1,0 +1,17 @@
+{
+  "kind": "GainResource",
+  "params": {
+    "amount": 1,
+    "targetFilter": {
+      "condition": {
+        "kind": "IdentityMatch",
+        "params": {
+          "elementAny": [
+            "Yellow"
+          ]
+        }
+      }
+    },
+    "resource": "skillcounter"
+  }
+}

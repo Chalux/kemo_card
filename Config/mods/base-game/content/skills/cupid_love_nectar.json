@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.cupid_love_nectar.name",
+  "descId": "skill.cupid_love_nectar.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "Team"
+  },
+  "effectRefs": [
+    {
+      "effectId": "cupid_nectar_heal"
+    }
+  ],
+  "tags": [
+    "support"
+  ]
+}

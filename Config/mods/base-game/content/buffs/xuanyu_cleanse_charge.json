@@ -1,0 +1,19 @@
+{
+  "displayNameId": "buff.xuanyu_cleanse_charge.name",
+  "descId": "buff.xuanyu_cleanse_charge.desc",
+  "durationType": "Permanent",
+  "duration": 0,
+  "stackRule": "Replace",
+  "maxStacks": 1,
+  "tags": [
+    "slot.charge"
+  ],
+  "modifiers": [],
+  "hooks": {
+    "onSlotCardPlayed": [
+      {
+        "effectId": "xuanyu_cleanse"
+      }
+    ]
+  }
+}

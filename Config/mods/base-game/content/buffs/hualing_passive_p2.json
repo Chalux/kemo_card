@@ -1,0 +1,17 @@
+{
+  "displayNameId": "buff.hualing_passive_p2.name",
+  "descId": "buff.hualing_passive_p2.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "buff.passive",
+    "buff.undispellable"
+  ],
+  "hooks": {
+    "onEnemyEntered": [
+      {
+        "effectId": "hualing_apply_entrance_suppression"
+      }
+    ]
+  }
+}

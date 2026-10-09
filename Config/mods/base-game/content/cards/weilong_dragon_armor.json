@@ -1,0 +1,31 @@
+{
+  "displayNameId": "card.weilong_dragon_armor.name",
+  "element": 4,
+  "role": "Shield",
+  "costType": "Energy",
+  "cost": 1,
+  "baseValue": 0,
+  "skillRefs": [
+    {
+      "skillId": "weilong_dragon_armor"
+    }
+  ],
+  "stats": {
+    "attributes": {
+      "MaxHealth": 20,
+      "PhysicalDefense": 1,
+      "MagicDefense": 1
+    }
+  },
+  "priority": 12,
+  "cardType": "Guard",
+  "targetSide": "Self",
+  "targetScope": "Self",
+  "targetCount": 1,
+  "retargetPolicy": "Default",
+  "tags": [
+    "exclusive"
+  ],
+  "rarity": "Exclusive",
+  "isExclusive": true
+}
