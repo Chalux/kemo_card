@@ -1,0 +1,1210 @@
+{
+  "mode": "mechanical re-registration of v13 idle-based poses; no new artwork",
+  "version": "v14",
+  "status": "game-spec preview; game assets not replaced",
+  "canvas": [
+    464,
+    560
+  ],
+  "groundRow": 534,
+  "idleStanceAnchorX": 337.5,
+  "idleBodyCenterX": 233.0,
+  "idleBodyHeightPx": 504,
+  "idleSource": "idle-suit-v9/frames/idle-01.png (pixels reused unchanged)",
+  "poseSource": "suit-actions-v13 attack/registered-sheet.png and defeat/generated-sheet.png",
+  "attackVariants": {
+    "attack": {
+      "dir": "attack",
+      "note": "body stays exactly at the idle stance; animation scaled to fit",
+      "frameCount": 9,
+      "durationMs": [
+        70,
+        110,
+        90,
+        70,
+        45,
+        60,
+        95,
+        115,
+        125
+      ],
+      "totalMs": 780,
+      "atlas": {
+        "columns": 3,
+        "rows": 3,
+        "size": [
+          1392,
+          1680
+        ]
+      },
+      "idleMatchedScale": 1.4237,
+      "scale": 1.2344,
+      "scaleVsIdleMatched": 0.867,
+      "stanceAnchorX": 337.5,
+      "anchorOffsetFromIdle": 0.0,
+      "marginPx": 8,
+      "droppedGeneratedPoses": [
+        4,
+        7,
+        9,
+        12
+      ],
+      "poses": [
+        {
+          "sourcePose": 2,
+          "sourceBounds": [
+            26,
+            9,
+            322,
+            362
+          ],
+          "sourceAnchor": 226.0,
+          "sourceContactBottom": 361,
+          "registration": [
+            59,
+            88
+          ],
+          "outputBounds": [
+            91,
+            99,
+            456,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 40.0
+        },
+        {
+          "sourcePose": 3,
+          "sourceBounds": [
+            32,
+            14,
+            326,
+            362
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 361,
+          "registration": [
+            47,
+            88
+          ],
+          "outputBounds": [
+            86,
+            105,
+            449,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 34.0
+        },
+        {
+          "sourcePose": 5,
+          "sourceBounds": [
+            48,
+            5,
+            314,
+            352
+          ],
+          "sourceAnchor": 253.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            25,
+            100
+          ],
+          "outputBounds": [
+            84,
+            106,
+            412,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 14.5
+        },
+        {
+          "sourcePose": 6,
+          "sourceBounds": [
+            39,
+            5,
+            301,
+            352
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            47,
+            100
+          ],
+          "outputBounds": [
+            95,
+            106,
+            419,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 23.5
+        },
+        {
+          "sourcePose": 8,
+          "sourceBounds": [
+            34,
+            5,
+            330,
+            352
+          ],
+          "sourceAnchor": 241.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            39,
+            100
+          ],
+          "outputBounds": [
+            81,
+            106,
+            447,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 30.5
+        },
+        {
+          "sourcePose": 10,
+          "sourceBounds": [
+            6,
+            3,
+            270,
+            348
+          ],
+          "sourceAnchor": 210.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            78,
+            105
+          ],
+          "outputBounds": [
+            85,
+            109,
+            411,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 14.5
+        },
+        {
+          "sourcePose": 11,
+          "sourceBounds": [
+            57,
+            3,
+            327,
+            348
+          ],
+          "sourceAnchor": 256.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            21,
+            105
+          ],
+          "outputBounds": [
+            91,
+            109,
+            424,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 24.0
+        }
+      ]
+    },
+    "attack-offset": {
+      "dir": "attack-offset",
+      "note": "idle-matched scale; whole action offset sideways to fit",
+      "frameCount": 9,
+      "durationMs": [
+        70,
+        110,
+        90,
+        70,
+        45,
+        60,
+        95,
+        115,
+        125
+      ],
+      "totalMs": 780,
+      "atlas": {
+        "columns": 3,
+        "rows": 3,
+        "size": [
+          1392,
+          1680
+        ]
+      },
+      "idleMatchedScale": 1.4237,
+      "scale": 1.4237,
+      "scaleVsIdleMatched": 1.0,
+      "stanceAnchorX": 325.32,
+      "anchorOffsetFromIdle": -12.2,
+      "marginPx": 2,
+      "droppedGeneratedPoses": [
+        4,
+        7,
+        9,
+        12
+      ],
+      "poses": [
+        {
+          "sourcePose": 2,
+          "sourceBounds": [
+            26,
+            9,
+            322,
+            362
+          ],
+          "sourceAnchor": 226.0,
+          "sourceContactBottom": 361,
+          "registration": [
+            4,
+            19
+          ],
+          "outputBounds": [
+            41,
+            32,
+            462,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 18.0
+        },
+        {
+          "sourcePose": 3,
+          "sourceBounds": [
+            32,
+            14,
+            326,
+            362
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 361,
+          "registration": [
+            -10,
+            19
+          ],
+          "outputBounds": [
+            36,
+            39,
+            454,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 11.5
+        },
+        {
+          "sourcePose": 5,
+          "sourceBounds": [
+            48,
+            5,
+            314,
+            352
+          ],
+          "sourceAnchor": 253.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            -35,
+            34
+          ],
+          "outputBounds": [
+            33,
+            41,
+            412,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -11.0
+        },
+        {
+          "sourcePose": 6,
+          "sourceBounds": [
+            39,
+            5,
+            301,
+            352
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            -10,
+            34
+          ],
+          "outputBounds": [
+            46,
+            41,
+            419,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -1.0
+        },
+        {
+          "sourcePose": 8,
+          "sourceBounds": [
+            34,
+            5,
+            330,
+            352
+          ],
+          "sourceAnchor": 241.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            -18,
+            34
+          ],
+          "outputBounds": [
+            30,
+            41,
+            451,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 7.0
+        },
+        {
+          "sourcePose": 10,
+          "sourceBounds": [
+            6,
+            3,
+            270,
+            348
+          ],
+          "sourceAnchor": 210.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            26,
+            40
+          ],
+          "outputBounds": [
+            35,
+            44,
+            410,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -11.0
+        },
+        {
+          "sourcePose": 11,
+          "sourceBounds": [
+            57,
+            3,
+            327,
+            348
+          ],
+          "sourceAnchor": 256.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            -40,
+            40
+          ],
+          "outputBounds": [
+            41,
+            44,
+            425,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -0.5
+        }
+      ]
+    }
+  },
+  "animations": {
+    "attack": {
+      "dir": "attack",
+      "note": "body stays exactly at the idle stance; animation scaled to fit",
+      "frameCount": 9,
+      "durationMs": [
+        70,
+        110,
+        90,
+        70,
+        45,
+        60,
+        95,
+        115,
+        125
+      ],
+      "totalMs": 780,
+      "atlas": {
+        "columns": 3,
+        "rows": 3,
+        "size": [
+          1392,
+          1680
+        ]
+      },
+      "idleMatchedScale": 1.4237,
+      "scale": 1.2344,
+      "scaleVsIdleMatched": 0.867,
+      "stanceAnchorX": 337.5,
+      "anchorOffsetFromIdle": 0.0,
+      "marginPx": 8,
+      "droppedGeneratedPoses": [
+        4,
+        7,
+        9,
+        12
+      ],
+      "poses": [
+        {
+          "sourcePose": 2,
+          "sourceBounds": [
+            26,
+            9,
+            322,
+            362
+          ],
+          "sourceAnchor": 226.0,
+          "sourceContactBottom": 361,
+          "registration": [
+            59,
+            88
+          ],
+          "outputBounds": [
+            91,
+            99,
+            456,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 40.0
+        },
+        {
+          "sourcePose": 3,
+          "sourceBounds": [
+            32,
+            14,
+            326,
+            362
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 361,
+          "registration": [
+            47,
+            88
+          ],
+          "outputBounds": [
+            86,
+            105,
+            449,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 34.0
+        },
+        {
+          "sourcePose": 5,
+          "sourceBounds": [
+            48,
+            5,
+            314,
+            352
+          ],
+          "sourceAnchor": 253.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            25,
+            100
+          ],
+          "outputBounds": [
+            84,
+            106,
+            412,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 14.5
+        },
+        {
+          "sourcePose": 6,
+          "sourceBounds": [
+            39,
+            5,
+            301,
+            352
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            47,
+            100
+          ],
+          "outputBounds": [
+            95,
+            106,
+            419,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 23.5
+        },
+        {
+          "sourcePose": 8,
+          "sourceBounds": [
+            34,
+            5,
+            330,
+            352
+          ],
+          "sourceAnchor": 241.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            39,
+            100
+          ],
+          "outputBounds": [
+            81,
+            106,
+            447,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 30.5
+        },
+        {
+          "sourcePose": 10,
+          "sourceBounds": [
+            6,
+            3,
+            270,
+            348
+          ],
+          "sourceAnchor": 210.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            78,
+            105
+          ],
+          "outputBounds": [
+            85,
+            109,
+            411,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 14.5
+        },
+        {
+          "sourcePose": 11,
+          "sourceBounds": [
+            57,
+            3,
+            327,
+            348
+          ],
+          "sourceAnchor": 256.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            21,
+            105
+          ],
+          "outputBounds": [
+            91,
+            109,
+            424,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 24.0
+        }
+      ]
+    },
+    "attack-offset": {
+      "dir": "attack-offset",
+      "note": "idle-matched scale; whole action offset sideways to fit",
+      "frameCount": 9,
+      "durationMs": [
+        70,
+        110,
+        90,
+        70,
+        45,
+        60,
+        95,
+        115,
+        125
+      ],
+      "totalMs": 780,
+      "atlas": {
+        "columns": 3,
+        "rows": 3,
+        "size": [
+          1392,
+          1680
+        ]
+      },
+      "idleMatchedScale": 1.4237,
+      "scale": 1.4237,
+      "scaleVsIdleMatched": 1.0,
+      "stanceAnchorX": 325.32,
+      "anchorOffsetFromIdle": -12.2,
+      "marginPx": 2,
+      "droppedGeneratedPoses": [
+        4,
+        7,
+        9,
+        12
+      ],
+      "poses": [
+        {
+          "sourcePose": 2,
+          "sourceBounds": [
+            26,
+            9,
+            322,
+            362
+          ],
+          "sourceAnchor": 226.0,
+          "sourceContactBottom": 361,
+          "registration": [
+            4,
+            19
+          ],
+          "outputBounds": [
+            41,
+            32,
+            462,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 18.0
+        },
+        {
+          "sourcePose": 3,
+          "sourceBounds": [
+            32,
+            14,
+            326,
+            362
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 361,
+          "registration": [
+            -10,
+            19
+          ],
+          "outputBounds": [
+            36,
+            39,
+            454,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 11.5
+        },
+        {
+          "sourcePose": 5,
+          "sourceBounds": [
+            48,
+            5,
+            314,
+            352
+          ],
+          "sourceAnchor": 253.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            -35,
+            34
+          ],
+          "outputBounds": [
+            33,
+            41,
+            412,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -11.0
+        },
+        {
+          "sourcePose": 6,
+          "sourceBounds": [
+            39,
+            5,
+            301,
+            352
+          ],
+          "sourceAnchor": 235.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            -10,
+            34
+          ],
+          "outputBounds": [
+            46,
+            41,
+            419,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -1.0
+        },
+        {
+          "sourcePose": 8,
+          "sourceBounds": [
+            34,
+            5,
+            330,
+            352
+          ],
+          "sourceAnchor": 241.5,
+          "sourceContactBottom": 351,
+          "registration": [
+            -18,
+            34
+          ],
+          "outputBounds": [
+            30,
+            41,
+            451,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": 7.0
+        },
+        {
+          "sourcePose": 10,
+          "sourceBounds": [
+            6,
+            3,
+            270,
+            348
+          ],
+          "sourceAnchor": 210.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            26,
+            40
+          ],
+          "outputBounds": [
+            35,
+            44,
+            410,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -11.0
+        },
+        {
+          "sourcePose": 11,
+          "sourceBounds": [
+            57,
+            3,
+            327,
+            348
+          ],
+          "sourceAnchor": 256.5,
+          "sourceContactBottom": 347,
+          "registration": [
+            -40,
+            40
+          ],
+          "outputBounds": [
+            41,
+            44,
+            425,
+            535
+          ],
+          "groundOvershootPx": 0,
+          "bodyCenterOffsetFromIdle": -0.5
+        }
+      ]
+    },
+    "defeat": {
+      "dir": "defeat",
+      "note": "idle scale kept",
+      "frameCount": 12,
+      "durationMs": [
+        100,
+        110,
+        110,
+        110,
+        115,
+        115,
+        115,
+        120,
+        120,
+        125,
+        125,
+        135
+      ],
+      "totalMs": 1400,
+      "atlas": {
+        "columns": 4,
+        "rows": 3,
+        "size": [
+          1856,
+          1680
+        ]
+      },
+      "idleMatchedScale": 1.5045,
+      "scale": 1.5045,
+      "scaleVsIdleMatched": 1.0,
+      "stanceAnchorX": 337.5,
+      "anchorOffsetFromIdle": 0.0,
+      "marginPx": 2,
+      "droppedGeneratedPoses": [],
+      "poses": [
+        {
+          "sourcePose": 2,
+          "sourceBounds": [
+            51,
+            30,
+            262,
+            341
+          ],
+          "sourceAnchor": 223.0,
+          "sourceContactBottom": 336,
+          "registration": [
+            2,
+            28
+          ],
+          "outputBounds": [
+            79,
+            73,
+            396,
+            541
+          ],
+          "groundOvershootPx": 6,
+          "bodyCenterOffsetFromIdle": 4.0
+        },
+        {
+          "sourcePose": 3,
+          "sourceBounds": [
+            50,
+            43,
+            273,
+            342
+          ],
+          "sourceAnchor": 234.5,
+          "sourceContactBottom": 336,
+          "registration": [
+            -15,
+            28
+          ],
+          "outputBounds": [
+            60,
+            93,
+            396,
+            543
+          ],
+          "groundOvershootPx": 8,
+          "bodyCenterOffsetFromIdle": -5.5
+        },
+        {
+          "sourcePose": 4,
+          "sourceBounds": [
+            54,
+            65,
+            283,
+            342
+          ],
+          "sourceAnchor": 243.5,
+          "sourceContactBottom": 337,
+          "registration": [
+            -29,
+            26
+          ],
+          "outputBounds": [
+            52,
+            124,
+            396,
+            541
+          ],
+          "groundOvershootPx": 6,
+          "bodyCenterOffsetFromIdle": -9.5
+        },
+        {
+          "sourcePose": 5,
+          "sourceBounds": [
+            39,
+            19,
+            276,
+            291
+          ],
+          "sourceAnchor": 236.0,
+          "sourceContactBottom": 283,
+          "registration": [
+            -17,
+            108
+          ],
+          "outputBounds": [
+            42,
+            137,
+            398,
+            545
+          ],
+          "groundOvershootPx": 10,
+          "bodyCenterOffsetFromIdle": -13.5
+        },
+        {
+          "sourcePose": 6,
+          "sourceBounds": [
+            54,
+            29,
+            286,
+            289
+          ],
+          "sourceAnchor": 242.5,
+          "sourceContactBottom": 282,
+          "registration": [
+            -27,
+            110
+          ],
+          "outputBounds": [
+            54,
+            154,
+            403,
+            544
+          ],
+          "groundOvershootPx": 9,
+          "bodyCenterOffsetFromIdle": -5.0
+        },
+        {
+          "sourcePose": 7,
+          "sourceBounds": [
+            56,
+            34,
+            294,
+            291
+          ],
+          "sourceAnchor": 251.0,
+          "sourceContactBottom": 282,
+          "registration": [
+            -40,
+            110
+          ],
+          "outputBounds": [
+            44,
+            161,
+            402,
+            547
+          ],
+          "groundOvershootPx": 12,
+          "bodyCenterOffsetFromIdle": -10.5
+        },
+        {
+          "sourcePose": 8,
+          "sourceBounds": [
+            46,
+            38,
+            299,
+            292
+          ],
+          "sourceAnchor": 258.0,
+          "sourceContactBottom": 282,
+          "registration": [
+            -50,
+            110
+          ],
+          "outputBounds": [
+            19,
+            167,
+            399,
+            549
+          ],
+          "groundOvershootPx": 14,
+          "bodyCenterOffsetFromIdle": -24.5
+        },
+        {
+          "sourcePose": 9,
+          "sourceBounds": [
+            31,
+            24,
+            281,
+            273
+          ],
+          "sourceAnchor": 240.0,
+          "sourceContactBottom": 267,
+          "registration": [
+            -23,
+            132
+          ],
+          "outputBounds": [
+            24,
+            168,
+            399,
+            542
+          ],
+          "groundOvershootPx": 7,
+          "bodyCenterOffsetFromIdle": -22.0
+        },
+        {
+          "sourcePose": 10,
+          "sourceBounds": [
+            38,
+            37,
+            290,
+            273
+          ],
+          "sourceAnchor": 248.0,
+          "sourceContactBottom": 267,
+          "registration": [
+            -36,
+            132
+          ],
+          "outputBounds": [
+            21,
+            188,
+            400,
+            542
+          ],
+          "groundOvershootPx": 7,
+          "bodyCenterOffsetFromIdle": -23.0
+        },
+        {
+          "sourcePose": 11,
+          "sourceBounds": [
+            50,
+            46,
+            303,
+            273
+          ],
+          "sourceAnchor": 262.5,
+          "sourceContactBottom": 266,
+          "registration": [
+            -58,
+            134
+          ],
+          "outputBounds": [
+            17,
+            203,
+            398,
+            544
+          ],
+          "groundOvershootPx": 9,
+          "bodyCenterOffsetFromIdle": -26.0
+        },
+        {
+          "sourcePose": 12,
+          "sourceBounds": [
+            62,
+            55,
+            306,
+            273
+          ],
+          "sourceAnchor": 266.5,
+          "sourceContactBottom": 266,
+          "registration": [
+            -63,
+            134
+          ],
+          "outputBounds": [
+            30,
+            217,
+            397,
+            544
+          ],
+          "groundOvershootPx": 9,
+          "bodyCenterOffsetFromIdle": -20.0
+        }
+      ]
+    }
+  },
+  "attackFitAnalysis": {
+    "idleScale": 1.4237,
+    "availableLeftPx": 337.5,
+    "availableRightPx": 126.5,
+    "poses": {
+      "1": {
+        "spanAtIdleScale": 353.1,
+        "needsLeftPx": 292.6,
+        "needsRightPx": 60.5,
+        "fits464AtIdleScale": true,
+        "used": false
+      },
+      "2": {
+        "spanAtIdleScale": 421.4,
+        "needsLeftPx": 284.7,
+        "needsRightPx": 136.7,
+        "fits464AtIdleScale": false,
+        "used": true
+      },
+      "3": {
+        "spanAtIdleScale": 418.6,
+        "needsLeftPx": 289.7,
+        "needsRightPx": 128.8,
+        "fits464AtIdleScale": false,
+        "used": true
+      },
+      "4": {
+        "spanAtIdleScale": 583.7,
+        "needsLeftPx": 485.5,
+        "needsRightPx": 98.2,
+        "fits464AtIdleScale": false,
+        "used": false
+      },
+      "5": {
+        "spanAtIdleScale": 378.7,
+        "needsLeftPx": 292.6,
+        "needsRightPx": 86.1,
+        "fits464AtIdleScale": true,
+        "used": true
+      },
+      "6": {
+        "spanAtIdleScale": 373.0,
+        "needsLeftPx": 279.8,
+        "needsRightPx": 93.3,
+        "fits464AtIdleScale": true,
+        "used": true
+      },
+      "7": {
+        "spanAtIdleScale": 603.7,
+        "needsLeftPx": 294.7,
+        "needsRightPx": 308.9,
+        "fits464AtIdleScale": false,
+        "used": false
+      },
+      "8": {
+        "spanAtIdleScale": 421.4,
+        "needsLeftPx": 295.4,
+        "needsRightPx": 126.0,
+        "fits464AtIdleScale": false,
+        "used": true
+      },
+      "9": {
+        "spanAtIdleScale": 476.9,
+        "needsLeftPx": 296.1,
+        "needsRightPx": 180.8,
+        "fits464AtIdleScale": false,
+        "used": false
+      },
+      "10": {
+        "spanAtIdleScale": 375.9,
+        "needsLeftPx": 291.2,
+        "needsRightPx": 84.7,
+        "fits464AtIdleScale": true,
+        "used": true
+      },
+      "11": {
+        "spanAtIdleScale": 384.4,
+        "needsLeftPx": 284.0,
+        "needsRightPx": 100.4,
+        "fits464AtIdleScale": true,
+        "used": true
+      },
+      "12": {
+        "spanAtIdleScale": 365.9,
+        "needsLeftPx": 301.1,
+        "needsRightPx": 64.8,
+        "fits464AtIdleScale": true,
+        "used": false
+      }
+    }
+  },
+  "integration": {
+    "note": "draft only; game assets untouched",
+    "spriteFramesDraft": "animations-v14-draft.tres",
+    "steps": [
+      "copy the chosen attack sheet to Resource/Assets/Characters/chalux/attack.png",
+      "copy defeat/defeat-sheet.png to Resource/Assets/Characters/chalux/defeat.png",
+      "replace animations.tres with animations-v14-draft.tres (or regenerate with this script)",
+      "update Resource/Assets/Characters/chalux/README.md frame counts and durations"
+    ]
+  }
+}

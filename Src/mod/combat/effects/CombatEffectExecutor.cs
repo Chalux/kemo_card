@@ -472,6 +472,10 @@ public sealed class CombatEffectExecutor
                 continue;
             }
 
+            if (target.Side == ECombatSide.Enemy && target.Index >= 0 && target.Index < sim.EnemyTeam.Enemies.Count &&
+                sim.EnemyTeam.Enemies[target.Index].IsAwaitingLifeBar)
+                continue;
+
             healable.Add(target);
         }
 

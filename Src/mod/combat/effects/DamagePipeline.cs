@@ -8,8 +8,9 @@ using KemoCard.Mod.Combat.Runtime;
 namespace KemoCard.Mod.Combat.Effects;
 
 /// <summary>
-/// 伤害包管线（2026-09-19 统一）：<b>所有</b>伤害写入都必须先过 <c>OnBeforeDamage</c>（可改数额、
+/// 普通伤害包管线（2026-09-19 统一）：伤害写入必须先过 <c>OnBeforeDamage</c>（可改数额、
 /// 可完全抵消），写入完成后再广播 <c>OnAfterDamage</c>（只读观测最终数额）。
+/// 独立的战斗机制扣血由 BattleMechanismRuntime 承载，不参与伤害包和受击钩子。
 /// </summary>
 /// <remarks>
 /// <para>统一的起因：此前三条通道彼此不一致——GAS 公式通道（<c>DamageExecution</c>）吃目标受伤倍率
@@ -42,6 +43,7 @@ internal static class DamagePipeline
         var finalAmount = RunBefore(simulation, source, target, amount, effectId, kind, element);
         var absorbed = MathF.Max(0f, shieldBefore - asc.GetCurrentValue(AttributeIds.Shield));
         float loss;
+        var advanceLifeBar = false;
         if (target.Side == ECombatSide.Player)
         {
             var before = simulation.PlayerTeam.SharedHpExact;
@@ -54,10 +56,16 @@ internal static class DamagePipeline
             asc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, before - finalAmount));
             loss = MathF.Max(0f, before - asc.GetCurrentValue(AttributeIds.Health));
             if (before > 0f && asc.GetCurrentValue(AttributeIds.Health) <= 0f)
+            {
+                if (target.Index >= 0 && target.Index < simulation.EnemyTeam.Enemies.Count)
+                    advanceLifeBar = simulation.EnemyLifeBars.OnDepleted(target.Index);
                 simulation.Buffs.RefreshEnemyPresenceConditions(simulation);
+            }
         }
 
         NotifyAfter(simulation, source, target, loss, effectId, kind, element);
+        if (advanceLifeBar)
+            simulation.EnemyLifeBars.PrepareAction(target.Index);
         return new DamageSettlementResult(amount, absorbed, loss, MathF.Max(0f, finalAmount - loss));
     }
 
@@ -129,6 +137,7 @@ internal static class DamagePipeline
         ECombatSide.Player when target.Index >= 0 && target.Index < simulation.PlayerTeam.Characters.Count =>
             simulation.PlayerTeam.Characters[target.Index].Buffs.HasTag(BuiltinBuffTags.TraitImmuneDamage),
         ECombatSide.Enemy when target.Index >= 0 && target.Index < simulation.EnemyTeam.Enemies.Count =>
+            simulation.EnemyTeam.Enemies[target.Index].IsAwaitingLifeBar ||
             simulation.EnemyTeam.Enemies[target.Index].Buffs.HasTag(BuiltinBuffTags.TraitImmuneDamage),
         _ => false,
     };
@@ -194,6 +203,7 @@ internal static class DamagePipeline
             source.Side == ECombatSide.Enemy &&
             source != target)
         {
+            simulation.Presentation.Emit(new EnemyAttackHitEvent(source.Index, target));
             simulation.RecordDamagedPlayerHit(target.Index, source);
             // 魔法受击账（TookMagicDamageLastTurn 条件，2026-09-26）：与 onDamaged 同门闩，
             // 只多一个"伤害维度 = 魔法"；被护盾 / 减伤完全抵消也算挨了这一下（与上一行同口径）。

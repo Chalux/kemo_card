@@ -1,5 +1,7 @@
 namespace KemoCard.Frame.Content.Definitions;
 
+public enum EItemKind { Potion, Relic }
+
 public enum ECostType
 {
     None,
@@ -227,6 +229,8 @@ public enum ESkillActionKind
     FillHand,
     /// <summary>驱散目标角色身上的可驱散负面 Buff 和 GameplayEffect，不处理手牌槽。</summary>
     DispelDebuffs,
+    /// <summary>召唤敌人；params.enemyId / count / maxAlive / maxSummons / trackLifeBarSummons。</summary>
+    SummonEnemy,
 }
 
 [Flags]

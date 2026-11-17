@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.evil_thought_sweep.name",
+  "descId": "skill.evil_thought_sweep.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "ghost_magical_damage",
+      "params": {
+        "Amount": 50
+      }
+    }
+  ]
+}

@@ -208,4 +208,43 @@ public sealed class CombatPresentationLogTests
             }
         }
     }
+
+    [TestCase(0f)]
+    [TestCase(10f)]
+    [TestCase(30f)]
+    public void Enemy_hit_precedes_health_loss_even_when_fully_absorbed(float amount)
+    {
+        using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand();
+        sim.PlayerTeam.Characters[2].Asc.SetBaseValue(AttributeIds.Shield, 20f);
+        sim.Presentation.Clear();
+        var target = new CombatTargetRef(ECombatSide.Player, 2);
+
+        DamagePipeline.Settle(sim, new(ECombatSide.Enemy, 0), target, amount);
+
+        var events = sim.Presentation.Drain();
+        var hit = events.OfType<EnemyAttackHitEvent>().Single();
+        Assert.That(hit, Is.EqualTo(new EnemyAttackHitEvent(0, target)));
+        var damage = events.OfType<DamageDealtEvent>().SingleOrDefault();
+        if (amount <= 20f)
+            Assert.That(damage, Is.Null, "完全吸收仍播命中，但不伪造损血事件");
+        else
+        {
+            Assert.That(damage, Is.Not.Null);
+            Assert.That(events.ToList().IndexOf(hit), Is.LessThan(events.ToList().IndexOf(damage!)));
+        }
+    }
+
+    [Test]
+    public void Repeated_enemy_hits_keep_actual_targets_and_friendly_damage_has_no_enemy_hit()
+    {
+        using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand();
+        sim.Presentation.Clear();
+        foreach (var slot in new[] { 1, 3, 1 })
+            DamagePipeline.Settle(sim, new(ECombatSide.Enemy, 0), new(ECombatSide.Player, slot), 1f);
+        DamagePipeline.Settle(sim, new(ECombatSide.Player, 0), new(ECombatSide.Player, 0), 1f);
+        DamagePipeline.Settle(sim, new(ECombatSide.Player, 0), new(ECombatSide.Enemy, 0), 1f);
+
+        var hits = sim.Presentation.Drain().OfType<EnemyAttackHitEvent>().ToArray();
+        Assert.That(hits.Select(hit => hit.Target.Index), Is.EqualTo(new[] { 1, 3, 1 }));
+    }
 }

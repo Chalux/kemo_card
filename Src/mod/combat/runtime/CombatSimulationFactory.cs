@@ -137,21 +137,31 @@ public static class CombatSimulationFactory
             }
 
             var count = Math.Max(1, spawn.Count);
+            if (spawn.InitialActionIndex < 0 || (enemyDef.LifeBars.Count == 0 ? spawn.InitialActionIndex != 0
+                : spawn.InitialActionIndex >= enemyDef.LifeBars[0].ActionSequence.Count))
+            {
+                error = $"Invalid initialActionIndex for enemy '{spawn.EnemyId}'.";
+                return null;
+            }
             var hpScale = spawn.HpScale ?? 1.0;
             var baseAttributes = AttributeContributionMapper.BuildEnemyBaseAttributes(enemyDef);
             if (!baseAttributes.TryGetValue(AttributeIds.MaxHealth, out var baseMaxHealth))
                 baseMaxHealth = enemyDef.MaxHp;
             var scaledMaxHealth = Math.Max(1f, baseMaxHealth * (float)hpScale);
+            if (enemyDef.LifeBars.Count > 0)
+                scaledMaxHealth = Math.Max(1f, enemyDef.LifeBars[0].MaxHp * (float)hpScale);
             baseAttributes[AttributeIds.MaxHealth] = scaledMaxHealth;
 
             for (var i = 0; i < count; i++)
             {
-                units.Add(new EnemyUnit(
+                var unit = new EnemyUnit(
                     $"enemy-{runtimeIndex++}",
                     spawn.EnemyId,
                     baseAttributes,
                     enemyDef.Element,
-                    enemyDef.Race));
+                    enemyDef.Race);
+                unit.ConfigureLifeBars(enemyDef.LifeBars, hpScale, spawn.InitialActionIndex);
+                units.Add(unit);
             }
         }
 

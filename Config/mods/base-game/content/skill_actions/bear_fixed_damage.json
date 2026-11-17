@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "bear_fixed_damage"
+  }
+}

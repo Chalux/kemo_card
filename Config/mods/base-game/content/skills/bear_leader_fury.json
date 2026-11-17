@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.bear_leader_fury.name",
+  "descId": "skill.bear_leader_fury.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_leader_damage",
+      "params": {
+        "Amount": 35
+      }
+    }
+  ]
+}

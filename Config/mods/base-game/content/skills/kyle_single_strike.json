@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.kyle_single_strike.name",
+  "descId": "skill.kyle_single_strike.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "brothers_physical_damage",
+      "params": {
+        "Amount": 25
+      }
+    }
+  ]
+}

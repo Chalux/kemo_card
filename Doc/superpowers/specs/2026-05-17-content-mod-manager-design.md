@@ -482,7 +482,7 @@ content/effects/*.json
 |--------|------|
 | CharacterDto | 仅可操控友方角色（4 人小队） |
 | 敌人 | 独立 `EnemyDto`（`content/enemies/*.json`），`BattleDto` 引用 |
-| ItemDto | 仅消耗品（使用后消失） |
+| ItemDto | 药水（使用后消失）与遗物（整局持有） |
 | EventDto | 混合：`eventKind` 区分数据驱动 vs 脚本驱动 |
 | Battle | 多波次 + 可选 `scriptPath` + 战后奖励 |
 
@@ -579,9 +579,15 @@ content/items/*.json
 | `race` | ERace | 种族（可组合 Flags，**2026-09-23 新增**，与 `CharacterDto.race` 同口径）。此前敌人只有属性/职业，无法被「蓝属性·人类·学术」这类跨属性与种族的筛选命中；未声明时为 `ERace.None`。运行时 `EnemyUnit.Element` / `EnemyUnit.Race` 同时作为 buff 持有者条件（`IdentityMatch` 的主体，2026-09-26 统一）的 provider |
 | `skillRefs` | SkillRefDto[] | AI 技能池（运行时规范见开放项） |
 | `buffRefs` | BuffRefDto[] | |
+| `entrySkillRefs` | SkillRefDto[] | 首次入场行动，换生命条不重放 |
+| `lifeBars` | EnemyLifeBarDto[] | 可选独立生命条，每条含正整数 `maxHp` 与非空 `actionSequence`；动作包含合法 `skillId` 与正整数 `actionCount`，技能必须属于 `skillRefs` |
 | `artPath` | string | |
 | `scriptPath` | string? | 可选自定义 AI 脚本 |
 | `tags` | string[] | |
+
+生命条还可声明自身 `entrySkillRefs`（每次进入该条执行一次），以及成对的 `prioritySkillId` / `requiredAliveEnemyTag`（有指定标签的存活敌人时执行优先技能，无同伴后从常规循环首项开始）。生成条目 `EnemySpawnDto.initialActionIndex` 默认为0，声明错位起手时须位于首条循环范围内。`SkillDto.enemyRandomTargetRepeats` 默认为1，范围1～100，多次技能须明确 `Enemy / RandomN / targetCount:1`，逐次重选并执行完整载荷，详见战斗规格。
+
+**不死恶灵内容扩展**：生命条 `prioritySkillId` 可配 `prioritySummonCondition: { enemyId, maxAlive, maxSummons }`，与 `requiredAliveEnemyTag` 互斥；召唤条件结束续接普通循环。新增 `SummonEnemy` 技能动作，敌人引用必须有效，`count`／`maxAlive` 为1～16，追踪额度时 `maxSummons` 为1～100；技能引用覆盖参数也需校验。波次 `entryMechanisms` 与生命条 `turnStartMechanisms` 使用 `{ id, maxHpDamagePercent, turn }`，每个列表ID唯一，百分比须有限且在(0,100000]；入场 turn=0，生命条内 turn≥1。Buff 可用 `deferFirstTurnEnd:true` 跳过新建／刷新后的第一次时长递减，仅支持 Turns 与非Add叠加规则。运行时、时序与表现见战斗规格。
 
 #### 13.5.3 BattleDto（`BattleDto.cs`）（原 §5 BattleDto）
 
@@ -598,6 +604,8 @@ content/items/*.json
 | `tags` | string[] | |
 
 **嵌套类型**（`SharedDefinitionDtos.cs`）：
+
+**2026-10-10 内容扩展**：`StoryDto.ringBattlePools` 为 `{ ring, battles: [{ battleId, weight }] }[]`，环号为唯一正整数，每池非空、引用有效、权重为正整数且总和不超出 Int32。普通 Run 入口只抽取本故事本环候选，详见 Run 规格。`BuffDto` 与 `GameplayEffectDefDto` 新增 `persistAcrossLifeBars`（默认 false），只在敌人生命条重置时控制保留，永久 / 不可驱散不等于跨生命条保留。
 
 - `BattleWaveDto`：`enemySpawns`（非空）、`waveScriptPath?`
 - `EnemySpawnDto`：`enemyId`、`count`（默认 1）、`hpScale?`、`skillOverrides?`
@@ -638,6 +646,10 @@ content/items/*.json
 - `Script`：`scriptPath` 非空
 
 #### 13.5.5 ItemDto（`ItemDto.cs`）（原 §5 ItemDto）
+
+2026-10-11：新增 `kind: Potion | Relic`（默认 Potion，兼容旧道具）；`battleStartSkillRefs` 为遗物开战技能列表，引用参数透传。药水要求非空且有效的 `useSkillRefs`；遗物可先只有显示信息，开战引用若有配置必须有效。`maxStack` 保留旧字段兼容，现行库存一槽一瓶，不据此堆叠。`shopPrice` 可空，配置后不得为负。运行口径见 Run 规格 §15。
+
+故事新增 `ringEventPools: [{ring, events: [{eventId, weight}]}]` 和 `shopItemIds: [itemId]`。环号唯一正整数，事件引用有效、权重为正、总权重不溢出；商店道具必须存在且有非负 `shopPrice`。事件选项新增 `itemRewards: [itemId]`，金币沿用 `GainResource` 效果引用。具体投放可保持空配置。
 
 | JSON 字段 | 类型 | 说明 |
 |-----------|------|------|

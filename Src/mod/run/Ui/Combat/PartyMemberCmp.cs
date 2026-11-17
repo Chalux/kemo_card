@@ -10,7 +10,7 @@ using KemoCard.Mod.Global.Ui.Tip;
 namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>
-/// 左栏的非操控角色卡片：名字、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量；点击切换操控（仅有权控制的槽位）。
+/// 左栏的非操控角色卡片：名字、攻防、回复量、护盾、常驻技能按钮与多档充能；点击切换操控。
 /// 悬停显示该角色的主动技（每一档 + 当前可释放档高亮，见 <see cref="CombatActiveSkillTips"/>）。
 /// 已标记卡牌条不挂在本组件内（Godot GUI 拾取按树序，挂左栏会被战场单位截走悬停），
 /// 由 <see cref="CombatWin"/> 的浮层跟随本卡定位，见 <see cref="MarkedCardStripCmp"/>。
@@ -23,6 +23,8 @@ public partial class PartyMemberCmp : BaseCmp
     [Export] private Label? _lblDefense;
     [Export] private Label? _lblMagicDefense;
     [Export] private Label? _lblHeal;
+    [Export] private Label? _lblShield;
+    [Export] private Label? _lblCharges;
     [Export] private Label? _lblState;
     [Export] private Label? _lblMark;
     [Export] private TextureRect? _crosshair;
@@ -31,7 +33,7 @@ public partial class PartyMemberCmp : BaseCmp
     /// <summary>点击回调，参数为该卡片绑定的槽位索引。</summary>
     public Action<int>? Clicked { get; set; }
 
-    /// <summary>「释放主动技」回调，参数为该卡片绑定的槽位索引（按钮只在有可释放档时可见）。</summary>
+    /// <summary>「释放主动技」回调，参数为该卡片绑定的槽位索引。</summary>
     public Action<int>? ReleaseRequested { get; set; }
 
     public int SlotIndex { get; private set; } = -1;
@@ -90,6 +92,13 @@ public partial class PartyMemberCmp : BaseCmp
             _lblMagicDefense.Text = CombatUnitFormat.MagicDefense(character.Asc);
         if (_lblHeal != null)
             _lblHeal.Text = CombatUnitFormat.Heal(character.Asc);
+        if (_lblShield != null)
+            _lblShield.Text = CombatUnitFormat.Shield(character.Asc);
+        if (_lblCharges != null)
+        {
+            _lblCharges.Text = CombatActiveSkillTips.ChargeDots(character);
+            _lblCharges.Visible = _lblCharges.Text.Length > 0;
+        }
 
         if (_lblState != null)
         {
@@ -117,11 +126,14 @@ public partial class PartyMemberCmp : BaseCmp
             _crosshair.Visible = marked;
     }
 
-    /// <summary>「释放主动技」按钮的显隐（判据见 <see cref="CombatActiveSkillTips.CanRelease"/>）。</summary>
-    public void SetSkillRelease(bool visible)
+    /// <summary>按钮常驻；未准备好、无权控制或结算中灰显。</summary>
+    public void SetSkillRelease(bool enabled)
     {
         if (_btnRelease != null)
-            _btnRelease.Visible = visible;
+        {
+            _btnRelease.Visible = true;
+            _btnRelease.Disabled = !enabled;
+        }
     }
 
     private void OnHoverEntered()

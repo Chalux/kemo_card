@@ -257,6 +257,12 @@ public sealed class CharacterBattleInstance
 
     public void RegenCurrentEnergy() => CurrentEnergy = Math.Min(CurrentEnergy + 1, MaxEnergy);
 
+    public void ReduceCurrentEnergy(int amount)
+    {
+        CurrentEnergy = (int)Math.Max(0, (long)CurrentEnergy - Math.Max(0, amount));
+        AvailableEnergy = (int)Math.Max(0, (long)AvailableEnergy - Math.Max(0, amount));
+    }
+
     public void RefillAvailableEnergy() => AvailableEnergy = CurrentEnergy;
 
     public bool TryConsumeAvailableEnergy(int amount)

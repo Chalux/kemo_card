@@ -1,0 +1,48 @@
+{
+  "displayNameId": "battle.undead_discovery.name",
+  "descId": "battle.undead_discovery.desc",
+  "waves": [
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "undead_ghost"
+        },
+        {
+          "enemyId": "undead_ghost",
+          "initialActionIndex": 1
+        }
+      ],
+      "entryMechanisms": [
+        {
+          "id": "undead_wave_1",
+          "maxHpDamagePercent": 25
+        }
+      ]
+    },
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "undead_ghost"
+        },
+        {
+          "enemyId": "evil_thought"
+        },
+        {
+          "enemyId": "undead_ghost"
+        }
+      ],
+      "entryMechanisms": [
+        {
+          "id": "undead_wave_2",
+          "maxHpDamagePercent": 80
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "entries": []
+  },
+  "tags": [
+    "boss"
+  ]
+}

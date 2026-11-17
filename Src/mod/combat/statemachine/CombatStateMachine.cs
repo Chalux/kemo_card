@@ -62,6 +62,13 @@ public sealed class CombatStateMachine
                     new CombatTargetRef(ECombatSide.Player, entry.CharacterIndex),
                     entry.BuffId,
                     entry.Params);
+            foreach (var id in simulation.Items.Relics)
+            {
+                if (!simulation.Definitions.Store.TryGetItem(id, out var relic) || relic.Kind != EItemKind.Relic)
+                    continue;
+                foreach (var reference in relic.BattleStartSkillRefs)
+                    ExecuteBattleStartSkill(simulation, new BattleStartSkillEntry(reference.SkillId, -1, reference.Params));
+            }
         }
         finally
         {
@@ -77,6 +84,9 @@ public sealed class CombatStateMachine
         // 必须在 onWaveStart / 首个 onTurnStart 之前挂载，否则第一次钩子会漏。
         // （换波路径同样要挂：见 CombatSimulation.AdvanceToNextWave。）
         simulation.ApplyEnemyInitialBuffs();
+        simulation.Mechanisms.WaveEntry();
+        if (team.IsDefeated)
+            return;
 
         // 阶层（波次）1 开始：开战被动已由 BattleStartSkills 挂载，onWaveStart 在此补发一次。
         simulation.Buffs.FireWaveStart(simulation);
@@ -94,7 +104,7 @@ public sealed class CombatStateMachine
         var source = entry.SourceCharacterIndex >= 0
             ? new CombatTargetRef(ECombatSide.Player, entry.SourceCharacterIndex)
             : CombatTargetRef.PlayerTeam;
-        SkillPayloadExecutor.Execute(simulation, skill, source, ResolveBattleStartTargets(simulation, skill, source));
+        SkillPayloadExecutor.Execute(simulation, skill, source, ResolveBattleStartTargets(simulation, skill, source), entry.Params);
     }
 
     /// <summary>
@@ -137,6 +147,7 @@ public sealed class CombatStateMachine
         {
             PlayCardCommand playCard => ApplyPlayCard(simulation, playCard),
             CastActiveSkillCommand castSkill => ApplyCastActiveSkill(simulation, castSkill),
+            UsePotionCommand potion => ApplyUsePotion(simulation, potion),
             ConfirmCharacterCommand confirm => ApplyConfirmCharacter(simulation, confirm),
             UnconfirmCharacterCommand unconfirm => ApplyUnconfirmCharacter(simulation, unconfirm),
             CancelQueuedCardCommand cancel => ApplyCancelQueuedCard(simulation, cancel),
@@ -163,6 +174,32 @@ public sealed class CombatStateMachine
     /// <summary>
     /// 主动触发充能球：不占"已行动"、不消耗能量，因此不会推动阶段推进（出牌阶段内可重复触发）。
     /// </summary>
+    private static CombatApplyResult ApplyUsePotion(CombatSimulation simulation, UsePotionCommand command)
+    {
+        if (command.PotionSlot < 0 || command.PotionSlot >= CombatItemInventory.PotionCapacity ||
+            simulation.Items.Potions[command.PotionSlot] != command.ItemId ||
+            !simulation.Definitions.Store.TryGetItem(command.ItemId, out var item) || item.Kind != EItemKind.Potion ||
+            !CombatCommandValidator.TryGetCharacter(simulation, command.CharacterIndex, out _, out _))
+            return new CombatApplyResult(false, "UI_ITEM_INVALID");
+        if (item.UseSkillRefs.Count == 0 || item.UseSkillRefs.Any(reference =>
+            !simulation.Definitions.Store.TryGetSkill(reference.SkillId, out _)))
+            return new CombatApplyResult(false, "UI_ITEM_INVALID");
+
+        var spec = item.TargetSpec ?? new TargetSpecDto { Side = ETargetSide.Self, Scope = ETargetScope.Self };
+        var targets = CombatTargeting.ResolvePlayerTargets(simulation, spec.Side, spec.Scope, spec.TargetCount,
+            command.CharacterIndex, command.Targets, out _);
+        if (targets is null)
+            return new CombatApplyResult(false, "UI_ITEM_INVALID_TARGET");
+
+        simulation.Items.RemovePotion(command.PotionSlot, command.ItemId);
+        foreach (var reference in item.UseSkillRefs)
+        {
+            simulation.Definitions.Store.TryGetSkill(reference.SkillId, out var skill);
+            SkillPayloadExecutor.Execute(simulation, skill, new(ECombatSide.Player, command.CharacterIndex), targets, reference.Params);
+        }
+        return new CombatApplyResult(true);
+    }
+
     private static CombatApplyResult ApplyTriggerOrbs(CombatSimulation simulation)
     {
         var result = simulation.Orbs.TriggerManual(simulation);
@@ -618,12 +655,18 @@ public sealed class CombatStateMachine
 
     private static void ExecuteEnemyPhase(CombatSimulation simulation)
     {
+        simulation.EnemyPhaseNumber++;
+        var enemyCount = simulation.EnemyTeam.Enemies.Count;
         simulation.SetDiscardChannel(EDiscardChannel.Other);
-        for (var enemyIndex = 0; enemyIndex < simulation.EnemyTeam.Enemies.Count; enemyIndex++)
+        for (var enemyIndex = 0; enemyIndex < enemyCount; enemyIndex++)
         {
             var enemy = simulation.EnemyTeam.Enemies[enemyIndex];
-            if (!enemy.IsAlive)
+            if (!enemy.IsAlive || enemy.FirstEnemyPhase > simulation.EnemyPhaseNumber)
                 continue;
+
+            simulation.EnemyActionIndex = enemyIndex;
+            simulation.EnemyLifeBars.PrepareAction(enemyIndex);
+            enemy.RefreshPriorityAction(simulation);
 
             // 行动计数（2026-09-23）：> 1 时本回合只递减、不行动——把它设为 2 即"推迟到下个回合"。
             if (enemy.ActionCount > 1)
@@ -633,14 +676,18 @@ public sealed class CombatStateMachine
                 continue;
             }
 
-            var skillId = simulation.EnemyAi.ChooseSkill(enemy, simulation.EnemyAiRng);
+            var skillId = enemy.NextAction?.SkillId ?? enemy.PlannedSkillId ?? simulation.EnemyAi.ChooseSkill(enemy, simulation.EnemyAiRng);
+            enemy.PlannedSkillId = null;
             enemy.IntentSkillId = skillId;
             if (skillId is null)
                 continue;
 
             simulation.Presentation.Emit(new EnemyActionStartedEvent(enemyIndex, skillId));
+            var lifeBarBefore = enemy.LifeBarIndex;
+            var sequenceBefore = enemy.ActionSequenceIndex;
             ExecuteEnemySkill(simulation, enemyIndex, skillId);
             simulation.Presentation.Emit(new EnemyActionEndedEvent(enemyIndex, skillId));
+            enemy.CompleteSequenceAction(lifeBarBefore, sequenceBefore);
         }
 
         // 回合结束管线（规则 / 领域 / buff 时长 / 充能球产出）与玩家阶段清波共用 ResolveTurnEnd，

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.kyle_heavy_sweep.name",
+  "descId": "skill.kyle_heavy_sweep.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "actionRefs": [
+    {
+      "actionId": "brothers_physical_damage",
+      "params": {
+        "Amount": 25
+      }
+    }
+  ]
+}

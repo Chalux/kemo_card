@@ -1,0 +1,18 @@
+{
+  "displayNameId": "buff.bear_leader_roar.name",
+  "descId": "buff.bear_leader_roar.desc",
+  "durationType": "Permanent",
+  "stackRule": "Add",
+  "maxStacks": 20,
+  "persistAcrossLifeBars": true,
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": 5
+      }
+    }
+  ]
+}

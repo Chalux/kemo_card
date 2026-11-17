@@ -39,12 +39,7 @@ public sealed class UIRuntimeData
 
         if (UI.GetParent() == parent)
         {
-            if (Mask != null && Mask.GetParent() == null && _owner.OpenOpt.Parent == null && layer != null)
-            {
-                int idx = UI.GetIndex();
-                layer.AddChild(Mask);
-                layer.MoveChild(Mask, idx);
-            }
+            MountMask(parent);
             return;
         }
 
@@ -55,22 +50,39 @@ public sealed class UIRuntimeData
         else
         {
             UI.GetParent()?.RemoveChild(UI);
-            if (GodotObject.IsInstanceValid(Mask)) Mask!.GetParent()?.RemoveChild(Mask);
         }
 
-        if (_owner.OpenOpt.Parent != null)
+        if (_owner.OpenOpt.Parent != null || layer == null)
         {
             parent.AddChild(UI);
-            if (Mask != null && Mask.GetParent() == null)
-            {
-                int idx = UI.GetIndex();
-                parent.AddChild(Mask);
-                parent.MoveChild(Mask, idx);
-            }
         }
         else
         {
-            layer?.AddUI(UI);
+            layer.AddUI(UI);
+        }
+
+        MountMask(parent);
+    }
+
+    /// <summary>
+    /// 遮罩统一在这里挂载（<see cref="UILayer.AddUI"/> 不再处理），且始终排在界面之前，
+    /// 保证遮罩绘制在界面下方。已挂在同一父节点时只校正顺序，不重复 AddChild。
+    /// </summary>
+    private void MountMask(Control parent)
+    {
+        BaseMask? mask = Mask;
+        if (mask == null || !GodotObject.IsInstanceValid(mask) || UI == null) return;
+
+        if (mask.GetParent() != parent)
+        {
+            mask.GetParent()?.RemoveChild(mask);
+            parent.AddChild(mask);
+        }
+
+        int uiIndex = UI.GetIndex();
+        if (mask.GetIndex() > uiIndex)
+        {
+            parent.MoveChild(mask, uiIndex);
         }
     }
 

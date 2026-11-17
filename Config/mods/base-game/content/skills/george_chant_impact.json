@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.george_chant_impact.name",
+  "descId": "skill.george_chant_impact.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "actionRefs": [
+    {
+      "actionId": "brothers_chant_damage",
+      "params": {
+        "Amount": 15
+      }
+    }
+  ]
+}

@@ -161,6 +161,12 @@ internal static class SharedHpSettlement
         var delta = before - asc.GetCurrentValue(AttributeIds.Health);
         if (delta < 0f)
         {
+            if (target.Side == ECombatSide.Enemy && target.Index >= 0 && target.Index < simulation.EnemyTeam.Enemies.Count &&
+                simulation.EnemyTeam.Enemies[target.Index].IsAwaitingLifeBar)
+            {
+                asc.Attributes.SetCurrentValue(AttributeIds.Health, before);
+                return 0f;
+            }
             // GE 把目标写成回血：补一条治疗表现事件，与其它治疗通道口径一致。
             PresentationEmitter.EmitHeal(simulation, source, target, -delta);
             return 0f;

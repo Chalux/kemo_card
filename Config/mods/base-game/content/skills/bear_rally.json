@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.bear_rally.name",
+  "descId": "skill.bear_rally.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_roar",
+      "params": {
+        "stacks": 2,
+        "hookTargets": "allEnemies",
+        "requiredEnemyTag": "bear.pack"
+      }
+    }
+  ]
+}

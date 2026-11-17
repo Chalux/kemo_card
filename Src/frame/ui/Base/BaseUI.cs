@@ -39,14 +39,6 @@ public abstract partial class BaseUI : Control, IUIMeta
     /// </summary>
     public virtual UIOpenOpt? OpenOpt => null;
 
-    /// <summary>
-    /// 获取 UI 的场景路径
-    /// </summary>
-    public string GetScenePath()
-    {
-        return $"res://{UIDir}/{UIId}.tscn";
-    }
-
     public override void _Ready()
     {
         OnReady();

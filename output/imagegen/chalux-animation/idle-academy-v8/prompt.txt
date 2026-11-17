@@ -1,0 +1,12 @@
+Mode: built-in image_gen; transparent_background=true
+Input 1 (edit target): ../idle-organic-v7/generated-sheet.png
+Input 2 (costume reference): ../../crux-academy-right-v4.png
+
+Use case: identity-preserve / sprite costume edit.
+Image 1 is the EDIT TARGET: 1536x1024 pixel sprite sheet, FOUR columns and TWO rows, 8 cells each384x512. Preserve that exact layout, character scale, character root anchors, screen-right facing pose, sword diagonal DOWN-RIGHT angle, medium pixel density, crisp square pixel clusters, limited palette and fixed upper-left light.
+Image 2 is COSTUME REFERENCE ONLY: match this white academy blazer, white shirt, small navy tie, thin blue trim, white loose trousers. This replaces tee and charcoal trousers in ALL 8 sprites. Use the pixel technique of image1, DO NOT add HD/painted fine detail from image2.
+In ALL 8 sprites remove the character LEFT hand from pocket (free arm on viewer RIGHT). Let left arm hang naturally at side with visible relaxed BLUE paw fingers beside thigh, not hidden in jacket or trouser pockets. Sword remains in RIGHT paw on viewer LEFT.
+Keep young blue-furred furry wolf identity, grey eye, muscular youthful body, white muzzle/chest fur, big blue tail with pale tip, digitigrade bare blue furry paws.
+Keep corrected right paw gripping the sword securely, no wrist twist and no disconnect from hilt. Pommel, grip, guard center, straight blade stay on one diagonal axis.
+Eight poses for idle: very subtle eased breathing and gentle tail sway, minimal body difference; first and eighth poses identical. Fifth sprite is a blink with closed eye, same head position and color. Feet fixed in each cell and fully visible. Body proportions and shadows stable; white uniform highlights and shadow boundaries do not flicker.
+Transparent background: no blue halo, no glow, no background gradient, no floor shadow, no text, no labels, no grid lines. Blank areas truly transparent. Retain margins inside each cell, fully framed ears, tail, feet, sword. Only the outfit and free arm are changed; pixel density stays exactly image1.

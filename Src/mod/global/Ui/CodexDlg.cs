@@ -21,6 +21,9 @@ public partial class CodexDlg : BaseDlg
     {
         Card,
         Character,
+
+        /// <summary>战斗页签：只在调试构建出现（<see cref="OS.IsDebugBuild"/>）。</summary>
+        Battle,
     }
 
     [Export] private TabContainer? _tabContainer;
@@ -44,11 +47,18 @@ public partial class CodexDlg : BaseDlg
     [Export] private GridContainer? _gridCharList;
     [Export] private BasePager? _charPager;
 
+    [Export] private HBoxContainer? _tabBattle;
+    [Export] private LineEdit? _iptBattleTxtFilter;
+    [Export] private ItemList? _listBattles;
+    [Export] private RichTextLabel? _rtBattleDetail;
+
     private CodexTab _tab;
     private readonly List<CardFilterCondition> _conditions = [];
     private readonly List<CharFilterCondition> _charConditions = [];
     private IReadOnlyList<CardDto> _filteredCards = [];
     private IReadOnlyList<CharacterDto> _filteredCharacters = [];
+    private IReadOnlyList<BattleDto> _filteredBattles = [];
+    private string? _selectedBattleId;
     private List<BaseCardItem> _cardSlots = [];
     private List<BaseCharacterItem> _charSlots = [];
 
@@ -121,6 +131,16 @@ public partial class CodexDlg : BaseDlg
         {
             Binder.Bind(() => _charPager.OnPageChanged = OnCharPagerPageChanged, () => _charPager.OnPageChanged = null);
         }
+
+        if (_iptBattleTxtFilter != null)
+        {
+            Binder.OnTextChanged(_iptBattleTxtFilter, _ => RefreshBattleList(resetSelection: true));
+        }
+
+        if (_listBattles != null)
+        {
+            Binder.OnItemSelected(_listBattles, OnBattleSelected);
+        }
     }
 
     protected override void OnOpen()
@@ -140,6 +160,16 @@ public partial class CodexDlg : BaseDlg
             _iptCharTxtFilter.Text = "";
         }
 
+        // 战斗页签只在调试构建出现：release 收起页签（不留死页签）。
+        ApplyBattleTabVisibility();
+        ApplyTabTitles();
+
+        if (_iptBattleTxtFilter != null && _iptBattleTxtFilter.Text.Length > 0)
+        {
+            // 清空会触发一次 TextChanged（重建列表），因此放在统一刷新之前。
+            _iptBattleTxtFilter.Text = "";
+        }
+
         CacheCardSlots();
         CacheCharSlots();
 
@@ -154,6 +184,7 @@ public partial class CodexDlg : BaseDlg
         PopulateCharFieldOptions();
         RebuildCharOpAndValOptions();
         RefreshFilteredList(resetPage: true);
+        RefreshBattleList(resetSelection: true);
     }
 
     protected override void UpdateView()
@@ -166,29 +197,43 @@ public partial class CodexDlg : BaseDlg
     private void OnTabChanged(long tabIndex)
     {
         KeywordTipService.Current?.HideTips();
-        _tab = tabIndex == (long)CodexTab.Character ? CodexTab.Character : CodexTab.Card;
+        _tab = ResolveTab(tabIndex);
 
-        if (_tab == CodexTab.Character)
+        switch (_tab)
         {
-            PopulateCharFieldOptions();
-            RebuildCharOpAndValOptions();
-            if (_iptCharTxtFilter != null)
-            {
-                _iptCharTxtFilter.PlaceholderText = "UI_CODEX_CHAR_TXT_FILTER";
-            }
-        }
-        else
-        {
-            PopulateFieldOptions();
-            RebuildOpAndValOptions();
-            if (_iptTxtFilter != null)
-            {
-                _iptTxtFilter.PlaceholderText = "UI_CODEX_TXT_FILTER";
-            }
+            case CodexTab.Character:
+                PopulateCharFieldOptions();
+                RebuildCharOpAndValOptions();
+                if (_iptCharTxtFilter != null)
+                {
+                    _iptCharTxtFilter.PlaceholderText = "UI_CODEX_CHAR_TXT_FILTER";
+                }
+                break;
+            case CodexTab.Battle:
+                break;
+            default:
+                PopulateFieldOptions();
+                RebuildOpAndValOptions();
+                if (_iptTxtFilter != null)
+                {
+                    _iptTxtFilter.PlaceholderText = "UI_CODEX_TXT_FILTER";
+                }
+                break;
         }
 
         RefreshFilteredList(resetPage: true);
     }
+
+    /// <summary>
+    /// 页索引 → 页签。页签隐藏（<c>SetTabHidden</c>）<b>不改变</b>索引，只是移除了非调试构建下到达
+    /// 索引 2 的入口；这里仍按可用性兜底，越界或页签不可用时一律回落卡牌页。
+    /// </summary>
+    private CodexTab ResolveTab(long tabIndex) => tabIndex switch
+    {
+        (long)CodexTab.Character => CodexTab.Character,
+        (long)CodexTab.Battle when IsBattleTabEnabled => CodexTab.Battle,
+        _ => CodexTab.Card,
+    };
 
     #endregion
 
@@ -666,6 +711,158 @@ public partial class CodexDlg : BaseDlg
 
     #endregion
 
+    #region 战斗图鉴（仅调试构建）
+
+    /// <summary>战斗页签的可用条件：场景里有该页签且当前是调试构建（<c>OS.IsDebugBuild()</c>）。</summary>
+    private bool IsBattleTabEnabled => _tabBattle is not null && OS.IsDebugBuild();
+
+    /// <summary>
+    /// 按调试构建收起 / 放出战斗页签。<b>不能用子节点 <c>Visible</c></b>：<c>TabContainer</c> 自己管理
+    /// 子节点可见性、且隐藏子节点不会收起页签按钮（2026-10-11 用 headless 探针实测）；
+    /// <c>SetTabHidden</c> 才是收起页签的 API，且<b>不改变</b>页索引。
+    /// </summary>
+    private void ApplyBattleTabVisibility()
+    {
+        if (_tabContainer is null || _tabContainer.GetTabCount() <= (int)CodexTab.Battle)
+        {
+            return;
+        }
+
+        _tabContainer.SetTabHidden((int)CodexTab.Battle, !IsBattleTabEnabled);
+    }
+
+    /// <summary>
+    /// 页签标题显式本地化：<c>TabContainer</c> 拿<b>子节点名</b>当标题且<b>不做</b>自动翻译
+    /// （2026-10-11 用 headless 探针实测：翻译表里已有 <c>UI_CARD</c> → 「卡牌」，页签仍显示原始键名），
+    /// 所以必须在打开时写入译文。节点名保留键名，与场景里的节点路径保持一致。
+    /// </summary>
+    private void ApplyTabTitles()
+    {
+        if (_tabContainer is null)
+        {
+            return;
+        }
+
+        string[] keys =
+        [
+            "UI_CARD",
+            "UI_CHARACTER",
+            "UI_BATTLE",
+        ];
+
+        var count = Math.Min(keys.Length, _tabContainer.GetTabCount());
+        for (var i = 0; i < count; i++)
+        {
+            _tabContainer.SetTabTitle(i, Localization.Tr(keys[i]));
+        }
+    }
+
+    private void OnBattleSelected(long index)
+    {
+        var i = (int)index;
+        if (i < 0 || i >= _filteredBattles.Count)
+        {
+            _selectedBattleId = null;
+            ShowBattleDetail(null);
+            return;
+        }
+
+        _selectedBattleId = _filteredBattles[i].Id;
+        ShowBattleDetail(_filteredBattles[i]);
+    }
+
+    /// <summary>
+    /// 按当前搜索词重建战斗列表并同步详情。<paramref name="resetSelection"/> 为 <c>true</c> 时丢弃
+    /// 上次选中项；为 <c>false</c> 时保留，但选中项被筛掉后回落第一项。
+    /// </summary>
+    private void RefreshBattleList(bool resetSelection)
+    {
+        if (!IsBattleTabEnabled)
+        {
+            return;
+        }
+
+        var store = AppRoot.Services.ContentModPipeline.Registry.Store;
+        _filteredBattles = BattleCodexBuilder.Collect(store, _iptBattleTxtFilter?.Text ?? "", Localization.Tr);
+
+        if (_listBattles != null)
+        {
+            _listBattles.Clear();
+            foreach (var battle in _filteredBattles)
+            {
+                _listBattles.AddItem(BattleCodexBuilder.RowTitle(battle, Localization.Tr));
+            }
+        }
+
+        if (resetSelection)
+        {
+            _selectedBattleId = null;
+        }
+
+        var index = IndexOfSelectedBattle();
+        if (index < 0)
+        {
+            index = _filteredBattles.Count > 0 ? 0 : -1;
+        }
+
+        if (index < 0)
+        {
+            _selectedBattleId = null;
+            _listBattles?.DeselectAll();
+            ShowBattleDetail(null);
+            return;
+        }
+
+        _selectedBattleId = _filteredBattles[index].Id;
+        _listBattles?.Select(index);
+        ShowBattleDetail(_filteredBattles[index]);
+    }
+
+    private int IndexOfSelectedBattle()
+    {
+        if (string.IsNullOrEmpty(_selectedBattleId))
+        {
+            return -1;
+        }
+
+        for (var i = 0; i < _filteredBattles.Count; i++)
+        {
+            if (string.Equals(_filteredBattles[i].Id, _selectedBattleId, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    /// <summary>
+    /// 右侧详情：<paramref name="battle"/> 为 <c>null</c> 时按"搜不到 / 还没选"分别给空白态文案，
+    /// 否则渲染该战斗的波次、敌人身份（元素 · 定位 · 种族）与各生命条的行动表。
+    /// </summary>
+    private void ShowBattleDetail(BattleDto? battle)
+    {
+        if (_rtBattleDetail == null)
+        {
+            return;
+        }
+
+        if (battle == null)
+        {
+            _rtBattleDetail.Text = _filteredBattles.Count == 0
+                ? Localization.Tr("UI_BATTLE_EMPTY")
+                : Localization.Tr(BattleCodexText.EmptyDetailKey);
+            return;
+        }
+
+        var store = AppRoot.Services.ContentModPipeline.Registry.Store;
+        _rtBattleDetail.Text = BattleCodexText.Render(
+            BattleCodexBuilder.BuildDetail(battle, store, Localization.Tr),
+            Localization.Tr);
+    }
+
+    #endregion
+
     #region 当前 Tab 刷新
 
     private void RefreshFilteredList(bool resetPage)
@@ -673,6 +870,10 @@ public partial class CodexDlg : BaseDlg
         if (_tab == CodexTab.Character)
         {
             RefreshCharacterFilteredList(resetPage);
+        }
+        else if (_tab == CodexTab.Battle)
+        {
+            RefreshBattleList(resetSelection: resetPage);
         }
         else
         {

@@ -1,0 +1,73 @@
+{
+  "displayNameId": "enemy.kyle.name",
+  "descId": "enemy.kyle.desc",
+  "maxHp": 400,
+  "baseAttributes": {
+    "MaxHealth": 400,
+    "PhysicalAttack": 5,
+    "MagicAttack": 0,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Red",
+  "race": "Human",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 400,
+      "actionSequence": [
+        {
+          "skillId": "kyle_single_strike",
+          "actionCount": 1
+        },
+        {
+          "skillId": "kyle_single_strike",
+          "actionCount": 1
+        },
+        {
+          "skillId": "kyle_sweep",
+          "actionCount": 1
+        }
+      ]
+    },
+    {
+      "maxHp": 400,
+      "actionSequence": [
+        {
+          "skillId": "kyle_single_strike",
+          "actionCount": 1
+        },
+        {
+          "skillId": "kyle_weaken",
+          "actionCount": 1
+        },
+        {
+          "skillId": "kyle_heavy_sweep",
+          "actionCount": 2
+        }
+      ]
+    }
+  ],
+  "skillRefs": [
+    {
+      "skillId": "kyle_heavy_sweep"
+    },
+    {
+      "skillId": "kyle_single_strike"
+    },
+    {
+      "skillId": "kyle_sweep"
+    },
+    {
+      "skillId": "kyle_weaken"
+    }
+  ],
+  "tags": [
+    "boss"
+  ],
+  "entrySkillRefs": [
+    {
+      "skillId": "kyle_entry_brand"
+    }
+  ]
+}

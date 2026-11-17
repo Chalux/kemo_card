@@ -32,20 +32,30 @@ public partial class UILayer : Control
         HideBool.OnChange = () => Visible = !HideBool.Value;
     }
 
-    public bool HasUI(BaseWin ui) => _uiMap.ContainsKey(ui.UIId);
+    /// <summary>
+    /// 字典键统一用 <see cref="UIVo.Id"/>（路由 id）：移除侧拿到的是 <c>vo.Id</c>，
+    /// 而 <see cref="BaseUI.UIId"/> 只是「约定上」与之一致，组件类（<c>BaseCmp</c>）并不成立。
+    /// </summary>
+    private static string KeyOf(BaseWin ui) => ui.UIVo?.Id ?? ui.UIId;
+
+    public bool HasUI(BaseWin ui) => _uiMap.ContainsKey(KeyOf(ui));
 
     public void AddUI(BaseWin ui)
     {
-        ui.UIVo?.Layer?.RemoveUI(ui.UIId);
+        string key = KeyOf(ui);
+        ui.UIVo?.Layer?.RemoveUI(key);
 
-        _uiMap[ui.UIId] = ui;
-        _uiSort.Add(ui);
-
-        if (ui.UIVo?.Mask != null)
+        // 同键重入时先摘掉旧条目，避免 _uiSort 出现重复节点。
+        if (_uiMap.TryGetValue(key, out BaseWin? existing))
         {
-            AddChild(ui.UIVo.Mask);
+            _uiSort.Remove(existing);
+            _uiMap.Remove(key);
         }
 
+        _uiMap[key] = ui;
+        _uiSort.Add(ui);
+
+        // 遮罩由 UIRuntimeData.AddToNode 统一挂载（保证插在界面之前），此处不再处理。
         AddChild(ui);
         if (ui.UIVo != null)
         {

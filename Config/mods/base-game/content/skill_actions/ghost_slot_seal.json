@@ -1,0 +1,7 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "ghost_slot_seal",
+    "slotSelection": "random"
+  }
+}

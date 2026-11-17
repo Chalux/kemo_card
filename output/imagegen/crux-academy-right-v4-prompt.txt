@@ -1,0 +1,11 @@
+Mode: built-in image_gen; transparent_background=true
+Reference: crux-furry-right-grip-v3.png (edit target)
+
+Use case: identity-preserve.
+Asset: full-body HD character illustration edit for game.
+Input image 1 is the edit target, young adult male blue-furred anthro wolf 克鲁克斯.
+Change clothing to a relaxed, slightly oversized academy uniform with WHITE as the dominant overall clothing color: white academy blazer, white collared shirt, a small navy-blue tie, restrained thin blue piping on lapels/cuffs, white/light cool-grey loose trousers. Polished understated academy tailoring, no military armor, no cape. Keep visible blue furry wrist/paw and digitigrade bare furry feet.
+Change only the free LEFT arm (on viewer RIGHT) from hand in pocket to hanging naturally by his side: elbow gently relaxed, visible blue-furred paw fingers open and resting beside thigh. This free hand is empty and clearly OUTSIDE all pockets.
+Preserve blue/white fur, wolf face and muzzle, grey irises, youthful athletic muscular build, large fluffy blue tail with pale tip, full body framing, 3/4 pose looking screen RIGHT, original illustration style and fixed lighting.
+The RIGHT hand (on viewer LEFT) continues holding the same straight sword diagonally DOWN-RIGHT at the reference angle. Preserve sword placement and the corrected physically coherent grip. Fingers and thumb wrap the hilt, the wrist supports it; pommel, hilt, guard center and blade centerline share the same straight diagonal axis. Do not rotate sword vertically.
+Transparent background, no environment, no glow, no floor shadow, no text, no watermark; keep all ears, feet, tail and sword fully within canvas.

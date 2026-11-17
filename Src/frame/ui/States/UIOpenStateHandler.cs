@@ -30,6 +30,8 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
         var openOpt = vo.OpenOpt;
         var task = vo.OpenTaskSource;
         bool IsCurrentRequest() => vo.StateMachine.CurrentState == EUIState.Open && requestFlag == vo.Load.PreLoadFlag;
+        // 打开成功已交付给调用方（Task 完成）后，任何异常都不再把界面打成失败。
+        bool published = false;
 
         try
         {
@@ -42,7 +44,9 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
                 manager.NavStack.Push(vo.Id);
             }
 
-            if (data != null)
+            // 挂载是流程必需项，不能由「过渡数据是否为空」隐式决定：
+            // 首开由 Create 挂载、缓存重开由 Load 挂载，这里只兜住「本应已挂树却没挂」的异常路径。
+            if (vo.Runtime.UI is { } mountTarget && mountTarget.GetParent() == null)
             {
                 vo.Runtime.AddToNode();
             }
@@ -89,18 +93,21 @@ public sealed class UIOpenStateHandler : IStateHandler<EUIState, IUIStateContext
             vo.Runtime.UpdateVisible();
             if (!IsCurrentRequest()) return;
             vo.Anim.StartOpenAnim(vo.OpenOpt.EffectiveAnimType, transitionData, win,
-                () => manager.LayerManager.UpdateLayers());
+                () => manager.UpdateLayers());
 
             if (!IsCurrentRequest()) return;
             // 成功状态先交付；事件/观察回调重入不能把已经打开的请求改成失败。
             vo.CompleteOpen(vo, task);
-            manager.EventDispatcher.Send(UIEvent.Open, new(vo));
-            openOpt.OnOpen?.Invoke(vo);
+            published = true;
+            // 订阅者抛异常不能把已完成的打开请求打成失败：走统一回调保护，异常只记日志。
+            UIManager.InvokeCallback(() => manager.EventDispatcher.Send(UIEvent.Open, new(vo)), vo.Id, "打开事件派发");
+            UIManager.InvokeCallback(() => openOpt.OnOpen?.Invoke(vo), vo.Id, "打开成功回调");
         }
         catch (Exception ex)
         {
             AppLog.Error($"UI<{vo.Id}> 打开生命周期失败：{ex.Message}", "UI");
-            if (IsCurrentRequest()) vo.StateMachine.TransitionTo(EUIState.Destroy, context);
+            // published 之后界面已交付成功，回调异常不得再销毁它（见 ui 框架审查 H1）。
+            if (!published && IsCurrentRequest()) vo.StateMachine.TransitionTo(EUIState.Destroy, context);
         }
         finally { context.OpenNext(); }
     }

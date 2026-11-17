@@ -32,4 +32,13 @@ public sealed class EnemyTeamState
     }
 
     private float ComputeTotalMaxHealth() => _enemies.Sum(enemy => enemy.Asc.GetCurrentValue(AttributeIds.MaxHealth));
+
+    internal int Add(EnemyUnit enemy)
+    {
+        _enemies.Add(enemy);
+        var maxHealth = ComputeTotalMaxHealth();
+        Asc.SetBaseValue(AttributeIds.MaxHealth, maxHealth);
+        Asc.Attributes.SetCurrentValue(AttributeIds.Health, maxHealth);
+        return _enemies.Count - 1;
+    }
 }

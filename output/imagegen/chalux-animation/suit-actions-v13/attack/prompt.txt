@@ -1,0 +1,24 @@
+Mode: built-in image_gen
+
+Use case: stylized-concept
+Asset type: a NEW pixel-art RPG attack animation sprite sheet.
+Reference image: approved character appearance and pixel style ONLY. Create every animation pose afresh. The reference dark background is not part of the asset.
+Primary request: a coherent, forceful SINGLE HORIZONTAL SWORD SLASH toward screen RIGHT, performed IN PLACE. Exactly 12 chronological full-body frames, 4 columns by 3 rows, reading left to right. Real transparent background. Request 2048x1536 with equal 512x512 cells. No text or labels.
+Character: this exact young blue furry anthro wolf with gray eyes, white relaxed business suit, white shirt, navy tie, white trousers, bare blue furry paws, fluffy blue tail with pale tip. Same youthful proportions and medium pixel detail as reference. Facing right at 3/4 view throughout; head always looks right. Anatomical right hand is screen-left sword hand, anatomical left hand is screen-right free hand. One straight steel sword; hand closes firmly around handle, wrist follows handle, guard and blade are on one physical axis.
+Motion: this is an ARC traced by the sword hand through rotation of shoulder, elbow and waist, not an arm straightening thrust. Both paws remain planted at exactly the same pixel positions in ALL frames; pelvis root fixed. Upper body has a small 20-degree twist and weight compression, never turns fully away from camera. Left free arm counterbalances. Tail responds with small delayed motion.
+12 frames:
+1 neutral approved idle pose, sword angled down-right.
+2 elbow bends and brings sword to lower-chest height, free hand lifts slightly.
+3 wind-up: sword held across belly, blade points screen LEFT, hand close to right side of waist; torso slightly coiled. Blade remains at waist height, never overhead.
+4 deepest wind-up with blade extending back-left horizontally, a clear pause.
+5 cut begins: shoulder rotates forward; hand follows a curved sweep across the front of torso, blade still mostly left but slightly foreshortened.
+6 halfway: sword passes toward camera so blade looks distinctly SHORTENED by perspective; hand moves along waist-level arc, not extended forward.
+7 impact: one full horizontal extension toward right, powerful upper-body twist, blade at lower-chest height; one small thin flat pale-cyan swipe attached to blade path (NOT a ring encircling body).
+8 follow-through: blade right and a little farther forward, torso follows the momentum, no second cut.
+9 arm relaxes but sword still roughly level, thin swipe already gone.
+10 elbow retracts naturally and sword starts lowering.
+11 sword returns almost to idle angle; free arm lowers.
+12 exact same neutral idle pose as frame 1.
+Preserve a single continuous wind-up -> sweep -> follow-through -> recover with no unrelated poses. No thrust, no overhead chop, no jumping, no stepping, no root displacement, no teleporting arms, no spinning/back view, no second slash.
+Layout: every pose same character scale (~390px standing height per 512px cell); pelvis at same cell x coordinate, identical foot line at y=490. Whole ears, both paws, tail and sword tip safely within each cell with at least 20px margins. Keep generous empty gutters so blades never cross cells.
+Style: crisp medium-density pixel clusters matching reference, same colors and fixed upper-left light, stable shadows on unmoving parts; no painterly fine detail, no extra pixel density, no changing costume lines or lighting, no glow around silhouette, no shadow blob on floor, no background.

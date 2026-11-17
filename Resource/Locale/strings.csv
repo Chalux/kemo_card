@@ -791,3 +791,197 @@ UI_COMBAT_HINT_PICK_DISCARD,请选择{0}～{1}张手牌丢弃（已选{2}张，E
 "skill.xuanyu_tempest_echo.desc","对敌方全体造成12＋50%魔法攻击的红元素魔法伤害，然后驱散自身所有可驱散负面效果。","Deal 12 + 50% Magic Attack as red magical damage to all enemies, then dispel all dispellable debuffs on self."
 "card.xuanyu_tempest_echo.name","风暴回响","Tempest Echo"
 "char.xuanyu.name","自主侦查型机甲——玄羽","Autonomous Reconnaissance Mecha — Xuanyu"
+ge.brothers_physical_damage.name,兄弟·物理伤害,Brothers: Physical Damage
+ge.brothers_magical_damage.name,兄弟·魔法伤害,Brothers: Magical Damage
+ge.brothers_chant_damage.name,咏唱冲击,Chant Impact
+buff.brothers_physical_attack_down.name,物理攻击降低,Physical Attack Down
+buff.brothers_physical_attack_down.desc,3回合物理攻击降低6。每次施加产生独立实例，效果与时间独立计算。,Physical Attack Down by 6 for 3 turns. Each application is an independent instance.
+buff.brothers_magic_attack_down.name,魔法攻击降低,Magic Attack Down
+buff.brothers_magic_attack_down.desc,3回合魔法攻击降低6。每次施加产生独立实例，效果与时间独立计算。,Magic Attack Down by 6 for 3 turns. Each application is an independent instance.
+buff.george_chant.name,咏唱,Chant
+buff.george_chant.desc,每层魔法攻击＋10，永久且不可驱散，最多15层。,Permanently grants +10 Magic Attack per stack. Undispellable. Maximum 15 stacks.
+buff.brothers_slot_damage.name,兄弟的烙印,Brothers' Brand
+buff.brothers_slot_damage.desc,从此手牌槽打出卡牌时受到5点伤害。持续整场战斗。,Take 5 damage when playing a card from this slot. Lasts for this battle.
+skill.kyle_entry_brand.name,入场·兄弟的烙印,Entrance: Brothers' Brand
+skill.kyle_entry_brand.desc,每名角色随机一个手牌槽附加5点伤害效果，持续整场战斗。,Each character receives a random hand slot with 5 damage on card play for this battle.
+skill.kyle_single_strike.name,凯尔·单体重击,Kyle: Strike
+skill.kyle_single_strike.desc,随机一名角色25点物理伤害。,Deals 25 physical damage to a random character.
+skill.kyle_sweep.name,凯尔·横扫,Kyle: Sweep
+skill.kyle_sweep.desc,全体10点物理伤害。,Deals 10 physical damage to all characters.
+skill.kyle_heavy_sweep.name,凯尔·蓄力横扫,Kyle: Heavy Sweep
+skill.kyle_heavy_sweep.desc,全体25点物理伤害。,Deals 25 physical damage to all characters.
+skill.george_single_spell.name,佐治·单体魔击,George: Spell
+skill.george_single_spell.desc,随机一名角色25点魔法伤害。,Deals 25 magical damage to a random character.
+skill.george_spell_sweep.name,佐治·魔法横扫,George: Spell Sweep
+skill.george_spell_sweep.desc,全体10点魔法伤害。,Deals 10 magical damage to all characters.
+skill.george_chant_impact.name,佐治·咏唱冲击,George: Chant Impact
+skill.george_chant_impact.desc,全体15＋100%魔法攻击点魔法伤害。,Deals 15 + 100% Magic Attack magical damage to all characters.
+skill.kyle_weaken.name,凯尔·压制,Kyle: Suppression
+skill.kyle_weaken.desc,全体3回合物理攻击－6，每次独立计时并叠加效果。,All characters lose 6 Physical Attack for 3 turns. Applications stack independently.
+skill.george_weaken.name,佐治·压制,George: Suppression
+skill.george_weaken.desc,全体3回合魔法攻击－6，每次独立计时并叠加效果。,All characters lose 6 Magic Attack for 3 turns. Applications stack independently.
+skill.george_chant.name,佐治·咏唱,George: Chant
+skill.george_chant.desc,自身获得1层咏唱：每层魔法攻击＋10，永久且不可驱散，最多15层。,"Gain 1 Chant stack: +10 Magic Attack permanently per stack, undispellable, up to 15 stacks."
+enemy.kyle.name,凯尔,Kyle
+enemy.kyle.desc,初启的兄弟之一。,One of the Awakening Brothers.
+enemy.george.name,佐治,George
+enemy.george.desc,初启的兄弟之一。,One of the Awakening Brothers.
+battle.awakening_brothers.name,初启的兄弟,Awakening Brothers
+battle.awakening_brothers.desc,凯尔与佐治依次登场，各有两条生命。仅在肉鸽模式第一环的随机战斗池出现。,"Face Kyle and George in sequence, each with two life bars. Appears in the roguelike ring 1 battle pool."
+buff.life_bar_immunity.name,免疫所有伤害,Damage Immunity
+buff.life_bar_immunity.desc,旧生命条已归零，免疫所有伤害。轮到自身行动时切换生命条并清空状态。,"The current life bar is depleted. Immune to all damage until this enemy acts, then change life bars and reset statuses."
+UI_COMBAT_ENEMY_LIFE_BAR,{0} · 生命条 {1}/{2},{0} · Life bar {1}/{2}
+ge.bear_fixed_damage.name,黑熊物理伤害,Bear physical damage
+ge.bear_elite_damage.name,黑熊物理伤害,Bear physical damage
+ge.bear_leader_damage.name,黑熊物理伤害,Bear physical damage
+buff.bear_roar.name,咆哮,Roar
+buff.bear_roar.desc,每层物理攻击+5，永久，最多20层。,"Physical attack +5 per stack, permanent, up to 20 stacks."
+buff.bear_leader_roar.name,咆哮,Roar
+buff.bear_leader_roar.desc,每层物理攻击+5，永久，最多20层。跨血条保留。,"Physical attack +5 per stack, permanent, up to 20 stacks. Persists across life bars."
+buff.bear_armor_break.name,破甲,Armor Break
+buff.bear_armor_break.desc,物理防御-6，持续3回合。每次施加独立计算时间与效果。,Physical defense -6 for 3 turns. Each application has its own duration and effect.
+buff.bear_slot_storm.name,暴风,Storm
+buff.bear_slot_storm.desc,暴风强度1。使用该槽位的牌时，弃置1个相邻槽位的牌，本场战斗持续生效。,Storm strength 1. Playing this slot discards a card from one adjacent slot. Lasts for this battle.
+skill.bear_entry_storm.name,林间暴风,Forest Storm
+skill.bear_entry_storm.desc,队伍全体各随机1个手牌槽附加暴风，强度1。,Apply strength 1 storm to a random hand slot of each party member.
+skill.bear_double_strike.name,黑熊连击,Bear Double Strike
+skill.bear_double_strike.desc,随机1名角色2次，每次造成25点物理伤害。,"Randomly target one character twice, dealing 25 physical damage each time. Each hit rolls a new target."
+skill.bear_roar.name,咆哮,Roar
+skill.bear_roar.desc,自身获得1层咆哮。,Gain 1 stack of Roar.
+skill.bear_elite_sweep.name,精英横扫,Elite Sweep
+skill.bear_elite_sweep.desc,全体25点物理伤害。,Deal 25 physical damage to all party members.
+skill.bear_rally.name,群熊咆哮,Rallying Roar
+skill.bear_rally.desc,存活的普通黑熊和精英黑熊获得2层咆哮。,Living ordinary and elite black bears gain 2 stacks of Roar.
+skill.bear_support.name,护卫咆哮,Supporting Roar
+skill.bear_support.desc,存活的普通黑熊获得2层咆哮。,Living ordinary black bears gain 2 stacks of Roar.
+skill.bear_elite_fury.name,孤熊怒击,Lone Bear Fury
+skill.bear_elite_fury.desc,全体25+125%物理攻击点物理伤害。,Deal 25 + 125% physical attack physical damage to all party members.
+skill.bear_elite_roar.name,精英咆哮,Elite Roar
+skill.bear_elite_roar.desc,自身获得2层咆哮。,Gain 2 stacks of Roar.
+skill.bear_entry_energy.name,首领威压,Leader Intimidation
+skill.bear_entry_energy.desc,队伍全体能量额度-2，最低0。,"Reduce each party member’s energy allowance by 2, to a minimum of 0."
+skill.bear_leader_double.name,首领破甲连击,Leader Armor Breaking Strikes
+skill.bear_leader_double.desc,随机1名角色2次，每次造成25点物理伤害并附加3回合破甲（物防-6）。,"Randomly target one character twice, each time dealing 25 physical damage and applying Armor Break for 3 turns (-6 physical defense)."
+skill.bear_leader_roar.name,首领咆哮,Leader Roar
+skill.bear_leader_roar.desc,自身获得2层咆哮，跨血条保留。,"Gain 2 stacks of Roar, persisting across life bars."
+skill.bear_leader_sweep.name,首领横扫,Leader Sweep
+skill.bear_leader_sweep.desc,全体35点物理伤害。,Deal 35 physical damage to all party members.
+skill.bear_double_roar.name,咆哮翻倍,Doubled Roar
+skill.bear_double_roar.desc,自身咆哮层数翻倍，最多20层；没有咆哮时保持0层。,"Double existing Roar stacks, up to 20. Zero stacks remain zero."
+skill.bear_leader_fury.name,首领怒击,Leader Fury
+skill.bear_leader_fury.desc,全体35+150%物理攻击点物理伤害。,Deal 35 + 150% physical attack physical damage to all party members.
+skill.bear_leader_triple.name,首领破甲三连击,Leader Triple Armor Break
+skill.bear_leader_triple.desc,随机1名角色3次，每次造成35点物理伤害并附加3回合破甲（物防-6）。,"Randomly target one character three times, each time dealing 35 physical damage and applying Armor Break for 3 turns (-6 physical defense)."
+enemy.black_bear.name,普通黑熊,Black Bear
+enemy.black_bear.desc,森林黑熊来袭中的黄元素动物。,A yellow element animal from Forest Black Bear Attack.
+enemy.elite_black_bear.name,精英黑熊,Elite Black Bear
+enemy.elite_black_bear.desc,森林黑熊来袭中的黄元素动物。,A yellow element animal from Forest Black Bear Attack.
+enemy.black_bear_leader.name,黑熊首领,Black Bear Leader
+enemy.black_bear_leader.desc,森林黑熊来袭中的黄元素动物。,A yellow element animal from Forest Black Bear Attack.
+battle.forest_black_bears.name,森林黑熊来袭,Forest Black Bear Attack
+battle.forest_black_bears.desc,三波黑熊战斗，仅在肉鸽模式第二环的随机池出现。,A three-wave black bear battle appearing only in the roguelike ring 2 random battle pool.
+ge.ghost_magical_damage.name,幽灵魔法伤害,Ghost magical damage
+buff.ghost_slot_seal.name,手牌槽封印,Hand Slot Seal
+buff.ghost_slot_seal.desc,封印该手牌槽2回合，无法标记或使用该槽的牌；其他手牌槽仍可使用。每次封印独立计时。,"Seal this hand slot for 2 subsequent turns, preventing its cards from being marked or played. Other slots remain usable. Each seal has its own duration."
+buff.evil_thought_attack_down.name,物攻·魔攻降低,Physical and Magic Attack Down
+buff.evil_thought_attack_down.desc,物理攻击和魔法攻击各-10，持续后续1回合。每次施加独立计算时间与效果。,Physical and magic attack -10 for 1 subsequent turn. Each application has its own duration and effect.
+skill.ghost_strike.name,幽灵侵袭,Ghost Assault
+skill.ghost_strike.desc,随机1名角色造成50点魔法伤害。,Deal 50 magical damage to one random character.
+skill.ghost_seal_twice.name,幽灵封印,Ghost Seals
+skill.ghost_seal_twice.desc,随机1名角色随机1个手牌槽封印2回合，执行2次，每次重新随机。,"Twice, randomly select a character and one hand slot, sealing it for 2 turns. Roll a new character and slot each time."
+skill.evil_thought_double.name,恶念连击,Malice Double Strike
+skill.evil_thought_double.desc,随机1名角色2次，每次造成50点魔法伤害。,"Randomly target one character twice, dealing 50 magical damage each time. Roll a new target each time."
+skill.evil_thought_weaken.name,恶念压制,Malice Suppression
+skill.evil_thought_weaken.desc,全体后续1回合物理攻击和魔法攻击各-10。,All party members lose 10 physical and magic attack for 1 subsequent turn.
+skill.evil_thought_sweep.name,恶念席卷,Malice Sweep
+skill.evil_thought_sweep.desc,全体50点魔法伤害。,Deal 50 magical damage to all party members.
+skill.evil_thought_summon_1.name,恶念召唤1,Malice Summon 1
+skill.evil_thought_summon_1.desc,场上幽灵不足2只时，召唤最多1只幽灵。该生命条行动召唤总数最多4只，不计入场召唤。占用本次行动，普通循环暂停。,"While fewer than 2 ghosts are alive, summon up to 1. Up to 4 action summons per life bar, excluding entry summons. Pause the regular cycle."
+skill.evil_thought_summon_2.name,恶念召唤2,Malice Summon 2
+skill.evil_thought_summon_2.desc,场上幽灵不足3只时，召唤最多2只幽灵。该生命条行动召唤总数最多5只，不计入场召唤。占用本次行动，普通循环暂停。,"While fewer than 3 ghosts are alive, summon up to 2. Up to 5 action summons per life bar, excluding entry summons. Pause the regular cycle."
+skill.evil_thought_summon_3.name,恶念召唤3,Malice Summon 3
+skill.evil_thought_summon_3.desc,场上幽灵不足4只时，召唤最多2只幽灵。该生命条行动召唤总数最多8只，不计入场召唤。占用本次行动，普通循环暂停。,"While fewer than 4 ghosts are alive, summon up to 2. Up to 8 action summons per life bar, excluding entry summons. Pause the regular cycle."
+skill.evil_thought_entry_2.name,恶念聚灵2,Malice Entry Summon 2
+skill.evil_thought_entry_2.desc,召唤幽灵，直到场上有3只幽灵，不计入本条行动召唤额度。,"Summon until 3 ghosts are alive, without consuming the action summon allowance."
+skill.evil_thought_entry_3.name,恶念聚灵3,Malice Entry Summon 3
+skill.evil_thought_entry_3.desc,召唤幽灵，直到场上有4只幽灵，不计入本条行动召唤额度。,"Summon until 4 ghosts are alive, without consuming the action summon allowance."
+enemy.undead_ghost.name,幽灵,Ghost
+enemy.undead_ghost.desc,蓝元素，不死｜未知。魔攻20，其余攻防0。,"Blue element, Undead | Unknown. Magic attack 20; other attack and defense stats 0."
+enemy.evil_thought.name,恶念,Malice
+enemy.evil_thought.desc,蓝元素，不死｜未知。魔攻40，其余攻防0。第三生命条进入时记为第1回合，第10回合开始对队伍造成血量上限9999%的机制伤害。,"Blue element, Undead | Unknown. Magic attack 40; other stats 0. The third life bar starts on turn 1; at the start of turn 10, deal unavoidable mechanism damage equal to 9999% of party maximum HP."
+battle.undead_discovery.name,发现不死恶灵,Discovery of Undying Spirits
+battle.undead_discovery.desc,仅在肉鸽模式第三环随机池出现。两波入场各触发一次血量上限25%／80%的固定机制伤害，直接扣队伍生命，不受攻防、增减伤或护盾影响。,"Appears only in the roguelike ring 3 pool. On entry, waves 1 and 2 deal mechanism damage equal to 25% and 80% of party maximum HP, respectively, once per wave. Bypasses defense, damage modifiers, and shields."
+UI_COMBAT_SLOT_SEALED,封印,Sealed
+
+UI_COMBAT_INTENT_SKILL,意图：{0}（计数 {1}）,Intent: {0} (count {1})
+UI_COMBAT_INTENT_NONE,意图：无行动,Intent: No action
+UI_COMBAT_INTENT_LIFE_BAR,意图：切换血条后行动,Intent: Act after changing HP bar
+
+UI_COMBAT_STAT_SHIELD,护盾,Shield
+UI_COMBAT_SHIELD,护盾 {0},Shield {0}
+UI_ITEMS_POTIONS,药水,Potions
+UI_ITEMS_RELICS,遗物,Relics
+UI_ITEM_USE,使用药水,Use potion
+UI_ITEM_DISCARD,丢弃药水,Discard potion
+UI_ITEM_MISSING,道具定义不可用,Item definition unavailable
+UI_ITEM_INVALID,药水槽位或定义无效,Invalid potion slot or definition
+UI_ITEM_INVALID_TARGET,药水目标无效,Invalid potion target
+UI_ITEM_EMPTY_SLOT,空槽位,Empty slot
+UI_ITEM_REPLACE_HINT,药水槽已满。选择要替换的药水，或放弃本次获取。,Potion slots are full. Replace a potion or decline the new one.
+UI_ITEM_REPLACE_SLOT,替换槽位 {0}：{1},Replace slot {0}: {1}
+UI_ITEM_GIVE_UP,放弃获取,Decline
+UI_MAP_TITLE,当前环路线,Ring routes
+UI_MAP_ROUTE_HINT,先选择一条路线，再自由安排随机事件、明文事件和商店的顺序。两种事件仅一次，商店可反复进入；完成两种事件后挑战 BOSS。,"Choose one route and visit its random event, visible event and shop in any order. Events are single-use; the shop can be revisited. Complete both events to unlock the BOSS."
+UI_MAP_START,起点,Start
+UI_MAP_EVENT,事件,Event
+UI_MAP_SHOP,商店,Shop
+UI_MAP_BOSS,挑战 BOSS,Fight BOSS
+UI_MAP_CONTINUE,继续前进,Continue
+UI_MAP_NEXT_RING,进入下一环,Next ring
+UI_MAP_FINISHED,已完成最后一环,Final ring complete
+UI_MAP_RING_COMPLETE,本环战斗已完成，可以进入下一环。,This ring is complete. Proceed to the next ring.
+UI_EVENT_EMPTY,此节点暂未配置事件，可以继续前进。,No event is configured for this node. You may continue.
+UI_SHOP_EMPTY,货架暂时为空。后续将在这里配置商品。,The shelves are empty. Goods will be configured here later.
+UI_SHOP_HINT,购买后商品售罄。药水槽满时可选择替换。,Purchased goods sell out. Full potion slots allow replacement.
+UI_SHOP_SOLD,{0}（售罄）,{0} (sold out)
+UI_SHOP_PRICE,{0} · {1} 金币,{0} · {1} gold
+UI_EVENT_NEED_GOLD,需要金币 ≥ {0}（当前 {1}）,Requires gold ≥ {0} (current {1})
+UI_EVENT_NEED_ITEM,需要持有：{0},Requires item: {0}
+UI_EVENT_NEED_FLAG,需要标记：{0},Requires flag: {0}
+UI_EVENT_NEED_RING,需要到达第 {0} 环,Requires ring {0}
+UI_EVENT_UNKNOWN_CONDITION,尚不支持的条件：{0},Unsupported condition: {0}
+UI_EVENT_UNSUPPORTED,此选项的结果暂不可执行，或资源不足。,This result is not available or resources are insufficient.
+UI_ACTION_BLOCKED,当前无法完成此操作，请检查资源和槽位。,Cannot complete this action. Check resources and slots.
+UI_MAP_SELECT_ROUTE,选择路线 {0},Choose route {0}
+UI_MAP_ROUTE_SELECTED,已选路线 {0},Route {0} selected
+UI_MAP_RETURN,返回地图,Return to map
+UI_MAP_VISIBLE_EVENT,明文事件,Visible event
+UI_VISIBLE_GOLD,150 金币,150 gold
+UI_VISIBLE_ROLE_PACK,{0}卡包 · 5 张,{0} pack · 5 cards
+UI_VISIBLE_ALL_PACK,卡包 · 每定位各 1 张,Pack · 1 card per role
+UI_VISIBLE_RELIC,选取一个遗物,Choose a relic
+UI_VISIBLE_GOLD_HINT,领取 150 金币，奖励由全队共享。,Receive 150 gold for the team.
+UI_VISIBLE_PACK_HINT,领取下列全部非专属卡牌，包内不重复；新卡加入共享收藏，已持有且可升级的卡升一阶。,Receive all the non-exclusive cards below without pack duplicates. New cards enter the shared collection; owned upgradeable cards advance one tier.
+UI_VISIBLE_RELIC_HINT,从下列随机候选中选择一个未持有遗物。候选不足 3 个时展示全部可用遗物。,"Choose one unowned relic from these random candidates. If fewer than 3 are available, all are shown."
+UI_VISIBLE_UNAVAILABLE,当前奖励池不足或奖励无法领取，可以跳过此明文事件。,This reward pool is insufficient or the reward is unavailable. You can skip this visible event.
+UI_VISIBLE_SKIP,跳过此奖励,Skip this reward
+UI_VISIBLE_CLAIM,领取奖励,Claim reward
+UI_BATTLE,战斗,Battle
+UI_BATTLE_TXT_FILTER,战斗名或敌人,Battle Or Enemy
+UI_BATTLE_EMPTY,没有匹配的战斗。,No matching battles.
+UI_BATTLE_DETAIL_EMPTY,从左侧列表选择一场战斗。,Select a battle from the list.
+UI_BATTLE_TAGS,标签,Tags
+UI_BATTLE_RULES,战斗规则,Combat Rules
+UI_BATTLE_WAVES,波次,Waves
+UI_BATTLE_WAVE_TITLE,第 {0} 波,Wave {0}
+UI_BATTLE_ACTION_TABLE,行动表,Action Table
+UI_BATTLE_ACTION_TABLE_NONE,无生命条配置（随机技能）,No action loop (random skills)
+UI_BATTLE_LIFE_BAR,生命条 {0} · 生命 {1},Life Bar {0} · HP {1}
+UI_BATTLE_ACTION_STEP,{0}. {1}（行动计数 {2}）,{0}. {1} (Action Count {2})
+UI_BATTLE_ENTRY_SKILLS,入场技：{0},Entry Skills: {0}
+UI_BATTLE_PRIORITY_SKILL,优先行动：{0},Priority Action: {0}
+UI_BATTLE_SPAWN_LINE,{0} ×{1},{0} ×{1}
+UI_BATTLE_HP,生命 {0},HP {0}
+UI_BATTLE_HP_SCALE,生命倍率 {0},HP Scale {0}
+UI_BATTLE_START_INDEX,起手第 {0} 项,Starts At #{0}
+UI_BATTLE_VALUE_NONE,无,None

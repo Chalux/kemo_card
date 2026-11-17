@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.brothers_chant_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "kind": "Damage",
+      "damageType": "Magical",
+      "attackScale": 1
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "displayNameId": "buff.ghost_slot_seal.name",
+  "descId": "buff.ghost_slot_seal.desc",
+  "durationType": "Turns",
+  "duration": 2,
+  "deferFirstTurnEnd": true,
+  "stackRule": "Independent",
+  "maxStacks": 2147483647,
+  "tags": [
+    "debuff",
+    "combat.state.sealed"
+  ]
+}

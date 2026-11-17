@@ -1,0 +1,12 @@
+Mode: built-in image_gen; transparent_background=true
+Edit target: ../idle-academy-v8/generated-sheet.png
+Costume and tail proportion reference: ../../crux-suit-right-v5.png
+
+Use case: identity-preserve / sprite costume edit.
+Input image 1: EDIT TARGET pixel sheet 1536x1024, 4 columns2 rows, 8 cells384x512. Input image2: new HD WHITE SUIT and smaller tail reference ONLY.
+Preserve target pixel style and medium pixel density EXACTLY, face scale, youthful athletic blue furry wolf identity, grey eye, stance and feet anchor, screen RIGHT facing 3/4, sword hand/pommel/guard/blade at reference diagonal down-right angle. No extra microdetail or painted gradients.
+Replace uniform with a contemporary white BUSINESS SUIT matching image2: single-breasted tailored white jacket, plain notched lapels, clean shoulder line, lightly shaped waist but comfortable fit, white tucked dress shirt, navy tie. White straight-leg suit trousers with pressed crease, clean loose hem above bare furry blue paws. Remove ALL blue piping, school-uniform cuff bands, trim or insignia. Trousers straight and comfortable, not balloon-shaped or gathered at ankle. Clothes dominant WHITE with simple coolgrey shadows and fewer meaningless folds.
+Free LEFT paw on viewer RIGHT remains clearly visible relaxed by thigh, outside pockets. RIGHT paw on viewer LEFT continues gripping straight sword, wrist and hilt coherent and pommel/grip/guardcenter/blade on SAME diagonal axis.
+Tail: REDUCE length and bulk modestly about15% from image1, preserve blue fluffy wolf tail with pale tip and same root attachment. Reference compact natural tail curve from image2. In each cell fully framed tail, ears, sword, paws.
+8 idle key poses, rooted feet, very soft breathing, tail curves naturally with delayed tip followthrough, do not shift the whole tail as a stiff block. First and last pose same. Fifth cell blink CLOSED eye same head position. Keep lighting from upper-left and shadow partition identical to avoid shadow shimmer; coherent palette in every cell.
+Canvas/layout EXACTLY 1536x1024, 4x2 cells384x512. No text or labels. Transparent background, NO glow/gradient/halo/floor shadow. All outfits match in every cell. Preserve target pixel scale.

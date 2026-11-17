@@ -1,0 +1,18 @@
+{
+  "displayNameId": "skill.bear_support.name",
+  "descId": "skill.bear_support.desc",
+  "targetOverride": {
+    "side": "Ally",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_roar",
+      "params": {
+        "stacks": 2,
+        "requiredEnemyTag": "bear.ordinary"
+      }
+    }
+  ]
+}

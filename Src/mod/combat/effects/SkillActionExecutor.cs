@@ -126,6 +126,15 @@ public sealed class SkillActionExecutor
             return;
         switch (action.Kind)
         {
+            case ESkillActionKind.SummonEnemy:
+                if (BuffActionParams.TryGetString(mergedParams, "enemyId", out var summonEnemyId))
+                    simulation.EnemySummons.Summon(source, summonEnemyId,
+                        ContentParameters.ReadInt(mergedParams, "count", 1),
+                        ContentParameters.ReadInt(mergedParams, "maxAlive", 1),
+                        ContentParameters.ReadInt(mergedParams, "maxSummons", 0),
+                        mergedParams.TryGetValue("trackLifeBarSummons", out var trackSummonsValue) &&
+                        bool.TryParse(trackSummonsValue?.ToString(), out var trackSummonsEnabled) && trackSummonsEnabled);
+                break;
             case ESkillActionKind.Draw:
                 ApplyDraw(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1));
                 break;
@@ -410,9 +419,27 @@ public sealed class SkillActionExecutor
         var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
             ? CombatTargetSelector.Resolve(simulation, source, parameters)
             : targets;
-        var instanceParams = BuffActionParams.BuildScaledInstanceParams(simulation, source, parameters, "buffId");
+        var instanceParams = BuffActionParams.BuildScaledInstanceParams(simulation, source, parameters,
+            "buffId", "stacks", "stackMultiplier", "requiredEnemyTag");
         foreach (var target in resolvedTargets)
-            simulation.Buffs.Apply(simulation, target, buffId, instanceParams);
+        {
+            if (BuffActionParams.TryGetString(parameters, "requiredEnemyTag", out var tag) &&
+                (target.Side != ECombatSide.Enemy || target.Index < 0 || target.Index >= simulation.EnemyTeam.Enemies.Count ||
+                 !simulation.Definitions.Store.TryGetEnemy(simulation.EnemyTeam.Enemies[target.Index].DefinitionId, out var definition) ||
+                 !definition.Tags.Contains(tag)))
+                continue;
+            var count = Math.Clamp(ContentParameters.ReadInt(parameters, "stacks", 1), 1, 100);
+            if (parameters.ContainsKey("stackMultiplier"))
+            {
+                var current = target.Side == ECombatSide.Enemy && target.Index >= 0 && target.Index < simulation.EnemyTeam.Enemies.Count
+                    ? simulation.EnemyTeam.Enemies[target.Index].Buffs.Find(buffId)?.Stacks ?? 0
+                    : target.Side == ECombatSide.Player && target.Index >= 0 && target.Index < simulation.PlayerTeam.Characters.Count
+                        ? simulation.PlayerTeam.Characters[target.Index].Buffs.Find(buffId)?.Stacks ?? 0 : 0;
+                count = (int)Math.Min(100, (long)current * (Math.Clamp(ContentParameters.ReadInt(parameters, "stackMultiplier", 1), 1, 100) - 1));
+            }
+            for (var stack = 0; stack < count; stack++)
+                simulation.Buffs.Apply(simulation, target, buffId, instanceParams);
+        }
     }
 
     /// <summary>授予充能球：params.orbTypeId 必填、params.count 可选（默认 1）；产球者 = 来源角色。</summary>
@@ -777,7 +804,7 @@ public sealed class SkillActionExecutor
 
     /// <summary>
     /// 资源给到「当前可用能量」（规格 §3.2），或按 <c>resource: "SkillCounter"</c> 显式加技能计数器
-    /// <c>S</c>（规格 §5.3 连发）。其余资源名 v1 无操作。
+    /// <c>S</c>（规格 §5.3 连发）；<c>CurrentEnergy</c> 的负数减少每回合能量额度与可用余额。
     /// </summary>
     private static void ApplyGainResource(
         CombatSimulation simulation,
@@ -786,7 +813,7 @@ public sealed class SkillActionExecutor
         IReadOnlyDictionary<string, object> parameters)
     {
         var amount = ContentParameters.ReadInt(parameters, "amount", 0);
-        if (amount <= 0)
+        if (amount == 0)
             return;
 
         var hasSelector = BuffActionParams.HasTargetSelector(parameters);
@@ -799,9 +826,23 @@ public sealed class SkillActionExecutor
         {
             case "energy":
                 foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets, allowSourceFallback: !hasSelector))
-                    character.GainAvailableEnergy(amount);
+                {
+                    if (amount > 0)
+                        character.GainAvailableEnergy(amount);
+                }
+                break;
+            case "currentenergy":
+                foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets, allowSourceFallback: !hasSelector))
+                {
+                    character.ReduceCurrentEnergy(amount < 0 ? (int)Math.Min(int.MaxValue, -(long)amount) : 0);
+                    var index = Enumerable.Range(0, simulation.PlayerTeam.Characters.Count)
+                        .First(i => ReferenceEquals(simulation.PlayerTeam.Characters[i], character));
+                    PresentationEmitter.EmitEnergy(simulation, index);
+                }
                 break;
             case "skillcounter":
+                if (amount < 0)
+                    break;
                 foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets, allowSourceFallback: !hasSelector))
                     character.GainSkillCounter(amount);
                 break;

@@ -94,6 +94,10 @@ public sealed class PassiveRefDto
 
 public sealed class EnemySpawnDto
 {
+    /// <summary>首条生命条行动循环的起点（0 起）。</summary>
+    [JsonPropertyName("initialActionIndex")]
+    public int InitialActionIndex { get; init; }
+
     [JsonPropertyName("enemyId")]
     public string EnemyId { get; init; } = "";
 
@@ -109,11 +113,27 @@ public sealed class EnemySpawnDto
 
 public sealed class BattleWaveDto
 {
+    [JsonPropertyName("entryMechanisms")]
+    public List<TeamHpMechanismDto> EntryMechanisms { get; init; } = [];
+
     [JsonPropertyName("enemySpawns")]
     public List<EnemySpawnDto> EnemySpawns { get; init; } = [];
 
     [JsonPropertyName("waveScriptPath")]
     public string? WaveScriptPath { get; init; }
+}
+
+/// <summary>直接扣队伍生命的战斗机制；Turn 为生命条内回合序号，波次入场使用0。</summary>
+public sealed class TeamHpMechanismDto
+{
+    [JsonPropertyName("id")]
+    public string Id { get; init; } = "";
+
+    [JsonPropertyName("maxHpDamagePercent")]
+    public float MaxHpDamagePercent { get; init; }
+
+    [JsonPropertyName("turn")]
+    public int Turn { get; init; }
 }
 
 public sealed class RewardEntryDto
@@ -145,6 +165,9 @@ public sealed class EventPageDto
 
 public sealed class EventOptionDto
 {
+    [JsonPropertyName("itemRewards")]
+    public List<string> ItemRewards { get; init; } = [];
+
     [JsonPropertyName("optionId")]
     public string OptionId { get; init; } = "";
 

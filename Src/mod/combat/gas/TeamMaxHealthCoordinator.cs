@@ -58,6 +58,6 @@ public sealed class TeamMaxHealthCoordinator : IDisposable
             ClampHealth();
     }
 
-    private void ClampHealth() => _team.Asc.Attributes.SetCurrentValue(AttributeIds.Health,
+    private void ClampHealth() => _team.WriteSharedHp(
         Math.Clamp(_team.SharedHpExact, 0f, MathF.Max(0f, _team.Asc.GetCurrentValue(AttributeIds.MaxHealth))));
 }

@@ -1,0 +1,77 @@
+{
+  "displayNameId": "enemy.black_bear_leader.name",
+  "descId": "enemy.black_bear_leader.desc",
+  "maxHp": 1200,
+  "baseAttributes": {
+    "MaxHealth": 1200,
+    "PhysicalAttack": 0,
+    "MagicAttack": 0,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Yellow",
+  "race": "Animal",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 1200,
+      "actionSequence": [
+        {
+          "skillId": "bear_leader_double",
+          "actionCount": 1
+        },
+        {
+          "skillId": "bear_leader_roar",
+          "actionCount": 1
+        },
+        {
+          "skillId": "bear_leader_sweep",
+          "actionCount": 2
+        }
+      ],
+      "entrySkillRefs": [
+        {
+          "skillId": "bear_entry_energy"
+        }
+      ]
+    },
+    {
+      "maxHp": 1500,
+      "actionSequence": [
+        {
+          "skillId": "bear_leader_fury",
+          "actionCount": 1
+        },
+        {
+          "skillId": "bear_leader_triple",
+          "actionCount": 1
+        }
+      ],
+      "entrySkillRefs": [
+        {
+          "skillId": "bear_double_roar"
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "boss"
+  ],
+  "skillRefs": [
+    {
+      "skillId": "bear_leader_double"
+    },
+    {
+      "skillId": "bear_leader_fury"
+    },
+    {
+      "skillId": "bear_leader_roar"
+    },
+    {
+      "skillId": "bear_leader_sweep"
+    },
+    {
+      "skillId": "bear_leader_triple"
+    }
+  ]
+}

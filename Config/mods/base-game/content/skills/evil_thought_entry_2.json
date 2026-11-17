@@ -1,0 +1,19 @@
+{
+  "displayNameId": "skill.evil_thought_entry_2.name",
+  "descId": "skill.evil_thought_entry_2.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Single",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "ghost_summon",
+      "params": {
+        "count": 3,
+        "maxAlive": 3,
+        "trackLifeBarSummons": false
+      }
+    }
+  ]
+}

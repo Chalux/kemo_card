@@ -23,7 +23,7 @@ namespace KemoCard.Mod.Run.Ui.CombatUi;
 /// </summary>
 public partial class CombatWin : BaseWin, ICombatStageView
 {
-    [Export] private Control? _itemSlots;
+    [Export] private Items.RunItemBannerCmp? _itemSlots;
     [Export] private HpBarCmp? _sharedHp;
     [Export] private Container? _bench;
     [Export] private Container? _allyStage;
@@ -63,6 +63,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
     protected override void OnReady()
     {
+        if (_itemSlots is not null) _itemSlots.PotionRequested = OnPotionRequested;
         CollectChildren(_bench, _members);
         CollectChildren(_allyStage, _allies);
         CollectChildren(_hand, _hands);
@@ -117,6 +118,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
 
     protected override void OnExitTree()
     {
+        if (_itemSlots is not null) _itemSlots.PotionRequested = null;
         if (_orbs != null)
             _orbs.TriggerRequested = null;
         foreach (var member in _members)
@@ -197,7 +199,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         var result = simulation.TryApply(command);
         if (!result.Success)
         {
-            ToastService.Show("UI_COMBAT_COMMAND_FAILED", result.Error);
+            ToastService.Show("UI_COMBAT_COMMAND_FAILED", result.Error is null ? "" : Localization.Tr(result.Error));
         }
         else
         {
@@ -235,6 +237,25 @@ public partial class CombatWin : BaseWin, ICombatStageView
     {
         if (_ui != null)
             _ui.InputLocked = locked;
+    }
+
+    private void OnPotionRequested(int slot)
+    {
+        var sim = Simulation;
+        if (sim is null || _ui is null || _ui.InputLocked || sim.Phase != ECombatPhase.Player) return;
+        var character = _ui.ControlledSlot;
+        var id = sim.Items.Potions[slot];
+        if (id is null) return;
+        _ui.ClearPending();
+        _ = RunUiController.OpenPotionAsync(new Items.RunPotionDlgPayload
+        {
+            Slot = slot, CharacterIndex = character, CanUse = true, Changed = SyncFromState,
+            UseRequested = targets =>
+            {
+                if (GodotObject.IsInstanceValid(this) && IsInsideTree())
+                    ApplyCommand(new UsePotionCommand(slot, id, character, targets));
+            },
+        });
     }
 
     private void CheckBattleEnd()
@@ -499,6 +520,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
         var store = simulation.Definitions.Store;
         var characters = simulation.PlayerTeam.Characters;
         var inPlayerPhase = simulation.Phase == ECombatPhase.Player;
+        _itemSlots?.Bind(run.State.Items, store, inPlayerPhase && !_ui.InputLocked);
         var controlled = _ui.ControlledSlot;
         var pickingTarget = _ui.PendingMode == ECombatPendingMode.PickTarget;
         CardDto? pendingCard = pickingTarget && TryGetPendingCard(simulation, out var pc) ? pc : null;
@@ -525,7 +547,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
             var strip = benchIndex < _strips.Count ? _strips[benchIndex] : null;
             benchIndex++;
 
-            // 释放按钮（2026-09-27）：玩家阶段、未锁输入、有权控制、未封印且有可释放档才显示。
+            // 释放按钮常驻：玩家阶段、未锁输入、有权控制、未封印且有可释放档才可用。
             var canRelease = inPlayerPhase
                 && !_ui.InputLocked
                 && _ui.CanControl(i)
@@ -606,7 +628,8 @@ public partial class CombatWin : BaseWin, ICombatStageView
             {
                 var slot = actor.HandSlots[i];
                 var card = slot.CardId is not null && store.TryGetCard(slot.CardId, out var def) ? def : null;
-                _hands[i].Bind(i, slot, card, (_ui.PendingMode == ECombatPendingMode.PickDiscard ? _ui.DiscardSlots.Contains(i) : _ui.HasPending && _ui.PendingHandSlot == i), canAct);
+                _hands[i].Bind(i, slot, card, (_ui.PendingMode == ECombatPendingMode.PickDiscard ? _ui.DiscardSlots.Contains(i) : _ui.HasPending && _ui.PendingHandSlot == i),
+                    canAct && (!slot.IsSealed || _ui.PendingMode == ECombatPendingMode.PickDiscard));
             }
 
             if (_btnConfirm != null)
@@ -657,6 +680,7 @@ public partial class CombatWin : BaseWin, ICombatStageView
             return;
 
         var locked = _ui.InputLocked;
+        _itemSlots?.SetEnabled(!locked && simulation.Phase == ECombatPhase.Player);
         foreach (var hand in _hands)
             hand.SetPending(false);
         foreach (var enemy in _enemies)
@@ -799,6 +823,23 @@ public partial class CombatWin : BaseWin, ICombatStageView
     }
 
     public void RefreshEnemy(int enemyIndex) => GetEnemyUnit(enemyIndex)?.Refresh();
+
+    public void AddSummonedEnemy(int enemyIndex)
+    {
+        var simulation = Simulation;
+        if (_enemyStage is null || _enemyScene is null || simulation is null)
+            return;
+        for (var index = _enemies.Count; index <= enemyIndex && index < simulation.EnemyTeam.Enemies.Count; index++)
+        {
+            if (_enemyScene.Instantiate() is not EnemyUnitCmp cmp)
+                return;
+            var unit = simulation.EnemyTeam.Enemies[index];
+            _enemyStage.AddChild(cmp);
+            cmp.Bind(index, unit, simulation.Definitions.Store.TryGetEnemy(unit.DefinitionId, out var def) ? def : null);
+            cmp.Clicked = OnEnemyTargetClicked;
+            _enemies.Add(cmp);
+        }
+    }
 
     public void RefreshOrbs()
     {

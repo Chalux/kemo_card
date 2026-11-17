@@ -1,0 +1,6 @@
+{
+  "kind": "DiscardSlot",
+  "params": {
+    "adjacentSlots": 1
+  }
+}

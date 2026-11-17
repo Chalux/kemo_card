@@ -10,6 +10,8 @@ namespace KemoCard.Mod.Run.Ui;
 public partial class RunMainWin : BaseWin
 {
     [Export] private Label? _lblStory;
+    [Export] private Items.RunItemBannerCmp? _items;
+    [Export] private RunAdventureCmp? _adventure;
     [Export] private Label? _lblPhase;
     [Export] private Label? _lblRing;
     [Export] private Label? _lblSeed;
@@ -63,6 +65,10 @@ public partial class RunMainWin : BaseWin
         }
 
         BindPhaseChanges();
+        if (_items is not null) _items.PotionRequested = slot => _ = RunUiController.OpenPotionAsync(new Items.RunPotionDlgPayload
+        { Slot = slot, CanUse = false, Changed = UpdateView });
+        var state = RunRuntime.Current?.State;
+        if (state is not null) Binder.Add(state.OnRunAdventureChanged((_, _) => UpdateView(), this).Off);
     }
 
     /// <summary>
@@ -140,6 +146,12 @@ public partial class RunMainWin : BaseWin
         }
 
         var state = run.State;
+        var service = RunRuntime.CreateAdventureService();
+        if (service is not null)
+        {
+            _items?.Bind(state.Items, service.Store, !state.Phase.IsCombatPhase());
+            _adventure?.Bind(service);
+        }
         var storyName = state.StoryId;
         if (AppRoot.Services.ContentModPipeline.Registry.Store.TryGetStory(state.StoryId, out var story)
             && !string.IsNullOrWhiteSpace(story.DisplayNameId))

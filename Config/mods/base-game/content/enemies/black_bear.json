@@ -1,0 +1,47 @@
+{
+  "displayNameId": "enemy.black_bear.name",
+  "descId": "enemy.black_bear.desc",
+  "maxHp": 600,
+  "baseAttributes": {
+    "MaxHealth": 600,
+    "PhysicalAttack": 0,
+    "MagicAttack": 0,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Yellow",
+  "race": "Animal",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 600,
+      "actionSequence": [
+        {
+          "skillId": "bear_double_strike",
+          "actionCount": 1
+        },
+        {
+          "skillId": "bear_roar",
+          "actionCount": 1
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "bear.ordinary",
+    "bear.pack"
+  ],
+  "skillRefs": [
+    {
+      "skillId": "bear_double_strike"
+    },
+    {
+      "skillId": "bear_roar"
+    }
+  ],
+  "entrySkillRefs": [
+    {
+      "skillId": "bear_entry_storm"
+    }
+  ]
+}

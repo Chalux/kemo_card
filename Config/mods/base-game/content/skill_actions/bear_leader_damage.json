@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "bear_leader_damage"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "displayNameId": "skill.george_chant.name",
+  "descId": "skill.george_chant.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Single"
+  },
+  "effectRefs": [
+    {
+      "effectId": "george_chant"
+    }
+  ]
+}

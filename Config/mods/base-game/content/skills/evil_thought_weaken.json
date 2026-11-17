@@ -1,0 +1,14 @@
+{
+  "displayNameId": "skill.evil_thought_weaken.name",
+  "descId": "skill.evil_thought_weaken.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "evil_thought_attack_down"
+    }
+  ]
+}

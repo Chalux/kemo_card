@@ -1,0 +1,13 @@
+{
+  "displayNameId": "skill.george_weaken.name",
+  "descId": "skill.george_weaken.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "effectRefs": [
+    {
+      "effectId": "brothers_magic_attack_down"
+    }
+  ]
+}

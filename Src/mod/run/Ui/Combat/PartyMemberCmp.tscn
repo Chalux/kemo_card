@@ -4,12 +4,12 @@
 [ext_resource type="Texture2D" uid="uid://cj3lseqeqbcvx" path="res://Resource/Asset/Icon/crosshair.svg" id="2_crosshair"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="3_kbtn"]
 
-[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblState", "_lblMark", "_crosshair", "_btnRelease")]
-custom_minimum_size = Vector2(0, 104)
+[node name="PartyMemberCmp" type="Control" node_paths=PackedStringArray("_lblName", "_lblAttack", "_lblMagicAttack", "_lblDefense", "_lblMagicDefense", "_lblHeal", "_lblShield", "_lblCharges", "_lblState", "_lblMark", "_crosshair", "_btnRelease")]
+custom_minimum_size = Vector2(0, 124)
 layout_mode = 3
 anchors_preset = 0
 offset_right = 240.0
-offset_bottom = 104.0
+offset_bottom = 124.0
 script = ExtResource("1_script")
 _lblName = NodePath("Margin/VBox/Header/Name")
 _lblAttack = NodePath("Margin/VBox/Grid/AttackValue")
@@ -17,10 +17,12 @@ _lblMagicAttack = NodePath("Margin/VBox/Grid/MagicAttackValue")
 _lblDefense = NodePath("Margin/VBox/Grid/DefenseValue")
 _lblMagicDefense = NodePath("Margin/VBox/Grid/MagicDefenseValue")
 _lblHeal = NodePath("Margin/VBox/Grid/HealValue")
+_lblShield = NodePath("Margin/VBox/Grid/ShieldValue")
 _lblState = NodePath("Margin/VBox/Header/State")
 _lblMark = NodePath("Margin/VBox/Header/Mark")
 _crosshair = NodePath("Margin/VBox/Header/Crosshair")
-_btnRelease = NodePath("Margin/VBox/Header/BtnRelease")
+_btnRelease = NodePath("Margin/VBox/Header/Release/BtnRelease")
+_lblCharges = NodePath("Margin/VBox/Header/Release/Charges")
 
 [node name="Face" type="Panel" parent="."]
 layout_mode = 1
@@ -87,13 +89,26 @@ theme_type_variation = &"Caption"
 theme_override_font_sizes/font_size = 12
 horizontal_alignment = 2
 
-[node name="BtnRelease" type="Button" parent="Margin/VBox/Header"]
+[node name="Release" type="VBoxContainer" parent="Margin/VBox/Header"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Charges" type="Label" parent="Margin/VBox/Header/Release"]
 visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="BtnRelease" type="Button" parent="Margin/VBox/Header/Release"]
 custom_minimum_size = Vector2(44, 20)
 layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"Compact"
 theme_override_font_sizes/font_size = 11
+disabled = true
 text = "UI_COMBAT_ACTIVE_SKILL_RELEASE"
 script = ExtResource("3_kbtn")
 
@@ -160,6 +175,19 @@ theme_override_font_sizes/font_size = 13
 text = "UI_COMBAT_STAT_HEAL"
 
 [node name="HealValue" type="Label" parent="Margin/VBox/Grid"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+
+
+[node name="ShieldLabel" type="Label" parent="Margin/VBox/Grid"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 13
+text = "UI_COMBAT_STAT_SHIELD"
+
+[node name="ShieldValue" type="Label" parent="Margin/VBox/Grid"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_font_sizes/font_size = 13

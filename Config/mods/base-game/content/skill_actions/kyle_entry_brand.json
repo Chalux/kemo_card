@@ -1,0 +1,7 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "brothers_slot_damage",
+    "slotSelection": "random"
+  }
+}

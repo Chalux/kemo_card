@@ -1,0 +1,14 @@
+{
+  "displayNameId": "skill.bear_entry_storm.name",
+  "descId": "skill.bear_entry_storm.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_entry_storm"
+    }
+  ]
+}

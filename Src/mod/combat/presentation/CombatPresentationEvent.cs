@@ -21,6 +21,16 @@ public sealed record BattleStartedEvent : CombatPresentationEvent;
 /// <summary>换波完成（敌人已替换，界面应按状态重建敌方舞台）。</summary>
 public sealed record WaveStartedEvent(int WaveIndex) : CombatPresentationEvent;
 
+public sealed record EnemySummonedEvent(int EnemyIndex, string DefinitionId, int Hp, int MaxHp) : CombatPresentationEvent;
+
+public sealed record BattleMechanismDamageEvent(string MechanismId, float Amount, int HpAfter, int MaxHp) : CombatPresentationEvent;
+
+public sealed record EnemyIntentChangedEvent(int EnemyIndex, string SkillNameId, string SkillDescriptionId,
+    int ActionCount, bool AwaitingLifeBar) : CombatPresentationEvent;
+
+public sealed record EnemyLifeBarChangedEvent(int EnemyIndex, int LifeBarIndex, int LifeBarCount, int Hp, int MaxHp)
+    : CombatPresentationEvent;
+
 /// <summary>一次抽到的牌：落到哪个手牌槽、是哪张卡。</summary>
 public sealed record DrawnCard(int SlotIndex, string CardId);
 
@@ -52,6 +62,9 @@ public sealed record DamageDealtEvent(
     int TargetHpAfter,
     int TargetMaxHp,
     bool TargetAlive) : CombatPresentationEvent;
+
+/// <summary>敌方攻击命中玩家：先播飞行特效，再播损血；护盾或减伤完全抵消时也发出。</summary>
+public sealed record EnemyAttackHitEvent(int EnemyIndex, CombatTargetRef Target) : CombatPresentationEvent;
 
 /// <summary>治疗已写入（队伍账本或敌方单位）。</summary>
 public sealed record HealedEvent(

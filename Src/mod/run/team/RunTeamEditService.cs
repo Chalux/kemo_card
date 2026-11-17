@@ -171,9 +171,9 @@ public sealed class RunTeamEditService
             return null;
 
         var deck = character.Decks[deckIndex];
-        var buildable = character.GetBuildableCardIds(_run.State.CardCollection).ToList();
+        var buildable = new Adventure.RunCardPackRewards(_run, _registry.Store).BuildableCards(character).ToList();
         buildable.Sort(StringComparer.Ordinal);
-        var validation = deck.Validate(character.GetBuildableCardIds(_run.State.CardCollection));
+        var validation = deck.Validate(new Adventure.RunCardPackRewards(_run, _registry.Store).BuildableCards(character));
 
         return new DeckEditView(
             instanceId,
@@ -212,7 +212,7 @@ public sealed class RunTeamEditService
         }
 
         var inDeck = new HashSet<string>(deck.CardIds, StringComparer.Ordinal);
-        var buildable = character.GetBuildableCardIds(_run.State.CardCollection).ToList();
+        var buildable = new Adventure.RunCardPackRewards(_run, _registry.Store).BuildableCards(character).ToList();
         buildable.Sort(StringComparer.Ordinal);
 
         return [.. buildable.Select(cardId => new DeckPoolCardView(cardId, inDeck.Contains(cardId)))];
@@ -402,7 +402,7 @@ public sealed class RunTeamEditService
         if (deck.CardIds.Contains(cardId, StringComparer.Ordinal))
             return TeamEditResult.Failure("UI_TEAM_DECK_DUPLICATE");
 
-        var buildable = character.GetBuildableCardIds(_run.State.CardCollection);
+        var buildable = new Adventure.RunCardPackRewards(_run, _registry.Store).BuildableCards(character);
         if (!buildable.Contains(cardId))
             return TeamEditResult.Failure("UI_TEAM_DECK_NOT_BUILDABLE");
 

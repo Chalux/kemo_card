@@ -123,11 +123,22 @@ public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
 
     public void Close()
     {
+        UIVo? vo = UIVo;
+        if (vo != null)
+        {
+            vo.Manager.Close(vo.Id);
+            return;
+        }
+
         if (!string.IsNullOrEmpty(UIId))
         {
             UIManager.Instance?.Close(UIId);
         }
     }
 
-    public bool IsUITop() => UIManager.Instance?.IsUITop(UIId) ?? false;
+    public bool IsUITop()
+    {
+        UIVo? vo = UIVo;
+        return vo != null ? vo.Manager.IsUITop(vo.Id) : UIManager.Instance?.IsUITop(UIId) ?? false;
+    }
 }

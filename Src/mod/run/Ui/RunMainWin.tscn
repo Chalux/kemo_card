@@ -3,7 +3,10 @@
 [ext_resource type="Script" uid="uid://crv6nx7yteksb" path="res://Src/mod/run/Ui/RunMainWin.cs" id="1_runmain"]
 [ext_resource type="Script" uid="uid://dy6h20orv3a5a" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_lblPotential", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam")]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Items/RunItemBannerCmp.tscn" id="3_items"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/RunAdventureCmp.tscn" id="4_adventure"]
+
+[node name="RunMainWin" type="Control" node_paths=PackedStringArray("_items", "_adventure", "_lblStory", "_lblPhase", "_lblRing", "_lblSeed", "_lblGold", "_lblPotential", "_btnSave", "_btnSaveExit", "_btnQuickLoad", "_btnAbandon", "_btnDebug", "_btnTeam")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,6 +14,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_runmain")
+_items = NodePath("Layout/Content/VBox/Items")
+_adventure = NodePath("Layout/Content/VBox/Adventure")
 _lblStory = NodePath("Layout/Rail/Margin/VBox/StoryLabel")
 _lblPhase = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/PhaseValue")
 _lblRing = NodePath("Layout/Rail/Margin/VBox/Ledger/Grid/RingValue")
@@ -192,7 +197,11 @@ theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="Table" type="Panel" parent="Layout/Content"]
+[node name="VBox" type="VBoxContainer" parent="Layout/Content"]
 layout_mode = 2
-mouse_filter = 2
-theme_type_variation = &"Sunken"
+theme_override_constants/separation = 18
+[node name="Items" parent="Layout/Content/VBox" instance=ExtResource("3_items")]
+layout_mode = 2
+[node name="Adventure" parent="Layout/Content/VBox" instance=ExtResource("4_adventure")]
+layout_mode = 2
+size_flags_vertical = 3

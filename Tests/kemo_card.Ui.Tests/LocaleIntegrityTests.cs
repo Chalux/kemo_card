@@ -116,6 +116,7 @@ public sealed class LocaleIntegrityTests
         // 这两处的文案键有一部分是"先存进常量/局部变量、再交给 Tr(key)"的形式
         // （GlossaryBuilder 的分组键与正文键、RunPauseDlg 的禁用原因键、角色被动/主动技的
         // 文案构造器），Tr("KEY") 的通用扫描匹配不到——漏一个就只会在界面上显示原始键名。
+        // CodexDlg 的页签标题同理（键存在 string[] 里逐个 SetTabTitle）。
         string[] files =
         [
             Path.Combine("Src", "mod", "run", "Ui", "RunPauseDlg.cs"),
@@ -124,6 +125,7 @@ public sealed class LocaleIntegrityTests
             Path.Combine("Src", "mod", "global", "Ui", "PassiveTextBuilder.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "ActiveSkillTextBuilder.cs"),
             Path.Combine("Src", "mod", "run", "Ui", "Combat", "CombatActiveSkillTips.cs"),
+            Path.Combine("Src", "mod", "global", "Ui", "CodexDlg.cs"),
         ];
 
         foreach (var relative in files)

@@ -4,6 +4,8 @@ namespace KemoCard.Mod.Run.Events;
 
 public enum ERunEvent
 {
+    [EventPayload(typeof(RunAdventureChangedPayload))]
+    RunAdventureChanged,
     [EventPayload(typeof(RunPhaseChangedPayload))]
     RunPhaseChanged,
 
@@ -19,6 +21,8 @@ public enum ERunEvent
     [EventPayload(typeof(RunDeckChangedPayload))]
     RunDeckChanged,
 }
+
+public readonly struct RunAdventureChangedPayload { }
 
 public readonly struct RunPhaseChangedPayload
 {

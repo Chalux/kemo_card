@@ -33,21 +33,25 @@ public sealed class StateMachine<TState, TContext> : IStateMachine<TState, TCont
     }
 
     /// <summary>
-    /// 执行状态切换：先退出当前状态，再进入目标状态
+    /// 执行状态切换：先切到目标状态，再依次触发旧状态 OnExit、新状态 OnEnter。
     /// </summary>
+    /// <remarks>
+    /// <para>状态在 OnExit <b>之前</b>写入：OnExit 里读 <see cref="CurrentState"/> 才是「正在切往哪」，
+    /// 也避免 OnExit 抛异常时状态机停在旧状态、与新状态回调已执行的事实矛盾。</para>
+    /// <para><b>无迁移表</b>：任意状态可跳到任意状态，调用方负责保证路径合法。</para>
+    /// </remarks>
     /// <param name="context">状态上下文</param>
     /// <param name="targetState">目标状态</param>
     /// <param name="data">传递给目标状态进入回调的附加数据</param>
     public void TransitionTo(TState targetState, TContext? context = default, object? data = null)
     {
         var prevState = _currentState;
+        _currentState = targetState;
 
         if (_configs.TryGetValue(prevState, out var prevConfig) && prevConfig.OnExit is not null)
         {
             prevConfig.OnExit(targetState, context);
         }
-
-        _currentState = targetState;
 
         if (_configs.TryGetValue(targetState, out var targetConfig) && targetConfig.OnEnter is not null)
         {

@@ -54,7 +54,7 @@ public sealed class UICloseDoneStateHandler : IStateHandler<EUIState, IUIStateCo
             vo.StateMachine.TransitionTo(EUIState.Destroy, context);
         }
 
-        manager.LayerManager.UpdateLayers();
+        manager.UpdateLayers();
         manager.EventDispatcher.Send(UIEvent.Close, new UIClosePayload(vo));
     }
 }

@@ -1,6 +1,7 @@
 using Godot;
 using KemoCard.Fixed.Godot;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Gas;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Global.Ui.Comp;
@@ -18,6 +19,7 @@ public partial class AllyUnitCmp : BaseCmp
     [Export] private CharacterPresenter? _presenter;
     [Export] private Label? _lblName;
     [Export] private Label? _lblState;
+    [Export] private Label? _lblShield;
     [Export] private Panel? _highlight;
     [Export] private TextureRect? _crosshair;
 
@@ -27,6 +29,8 @@ public partial class AllyUnitCmp : BaseCmp
     public int SlotIndex { get; private set; } = -1;
 
     private bool _targetable;
+    private CharacterBattleInstance? _boundCharacter;
+    private CharacterDto? _boundDefinition;
 
     protected override void OnReady()
     {
@@ -44,16 +48,25 @@ public partial class AllyUnitCmp : BaseCmp
 
     public void Bind(int slotIndex, CharacterBattleInstance character, CharacterDto? definition)
     {
+        if (_lblShield != null)
+        {
+            _lblShield.Text = CombatUnitFormat.ShieldLabel(character.Asc);
+            _lblShield.Visible = character.Asc.GetCurrentValue(AttributeIds.Shield) > 0f;
+        }
         SlotIndex = slotIndex;
         if (_lblName != null)
             _lblName.Text = CombatUnitFormat.DisplayName(definition?.DisplayNameId, character.DefinitionId);
 
-        if (_presenter != null)
+        if (_presenter != null
+            && (!ReferenceEquals(character, _boundCharacter) || !ReferenceEquals(definition, _boundDefinition)))
         {
+            _boundCharacter = character;
+            _boundDefinition = definition;
             if (definition != null)
             {
                 _presenter.Visible = true;
                 _presenter.Bind(definition);
+                _ = _presenter.PlayOnceAsync("enter");
             }
             else
             {
@@ -90,6 +103,13 @@ public partial class AllyUnitCmp : BaseCmp
 
     public void Play(string animName) => _presenter?.Play(animName);
 
+    public bool HasAnimation(string animName) => _presenter?.HasAnimation(animName) == true;
+
+    public bool HasSpritePresentation => _presenter?.HasPresentation == true;
+
+    public Task PlayOnceAsync(string animName, bool returnToIdle = true) =>
+        _presenter?.PlayOnceAsync(animName, returnToIdle) ?? Task.CompletedTask;
+
     /// <summary>
     /// 移动到指定的全局坐标：由 <see cref="UnitTweens.MoveToAsync"/> 走 Godot 4.7 offset transform，
     /// 位移不写 <c>Position</c>，容器重排（排序 / 尺寸变化）不会冲掉动画。
@@ -108,6 +128,9 @@ public partial class AllyUnitCmp : BaseCmp
 
     public Task AttackPulseAsync(float duration)
     {
+        if (HasSpritePresentation)
+            return PlayOnceAsync("attack", returnToIdle: false);
+
         Play("attack");
         return UnitTweens.PulseAsync(this, 1.08f, duration);
     }

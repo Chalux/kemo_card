@@ -111,7 +111,7 @@ public sealed class PlayerTeamState
 
         if (IsDefeated)
             return;
-        Asc.Attributes.SetCurrentValue(AttributeIds.Health, MathF.Max(0f, SharedHpExact - amount));
+        WriteSharedHp(MathF.Max(0f, SharedHpExact - amount));
     }
 
     public void HealShared(float amount)
@@ -126,9 +126,7 @@ public sealed class PlayerTeamState
 
         if (IsDefeated)
             return;
-        Asc.Attributes.SetCurrentValue(
-            AttributeIds.Health,
-            MathF.Min(Asc.GetCurrentValue(AttributeIds.MaxHealth), SharedHpExact + amount));
+        WriteSharedHp(MathF.Min(Asc.GetCurrentValue(AttributeIds.MaxHealth), SharedHpExact + amount));
     }
 
     /// <summary>规格 §1.3：点名玩家槽位的治疗软失败，只记一次诊断计数。</summary>
@@ -139,5 +137,13 @@ public sealed class PlayerTeamState
     /// 这是唯一合法的补满入口，不受 <see cref="SharedHpLocked"/> 影响。
     /// </summary>
     public void FreezeAndFillSharedHp() =>
-        Asc.Attributes.SetCurrentValue(AttributeIds.Health, Asc.GetCurrentValue(AttributeIds.MaxHealth));
+        WriteSharedHp(Asc.GetCurrentValue(AttributeIds.MaxHealth));
+
+    /// <summary>账本是资源余量：同步基础值与当前值，防止回合重算恢复旧生命值。</summary>
+    internal void WriteSharedHp(float value)
+    {
+        var delta = value - SharedHpExact;
+        Asc.SetBaseValue(AttributeIds.Health, Asc.GetBaseValue(AttributeIds.Health) + delta);
+        Asc.Attributes.SetCurrentValue(AttributeIds.Health, value);
+    }
 }

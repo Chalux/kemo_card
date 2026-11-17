@@ -1,0 +1,66 @@
+{
+  "displayNameId": "enemy.elite_black_bear.name",
+  "descId": "enemy.elite_black_bear.desc",
+  "maxHp": 800,
+  "baseAttributes": {
+    "MaxHealth": 800,
+    "PhysicalAttack": 0,
+    "MagicAttack": 0,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Yellow",
+  "race": "Animal",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 800,
+      "actionSequence": [
+        {
+          "skillId": "bear_elite_sweep",
+          "actionCount": 2
+        },
+        {
+          "skillId": "bear_rally",
+          "actionCount": 1
+        }
+      ]
+    },
+    {
+      "maxHp": 1000,
+      "actionSequence": [
+        {
+          "skillId": "bear_elite_fury",
+          "actionCount": 1
+        },
+        {
+          "skillId": "bear_elite_roar",
+          "actionCount": 1
+        }
+      ],
+      "prioritySkillId": "bear_support",
+      "requiredAliveEnemyTag": "bear.ordinary"
+    }
+  ],
+  "tags": [
+    "bear.pack",
+    "boss"
+  ],
+  "skillRefs": [
+    {
+      "skillId": "bear_elite_fury"
+    },
+    {
+      "skillId": "bear_elite_roar"
+    },
+    {
+      "skillId": "bear_elite_sweep"
+    },
+    {
+      "skillId": "bear_rally"
+    },
+    {
+      "skillId": "bear_support"
+    }
+  ]
+}

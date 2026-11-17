@@ -23,11 +23,16 @@ public sealed class BoolVal
         UpdateValue();
     }
 
-    public void Destory()
+    /// <summary>清空全部来源并解除变更回调。</summary>
+    public void Destroy()
     {
         _sources.Clear();
         OnChange = null;
     }
+
+    /// <summary>拼写错误的旧名，保留以兼容既有调用点。</summary>
+    [Obsolete("拼写错误，请改用 Destroy()。")]
+    public void Destory() => Destroy();
 
     private void UpdateValue()
     {

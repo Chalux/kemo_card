@@ -1,0 +1,19 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Items/RunOptionCmp.cs" id="1"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2"]
+[node name="RunOptionCmp" type="VBoxContainer" node_paths=PackedStringArray("_button", "_details")]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("1")
+_button = NodePath("Button")
+_details = NodePath("Details")
+[node name="Button" type="Button" parent="."]
+custom_minimum_size = Vector2(180, 42)
+layout_mode = 2
+script = ExtResource("2")
+EnableHoverScale = false
+[node name="Details" type="Label" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 13

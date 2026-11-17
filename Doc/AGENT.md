@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-10-06（战斗结算边界、生命周期与指令职责拆分）
+**最后修订**：2026-10-10（补充所有角色的像素动画制作流程与原地动作约定）
 
 ---
 
@@ -45,6 +45,8 @@ Godot 4.7 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 - **界面必须声明归属 Mod 且只取自家门面**：`UIRegistration` 的 `OwnerModId` 必填、在 `Src/mod/FeatureModCatalog.cs` 登记；界面取数用 `Facade<T>()`，不得跨功能直接访问 `AppRoot.Services`。
 - **本地化**：面向用户的文案必须用翻译键；场景 `text` 填键；C# 用 `Localization.Tr`。新增键写入 `Resource/Locale/strings.csv`（及 mod CSV）。日志 / `GD.Print` 等可用明文。
 - **不创建 `.uid` 文件**（引擎自动生成）。
+- **角色像素动画制作**：所有角色沿用「确认立绘 → 生成低分辨率像素 `idle` → 用户确认像素风格 → 制作其余序列 → 切帧与播放检查」流程。每角色固定 `enter`（入场）、`idle`（待机）、`attack`（攻击）、`buff`（Buff 与治疗共用）、`defeat`（战败）五组；默认面向画面右方、透明背景。五组动作均原地完成，固定画布尺寸、角色根位置和地面基准，不制作整体行走、冲刺或位置平移；允许呼吸、挥剑、摆尾、下蹲与倒地等局部姿态变化，入场使用原地亮相。检查循环衔接、角色比例、锚点稳定及武器/尾巴裁切；未确认 `idle` 前不继续制作其余四组。
+- **角色像素风格参考**：其他角色制作动画时必须使用经用户认可的克鲁克斯像素帧作为风格参考，各自立绘作为身份参考。统一光源与明暗分区，静止部分颜色、阴影必须稳定，不允许无动作依据的阴影跳变或闪烁；明暗变化须与姿态、遮挡或显式特效对应。用户认可 v5 的中间像素细节；当前试验更柔和的呼吸及延迟尾摆，双脚和根位置固定，阴影随形体运动。武器朝向以动作姿态为准，检查手掌包握、手腕与握柄是否协调，以及柄、护手中心、剑身是否同轴，不统一要求竖直下垂。参考见 [idle v9 西装与尾摆说明](../output/imagegen/chalux-animation/idle-suit-v9/style-reference.md)，v9 服饰、idle 与游戏居中已获用户确认；新增四套与五组装配入口见 [suit-actions-v10 制作记录](../output/imagegen/chalux-animation/suit-actions-v10/production-notes.md)。
 - **Mod 脚本归属**：mod 脚本源（TS，`scripts-src/`）必须放在 mod 自己的文件夹 `Config/mods/<mod>/scripts-src/`，**不放 `Src/typescript/`**；esbuild 编译到同 mod `scripts/`，产物随仓库提交。`Src/typescript/` 只保留 agent builtins 与构建工具。
 - **战斗逻辑与表现分离**：`Src/mod/combat` 只在编排层 `simulation.Presentation.Emit(...)` 记录值事件（record，不持运行时对象引用、不引用 Godot）；动画只在 `Src/mod/run/Ui/Combat/Presentation/CombatAnimator` 内按事件编排，界面播完后以 `SyncFromState` 对账。不得让战斗逻辑直接驱动节点，也不得在界面里重算战斗结果（见战斗规格 §16、Run 规格 §14）。
 - **连续大段同业务代码**（>5 个函数）用 `#region` / `#endregion`。

@@ -1,0 +1,41 @@
+{
+  "displayNameId": "enemy.undead_ghost.name",
+  "descId": "enemy.undead_ghost.desc",
+  "maxHp": 800,
+  "baseAttributes": {
+    "MaxHealth": 800,
+    "PhysicalAttack": 0,
+    "MagicAttack": 20,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Blue",
+  "race": "Undead, Unknown",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 800,
+      "actionSequence": [
+        {
+          "skillId": "ghost_strike",
+          "actionCount": 1
+        },
+        {
+          "skillId": "ghost_seal_twice",
+          "actionCount": 1
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "undead.ghost"
+  ],
+  "skillRefs": [
+    {
+      "skillId": "ghost_seal_twice"
+    },
+    {
+      "skillId": "ghost_strike"
+    }
+  ]
+}

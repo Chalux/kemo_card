@@ -50,7 +50,7 @@ public sealed class UIOpenCoordinator(UIManager manager)
             UIVo vo = _openQueue.Dequeue();
             if (vo.StateMachine.CurrentState == EUIState.Destroy) continue;
             _currOpening = vo;
-            vo.StateMachine.TransitionTo(EUIState.Load, new UIStateContext(vo, _manager));
+            vo.StateMachine.TransitionTo(EUIState.Load, vo);
             return;
         }
     }
@@ -77,11 +77,10 @@ public sealed class UIOpenCoordinator(UIManager manager)
                     if (_currOpening.Lifecycle.LoadTime == 0) break;
 
                     long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    if (now - _currOpening.Lifecycle.LoadTime > UIConsts.UI_LOAD_TIMEOUT)
+                    if (now - _currOpening.Lifecycle.LoadTime > UIConsts.UI_LOAD_TIMEOUT_MS)
                     {
                         var timedOut = _currOpening;
-                        timedOut.StateMachine.TransitionTo(EUIState.Destroy,
-                            new UIStateContext(timedOut, _manager));
+                        timedOut.StateMachine.TransitionTo(EUIState.Destroy, timedOut);
                         ResetCurrentOpening(timedOut);
                         OpenNext();
                     }

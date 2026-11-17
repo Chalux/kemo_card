@@ -4,6 +4,9 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public sealed class GameplayEffectDefDto
 {
+    [JsonPropertyName("persistAcrossLifeBars")]
+    public bool PersistAcrossLifeBars { get; init; }
+
     [JsonPropertyName("id")]
     public string Id { get; init; } = "";
 

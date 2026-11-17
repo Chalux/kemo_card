@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.brothers_magic_attack_down.name",
+  "descId": "buff.brothers_magic_attack_down.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Independent",
+  "maxStacks": 2147483647,
+  "tags": [
+    "debuff"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -6
+      }
+    }
+  ]
+}

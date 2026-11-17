@@ -141,6 +141,15 @@ public static class BindingScopeSignals
         scope.Bind(() => control.Resized += handler, Guarded(control, () => control.Resized -= handler));
     }
 
+    /// <summary>容器需要重排子节点。用于「绘制依赖兄弟节点位置」的自绘控件。</summary>
+    public static void OnSortChildren(this BindingScope scope, Container container, Action handler)
+    {
+        ArgumentNullException.ThrowIfNull(scope);
+        ArgumentNullException.ThrowIfNull(container);
+        ArgumentNullException.ThrowIfNull(handler);
+        scope.Bind(() => container.SortChildren += handler, Guarded(container, () => container.SortChildren -= handler));
+    }
+
     /// <summary>焦点变化。</summary>
     public static void OnFocusChanged(this BindingScope scope, Control control, Action<bool> handler)
     {

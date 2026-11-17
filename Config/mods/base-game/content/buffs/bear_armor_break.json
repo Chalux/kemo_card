@@ -1,0 +1,21 @@
+{
+  "displayNameId": "buff.bear_armor_break.name",
+  "descId": "buff.bear_armor_break.desc",
+  "durationType": "Turns",
+  "duration": 3,
+  "stackRule": "Independent",
+  "maxStacks": 2147483647,
+  "tags": [
+    "debuff"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "PhysicalDefense",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -6
+      }
+    }
+  ]
+}

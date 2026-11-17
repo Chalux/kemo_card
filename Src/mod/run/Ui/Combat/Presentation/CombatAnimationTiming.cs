@@ -41,6 +41,12 @@ public static class CombatAnimationTiming
     /// <summary>敌人行动前后的短暂停顿，让玩家看清是谁在动。</summary>
     public const float EnemyBeat = 0.12f;
 
+    /// <summary>敌方攻击水泡飞行。</summary>
+    public const float EnemyBubbleFlight = 0.34f;
+
+    /// <summary>水泡命中后破裂。</summary>
+    public const float EnemyBubbleBurst = 0.12f;
+
     /// <summary>施法者站在目标面前的停顿（等伤害飘字先出现）。</summary>
     public const float StrikeHold = 0.08f;
 

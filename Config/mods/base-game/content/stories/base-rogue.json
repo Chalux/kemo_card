@@ -3,5 +3,34 @@
   "descId": "story.base_rogue.desc",
   "author": "Chalux",
   "scriptPath": "stories/base_rogue.js",
-  "singlePlayerOnly": true
+  "singlePlayerOnly": true,
+  "ringBattlePools": [
+    {
+      "ring": 1,
+      "battles": [
+        {
+          "battleId": "awakening_brothers",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "ring": 2,
+      "battles": [
+        {
+          "battleId": "forest_black_bears",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "ring": 3,
+      "battles": [
+        {
+          "battleId": "undead_discovery",
+          "weight": 1
+        }
+      ]
+    }
+  ]
 }

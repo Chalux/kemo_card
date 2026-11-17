@@ -1,0 +1,15 @@
+{
+  "displayNameId": "skill.ghost_seal_twice.name",
+  "descId": "skill.ghost_seal_twice.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "ghost_slot_seal"
+    }
+  ],
+  "enemyRandomTargetRepeats": 2
+}

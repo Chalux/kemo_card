@@ -1,0 +1,451 @@
+{
+  "animation": "idle",
+  "frameCount": 32,
+  "frameSize": [
+    432,
+    560
+  ],
+  "columns": 8,
+  "rows": 4,
+  "fps": 10,
+  "cycleDurationMs": 3200,
+  "status": "white-suit-and-followthrough-tail-trial",
+  "styleBaseline": "../idle-balanced-v5",
+  "correctedGripReference": "../../crux-suit-right-v5.png",
+  "rootMotion": false,
+  "footPixelsIdentical": true,
+  "swordPixelsIdentical": true,
+  "firstLastIdentical": true,
+  "chestLiftMaxPx": 2,
+  "tailSwayMaxPx": 5,
+  "inhaleFraction": 0.44,
+  "tailDelayDegrees": null,
+  "noRegeneratedShadowColors": true,
+  "firstLastSha256": "cd5a86a10769ae7faec712a7f37a2564709209fb808796f9dacc1efabacb9ab3",
+  "samples": [
+    {
+      "frame": 1,
+      "chestLiftPx": 0.0,
+      "tailClockRadians": 0.0,
+      "tailXRangePx": [
+        -4,
+        0
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    },
+    {
+      "frame": 2,
+      "chestLiftPx": 0.026,
+      "tailClockRadians": 0.298,
+      "tailXRangePx": [
+        -4,
+        0
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    },
+    {
+      "frame": 3,
+      "chestLiftPx": 0.104,
+      "tailClockRadians": 0.591,
+      "tailXRangePx": [
+        -3,
+        0
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    },
+    {
+      "frame": 4,
+      "chestLiftPx": 0.229,
+      "tailClockRadians": 0.877,
+      "tailXRangePx": [
+        -2,
+        1
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    },
+    {
+      "frame": 5,
+      "chestLiftPx": 0.395,
+      "tailClockRadians": 1.152,
+      "tailXRangePx": [
+        0,
+        1
+      ],
+      "tailYRangePx": [
+        -1,
+        0
+      ]
+    },
+    {
+      "frame": 6,
+      "chestLiftPx": 0.593,
+      "tailClockRadians": 1.413,
+      "tailXRangePx": [
+        0,
+        2
+      ],
+      "tailYRangePx": [
+        -1,
+        0
+      ]
+    },
+    {
+      "frame": 7,
+      "chestLiftPx": 0.812,
+      "tailClockRadians": 1.658,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        0
+      ]
+    },
+    {
+      "frame": 8,
+      "chestLiftPx": 1.041,
+      "tailClockRadians": 1.885,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 9,
+      "chestLiftPx": 1.268,
+      "tailClockRadians": 2.092,
+      "tailXRangePx": [
+        0,
+        4
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 10,
+      "chestLiftPx": 1.481,
+      "tailClockRadians": 2.28,
+      "tailXRangePx": [
+        0,
+        4
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 11,
+      "chestLiftPx": 1.669,
+      "tailClockRadians": 2.45,
+      "tailXRangePx": [
+        0,
+        4
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 12,
+      "chestLiftPx": 1.821,
+      "tailClockRadians": 2.602,
+      "tailXRangePx": [
+        0,
+        4
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 13,
+      "chestLiftPx": 1.93,
+      "tailClockRadians": 2.739,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 14,
+      "chestLiftPx": 1.989,
+      "tailClockRadians": 2.864,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 15,
+      "chestLiftPx": 1.998,
+      "tailClockRadians": 2.979,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 16,
+      "chestLiftPx": 1.97,
+      "tailClockRadians": 3.088,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 17,
+      "chestLiftPx": 1.91,
+      "tailClockRadians": 3.195,
+      "tailXRangePx": [
+        0,
+        3
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 18,
+      "chestLiftPx": 1.821,
+      "tailClockRadians": 3.305,
+      "tailXRangePx": [
+        0,
+        2
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 19,
+      "chestLiftPx": 1.705,
+      "tailClockRadians": 3.42,
+      "tailXRangePx": [
+        0,
+        2
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 20,
+      "chestLiftPx": 1.565,
+      "tailClockRadians": 3.544,
+      "tailXRangePx": [
+        0,
+        2
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 21,
+      "chestLiftPx": 1.408,
+      "tailClockRadians": 3.681,
+      "tailXRangePx": [
+        0,
+        2
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 22,
+      "chestLiftPx": 1.237,
+      "tailClockRadians": 3.833,
+      "tailXRangePx": [
+        0,
+        1
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 23,
+      "chestLiftPx": 1.058,
+      "tailClockRadians": 4.003,
+      "tailXRangePx": [
+        0,
+        1
+      ],
+      "tailYRangePx": [
+        0,
+        2
+      ]
+    },
+    {
+      "frame": 24,
+      "chestLiftPx": 0.877,
+      "tailClockRadians": 4.191,
+      "tailXRangePx": [
+        0,
+        1
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 25,
+      "chestLiftPx": 0.701,
+      "tailClockRadians": 4.399,
+      "tailXRangePx": [
+        -1,
+        0
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 26,
+      "chestLiftPx": 0.534,
+      "tailClockRadians": 4.625,
+      "tailXRangePx": [
+        -1,
+        0
+      ],
+      "tailYRangePx": [
+        0,
+        1
+      ]
+    },
+    {
+      "frame": 27,
+      "chestLiftPx": 0.382,
+      "tailClockRadians": 4.87,
+      "tailXRangePx": [
+        -2,
+        0
+      ],
+      "tailYRangePx": [
+        0,
+        0
+      ]
+    },
+    {
+      "frame": 28,
+      "chestLiftPx": 0.251,
+      "tailClockRadians": 5.131,
+      "tailXRangePx": [
+        -2,
+        0
+      ],
+      "tailYRangePx": [
+        -1,
+        0
+      ]
+    },
+    {
+      "frame": 29,
+      "chestLiftPx": 0.144,
+      "tailClockRadians": 5.406,
+      "tailXRangePx": [
+        -3,
+        0
+      ],
+      "tailYRangePx": [
+        -1,
+        0
+      ]
+    },
+    {
+      "frame": 30,
+      "chestLiftPx": 0.065,
+      "tailClockRadians": 5.692,
+      "tailXRangePx": [
+        -4,
+        0
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    },
+    {
+      "frame": 31,
+      "chestLiftPx": 0.016,
+      "tailClockRadians": 5.986,
+      "tailXRangePx": [
+        -4,
+        0
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    },
+    {
+      "frame": 32,
+      "chestLiftPx": 0.0,
+      "tailClockRadians": 6.283,
+      "tailXRangePx": [
+        -4,
+        0
+      ],
+      "tailYRangePx": [
+        -2,
+        0
+      ]
+    }
+  ],
+  "generatedWith": "built-in image_gen art with integer frame assembly",
+  "processing": "integer pixel assembly; spatially delayed two-axis tail bend, unequal return speed and settling, 32 frames, rigid feet and sword, shared preview palette",
+  "costumeReference": "../../crux-suit-right-v5.png",
+  "motionBaseline": "../idle-academy-v8",
+  "freeLeftHand": "hanging outside pockets on viewer right",
+  "tailSizeRequest": "slightly smaller, still fluffy",
+  "tailVerticalMaxPx": 2,
+  "tailTipLagDegrees": 51.6
+}

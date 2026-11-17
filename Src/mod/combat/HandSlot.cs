@@ -12,6 +12,7 @@ public sealed class HandSlot
     public BuffContainer Buffs { get; } = new();
 
     public bool IsEmpty => CardId is null;
+    public bool IsSealed => Buffs.HasTag(CombatConstants.SealedTag);
 
     /// <summary>已标记入队时为对应的队列序号；<c>null</c> 表示未标记。标记不使卡牌离手。</summary>
     public long? MarkedSequence { get; private set; }

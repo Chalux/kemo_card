@@ -1,0 +1,9 @@
+Mode: built-in image_gen
+
+Use case: precise-object-edit
+Edit target: image 1 is the newly generated attack sprite sheet, 12 poses in 4 columns and 3 rows. Supporting appearance reference: image 2 is the approved idle.
+Change only ONE issue: the character's standing feet and lower trousers change stance width between frames. This must be an IN-PLACE slash with both feet nailed down.
+Preserve the 12 original upper-body attack poses in their existing order, every head, upper torso, sword hand, sword shape and sword angle, slash effect, jacket upper half, and free arm exactly. Preserve crisp medium pixel style and transparency.
+Below the jacket, use the exact neutral lower trousers and two furry paws from FRAME 1 of image 1 as the common leg silhouette in EVERY cell. The same two paws, same size, same orientation, same spacing, same floor line in every frame. Knees may have at most tiny compression but never widen or narrow stance. Do not lift either paw. Do not step. Make the pelvis and trousers meet each upper jacket naturally, no visible cut seam. Keep the torso rooted over the same center between feet, even when the upper body twists.
+Keep each full sword tip, all ears and tail inside its own cell, retain every pose, absolutely no new poses or changes to attack choreography. Tail can retain small pose-dependent response. Frames 1 and 12 should be identical neutral stand.
+Output one 4x3 transparent sprite sheet with exactly 12 poses. Uniform generous cells and gutters; each whole wolf same scale in every cell, registered to same root and ground line. No frame overlap. No text, labels, floor shadow, background, halos, extra weapons or duplicated limbs.

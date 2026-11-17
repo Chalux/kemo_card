@@ -1,0 +1,62 @@
+{
+  "animation": "idle",
+  "frameCount": 8,
+  "frameSize": [
+    432,
+    560
+  ],
+  "columns": 4,
+  "rows": 2,
+  "fps": 6.25,
+  "loop": true,
+  "status": "awaiting-user-confirmation",
+  "rootMotion": false,
+  "firstLastIdentical": true,
+  "firstLastSha256": "b2c6b5050cf543723e27c420bcee97ce4fc56a1609c34d1476f696c746695da0",
+  "integerRegistrationOffsets": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "pawRegistrationErrors": [
+    0.0,
+    257.5901184082031,
+    245.737060546875,
+    293.8764953613281,
+    278.22247314453125,
+    346.7680969238281,
+    356.84454345703125,
+    0.0
+  ],
+  "generatedWith": "built-in image_gen",
+  "processing": "integer crop/padding/anchor registration and first-frame reuse at the loop boundary; no repainting or resampling"
+}

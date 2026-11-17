@@ -15,6 +15,7 @@ public sealed class BuffInstance
     public IReadOnlyDictionary<string, object>? Params { get; }
 
     public int Stacks { get; private set; } = 1;
+    private bool _deferFirstTurnEnd;
 
     /// <summary>领域生命周期持有的独立实例，普通同名投放和驱散不得覆盖它。</summary>
     internal bool IsDomainOwned { get; set; }
@@ -71,6 +72,7 @@ public sealed class BuffInstance
     {
         ArgumentNullException.ThrowIfNull(def);
         Def = def;
+        _deferFirstTurnEnd = def.DeferFirstTurnEnd;
         _magnitudeResolver = magnitudeResolver;
         Params = parameters is { Count: > 0 }
             ? new Dictionary<string, object>(parameters, StringComparer.Ordinal)
@@ -107,6 +109,7 @@ public sealed class BuffInstance
             return;
 
         var full = FullDuration;
+        _deferFirstTurnEnd = Def.DeferFirstTurnEnd;
         if (_stackTurns.Count == 0)
             _stackTurns.Add(full);
         for (var i = 0; i < _stackTurns.Count; i++)
@@ -120,6 +123,11 @@ public sealed class BuffInstance
     /// </summary>
     public void TickTurnEnd()
     {
+        if (_deferFirstTurnEnd)
+        {
+            _deferFirstTurnEnd = false;
+            return;
+        }
         if (RemainingTurns is not > 0)
             return;
 

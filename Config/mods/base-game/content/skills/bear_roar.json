@@ -1,0 +1,14 @@
+{
+  "displayNameId": "skill.bear_roar.name",
+  "descId": "skill.bear_roar.desc",
+  "targetOverride": {
+    "side": "Self",
+    "scope": "Single",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_roar"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.ghost_strike.name",
+  "descId": "skill.ghost_strike.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "ghost_magical_damage",
+      "params": {
+        "Amount": 50
+      }
+    }
+  ]
+}

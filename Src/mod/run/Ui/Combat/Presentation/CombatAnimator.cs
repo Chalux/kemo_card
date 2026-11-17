@@ -1,5 +1,6 @@
 using Godot;
 using KemoCard.Fixed.Godot;
+using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
 using KemoCard.Mod.Combat.StateMachine;
@@ -31,10 +32,15 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
         {
             PhaseChangedEvent evt => PlayPhaseChangedAsync(evt),
             WaveStartedEvent => PlayWaveStartedAsync(),
+            EnemySummonedEvent evt => PlayEnemySummonedAsync(evt),
+            BattleMechanismDamageEvent evt => PlayMechanismDamageAsync(evt),
+            EnemyLifeBarChangedEvent evt => PlayEnemyLifeBarChangedAsync(evt),
+            EnemyIntentChangedEvent evt => PlayEnemyIntentChangedAsync(evt),
             CardsDrawnEvent evt => PlayCardsDrawnAsync(evt),
             CardDiscardedEvent evt => PlayCardDiscardedAsync(evt),
             CardSettleStartedEvent evt => PlayCardSettleStartedAsync(evt),
             CardSettleEndedEvent evt => PlayCardSettleEndedAsync(evt),
+            EnemyAttackHitEvent evt => PlayEnemyAttackHitAsync(evt),
             DamageDealtEvent evt => PlayDamageDealtAsync(evt),
             HealedEvent evt => PlayHealedAsync(evt),
             BuffAppliedEvent evt => PlayBuffAppliedAsync(evt.Holder, evt.BuffId),
@@ -69,13 +75,50 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
         var text = evt.To == ECombatPhase.Player
             ? string.Format(Localization.Tr(key), evt.TurnNumber)
             : Localization.Tr(key);
-        return _view!.ShowPhaseBannerAsync(text, CombatAnimationTiming.PhaseBanner);
+        var banner = _view!.ShowPhaseBannerAsync(text, CombatAnimationTiming.PhaseBanner);
+        return evt.To == ECombatPhase.Defeat
+            ? Task.WhenAll(banner, PlayAllyActionAsync(new CombatTargetRef(ECombatSide.Player, -1), "defeat", false))
+            : banner;
     }
 
     private async Task PlayWaveStartedAsync()
     {
         _view!.RebuildEnemies();
         await UnitTweens.WaitAsync(this, CombatAnimationTiming.EnemyBeat);
+    }
+
+    private Task PlayEnemyLifeBarChangedAsync(EnemyLifeBarChangedEvent evt)
+    {
+        var enemy = _view!.GetEnemyUnit(evt.EnemyIndex);
+        enemy?.SetLifeBarColor(evt.LifeBarIndex, evt.LifeBarCount);
+        return enemy?.HpBar?.AnimateToAsync(evt.Hp, evt.MaxHp, CombatAnimationTiming.HpBar) ?? Task.CompletedTask;
+    }
+
+    private Task PlayEnemyIntentChangedAsync(EnemyIntentChangedEvent evt)
+    {
+        _view!.GetEnemyUnit(evt.EnemyIndex)?.SetIntent(evt);
+        return Task.CompletedTask;
+    }
+
+    private async Task PlayEnemySummonedAsync(EnemySummonedEvent evt)
+    {
+        _view!.AddSummonedEnemy(evt.EnemyIndex);
+        var unit = _view.GetEnemyUnit(evt.EnemyIndex);
+        if (unit is not null)
+        {
+            unit.Visible = true;
+            unit.Modulate = unit.Modulate with { A = 1f };
+            unit.HpBar?.SetValue(evt.Hp, evt.MaxHp);
+        }
+        await UnitTweens.WaitAsync(this, CombatAnimationTiming.EnemyBeat);
+    }
+
+    private Task PlayMechanismDamageAsync(BattleMechanismDamageEvent evt)
+    {
+        var shared = _view!.SharedHpBar;
+        if (shared is not null)
+            SpawnNumber(CenterOf(shared), $"-{Mathf.RoundToInt(evt.Amount)}", KemoPalette.Danger);
+        return shared?.AnimateToAsync(evt.HpAfter, evt.MaxHp, CombatAnimationTiming.HpBar) ?? Task.CompletedTask;
     }
 
     #endregion
@@ -113,7 +156,9 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
 
         _view.GetHandSlot(evt.CharacterIndex, evt.SlotIndex)?.SetPending(true);
 
-        var approach = ResolveApproachPosition(caster, evt.Targets);
+        // Sprite characters stay at their root anchor even while only idle is
+        // available. Portrait-only units retain the approach tween.
+        var approach = caster.HasSpritePresentation ? null : ResolveApproachPosition(caster, evt.Targets);
         if (approach.HasValue)
             await caster.MoveToAsync(approach.Value, CombatAnimationTiming.UnitMove);
 
@@ -210,11 +255,11 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
         }
 
         var shared = _view!.SharedHpBar;
-        if (shared is null)
-            return;
-
-        SpawnNumber(CenterOf(shared), $"+{amount}", KemoPalette.Accent);
-        await shared.AnimateToAsync(evt.HpAfter, evt.MaxHp, CombatAnimationTiming.HpBar);
+        if (shared is not null)
+            SpawnNumber(CenterOf(shared), $"+{amount}", KemoPalette.Accent);
+        await Task.WhenAll(
+            shared?.AnimateToAsync(evt.HpAfter, evt.MaxHp, CombatAnimationTiming.HpBar) ?? Task.CompletedTask,
+            PlayAllyActionAsync(evt.Target, "buff"));
     }
 
     private void SpawnNumber(Vector2 globalCenter, string text, Color color)
@@ -226,7 +271,7 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
         _ = number.PlayAsync(globalCenter, text, color, CombatAnimationTiming.DamageNumber);
     }
 
-    private static Vector2 CenterOf(Control control) => control.GlobalPosition + control.Size / 2f;
+    private static Vector2 CenterOf(Control control) => control.GetGlobalTransform() * (control.Size / 2f);
 
     #endregion
 
@@ -236,10 +281,26 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
     {
         _view!.RefreshBuffs(holder);
         var icon = _view.GetBuffList(holder)?.FindIcon(buffId);
-        if (icon is null)
-            return;
+        await Task.WhenAll(
+            icon is not null ? UnitTweens.PulseAsync(icon, 1.3f, CombatAnimationTiming.BuffPop) : Task.CompletedTask,
+            holder.HandSlotIndex is null ? PlayAllyActionAsync(holder.Target, "buff") : Task.CompletedTask);
+    }
 
-        await UnitTweens.PulseAsync(icon, 1.3f, CombatAnimationTiming.BuffPop);
+    private Task PlayAllyActionAsync(CombatTargetRef target, string animation, bool returnToIdle = true)
+    {
+        if (target.Side != ECombatSide.Player)
+            return Task.CompletedTask;
+        if (target.Index >= 0)
+            return _view!.GetAllyUnit(target.Index)?.PlayOnceAsync(animation, returnToIdle) ?? Task.CompletedTask;
+
+        var actions = new List<Task>();
+        for (var slot = 0; slot < CombatConstants.SlotCount; slot++)
+        {
+            var ally = _view!.GetAllyUnit(slot);
+            if (ally is not null)
+                actions.Add(ally.PlayOnceAsync(animation, returnToIdle));
+        }
+        return Task.WhenAll(actions);
     }
 
     private async Task PlayBuffRemovedAsync(BuffRemovedEvent evt)
@@ -276,6 +337,21 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
 
         await UnitTweens.WaitAsync(this, CombatAnimationTiming.EnemyBeat);
         await enemy.LungeAsync(CombatAnimationTiming.UnitAttack);
+    }
+
+    private Task PlayEnemyAttackHitAsync(EnemyAttackHitEvent evt)
+    {
+        var enemy = _view!.GetEnemyUnit(evt.EnemyIndex);
+        var ally = _view.GetAllyUnit(evt.Target.Index);
+        if (enemy is null || ally is null || !enemy.IsInsideTree() || !ally.IsInsideTree())
+            return Task.CompletedTask;
+
+        var bubble = ResourceLoader.Load<PackedScene>("res://Src/mod/run/Ui/Combat/Presentation/WaterBubbleCmp.tscn")
+            .Instantiate<WaterBubbleCmp>();
+        _view.FxLayer.AddChild(bubble);
+        return bubble.PlayAsync(
+            CenterOf(enemy.GetNodeOrNull<Control>("Presenter") ?? enemy),
+            CenterOf(ally.GetNodeOrNull<Control>("Presenter") ?? ally));
     }
 
     private Task PlayEnemyActionEndedAsync(EnemyActionEndedEvent evt) =>

@@ -1,0 +1,17 @@
+{
+  "displayNameId": "skill.george_single_spell.name",
+  "descId": "skill.george_single_spell.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "brothers_magical_damage",
+      "params": {
+        "Amount": 25
+      }
+    }
+  ]
+}

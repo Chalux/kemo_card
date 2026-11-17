@@ -26,6 +26,8 @@ internal static class CombatCommandValidator
             return new CombatApplyResult(false, "手牌槽位无效。");
 
         slot = character.HandSlots[command.HandSlotIndex];
+        if (slot.IsSealed)
+            return new CombatApplyResult(false, "手牌槽处于封印，无法标记卡牌。");
         if (slot.IsEmpty || slot.CardId is null || slot.RuntimeInstanceId is null)
             return new CombatApplyResult(false, "指定槽位没有卡牌。");
         if (slot.IsMarked)

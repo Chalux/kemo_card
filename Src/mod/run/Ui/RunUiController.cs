@@ -9,6 +9,9 @@ namespace KemoCard.Mod.Run.Ui;
 
 public static class RunUiController
 {
+    public static Task<UIVo?> OpenPotionAsync(Items.RunPotionDlgPayload payload) =>
+        UIManager.Instance?.OpenAsync(new UiId<Items.RunPotionDlgPayload>(RunUiIds.Potion), payload)
+            ?? Task.FromResult<UIVo?>(null);
     public static async Task<UIVo?> OpenStorySelectAsync()
     {
         return await (UIManager.Instance?.OpenAsync<StorySelectDlg>(new UiId<StorySelectDlg>(RunUiIds.StorySelect), default, null)

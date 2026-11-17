@@ -39,6 +39,13 @@ public sealed class EnemyDto
     [JsonPropertyName("buffRefs")]
     public List<BuffRefDto> BuffRefs { get; init; } = [];
 
+    /// <summary>独立生命条；空列表沿用 maxHp 与随机技能。首条也需明确声明。</summary>
+    [JsonPropertyName("lifeBars")]
+    public List<EnemyLifeBarDto> LifeBars { get; init; } = [];
+
+    [JsonPropertyName("entrySkillRefs")]
+    public List<SkillRefDto> EntrySkillRefs { get; init; } = [];
+
     [JsonPropertyName("artPath")]
     public string ArtPath { get; init; } = "";
 
@@ -47,4 +54,51 @@ public sealed class EnemyDto
 
     [JsonPropertyName("tags")]
     public List<string> Tags { get; init; } = [];
+}
+
+public sealed class EnemyLifeBarDto
+{
+    [JsonPropertyName("turnStartMechanisms")]
+    public List<TeamHpMechanismDto> TurnStartMechanisms { get; init; } = [];
+
+    [JsonPropertyName("prioritySummonCondition")]
+    public EnemySummonConditionDto? PrioritySummonCondition { get; init; }
+
+    [JsonPropertyName("entrySkillRefs")]
+    public List<SkillRefDto> EntrySkillRefs { get; init; } = [];
+
+    /// <summary>满足同伴标签或召唤条件时重复此行动；标签条件结束重启常规循环，召唤条件结束续接循环。</summary>
+    [JsonPropertyName("prioritySkillId")]
+    public string? PrioritySkillId { get; init; }
+
+    [JsonPropertyName("requiredAliveEnemyTag")]
+    public string? RequiredAliveEnemyTag { get; init; }
+
+    [JsonPropertyName("maxHp")]
+    public int MaxHp { get; init; }
+
+    [JsonPropertyName("actionSequence")]
+    public List<EnemyActionDto> ActionSequence { get; init; } = [];
+}
+
+public sealed class EnemySummonConditionDto
+{
+    [JsonPropertyName("enemyId")]
+    public string EnemyId { get; init; } = "";
+
+    [JsonPropertyName("maxAlive")]
+    public int MaxAlive { get; init; }
+
+    [JsonPropertyName("maxSummons")]
+    public int MaxSummons { get; init; }
+}
+
+public sealed class EnemyActionDto
+{
+    [JsonPropertyName("skillId")]
+    public string SkillId { get; init; } = "";
+
+    /// <summary>本次行动等待的敌方回合数；1 为下个敌方回合行动。</summary>
+    [JsonPropertyName("actionCount")]
+    public int ActionCount { get; init; } = 1;
 }

@@ -1,0 +1,158 @@
+{
+  "mode": "built-in image_gen",
+  "frameSize": [
+    464,
+    560
+  ],
+  "bodyAnchor": [
+    264,
+    280
+  ],
+  "presentationOffset": [
+    -32,
+    0
+  ],
+  "rootMotion": false,
+  "idlePixelsPreserved": true,
+  "animations": {
+    "enter": {
+      "frames": 8,
+      "sourceIndicesZeroBased": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "durationMs": [
+        100,
+        100,
+        120,
+        120,
+        140,
+        120,
+        120,
+        140
+      ],
+      "totalMs": 960,
+      "loop": false
+    },
+    "attack": {
+      "frames": 8,
+      "sourceIndicesZeroBased": [
+        0,
+        1,
+        2,
+        2,
+        3,
+        3,
+        6,
+        7
+      ],
+      "durationMs": [
+        80,
+        120,
+        100,
+        80,
+        60,
+        80,
+        120,
+        140
+      ],
+      "totalMs": 780,
+      "loop": false
+    },
+    "buff": {
+      "frames": 8,
+      "sourceIndicesZeroBased": [
+        0,
+        1,
+        2,
+        3,
+        3,
+        5,
+        6,
+        7
+      ],
+      "durationMs": [
+        100,
+        140,
+        140,
+        140,
+        180,
+        140,
+        140,
+        140
+      ],
+      "totalMs": 1120,
+      "loop": false
+    },
+    "defeat": {
+      "frames": 8,
+      "sourceIndicesZeroBased": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        6
+      ],
+      "durationMs": [
+        100,
+        140,
+        140,
+        180,
+        180,
+        180,
+        180,
+        300
+      ],
+      "totalMs": 1400,
+      "loop": false
+    },
+    "idle": {
+      "frames": 32,
+      "durationMs": [
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100,
+        100
+      ],
+      "totalMs": 3200,
+      "loop": true
+    }
+  }
+}

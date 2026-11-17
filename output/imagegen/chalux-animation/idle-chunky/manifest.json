@@ -1,0 +1,89 @@
+{
+  "animation": "idle",
+  "sourceColumns": 4,
+  "sourceRows": 2,
+  "frameSize": [
+    384,
+    544
+  ],
+  "frameCount": 8,
+  "fps": 6.25,
+  "loop": true,
+  "status": "awaiting-style-approval",
+  "generatedWith": "built-in image_gen",
+  "processing": "slice at row gutter and pad to a common floor; no repainting or resampling",
+  "checks": [
+    {
+      "frame": 1,
+      "opaque_bounds": [
+        57,
+        50,
+        372,
+        528
+      ]
+    },
+    {
+      "frame": 2,
+      "opaque_bounds": [
+        43,
+        51,
+        364,
+        528
+      ]
+    },
+    {
+      "frame": 3,
+      "opaque_bounds": [
+        5,
+        51,
+        337,
+        528
+      ]
+    },
+    {
+      "frame": 4,
+      "opaque_bounds": [
+        1,
+        51,
+        333,
+        528
+      ]
+    },
+    {
+      "frame": 5,
+      "opaque_bounds": [
+        48,
+        52,
+        374,
+        528
+      ]
+    },
+    {
+      "frame": 6,
+      "opaque_bounds": [
+        34,
+        55,
+        366,
+        528
+      ]
+    },
+    {
+      "frame": 7,
+      "opaque_bounds": [
+        22,
+        55,
+        349,
+        528
+      ]
+    },
+    {
+      "frame": 8,
+      "opaque_bounds": [
+        31,
+        54,
+        341,
+        528
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ namespace KemoCard.Mod.Run.Ui.CombatUi;
 /// <summary>战斗界面各组件共用的属性读取与文案拼接口径（角色 / 敌人一致）。</summary>
 public static class CombatUnitFormat
 {
+    #region 战斗属性数值
     private static int Read(AbilitySystemComponent asc, string attributeId) =>
         (int)MathF.Round(asc.GetCurrentValue(attributeId));
 
@@ -29,6 +30,13 @@ public static class CombatUnitFormat
 
     /// <summary>回复量。</summary>
     public static string Heal(AbilitySystemComponent asc) => Read(asc, AttributeIds.HealPower).ToString();
+
+    public static string Shield(AbilitySystemComponent asc) => Math.Max(0, Read(asc, AttributeIds.Shield)).ToString();
+
+    public static string ShieldLabel(AbilitySystemComponent asc) =>
+        string.Format(Localization.Tr("UI_COMBAT_SHIELD"), Shield(asc));
+
+    #endregion
 
     /// <summary>「种族·定位」（任一为空则只显示另一项；都为空返回 ""）。</summary>
     public static string RaceAndRole(ERace race, ERole role)

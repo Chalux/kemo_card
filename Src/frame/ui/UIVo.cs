@@ -47,8 +47,13 @@ public sealed class UIVo : IUIStateContext, IUIVoHandle
     UIVo IUIStateContext.UIVo => this;
     UIManager IUIStateContext.UIManager => Manager;
 
-    public bool IsOpen => StateMachine.CurrentState is >= EUIState.Create and <= EUIState.Open;
-    public bool IsClose => StateMachine.CurrentState >= EUIState.Close;
+    /// <summary>是否处于「已打开」状态（Create / Open）。</summary>
+    /// <remarks>显式枚举而非枚举区间：区间依赖 <see cref="EUIState"/> 的声明顺序，插值即静默改语义。</remarks>
+    public bool IsOpen => StateMachine.CurrentState is EUIState.Create or EUIState.Open;
+
+    /// <summary>是否已进入关闭流程（Close / CloseDone / Cache / Destroy，即幂等的「不再视为打开」）。</summary>
+    public bool IsClose => StateMachine.CurrentState
+        is EUIState.Close or EUIState.CloseDone or EUIState.Cache or EUIState.Destroy;
 
     public UIVo(string id, EUIType type, string ownerModId, object? payload, UIManager manager,
         IEnumerable<IStateHandler<EUIState, IUIStateContext>> handlers, UIOpenOpt? openOpt = null)

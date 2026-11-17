@@ -43,6 +43,9 @@ public interface ICombatStageView
     /// <summary>换波：按模拟器状态重建敌方舞台。</summary>
     void RebuildEnemies();
 
+    /// <summary>追加召唤者，不重建已有单位，保持运行时索引稳定。</summary>
+    void AddSummonedEnemy(int enemyIndex);
+
     /// <summary>立即按状态重绘某个敌人（阵亡态等）。</summary>
     void RefreshEnemy(int enemyIndex);
 

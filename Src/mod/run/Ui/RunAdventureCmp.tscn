@@ -1,0 +1,163 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://Src/mod/run/Ui/RunAdventureCmp.cs" id="1"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2"]
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Items/RunOptionCmp.tscn" id="3"]
+[ext_resource type="Script" path="res://Src/mod/run/Ui/RunMapLinesCmp.cs" id="4"]
+[node name="RunAdventureCmp" type="VBoxContainer" node_paths=PackedStringArray("_nodeTitle", "_text", "_options", "_leave", "_boss", "_next")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1")
+_nodeTitle = NodePath("Title")
+_text = NodePath("Text")
+_options = NodePath("Scroll/Options")
+_leave = NodePath("Leave")
+_boss = NodePath("Map/Routes/Boss")
+_next = NodePath("Next")
+_optionScene = ExtResource("3")
+theme_override_constants/separation = 14
+[node name="Map" type="Control" parent="."]
+custom_minimum_size = Vector2(760, 230)
+layout_mode = 2
+[node name="Lines" type="Control" parent="Map"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4")
+[node name="Routes" type="HBoxContainer" parent="Map"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 24
+[node name="Start" type="Label" parent="Map/Routes"]
+custom_minimum_size = Vector2(64, 0)
+layout_mode = 2
+text = "UI_MAP_START"
+vertical_alignment = 1
+horizontal_alignment = 1
+[node name="Lanes" type="VBoxContainer" parent="Map/Routes"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 70
+
+[node name="Branch0" type="HBoxContainer" parent="Map/Routes/Lanes"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="Select" type="Button" parent="Map/Routes/Lanes/Branch0"]
+custom_minimum_size = Vector2(100, 68)
+layout_mode = 2
+size_flags_vertical = 4
+text = "UI_MAP_SELECT_ROUTE"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Node0" type="Button" parent="Map/Routes/Lanes/Branch0"]
+custom_minimum_size = Vector2(95, 68)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "UI_MAP_EVENT"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Node1" type="Button" parent="Map/Routes/Lanes/Branch0"]
+custom_minimum_size = Vector2(95, 68)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "UI_MAP_SHOP"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Node2" type="Button" parent="Map/Routes/Lanes/Branch0"]
+custom_minimum_size = Vector2(95, 68)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "UI_MAP_EVENT"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Branch1" type="HBoxContainer" parent="Map/Routes/Lanes"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="Select" type="Button" parent="Map/Routes/Lanes/Branch1"]
+custom_minimum_size = Vector2(100, 68)
+layout_mode = 2
+size_flags_vertical = 4
+text = "UI_MAP_SELECT_ROUTE"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Node0" type="Button" parent="Map/Routes/Lanes/Branch1"]
+custom_minimum_size = Vector2(95, 68)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "UI_MAP_EVENT"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Node1" type="Button" parent="Map/Routes/Lanes/Branch1"]
+custom_minimum_size = Vector2(95, 68)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "UI_MAP_SHOP"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Node2" type="Button" parent="Map/Routes/Lanes/Branch1"]
+custom_minimum_size = Vector2(95, 68)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+text = "UI_MAP_EVENT"
+script = ExtResource("2")
+EnableHoverScale = false
+
+[node name="Boss" type="Button" parent="Map/Routes"]
+custom_minimum_size = Vector2(90, 78)
+layout_mode = 2
+size_flags_vertical = 4
+text = "UI_MAP_BOSS"
+script = ExtResource("2")
+Primary = true
+EnableHoverScale = false
+[node name="Rule" type="HSeparator" parent="."]
+layout_mode = 2
+[node name="Title" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 23
+[node name="Text" type="Label" parent="."]
+layout_mode = 2
+autowrap_mode = 3
+[node name="Scroll" type="ScrollContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+[node name="Options" type="VBoxContainer" parent="Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 14
+[node name="Leave" type="Button" parent="."]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 42)
+text = "UI_MAP_CONTINUE"
+script = ExtResource("2")
+[node name="Next" type="Button" parent="."]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 42)
+text = "UI_MAP_NEXT_RING"
+script = ExtResource("2")

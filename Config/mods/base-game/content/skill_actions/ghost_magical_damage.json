@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "ghost_magical_damage"
+  }
+}

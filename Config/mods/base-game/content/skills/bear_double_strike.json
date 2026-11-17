@@ -1,0 +1,18 @@
+{
+  "displayNameId": "skill.bear_double_strike.name",
+  "descId": "skill.bear_double_strike.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_fixed_damage",
+      "params": {
+        "Amount": 25
+      }
+    }
+  ],
+  "enemyRandomTargetRepeats": 2
+}

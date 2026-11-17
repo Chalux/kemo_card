@@ -1,0 +1,18 @@
+{
+  "displayNameId": "skill.evil_thought_double.name",
+  "descId": "skill.evil_thought_double.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "ghost_magical_damage",
+      "params": {
+        "Amount": 50
+      }
+    }
+  ],
+  "enemyRandomTargetRepeats": 2
+}

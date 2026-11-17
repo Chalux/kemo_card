@@ -27,4 +27,5 @@ stretch_mode = 5
 
 [node name="AnimSprite" type="AnimatedSprite2D" parent="."]
 visible = false
+texture_filter = 1
 centered = true

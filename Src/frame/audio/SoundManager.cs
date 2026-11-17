@@ -10,6 +10,7 @@ public partial class SoundManager : Node, ISoundService
     public const int SfxPoolSize = 8;
     public const int MaxCacheSize = 50;
     public const float MuteFadeSeconds = 0.5f;
+    public const string BusLayoutPath = "res://default_bus_layout.tres";
 
     private readonly AudioStreamPlayer _bgm;
     private readonly AudioStreamPlayer _ambient;
@@ -117,6 +118,17 @@ public partial class SoundManager : Node, ISoundService
 
         var clamped = Math.Clamp(volumePercent, 0, 100);
         _volumePercent[busIndex] = clamped;
+
+        if (busIndex >= EngineBusCount)
+        {
+            // 总线布局没生效（引擎只有 Master）时只记录设置值并告警，
+            // 不能把越界索引传给引擎，否则 AudioServer 会直接报原生越界错误。
+            AppLog.Warning(
+                $"总线 {busIndex} 在引擎中不存在（当前 {AudioServer.BusCount} 条），音量仅记录未应用；请检查 {BusLayoutPath}",
+                "Sound");
+            return;
+        }
+
         if (!IsMuted(busIndex))
         {
             AudioServer.SetBusVolumeLinear(busIndex, clamped / 100f);
@@ -151,7 +163,7 @@ public partial class SoundManager : Node, ISoundService
         _muteTween = CreateTween();
         _muteTween.SetParallel(true);
 
-        for (var bus = 0; bus < SoundBus.Count; bus++)
+        for (var bus = 0; bus < EngineBusCount; bus++)
         {
             if ((flip & (1 << bus)) == 0)
             {
@@ -186,7 +198,7 @@ public partial class SoundManager : Node, ISoundService
         }
 
         // 未 flip 的总线立即对齐 mute/音量
-        for (var bus = 0; bus < SoundBus.Count; bus++)
+        for (var bus = 0; bus < EngineBusCount; bus++)
         {
             if ((flip & (1 << bus)) != 0)
             {
@@ -206,7 +218,7 @@ public partial class SoundManager : Node, ISoundService
 
     private void ApplyMuteFlagsImmediate()
     {
-        for (var bus = 0; bus < SoundBus.Count; bus++)
+        for (var bus = 0; bus < EngineBusCount; bus++)
         {
             var muted = IsMuted(bus);
             AudioServer.SetBusMute(bus, muted);
@@ -225,6 +237,12 @@ public partial class SoundManager : Node, ISoundService
     }
 
     private bool IsMuted(int busIndex) => (_muteFlag & (1 << busIndex)) != 0;
+
+    /// <summary>
+    /// 引擎中实际存在的总线数。总线布局（<see cref="BusLayoutPath"/>）加载失败时引擎只剩 Master，
+    /// 此时 SoundBus 里的索引对引擎是越界的，所有引擎侧调用都必须按这个上限收敛。
+    /// </summary>
+    private static int EngineBusCount => Math.Min(SoundBus.Count, AudioServer.BusCount);
 
     #endregion
 

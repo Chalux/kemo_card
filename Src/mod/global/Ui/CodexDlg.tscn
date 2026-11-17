@@ -9,7 +9,7 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_close"]
 
-[node name="CodexDlg" type="Control" node_paths=PackedStringArray("_tabContainer", "_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager", "_obCharField", "_obCharOp", "_obCharVal", "_itemListCharConditions", "_btnCharAdd", "_btnCharSearch", "_iptCharTxtFilter", "_gridCharList", "_charPager")]
+[node name="CodexDlg" type="Control" node_paths=PackedStringArray("_tabContainer", "_obField", "_obOp", "_obVal", "_itemListConditions", "_btnAdd", "_btnSearch", "_iptTxtFilter", "_gridCardList", "_pager", "_obCharField", "_obCharOp", "_obCharVal", "_itemListCharConditions", "_btnCharAdd", "_btnCharSearch", "_iptCharTxtFilter", "_gridCharList", "_charPager", "_tabBattle", "_iptBattleTxtFilter", "_listBattles", "_rtBattleDetail")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -36,6 +36,10 @@ _btnCharSearch = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/Btn
 _iptCharTxtFilter = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Filter/VBox/IptTxtFilter")
 _gridCharList = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Results/Control/GridContainerCharList")
 _charPager = NodePath("Margin/VBox/TabContainer/UI_CHARACTER/Results/BasePager")
+_tabBattle = NodePath("Margin/VBox/TabContainer/UI_BATTLE")
+_iptBattleTxtFilter = NodePath("Margin/VBox/TabContainer/UI_BATTLE/Filter/VBox/IptTxtFilter")
+_listBattles = NodePath("Margin/VBox/TabContainer/UI_BATTLE/Filter/VBox/ListBattles")
+_rtBattleDetail = NodePath("Margin/VBox/TabContainer/UI_BATTLE/Detail/RTDetail")
 
 [node name="Bg" type="Panel" parent="."]
 layout_mode = 1
@@ -297,6 +301,44 @@ EnableHoverTip = true
 
 [node name="BasePager" parent="Margin/VBox/TabContainer/UI_CHARACTER/Results" instance=ExtResource("4_egqms")]
 layout_mode = 2
+
+[node name="UI_BATTLE" type="HBoxContainer" parent="Margin/VBox/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 20
+metadata/_tab_index = 2
+
+[node name="Filter" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_BATTLE"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_type_variation = &"SunkenContainer"
+
+[node name="VBox" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_BATTLE/Filter"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="IptTxtFilter" type="LineEdit" parent="Margin/VBox/TabContainer/UI_BATTLE/Filter/VBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+placeholder_text = "UI_BATTLE_TXT_FILTER"
+clear_button_enabled = true
+
+[node name="ListBattles" type="ItemList" parent="Margin/VBox/TabContainer/UI_BATTLE/Filter/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
+
+[node name="Detail" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_BATTLE"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SunkenContainer"
+
+[node name="RTDetail" type="RichTextLabel" parent="Margin/VBox/TabContainer/UI_BATTLE/Detail"]
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/bold_font_size = 20
+bbcode_enabled = true
+scroll_active = true
 
 [node name="BaseDlgComp" parent="." instance=ExtResource("2_ii0j4")]
 layout_mode = 1

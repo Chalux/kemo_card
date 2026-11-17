@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Godot;
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
@@ -30,10 +31,22 @@ public partial class CharacterPresenter : Control
     private CharacterDto? _character;
     private CharacterPresentationDto? _presentation;
     private SpriteFrames? _frames;
+    private Vector2 _frameCanvasSize;
     private IReadOnlyList<string> _animNames = Array.Empty<string>();
     private bool _hasPresentation;
+    private int _playSequence;
 
     public bool HasPresentation => _hasPresentation;
+
+    public override void _Ready() => FitAnimation();
+
+    public override void _Notification(int what)
+    {
+        if (what == NotificationResized)
+        {
+            FitAnimation();
+        }
+    }
 
     public void Bind(CharacterDto character)
     {
@@ -90,10 +103,45 @@ public partial class CharacterPresenter : Control
             }
         }
 
+        _playSequence++;
+        _animSprite.Stop();
         _animSprite.Play(target);
     }
 
     public IReadOnlyList<string> ListAnims() => _animNames;
+
+    public bool HasAnimation(string animName) => _frames?.HasAnimation(animName) == true;
+
+    /// <summary>包含逐帧停顿权重的完整播放时长；缺少动画时返回零。</summary>
+    public double GetAnimationDuration(string animName)
+    {
+        if (_frames == null || !_frames.HasAnimation(animName))
+            return 0;
+
+        var speed = _frames.GetAnimationSpeed(animName);
+        if (speed <= 0)
+            return 0;
+
+        double duration = 0;
+        for (var i = 0; i < _frames.GetFrameCount(animName); i++)
+            duration += _frames.GetFrameDuration(animName, i);
+        return duration / speed;
+    }
+
+    /// <summary>播完整段原地动作；后续动作或重新绑定会取消旧动作的待机回切。</summary>
+    public async Task PlayOnceAsync(string animName, bool returnToIdle = true)
+    {
+        var duration = GetAnimationDuration(animName);
+        if (duration <= 0 || !IsInsideTree())
+            return;
+
+        Play(animName);
+        var sequence = _playSequence;
+        await ToSignal(GetTree().CreateTimer(duration, processAlways: false), SceneTreeTimer.SignalName.Timeout);
+        if (GodotObject.IsInstanceValid(this) && IsInsideTree()
+            && sequence == _playSequence && returnToIdle)
+            Play(_presentation?.DefaultAnim ?? "idle");
+    }
 
     #region 绑定分支
 
@@ -103,12 +151,30 @@ public partial class CharacterPresenter : Control
         CharacterPresentationDto presentation)
     {
         _frames = frames;
+        _frameCanvasSize = Vector2.Zero;
+        foreach (var animation in frames.GetAnimationNames())
+        {
+            for (var index = 0; index < frames.GetFrameCount(animation); index++)
+            {
+                var texture = frames.GetFrameTexture(animation, index);
+                if (texture != null)
+                {
+                    var frameSize = texture.GetSize();
+                    _frameCanvasSize = new Vector2(
+                        Mathf.Max(_frameCanvasSize.X, frameSize.X),
+                        Mathf.Max(_frameCanvasSize.Y, frameSize.Y));
+                }
+            }
+        }
         _hasPresentation = true;
         _animNames = PresentationAnimList.Resolve(frames.GetAnimationNames(), presentation.Anims);
 
         if (_animSprite != null)
         {
             _animSprite.SpriteFrames = frames;
+            // Asset-local pixels: the body's anchor can differ from the canvas
+            // center when a tail or weapon occupies asymmetric transparent space.
+            _animSprite.Offset = frames.GetMeta("presentation_offset", Vector2.Zero).AsVector2();
             _animSprite.Visible = true;
         }
 
@@ -119,6 +185,22 @@ public partial class CharacterPresenter : Control
         }
 
         Play(presentation.DefaultAnim);
+        FitAnimation();
+    }
+
+    private void FitAnimation()
+    {
+        if (_animSprite == null || _frameCanvasSize.X <= 0 || _frameCanvasSize.Y <= 0
+            || Size.X <= 0 || Size.Y <= 0)
+        {
+            return;
+        }
+
+        // Use one canvas for all frames so breathing and tail movement never
+        // change the scale or root anchor inside cards, details or combat slots.
+        var scale = Mathf.Min(Size.X / _frameCanvasSize.X, Size.Y / _frameCanvasSize.Y);
+        _animSprite.Scale = new Vector2(scale, scale);
+        _animSprite.Position = Size * 0.5f;
     }
 
     private void BindPortrait(CharacterDto character)
@@ -159,7 +241,9 @@ public partial class CharacterPresenter : Control
 
     private void ClearPresentation()
     {
+        _playSequence++;
         _frames = null;
+        _frameCanvasSize = Vector2.Zero;
         _hasPresentation = false;
         _animNames = Array.Empty<string>();
 
@@ -167,6 +251,7 @@ public partial class CharacterPresenter : Control
         {
             _animSprite.Stop();
             _animSprite.SpriteFrames = null;
+            _animSprite.Offset = Vector2.Zero;
             _animSprite.Visible = false;
         }
     }

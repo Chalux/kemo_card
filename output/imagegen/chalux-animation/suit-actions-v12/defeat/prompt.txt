@@ -1,0 +1,25 @@
+Mode: built-in image_gen; transparent_background=true
+
+Use case: stylized-concept. Asset: production pixel-art animation sheet for young blue/white anthro wolf 克鲁克斯.
+Approved character: youthful athletic blue furry wolf with gray eyes, pale muzzle, pointed ears, slightly smaller fluffy tail with pale tip. White relaxed BUSINESS SUIT (plain white lapels, white shirt, navy tie, straight white suit trousers), blue bare digitigrade furry paws. Anatomical RIGHT hand holds ONE straight sword; empty LEFT hand outside pockets. Facing screenRIGHT in3/4. Fixed upper-left light and consistent medium-density crisp pixel clusters matching idle reference; stable shadows for unchanged regions, no arbitrary shadow shimmer or costume redesign.
+Transparent PNG, no text/numbers/grid/background/ground shadow. SIXTEEN consecutive full-body poses, FOUR columns FOUR rows, reading order, exact4x4 layout. Use2048x2048 canvas, cells512x512, same scale, same groundY500, torso/root centeredX265 eachcell. Ground/support contact stays constant; NO steps, root translation, sliding, lunge, camera movement or whole-sprite shrinking. Keep the WHOLE tail, paws, ears, sword and any explicit trace INSIDE eachcell with12px clear gutters. Sword length approximately40% of full standing character height, consistent acrossframes except legitimate perspective foreshortening. Wrist aligns naturally with forearm and rigid sword hilt/guard/blade axis. One pair arms/legs, no extra paws, no ghost sword fragments.
+Input image1: PREVIOUS DEFEAT DESIGN reference; retain its same progressive exhausted single-knee collapse, white suit, final bowed-head posture and left palm resting on raised left knee. Inputimage2: approvedidle STYLE/IDENTITY/SCALE reference. User likes the defeat poses but finds transitions jerky. Keep the DESIGN, replace timing/pose spacing with small even changes, especially between standing crouch and knee landing. Do not invent a new death pose.
+16 actual consecutive SMALL-STEP poses:
+1 approvedidle;
+2 ears lower, shoulders sag2px;
+3 soften knees, pelvis sinks8px;
+4 bend knees a little more, pelvis sinks another12px, sword grip follows arm;
+5 deepencrouch another15px, right knee halfway toward ground, left foot staysplanted;
+6 pelvis another15px lower, torsoinclines slightly, right knee nearlyground, LEFT freepaw halfway toward raisedleftknee;
+7 RIGHT knee just TOUCHES ground, left foot unchanged, bodystillsettling, sword tip near floor;
+8 body takesweight on rightknee and plantedleftfoot, pelvis sinks8px, leftpaw justtouches ownraisedleftknee;
+9 leftpawsettles, sword tipcontactsground, headlowers just5px;
+10 shoulders lower3px, headbows another6px;
+11 headbows6px, eyeshalfclose;
+12 headbows5px, eyesclose;
+13 headsettles3px, tailbase lowers;
+14 tailmiddle settles withdelay, shouldersheld;
+15 tailtipsettles ontoground, finalpose;
+16 holdthe SAME final bowed-head one-knee pose.
+Maintain EXACT same right knee contact and left foot position in7..16, same bodyproportions/headsize. Do not suddenly jump from standing to kneeling at frame7; frames3..6 must show four progressively lower crouches with steadily decreasing gap to ground. Before kneelanding, head descends with pelvis smoothly, never separate head-bobbing or up/down wobble. Afterlandingonlysmallspinemotion; head notjump20px.
+RIGHT swordpaw remains gripping same hilt; rigid sword tiprests onground9..16 as light support. Leftemptyhandrests on ownraisedleftknee, no switchedhand or switchedleg. No double-knee pose, no alternation or return tostanding, no gore/rippedsuit. Tail retainsvolume and follows body withdelay. Fixedlighting; pose-linkedfoldchanges only, stationary paws/sword/garmentareas keep samecolors.

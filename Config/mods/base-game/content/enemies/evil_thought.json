@@ -1,0 +1,126 @@
+{
+  "displayNameId": "enemy.evil_thought.name",
+  "descId": "enemy.evil_thought.desc",
+  "maxHp": 1800,
+  "baseAttributes": {
+    "MaxHealth": 1800,
+    "PhysicalAttack": 0,
+    "MagicAttack": 40,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Blue",
+  "race": "Undead, Unknown",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 1800,
+      "actionSequence": [
+        {
+          "skillId": "evil_thought_double",
+          "actionCount": 1
+        },
+        {
+          "skillId": "evil_thought_weaken",
+          "actionCount": 1
+        },
+        {
+          "skillId": "evil_thought_sweep",
+          "actionCount": 1
+        }
+      ],
+      "prioritySkillId": "evil_thought_summon_1",
+      "prioritySummonCondition": {
+        "enemyId": "undead_ghost",
+        "maxAlive": 2,
+        "maxSummons": 4
+      }
+    },
+    {
+      "maxHp": 2400,
+      "actionSequence": [
+        {
+          "skillId": "evil_thought_double",
+          "actionCount": 1
+        },
+        {
+          "skillId": "evil_thought_weaken",
+          "actionCount": 1
+        },
+        {
+          "skillId": "evil_thought_sweep",
+          "actionCount": 1
+        }
+      ],
+      "prioritySkillId": "evil_thought_summon_2",
+      "prioritySummonCondition": {
+        "enemyId": "undead_ghost",
+        "maxAlive": 3,
+        "maxSummons": 5
+      },
+      "entrySkillRefs": [
+        {
+          "skillId": "evil_thought_entry_2"
+        }
+      ]
+    },
+    {
+      "maxHp": 2800,
+      "actionSequence": [
+        {
+          "skillId": "evil_thought_double",
+          "actionCount": 1
+        },
+        {
+          "skillId": "evil_thought_weaken",
+          "actionCount": 1
+        },
+        {
+          "skillId": "evil_thought_sweep",
+          "actionCount": 1
+        }
+      ],
+      "prioritySkillId": "evil_thought_summon_3",
+      "prioritySummonCondition": {
+        "enemyId": "undead_ghost",
+        "maxAlive": 4,
+        "maxSummons": 8
+      },
+      "entrySkillRefs": [
+        {
+          "skillId": "evil_thought_entry_3"
+        }
+      ],
+      "turnStartMechanisms": [
+        {
+          "id": "evil_thought_deadline",
+          "turn": 10,
+          "maxHpDamagePercent": 9999
+        }
+      ]
+    }
+  ],
+  "tags": [
+    "boss"
+  ],
+  "skillRefs": [
+    {
+      "skillId": "evil_thought_double"
+    },
+    {
+      "skillId": "evil_thought_summon_1"
+    },
+    {
+      "skillId": "evil_thought_summon_2"
+    },
+    {
+      "skillId": "evil_thought_summon_3"
+    },
+    {
+      "skillId": "evil_thought_sweep"
+    },
+    {
+      "skillId": "evil_thought_weaken"
+    }
+  ]
+}

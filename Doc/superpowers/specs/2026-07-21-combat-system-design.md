@@ -63,6 +63,34 @@
 - 玩家操控 **4 名角色**（槽位 0–3）；每名角色战斗内 **独立** 抽牌堆、手牌、弃牌堆。
 - 敌人由战斗定义（波次 / 生成）实例化；敌方阶段按 AI / 定义行动；敌方单位使用 **独立 HP**（非共享）。
 
+#### 1.1.1 多生命条与固定行动循环（2026-10-10）
+
+- `EnemyDto.lifeBars` 声明每条生命的 `maxHp` 与 `actionSequence`；每项含 `skillId`、`actionCount`（默认 1）。无生命条配置时沿用单条 HP 与原 AI。生命条均应用生成配置 `hpScale`。
+- `actionCount` 为本项需要等待的敌方回合数：1 立即行动；2 等待一回合再行动。只有完成行动才推进循环；外部行动延迟不会消耗循环步骤。
+- 任一伤害包仅扣当前生命条，不传递溢出伤害。存在下一条时，卡牌执行阶段（包括后续普攻）至该敌人开始行动前破条，暂留当前条 0 血，保持合法目标与存活判定，获得不可驱散的【免疫所有伤害】。敌方阶段轮到该敌人时移除免疫、清空状态、补满下一条，从新循环第一项开始；先清掉旧条的行动延迟，再检查新条行动计数。其余区间破条立即换条。
+- 换条不结束当前回合，不重放敌人首次入场行动或波次开始钩子。仅最后一条归零才阵亡并参与清波判定；换波仍结束当前回合。
+- 状态重置移除该敌人所有 Buff、GE、护盾与行动延迟，包括不可驱散状态。内容可用 `persistAcrossLifeBars: true` 明确保留 Buff / GE。重置不分发移除钩子，避免移除过程重新建立旧状态；其他角色、手牌槽与队伍领域不随该敌人换条重置。
+- `entrySkillRefs` 在首次入场初始化时执行一次，不占行动循环；换条不重复执行。换条以 `EnemyLifeBarChangedEvent` 值事件驱动血条与条数显示，破条伤害事件保持 `TargetAlive = true`，不会提前播放阵亡退场。
+- 「初启的兄弟」两波依次为凯尔（红 / 人类，400→400，物攻 5）与佐治（绿 / 人类，400→600，魔攻 5），其余攻防为 0。定值攻击不额外叠加源攻击力，仍结算防御；佐治第二条全体攻击为 `15 + 100% 魔攻`。减攻使用 `Independent` 新实例、各减 6 并持续 3 回合；咏唱永久不可驱散、每层魔攻 +10、上限 15。凯尔入场在每名角色随机一槽施加本场战斗持续的出牌伤害 5。
+
+**2026-10-11 黑熊战斗与循环扩展**：
+
+- `EnemySpawnDto.initialActionIndex` 为首条循环的 0 起索引，必须在循环范围内；换条仍从新循环首项开始。生命条可独立声明 `entrySkillRefs`，首次生成执行首条入场动作，后续换条在清空状态、补满生命并发换条事件后执行新条入场动作一次，不消耗常规行动。
+- 生命条可同时声明 `prioritySkillId` 与 `requiredAliveEnemyTag`：存在该标签的存活敌人时每次以计数1执行优先动作，不推进常规循环；条件消失后从常规循环首项开始。死亡同伴不满足条件。
+- 敌方技能 `enemyRandomTargetRepeats` 默认1，允许1～100次，仅多次时要求 `Enemy / RandomN / targetCount:1`。第一轮沿用已解析目标，后续每轮重新随机（继续遵守嘲讽），允许重复命中；每轮完整执行载荷，因此伤害和破甲逐次配对结算。文案统一写「随机1名角色N次」，不使用「随机N名角色」表示可重复命中。
+- `ApplyBuff` 可用 `stacks` 指定投放次数，或用 `stackMultiplier` 按现有层数补足倍数（0层保持0层，遵守 Buff 上限）；`requiredEnemyTag` 限定敌人定义标签。`GainResource / currentEnergy` 的负 amount 降低每回合额度 `CurrentEnergy` 和当前可用余额，最低0，不改 `MaxEnergy`；之后照常每回合再生。波次入场扣额度发生在新回合再生之前。
+- 「森林黑熊来袭」三波为普通黑熊×2（600；第二只从循环第2项开始）、普通／精英／普通（600／800→1000／600；普通均从第1项开始）、首领（1200→1500）。全为黄元素动物，基础攻防均0。普通入场各给每名角色随机一槽永久暴风强度1（同槽替换）。咆哮每层物攻+5，永久可驱散、上限20；仅首领咆哮跨条保留并在第二条入场翻倍。首领第一条入场队伍能量额度-2，破甲每击新增物防-6的3回合独立实例。精英第二条有普通黑熊时只给普通黑熊2层咆哮，失去全部普通黑熊后进入单独循环；公式伤害分别按125%和150%实时物攻计算，定值攻击不叠加物攻。
+
+**2026-10-11 不死恶灵、召唤与战斗机制**：
+
+- `BattleWaveDto.entryMechanisms` 独立声明波次入场扣血（`id`、`maxHpDamagePercent`，`turn:0`）。首次满血初始化后／换波敌人初始化后各执行一次，不随单个敌人入场或召唤重放。数额按触发时队伍未取整 `MaxHealth` 计算，通过唯一队伍生命写入口直接扣血；不走攻防、倍率、护盾、普通伤害规则、免疫／致命伤钩子、受击成长或魔法受击记账，也不属于任何敌人的行动。死亡立即进入 Defeat，不再执行回合开始治疗。表现使用独立 `BattleMechanismDamageEvent`。
+- 生命条 `turnStartMechanisms` 使用相同结构，`turn` 必须为正整数。正式切换该条时记为第1回合，每个全局回合开始在治疗、时长和抽牌管线前检查；按敌人实例／生命条／机制ID去重。旧条0血等待期间不启动新条倒计时，敌人最终死亡后不再触发其机制。
+- `prioritySkillId` 除同伴标签条件外，可改配 `prioritySummonCondition: { enemyId, maxAlive, maxSummons }`，两类条件互斥。存活数量不足且本条行动召唤额度未用完时，每次计数1执行召唤，普通循环暂停并保留进度；补齐或额度耗尽后续接原步骤。召唤额度按来源敌人／生命条／召唤定义记录，换条重置，场上存活幽灵不会被重置或清除。
+- `SummonEnemy` 动作参数为 `enemyId`、`count`、`maxAlive`、`maxSummons`、`trackLifeBarSummons`。实际数量同时受人口空位、单次数量和剩余额度约束；入场补足可设置 tracking=false。新敌人从同一工厂创建、赋独立运行时ID、接入GE与入场钩子，并追加到敌方列表，既有索引不变。敌方阶段以阶段开始快照行动，新召唤者在下一个敌方阶段才可行动；波次结束／胜利也包含这些单位。`EnemySummonedEvent` 驱动界面追加节点。
+- 手牌槽封印使用该槽 Buff 上的 `combat.state.sealed`，不封印整名角色，不阻止其他槽或正常弃置。标记指令拒绝该槽；新封印取消该槽已有标记并退款，封印免疫特征拦截投放。界面显示「封印」并禁用出牌点击。
+- Buff `deferFirstTurnEnd:true` 在新建／刷新后跳过一次回合结束递减，使敌方行动中的减攻、封印持续完整后续玩家回合；只允许 Turns 且 Independent／Refresh／Replace，避免共享层时长。其余 Buff 保持原时长规则。
+- 「发现不死恶灵」仅两波：幽灵×2（800；魔攻20；第二只错位起手）、幽灵／恶念／幽灵（恶念1800→2400→2800、魔攻40；幽灵同起手）。皆蓝元素、不死｜未知，其他攻防0。两波各触发上限25%／80%机制扣血；幽灵逐次随机角色与手牌槽施加2回合独立封印。恶念常规三步为随机1名角色2次各50魔伤、全体后续1回合双攻-10、全体50魔伤，定值攻击不额外叠加源魔攻。三个生命条分别补至2／3／4只幽灵，行动召唤总额4／5／8只、单次1／2／2只，不含第二／三条入场补足。第三条第10回合开始造成上限9999%机制扣血。
+
 ### 1.2 共享 HP（唯一玩家生命账本）
 
 - 胜负只看 **队伍共享 HP**；**v1 无单角色倒地**。四槽在 `SharedHp > 0` 期间全程可行动、可被点名（减员压力用 **封印**，见 2.5，不用死亡态）。
@@ -374,7 +402,7 @@ activeSkillChain: [
 
 ## 9. 开放项
 
-- 敌人 AI / 意图 UI（`EnemyUnit.IntentSkillId` 已有，界面尚未展示）。
+- 敌人意图已接入（2026-10-11）：玩家阶段开始预定下一技能，随机 AI 的预定结果保留至真正行动，行动延迟与界面刷新不重新抽选。条件召唤/增益按当前存活条件更新；固定循环按下一项更新。`EnemyUnit.Intent` 与 `EnemyIntentChangedEvent` 提供技能名称/说明翻译键、行动计数、待换血条状态，`IntentSkillId` 继续记录实际行动。无技能显示无行动；卡牌阶段破条后预告切换血条再行动。
 - `costScaling` 与动态费用接入后的展示与 `paid` 规则细项。
 - 非 Energy 费用类型专项（含 Health=SharedHp 的预扣/退费细则）。
 - ~~Team/Shared 目标枚举落点~~ → 已决议（2026-07-28）：`ETargetScope` 扩展 `Team`，见 1.3。
@@ -1537,6 +1565,8 @@ P2 与 P4 均采用受击口径，防御或护盾完全抵消也触发；自身�
 
 ### 16.1 逻辑侧契约
 
+2026-10-11：玩家阶段支持 `UsePotionCommand`，库存与 Run 共用 `CombatItemInventory`。校验拥有该瓶及合法目标后消耗并执行 `useSkillRefs`，不扣能量、不置已行动、不触发主动技能钩子；结算后的损血 / 治疗 / Buff 继续走既有表现事件，播放锁同其他指令。遗物开战技能在 InitialBuffs 后、冻结生命前执行，Buff 由技能安装。
+
 - `CombatSimulation.Presentation`（`CombatPresentationLog`）**始终存在**（不是构造参数）；`Emit(event)` 追加，`Drain()` 取走并清空，`Count` 只读。
 - 事件类型全部是 `Src/mod/combat/presentation/` 下的 **不可变 record**，**只携带值**（索引、id、数值、`CombatTargetRef`、`BuffHolderRef`），**不得**持有 `EnemyUnit` / `CharacterBattleInstance` / `BuffInstance` 等运行时对象引用，也**不得**引用 Godot 类型。
 - 发射点只允许在**已有编排层**插入一行 `Emit`，不改变玩法顺序与数值；单测 `CombatPresentationLogTests` 守卫事件顺序。
@@ -1553,6 +1583,7 @@ P2 与 P4 均采用受击口径，防御或护盾完全抵消也触发；自身�
 | `CardDiscardedEvent` | `CharacterIndex, SlotIndex, CardId, Channel` | `DiscardSettledCard`（结算弃，`Channel = CardExecution`）与 §4.6 中途弃牌通道（按当时的 `CurrentDiscardChannel`） |
 | `CardSettleStartedEvent` / `CardSettleEndedEvent` | `CharacterIndex, SlotIndex, CardId, Targets` | `SettleQueuedCard` 首 / 尾 |
 | `DamageDealtEvent` | `Source, Target, Amount, Kind, Element, EffectId, TargetHpAfter, TargetMaxHp, TargetAlive` | `DamagePipeline.NotifyAfter`（唯一伤害 choke point；Amount ≤ 0 不发） |
+| `EnemyAttackHitEvent` | `EnemyIndex, Target` | `DamagePipeline.NotifyAfter` 敌方命中玩家角色槽位时发出，早于该次 `DamageDealtEvent`；零实际损血仍发，供水泡攻击动效使用 |
 | `HealedEvent` | `Source, Target, Amount, HpAfter, MaxHp` | `CombatEffectExecutor.ApplyHeal`（账本 / 敌方两支）、`GameplayEffectApplicator` 吸血分支、`SharedHpSettlement.RunOnLedger` / `RunOnTarget`（GE 写入产生回血时补记；Amount ≤ 0 不发） |
 | `BuffAppliedEvent` / `BuffStacksChangedEvent` / `BuffRemovedEvent` | `Holder(BuffHolderRef), BuffId, Stacks` | `BuffRuntime.StackOrAdd`（新建 / 叠层 / 替换）、`Dispel`、`FireTurnEnd` 到期移除 |
 | `NormalAttackStrikeEvent` | `CharacterIndex, Kind, Element, IsOwnerStrike, Targets` | `NormalAttackRuntime.Strike` 每次打击**开始**（伤害循环之前：界面先播前冲，其后的 `DamageDealtEvent` 逐目标跟随） |
@@ -1574,6 +1605,7 @@ P2 与 P4 均采用受击口径，防御或护盾完全抵消也触发；自身�
 本节明确既有机制在组合场景下的边界，不改变增伤、连携、能量与多波玩法公式。
 
 - **合法构筑开战**：Run 的 `CardCollection` 必须传入战斗工厂，开战与卡组编辑使用相同的拥有权集合。注册但未获得的通用卡仍不能使用。战斗期间的卡组锁覆盖已捕获的 DeckPreset 引用与快照替换入口。
+- **共享生命持久写入（2026-10-11）**：伤害、治疗、开战补满与上限裁剪同步账本的基础值与当前值，回合结束/效果移除的属性重算不能恢复已经扣掉的生命，也不能复活已阵亡队伍。
 - **统一损血口径**：Damage execution 把未按生命余额截断的计算数额交给宿主；经规则、护盾后才写生命。`OnAfterDamage`、DamageDealt 表现与伤害返回值使用实际损血，超额伤害单独计数。敌方命中玩家槽位时，完全吸收也记一次 onDamaged；零实际损血不广播正数伤害事件。兼容 Instant Health 修饰符的转移边界只包住数值写入，生命周期钩子在边界外分发。吸血只累计本 GE 各次结算返回的实际损血，不纳入 onApply 等钩子的独立伤害或治疗。直伤回落继续传递完整 kind/element，保证缩放、规则、表现与受击账一致。
 - **回合边界**：首回合和后续回合均依次执行规则 OnTurnStart、GE 开始批次、Buff 开始批次，再检查终局/换波。终局后不灌入玩家资源、不覆盖终局阶段。每回合收尾只运行一次，先取消剩余付费标记并在原账期退款，再运行规则、GE/领域、Buff 和回合产球；跨波不得携带旧 Paid 或手牌标记。
 - **GE 驱动**：队伍、玩家角色与存活敌人的 ASC 都参与回合开始/结束，持续 GE 到期、周期 Damage execution 和 apply/stack/remove 钩子均有接线。来源身份在施加者死亡或换波后仍保留。v1 敌方队伍账本载荷仍为空放。

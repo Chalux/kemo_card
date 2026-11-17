@@ -1,0 +1,1 @@
+{"method":"execute.code","params":{"code":"get_tree().root.find_children(\"*Character*\", \"\", true, false)"}}

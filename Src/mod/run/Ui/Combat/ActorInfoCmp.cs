@@ -11,7 +11,7 @@ namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>
 /// 底栏最左：当前操控角色的信息——名字、元素·定位、能量（可用 / 当前 / 上限）、技能计数 S / Cap
-/// （+ 主动技状态行：可用 / 最大）、物理攻击 / 魔法攻击、物理防御 / 魔法防御、回复量、buff 列表。
+/// （+ 主动技状态行：可用 / 最大）、常驻技能按钮与多档充能、攻防、回复量、护盾、buff 列表。
 /// 悬停面板显示该角色的主动技（每一档 + 当前可释放档高亮，见 <see cref="CombatActiveSkillTips"/>）。
 /// </summary>
 public partial class ActorInfoCmp : BaseCmp
@@ -21,19 +21,21 @@ public partial class ActorInfoCmp : BaseCmp
     [Export] private Label? _lblEnergy;
     [Export] private Label? _lblSkill;
     [Export] private Label? _lblSkillHint;
+    [Export] private Label? _lblCharges;
     [Export] private Button? _btnRelease;
     [Export] private Label? _lblAttack;
     [Export] private Label? _lblMagicAttack;
     [Export] private Label? _lblDefense;
     [Export] private Label? _lblMagicDefense;
     [Export] private Label? _lblHeal;
+    [Export] private Label? _lblShield;
     [Export] private Label? _lblState;
     [Export] private Label? _lblMark;
     [Export] private BuffListCmp? _buffs;
 
     public BuffListCmp? BuffList => _buffs;
 
-    /// <summary>「释放主动技」回调（按钮只在有可释放档时可见）。</summary>
+    /// <summary>「释放主动技」回调（按钮常驻，未准备好时禁用）。</summary>
     public Action? ReleaseRequested { get; set; }
 
     private CharacterBattleInstance? _character;
@@ -63,6 +65,11 @@ public partial class ActorInfoCmp : BaseCmp
         }
 
         SetEnergy(character.CurrentEnergy, character.AvailableEnergy, character.MaxEnergy);
+        if (_lblCharges != null)
+        {
+            _lblCharges.Text = CombatActiveSkillTips.ChargeDots(character);
+            _lblCharges.Visible = _lblCharges.Text.Length > 0;
+        }
 
         if (_lblSkill != null)
         {
@@ -90,6 +97,8 @@ public partial class ActorInfoCmp : BaseCmp
             _lblMagicDefense.Text = CombatUnitFormat.MagicDefense(character.Asc);
         if (_lblHeal != null)
             _lblHeal.Text = CombatUnitFormat.Heal(character.Asc);
+        if (_lblShield != null)
+            _lblShield.Text = CombatUnitFormat.Shield(character.Asc);
 
         if (_lblState != null)
         {
@@ -118,10 +127,13 @@ public partial class ActorInfoCmp : BaseCmp
 
     private void OnHoverExited() => KeywordTipService.Current?.HideTips(this);
 
-    /// <summary>「释放主动技」按钮的显隐（判据见 <see cref="CombatActiveSkillTips.CanRelease"/>）。</summary>
-    public void SetSkillRelease(bool visible)
+    /// <summary>按钮常驻；未准备好、无权控制或结算中灰显。</summary>
+    public void SetSkillRelease(bool enabled)
     {
         if (_btnRelease != null)
-            _btnRelease.Visible = visible;
+        {
+            _btnRelease.Visible = true;
+            _btnRelease.Disabled = !enabled;
+        }
     }
 }

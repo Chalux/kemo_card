@@ -130,7 +130,7 @@ public sealed class AbilitySystemComponent
         };
     }
 
-    public bool RemoveActiveEffect(Guid handle)
+    public bool RemoveActiveEffect(Guid handle, bool invokeRemoveHooks = true)
     {
         var effect = _activeEffects.FirstOrDefault(item => item.Handle == handle);
         if (!RemoveActiveEffectInternal(handle))
@@ -138,7 +138,7 @@ public sealed class AbilitySystemComponent
 
         RefreshGrantedTags();
         Aggregator.RecalculateAll();
-        if (effect is not null && effect.Def.Hooks.OnRemove.Count > 0)
+        if (invokeRemoveHooks && effect is not null && effect.Def.Hooks.OnRemove.Count > 0)
             HookDispatcher?.DispatchRemove(effect, effect.Def.Hooks.OnRemove);
         return true;
     }

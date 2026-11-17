@@ -1,0 +1,6 @@
+Mode: built-in image_gen; transparent_background=true
+
+Use case: precise-object-edit. Image1 is BUFF sheet edit target, image2 approved idlepixel reference. EXACT1536x1024 FOURcolumns TWOrows cells384x512.
+Repair ONLY the free LEFT arm gesture and its effect so NOTHING crosses any cellborder. Keep fixed identity, face, white suit, swordhand pose, pixelscale, root, feet, tail and original sprite shadows.
+The character's LEFT arm on viewer RIGHT stays bent CLOSE TO CHEST while casting. Free elbow by waist and free palm nearx305,y205 within eachcell. Never fully extend arm to the far right. Frame5 palmmaxx340 (including fingertips); effectpixelmaxx350. Maintain at least24px rightmargin all8frames. Small pale-cyan light floats ONLY above leftpalmandfewtiny motes nearleftshoulder. Remove every graphic or light outsidecellbounds, particularly frame5 and6. Nolargeaura or glowgradient. Tinycrisp pixelhighlights only.
+All white trouser legs and feet fixed exactlymatchingimage2. Swordheld down-right in RIGHT paw, no sword movement or new wristrotation. Fixed palette and upper-left light. 1idle2leftelbowbends3leftpalmupnearsternum4smalllight5offerspalmcompactly6lightdisperses7lowersarm8idle. Singlecoherentleftarm bluefurrypaw. Actualtransparentbackground,nogroundshadow,textorlabels.

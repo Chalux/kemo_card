@@ -1,0 +1,583 @@
+{
+  "mode": "built-in image_gen",
+  "version": "v13",
+  "status": "preview-only",
+  "frameSize": [
+    896,
+    592
+  ],
+  "gameAssetsReplaced": false,
+  "animations": {
+    "attack": {
+      "frameCount": 12,
+      "durationMs": [
+        90,
+        90,
+        90,
+        120,
+        50,
+        40,
+        50,
+        70,
+        80,
+        100,
+        100,
+        120
+      ],
+      "totalMs": 1000,
+      "loop": false,
+      "extraction": [
+        {
+          "sourceFrame": 1,
+          "sourceRect": [
+            0,
+            0,
+            327,
+            367
+          ],
+          "scale": 1.42,
+          "registration": [
+            149,
+            22
+          ],
+          "sourceFootCenter": 141.5,
+          "sourceFootBottom": 361,
+          "outputBounds": [
+            211,
+            33,
+            563,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 2,
+          "sourceRect": [
+            327,
+            0,
+            343,
+            367
+          ],
+          "scale": 1.42,
+          "registration": [
+            183,
+            22
+          ],
+          "sourceFootCenter": 117.5,
+          "sourceFootBottom": 361,
+          "outputBounds": [
+            220,
+            35,
+            640,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 3,
+          "sourceRect": [
+            670,
+            0,
+            330,
+            367
+          ],
+          "scale": 1.42,
+          "registration": [
+            177,
+            22
+          ],
+          "sourceFootCenter": 122.0,
+          "sourceFootBottom": 361,
+          "outputBounds": [
+            222,
+            42,
+            640,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 4,
+          "sourceRect": [
+            1000,
+            0,
+            448,
+            367
+          ],
+          "scale": 1.42,
+          "registration": [
+            24,
+            22
+          ],
+          "sourceFootCenter": 229.5,
+          "sourceFootBottom": 361,
+          "outputBounds": [
+            35,
+            43,
+            617,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 5,
+          "sourceRect": [
+            0,
+            367,
+            329,
+            357
+          ],
+          "scale": 1.42,
+          "registration": [
+            155,
+            36
+          ],
+          "sourceFootCenter": 137.0,
+          "sourceFootBottom": 351,
+          "outputBounds": [
+            223,
+            43,
+            601,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 6,
+          "sourceRect": [
+            329,
+            367,
+            337,
+            357
+          ],
+          "scale": 1.42,
+          "registration": [
+            176,
+            36
+          ],
+          "sourceFootCenter": 122.5,
+          "sourceFootBottom": 351,
+          "outputBounds": [
+            231,
+            43,
+            604,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 7,
+          "sourceRect": [
+            666,
+            367,
+            459,
+            357
+          ],
+          "scale": 1.42,
+          "registration": [
+            177,
+            36
+          ],
+          "sourceFootCenter": 121.5,
+          "sourceFootBottom": 351,
+          "outputBounds": [
+            221,
+            43,
+            823,
+            537
+          ]
+        },
+        {
+          "sourceFrame": 8,
+          "sourceRect": [
+            1100,
+            367,
+            348,
+            357
+          ],
+          "scale": 1.42,
+          "registration": [
+            169,
+            36
+          ],
+          "sourceFootCenter": 127.5,
+          "sourceFootBottom": 351,
+          "outputBounds": [
+            217,
+            43,
+            637,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 9,
+          "sourceRect": [
+            0,
+            724,
+            380,
+            362
+          ],
+          "scale": 1.42,
+          "registration": [
+            168,
+            42
+          ],
+          "sourceFootCenter": 128.0,
+          "sourceFootBottom": 347,
+          "outputBounds": [
+            222,
+            45,
+            698,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 10,
+          "sourceRect": [
+            375,
+            724,
+            295,
+            362
+          ],
+          "scale": 1.42,
+          "registration": [
+            213,
+            42
+          ],
+          "sourceFootCenter": 96.5,
+          "sourceFootBottom": 347,
+          "outputBounds": [
+            222,
+            46,
+            596,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 11,
+          "sourceRect": [
+            670,
+            724,
+            390,
+            362
+          ],
+          "scale": 1.42,
+          "registration": [
+            146,
+            42
+          ],
+          "sourceFootCenter": 143.5,
+          "sourceFootBottom": 347,
+          "outputBounds": [
+            227,
+            46,
+            611,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 12,
+          "sourceRect": [
+            1090,
+            724,
+            358,
+            362
+          ],
+          "scale": 1.42,
+          "registration": [
+            158,
+            42
+          ],
+          "sourceFootCenter": 135.0,
+          "sourceFootBottom": 347,
+          "reusesOutputFrame": 1,
+          "outputBounds": [
+            211,
+            33,
+            563,
+            536
+          ]
+        }
+      ]
+    },
+    "defeat": {
+      "frameCount": 12,
+      "durationMs": [
+        100,
+        110,
+        110,
+        110,
+        120,
+        120,
+        120,
+        130,
+        130,
+        140,
+        140,
+        300
+      ],
+      "totalMs": 1630,
+      "loop": false,
+      "extraction": [
+        {
+          "sourceFrame": 1,
+          "sourceRect": [
+            0,
+            0,
+            314,
+            360
+          ],
+          "scale": 1.5,
+          "registration": [
+            158,
+            31
+          ],
+          "sourceFootCenter": 219.5,
+          "sourceFootBottom": 336,
+          "outputBounds": [
+            226,
+            41,
+            548,
+            544
+          ]
+        },
+        {
+          "sourceFrame": 2,
+          "sourceRect": [
+            314,
+            0,
+            313,
+            360
+          ],
+          "scale": 1.5,
+          "registration": [
+            152,
+            31
+          ],
+          "sourceFootCenter": 223.0,
+          "sourceFootBottom": 336,
+          "outputBounds": [
+            229,
+            76,
+            545,
+            542
+          ]
+        },
+        {
+          "sourceFrame": 3,
+          "sourceRect": [
+            627,
+            0,
+            313,
+            360
+          ],
+          "scale": 1.5,
+          "registration": [
+            135,
+            31
+          ],
+          "sourceFootCenter": 234.5,
+          "sourceFootBottom": 336,
+          "outputBounds": [
+            210,
+            96,
+            545,
+            544
+          ]
+        },
+        {
+          "sourceFrame": 4,
+          "sourceRect": [
+            940,
+            0,
+            314,
+            360
+          ],
+          "scale": 1.5,
+          "registration": [
+            122,
+            29
+          ],
+          "sourceFootCenter": 243.5,
+          "sourceFootBottom": 337,
+          "outputBounds": [
+            203,
+            127,
+            547,
+            542
+          ]
+        },
+        {
+          "sourceFrame": 5,
+          "sourceRect": [
+            0,
+            360,
+            314,
+            320
+          ],
+          "scale": 1.5,
+          "registration": [
+            133,
+            110
+          ],
+          "sourceFootCenter": 236.0,
+          "sourceFootBottom": 283,
+          "outputBounds": [
+            191,
+            138,
+            547,
+            547
+          ]
+        },
+        {
+          "sourceFrame": 6,
+          "sourceRect": [
+            314,
+            360,
+            313,
+            320
+          ],
+          "scale": 1.5,
+          "registration": [
+            122,
+            111
+          ],
+          "sourceFootCenter": 243.0,
+          "sourceFootBottom": 282,
+          "outputBounds": [
+            203,
+            154,
+            551,
+            545
+          ]
+        },
+        {
+          "sourceFrame": 7,
+          "sourceRect": [
+            627,
+            360,
+            313,
+            320
+          ],
+          "scale": 1.5,
+          "registration": [
+            110,
+            111
+          ],
+          "sourceFootCenter": 251.0,
+          "sourceFootBottom": 282,
+          "outputBounds": [
+            194,
+            162,
+            551,
+            548
+          ]
+        },
+        {
+          "sourceFrame": 8,
+          "sourceRect": [
+            940,
+            360,
+            314,
+            320
+          ],
+          "scale": 1.5,
+          "registration": [
+            102,
+            111
+          ],
+          "sourceFootCenter": 256.5,
+          "sourceFootBottom": 282,
+          "outputBounds": [
+            171,
+            168,
+            551,
+            549
+          ]
+        },
+        {
+          "sourceFrame": 9,
+          "sourceRect": [
+            0,
+            680,
+            314,
+            300
+          ],
+          "scale": 1.5,
+          "registration": [
+            126,
+            134
+          ],
+          "sourceFootCenter": 240.5,
+          "sourceFootBottom": 267,
+          "outputBounds": [
+            172,
+            170,
+            548,
+            544
+          ]
+        },
+        {
+          "sourceFrame": 10,
+          "sourceRect": [
+            314,
+            680,
+            313,
+            300
+          ],
+          "scale": 1.5,
+          "registration": [
+            115,
+            134
+          ],
+          "sourceFootCenter": 248.0,
+          "sourceFootBottom": 267,
+          "outputBounds": [
+            172,
+            189,
+            550,
+            544
+          ]
+        },
+        {
+          "sourceFrame": 11,
+          "sourceRect": [
+            627,
+            680,
+            313,
+            300
+          ],
+          "scale": 1.5,
+          "registration": [
+            94,
+            135
+          ],
+          "sourceFootCenter": 262.0,
+          "sourceFootBottom": 266,
+          "outputBounds": [
+            169,
+            204,
+            549,
+            545
+          ]
+        },
+        {
+          "sourceFrame": 12,
+          "sourceRect": [
+            940,
+            680,
+            314,
+            300
+          ],
+          "scale": 1.5,
+          "registration": [
+            87,
+            135
+          ],
+          "sourceFootCenter": 266.5,
+          "sourceFootBottom": 266,
+          "outputBounds": [
+            180,
+            218,
+            546,
+            545
+          ]
+        }
+      ]
+    }
+  }
+}

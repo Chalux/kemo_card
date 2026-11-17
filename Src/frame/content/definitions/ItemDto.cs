@@ -4,6 +4,12 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public sealed class ItemDto
 {
+    [JsonPropertyName("kind")]
+    public EItemKind Kind { get; init; } = EItemKind.Potion;
+
+    [JsonPropertyName("battleStartSkillRefs")]
+    public List<SkillRefDto> BattleStartSkillRefs { get; init; } = [];
+
     [JsonPropertyName("id")]
     public string Id { get; init; } = "";
 

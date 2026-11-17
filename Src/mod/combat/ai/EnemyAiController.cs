@@ -34,6 +34,9 @@ public sealed class EnemyAiController
         if (!_registry.Store.TryGetEnemy(enemy.DefinitionId, out var def))
             return null;
 
+        if (enemy.NextAction is { } action)
+            return action.SkillId;
+
         if (!string.IsNullOrWhiteSpace(def.ScriptPath) && _scriptInvoker is not null)
         {
             var callContext = new ScriptCallContext

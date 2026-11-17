@@ -1,0 +1,13 @@
+{
+  "displayNameId": "skill.kyle_entry_brand.name",
+  "descId": "skill.kyle_entry_brand.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "actionRefs": [
+    {
+      "actionId": "kyle_entry_brand"
+    }
+  ]
+}

@@ -1,5 +1,17 @@
 {
   "displayNameId": "char.chalux.name",
+  "portraits": {
+    "default": "Neutral",
+    "entries": [
+      { "key": "Neutral", "path": "Characters/chalux/portrait.png" }
+    ]
+  },
+  "presentation": {
+    "kind": "SpriteFrames",
+    "path": "Characters/chalux/animations.tres",
+    "defaultAnim": "idle",
+    "anims": ["idle"]
+  },
   "element": "Blue",
   "role": "Warrior",
   "race": ["Animal", "Dragon"],

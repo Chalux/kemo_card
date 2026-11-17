@@ -1,0 +1,37 @@
+{
+  "displayNameId": "char.chalux.name",
+  "portraits": {
+    "default": "Neutral",
+    "entries": [
+      { "key": "Neutral", "path": "Characters/chalux/portrait.png" }
+    ]
+  },
+  "presentation": {
+    "kind": "SpriteFrames",
+    "path": "Characters/chalux/animations.tres",
+    "defaultAnim": "idle",
+    "anims": ["idle"]
+  },
+  "element": "Blue",
+  "role": "Warrior",
+  "race": ["Animal", "Dragon"],
+  "skillRefs": [],
+  "activeSkillChain": [
+    { "skillId": "chalux_glacial_overflow", "cooldown": 8 }
+  ],
+  "cards": [
+    "chalux_orca_ice_rush",
+    "chalux_resplendent_path",
+    "chalux_brilliant_sword",
+    "chalux_absolute_resolve"
+  ],
+  "maxEnergy": 8,
+  "initialEnergy": 3,
+  "passives": [
+    { "buffId": "chalux_passive_p1", "requiredPotential": 0 },
+    { "buffId": "chalux_passive_p2", "requiredPotential": 10 },
+    { "buffId": "chalux_passive_p3", "requiredPotential": 30 },
+    { "buffId": "chalux_passive_p4", "requiredPotential": 50 }
+  ],
+  "tags": ["starter"]
+}

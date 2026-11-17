@@ -41,6 +41,12 @@ public sealed class CombatSimulation : IDisposable
     public int RejectedEffectExecutionCount => EffectBudget.RejectedCount;
     public TeamDomainManager DomainManager { get; }
     internal CombatEffectLifecycle EffectLifecycle { get; }
+    internal EnemyLifeBarRuntime EnemyLifeBars { get; }
+    internal EnemyIntentRuntime EnemyIntents { get; }
+    internal EnemySummonRuntime EnemySummons { get; }
+    internal BattleMechanismRuntime Mechanisms { get; }
+    internal int EnemyPhaseNumber { get; set; }
+    internal int EnemyActionIndex { get; set; } = -1;
     public EnemyAiController EnemyAi { get; }
     public IContentEffectScriptHost ScriptHost { get; }
 
@@ -58,6 +64,7 @@ public sealed class CombatSimulation : IDisposable
     /// 始终存在（不是构造参数），逻辑层不知道是否有人消费。
     /// </summary>
     public CombatPresentationLog Presentation { get; } = new();
+    public CombatItemInventory Items { get; set; } = new();
 
     public string ModId { get; }
     public BattleDto? Battle { get; }
@@ -167,6 +174,10 @@ public sealed class CombatSimulation : IDisposable
         NormalAttacks = new NormalAttackRuntime();
         DomainManager = new TeamDomainManager(this);
         EffectLifecycle = new CombatEffectLifecycle(this);
+        EnemyLifeBars = new EnemyLifeBarRuntime(this);
+        EnemyIntents = new EnemyIntentRuntime(this);
+        EnemySummons = new EnemySummonRuntime(this);
+        Mechanisms = new BattleMechanismRuntime(this);
         EffectLifecycle.AttachHolders();
         EnemyAi = new EnemyAiController(definitions, enemyAiScriptInvoker, modId, runSeed);
         _teamMaxHealthCoordinator = new TeamMaxHealthCoordinator(PlayerTeam);
@@ -178,7 +189,10 @@ public sealed class CombatSimulation : IDisposable
     public CombatApplyResult TryApply(ICombatCommand command)
     {
         ArgumentNullException.ThrowIfNull(command);
-        return _stateMachine.TryApply(this, command);
+        var result = _stateMachine.TryApply(this, command);
+        if (result.Success && Phase == ECombatPhase.Player)
+            EnemyIntents.RefreshAll();
+        return result;
     }
 
     public CombatContext CreateContext() => new(this, TurnNumber);
@@ -186,6 +200,8 @@ public sealed class CombatSimulation : IDisposable
     internal void TransitionTo(ECombatPhase phase)
     {
         var previous = _stateMachine.Phase;
+        if (phase == ECombatPhase.Enemy && previous != phase)
+            EnemyActionIndex = -1;
         _stateMachine.TransitionTo(phase);
         if (previous != phase)
             Presentation.Emit(new PhaseChangedEvent(previous, phase, TurnNumber));
@@ -619,6 +635,9 @@ public sealed class CombatSimulation : IDisposable
         // 新波次的敌人是全新的实例（buff 容器为空）：必须重新挂载内容声明的开战 buff，
         // 否则 EnemyDto.buffRefs 只在第一波生效。顺序与 BattleStart 一致——先挂 buff 再发阶层钩子。
         ApplyEnemyInitialBuffs();
+        Mechanisms.WaveEntry();
+        if (PlayerTeam.IsDefeated)
+            return;
         // 阶层开始钩子（波内每 N 回合的计时基准同时归零）。
         Buffs.FireWaveStart(this);
 
@@ -636,17 +655,40 @@ public sealed class CombatSimulation : IDisposable
     /// </summary>
     internal void ApplyEnemyInitialBuffs()
     {
-        for (var i = 0; i < EnemyTeam.Enemies.Count; i++)
-        {
-            var enemy = EnemyTeam.Enemies[i];
-            if (Definitions.Store.TryGetEnemy(enemy.DefinitionId, out var definition))
-            {
-                foreach (var buffRef in definition.BuffRefs)
-                    Buffs.Apply(this, new CombatTargetRef(ECombatSide.Enemy, i), buffRef.BuffId, buffRef.Params);
-            }
-            Buffs.FireEnemyEntered(this, i);
-        }
+        var initialCount = EnemyTeam.Enemies.Count;
+        for (var i = 0; i < initialCount; i++)
+            InitializeEnemy(i);
         DomainManager.RefreshDomainBuffs();
+    }
+
+    internal void InitializeEnemy(int index)
+    {
+        var enemy = EnemyTeam.Enemies[index];
+        enemy.LifeBarEnteredTurn = TurnNumber;
+        if (Definitions.Store.TryGetEnemy(enemy.DefinitionId, out var definition))
+        {
+            foreach (var buffRef in definition.BuffRefs)
+                Buffs.Apply(this, new CombatTargetRef(ECombatSide.Enemy, index), buffRef.BuffId, buffRef.Params);
+            ExecuteEnemyEntrySkills(index, definition.EntrySkillRefs);
+            if (enemy.LifeBars.Count > 0)
+                ExecuteEnemyEntrySkills(index, enemy.LifeBars[enemy.LifeBarIndex].EntrySkillRefs);
+        }
+        Buffs.FireEnemyEntered(this, index);
+    }
+
+    internal void ExecuteEnemyEntrySkills(int enemyIndex, IReadOnlyList<SkillRefDto> references)
+    {
+        foreach (var reference in references)
+        {
+            if (!Definitions.Store.TryGetSkill(reference.SkillId, out var skill))
+                continue;
+            var source = new CombatTargetRef(ECombatSide.Enemy, enemyIndex);
+            var targets = CombatTargetResolver.ResolveEnemySkillTargets(this, skill, enemyIndex);
+            Presentation.Emit(new EnemyActionStartedEvent(enemyIndex, skill.Id));
+            SkillPayloadExecutor.Execute(this, skill, source, targets, reference.Params);
+            Presentation.Emit(new EnemyActionEndedEvent(enemyIndex, skill.Id));
+            FlushOnDamagedHits();
+        }
     }
 
     public void Dispose()

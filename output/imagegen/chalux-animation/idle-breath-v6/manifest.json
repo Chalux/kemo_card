@@ -1,0 +1,35 @@
+{
+  "animation": "idle",
+  "frameCount": 8,
+  "frameSize": [
+    432,
+    560
+  ],
+  "columns": 4,
+  "rows": 2,
+  "fps": 3.8461538461538463,
+  "cycleDurationMs": 2080,
+  "status": "breathing-trial-awaiting-user-confirmation",
+  "styleSource": "../idle-balanced-v5/frames/idle-01.png",
+  "motionReference": "generated-motion-reference.png",
+  "rootMotion": false,
+  "footPixelsIdentical": true,
+  "firstLastIdentical": true,
+  "chestLiftMaxPx": 4,
+  "headLiftMaxPx": 2,
+  "shoulderSwayMaxPx": 1,
+  "breathingPhases": [
+    0,
+    1,
+    3,
+    4,
+    3,
+    1,
+    0,
+    0
+  ],
+  "shading": "source colors travel with the integer rig; no regenerated shadows or lighting",
+  "firstLastSha256": "45bf6848d52aa4dae1ac2579dfd23387c88681e722c617594ff9741041da0c51",
+  "generatedWith": "built-in image_gen artwork and motion reference; integer animation assembly",
+  "processing": "approved v5 pixels mapped by integer breathing rig; no color blending or shading repaint"
+}

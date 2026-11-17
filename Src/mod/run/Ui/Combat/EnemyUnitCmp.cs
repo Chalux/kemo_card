@@ -5,6 +5,7 @@ using KemoCard.Frame.Content.Keywords;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Combat.Runtime;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Global.Ui.Comp;
 using KemoCard.Mod.Global.Ui.Themes;
 using KemoCard.Mod.Global.Ui.Tip;
@@ -20,6 +21,7 @@ public partial class EnemyUnitCmp : BaseCmp
 {
     [Export] private CharacterPresenter? _presenter;
     [Export] private Label? _lblName;
+    [Export] private Label? _lblIntent;
     [Export] private HpBarCmp? _hp;
     [Export] private BuffListCmp? _buffs;
     [Export] private Panel? _highlight;
@@ -79,6 +81,8 @@ public partial class EnemyUnitCmp : BaseCmp
             return;
 
         _hp?.SetValue(_unit.CurrentHp, _unit.MaxHp);
+        SetLifeBarColor(_unit.LifeBarIndex, _unit.LifeBarCount);
+        SetIntent(_unit.Intent);
         _buffs?.Bind(_unit.Buffs.Visible);
         Visible = _unit.IsAlive;
         if (_unit.IsAlive)
@@ -118,6 +122,24 @@ public partial class EnemyUnitCmp : BaseCmp
 
     public Task ShakeAsync(float duration) => UnitTweens.ShakeAsync(this, 8f, duration);
 
+    public void SetLifeBarColor(int index, int count)
+    {
+        _hp?.SetLifeBarColors(index, count);
+    }
+
+    public void SetIntent(EnemyIntentChangedEvent? intent)
+    {
+        if (_lblIntent is null)
+            return;
+        _lblIntent.Text = intent is { AwaitingLifeBar: true }
+            ? Localization.Tr("UI_COMBAT_INTENT_LIFE_BAR")
+            : intent is null || string.IsNullOrWhiteSpace(intent.SkillNameId)
+                ? Localization.Tr("UI_COMBAT_INTENT_NONE")
+                : string.Format(Localization.Tr("UI_COMBAT_INTENT_SKILL"), Localization.Tr(intent.SkillNameId), intent.ActionCount);
+        _lblIntent.TooltipText = intent is not null && !string.IsNullOrWhiteSpace(intent.SkillDescriptionId)
+            ? Localization.Tr(intent.SkillDescriptionId) : _lblIntent.Text;
+    }
+
     public Task LungeAsync(float duration) => UnitTweens.PulseAsync(this, 1.08f, duration);
 
     /// <summary>阵亡退场：淡出到完全透明（随后的 <see cref="Refresh"/> 隐藏并释放占位）。</summary>
@@ -136,6 +158,12 @@ public partial class EnemyUnitCmp : BaseCmp
         if (identity.Length > 0)
             lines.Add(identity);
         lines.Add(string.Format(Localization.Tr("UI_COMBAT_TIP_HP"), _unit.CurrentHp, _unit.MaxHp));
+        if (_unit.Intent is { } intent)
+        {
+            lines.Add(_lblIntent?.Text ?? "");
+            if (!string.IsNullOrWhiteSpace(intent.SkillDescriptionId))
+                lines.Add(Localization.Tr(intent.SkillDescriptionId));
+        }
         lines.Add(string.Format(
             Localization.Tr("UI_COMBAT_TIP_ATTACK"),
             CombatUnitFormat.PhysicalAttack(_unit.Asc),

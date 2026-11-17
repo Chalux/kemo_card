@@ -76,7 +76,8 @@ public partial class HandSlotCmp : BaseCmp
         {
             _card.Visible = HasCard;
             _card.SetData(HasCard ? card : null);
-            _card.SetOverlay(HasCard && slot.IsMarked ? Localization.Tr("UI_COMBAT_CARD_MARKED") : null);
+            _card.SetOverlay(HasCard && slot.IsSealed ? Localization.Tr("UI_COMBAT_SLOT_SEALED") :
+                HasCard && slot.IsMarked ? Localization.Tr("UI_COMBAT_CARD_MARKED") : null);
             _card.Modulate = _card.Modulate with { A = interactable || !HasCard ? 1f : 0.7f };
         }
 

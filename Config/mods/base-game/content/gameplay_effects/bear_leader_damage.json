@@ -1,0 +1,11 @@
+{
+  "displayNameId": "ge.bear_leader_damage.name",
+  "durationPolicy": "Instant",
+  "executions": [
+    {
+      "kind": "Damage",
+      "damageType": "Physical",
+      "attackScale": 1.5
+    }
+  ]
+}

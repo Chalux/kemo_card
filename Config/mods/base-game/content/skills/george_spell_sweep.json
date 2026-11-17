@@ -1,0 +1,16 @@
+{
+  "displayNameId": "skill.george_spell_sweep.name",
+  "descId": "skill.george_spell_sweep.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "All"
+  },
+  "actionRefs": [
+    {
+      "actionId": "brothers_magical_damage",
+      "params": {
+        "Amount": 10
+      }
+    }
+  ]
+}

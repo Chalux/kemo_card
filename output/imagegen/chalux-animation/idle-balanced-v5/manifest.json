@@ -1,0 +1,68 @@
+{
+  "animation": "idle",
+  "frameCount": 8,
+  "frameSize": [
+    432,
+    560
+  ],
+  "columns": 4,
+  "rows": 2,
+  "fps": 6.25,
+  "loop": true,
+  "status": "awaiting-user-confirmation",
+  "rootMotion": false,
+  "firstLastIdentical": true,
+  "staticRegionPixelIdentical": true,
+  "animatedRegions": {
+    "eye": [
+      272,
+      89,
+      302,
+      115
+    ],
+    "tailTip": [
+      60,
+      424,
+      164,
+      504
+    ]
+  },
+  "tailTipMaxDisplacementPx": 4,
+  "firstLastSha256": "45bf6848d52aa4dae1ac2579dfd23387c88681e722c617594ff9741041da0c51",
+  "integerRegistrationOffsets": [
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "generatedWith": "built-in image_gen",
+  "processing": "generated art assembled as one immutable body layer plus cropped blink and integer tail-tip deformation; no repainting, palette changes or interpolation"
+}

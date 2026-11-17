@@ -5,6 +5,11 @@ namespace KemoCard.Frame.UI.Def;
 /// <summary>
 /// 遮罩选项
 /// </summary>
+/// <remarks>
+/// <see cref="Runtime"/> 会被加载并挂到界面之下；其余字段框架<b>不消费</b>（仅 <see cref="UIOpenOpt.Clone"/>
+/// 会复制），需要透明度、点击关闭、最短展示时间等行为时，请在实际的 <c>BaseMask</c> 子类里实现，
+/// 不要以为在这里赋值就会生效。
+/// </remarks>
 public class UIMaskOpt
 {
     public string? Runtime { get; set; }

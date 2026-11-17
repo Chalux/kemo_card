@@ -34,13 +34,25 @@ public sealed class BindingScope
     }
 
     /// <summary>登记并立即订阅。</summary>
+    /// <remarks>
+    /// 先登记再订阅：<paramref name="subscribe"/> 抛异常时立刻撤销登记，
+    /// 既不会留下「已订阅但没进账本」的泄漏，也不会留下「账本里有、实际没订阅」的坏条目。
+    /// </remarks>
     public void Bind(Action subscribe, Action unsubscribe)
     {
         ArgumentNullException.ThrowIfNull(subscribe);
         ArgumentNullException.ThrowIfNull(unsubscribe);
 
-        subscribe();
         _unbinders.Add(unsubscribe);
+        try
+        {
+            subscribe();
+        }
+        catch
+        {
+            _unbinders.Remove(unsubscribe);
+            throw;
+        }
     }
 
     /// <summary>

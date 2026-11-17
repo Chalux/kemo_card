@@ -32,12 +32,23 @@ public static class CombatActiveSkillTips
     /// <summary>技能进度后缀：满档（<c>S</c> 已达 <c>Cap</c>，最高档可释放）。</summary>
     public const string MaxKey = "UI_COMBAT_ACTIVE_SKILL_MAX";
 
-    /// <summary>是否有可释放档（释放按钮的显示判据；无主动链恒 <c>false</c>）。</summary>
+    /// <summary>是否有可释放档（释放按钮的可用判据；无主动链恒 <c>false</c>）。</summary>
     public static bool CanRelease(CharacterBattleInstance character)
     {
         ArgumentNullException.ThrowIfNull(character);
 
         return character.ActiveSkillChain.Count > 0 && character.ResolveCastableTier() >= 0;
+    }
+
+    /// <summary>多档充能：每个累计门槛对应一颗圆点，已达标实心，未达标空心。</summary>
+    public static string ChargeDots(CharacterBattleInstance character)
+    {
+        ArgumentNullException.ThrowIfNull(character);
+        if (character.ActiveSkillChain.Count <= 1)
+            return "";
+        var filled = character.ResolveCastableTier() + 1;
+        return string.Join(" ", Enumerable.Range(0, character.ActiveSkillChain.Count)
+            .Select(index => index < filled ? "●" : "○"));
     }
 
     /// <summary>

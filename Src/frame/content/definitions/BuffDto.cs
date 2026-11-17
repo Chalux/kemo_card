@@ -172,6 +172,9 @@ public sealed class BuffEffectHooksDto
 
 public sealed class BuffDto
 {
+    [JsonPropertyName("persistAcrossLifeBars")]
+    public bool PersistAcrossLifeBars { get; init; }
+
     [JsonPropertyName("id")]
     public string Id { get; init; } = "";
 
@@ -192,6 +195,10 @@ public sealed class BuffDto
 
     [JsonPropertyName("durationType")]
     public EBuffDurationType DurationType { get; init; }
+
+    /// <summary>跳过新建/刷新后第一次回合结束的时长递减，供敌方行动施加的完整后续回合效果。</summary>
+    [JsonPropertyName("deferFirstTurnEnd")]
+    public bool DeferFirstTurnEnd { get; init; }
 
     [JsonPropertyName("duration")]
     public int Duration { get; init; }

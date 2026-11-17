@@ -1,0 +1,21 @@
+{
+  "displayNameId": "skill.bear_leader_triple.name",
+  "descId": "skill.bear_leader_triple.desc",
+  "targetOverride": {
+    "side": "Enemy",
+    "scope": "RandomN",
+    "targetCount": 1
+  },
+  "actionRefs": [
+    {
+      "actionId": "bear_fixed_damage",
+      "params": {
+        "Amount": 35
+      }
+    },
+    {
+      "actionId": "bear_armor_break"
+    }
+  ],
+  "enemyRandomTargetRepeats": 3
+}

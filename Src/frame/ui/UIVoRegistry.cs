@@ -1,3 +1,4 @@
+using KemoCard.Frame.Logging;
 using KemoCard.Frame.StateMachine;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Frame.UI.States;
@@ -40,28 +41,43 @@ public sealed class UIVoRegistry(UIManager manager, IEnumerable<IStateHandler<EU
         _map.Remove(id);
     }
 
-    public void TickCacheDestroy(double delta)
+    public void Tick(double delta)
     {
         _cacheCheckAccumulator += delta;
         if (_cacheCheckAccumulator < 1) return;
         _cacheCheckAccumulator = 0;
 
         long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        List<string> toDestroy = [];
+        // 快照：强制流转 / 销毁会同步修改 _map（Destroy handler 里 Remove），不能边枚举边改。
+        UIVo[] snapshot = [.. _map.Values];
+        foreach (var vo in snapshot) ForceCloseTimeout(vo, now);
+        foreach (var vo in snapshot) DestroyExpiredCache(vo, now);
+    }
 
-        foreach (var (id, vo) in _map)
-        {
-            if (vo.StateMachine.CurrentState != EUIState.Cache || vo.Lifecycle.DestroyTime == -1)
-                continue;
+    /// <summary>
+    /// 关闭超时看门狗：OnCloseAnim 的 done 永不回调（Tween 被 kill / 节点离树 / 业务漏调）时，
+    /// VO 会永久停在 Close（IsOpen=false、IsClose=true，既不会被缓存回收，也进不了批量关闭），
+    /// 这里兜底推进到 CloseDone。
+    /// </summary>
+    private static void ForceCloseTimeout(UIVo vo, long now)
+    {
+        if (vo.StateMachine.CurrentState != EUIState.Close) return;
+        if (vo.Lifecycle.CloseStartTime == 0) return;
 
-            if (now >= vo.Lifecycle.DestroyTime)
-                toDestroy.Add(id);
-        }
+        long elapsed = now - vo.Lifecycle.CloseStartTime;
+        if (elapsed <= UIConsts.UI_CLOSE_TIMEOUT_MS) return;
 
-        foreach (var id in toDestroy)
-        {
-            _map[id].StateMachine.TransitionTo(EUIState.Destroy,
-                new UIStateContext(_map[id], _manager));
-        }
+        AppLog.Error($"UI 管理器: 关闭UI<{vo.Id}> 超时（{elapsed}ms），强制进入关闭完成。", "UI");
+        vo.StateMachine.TransitionTo(EUIState.CloseDone, vo);
+    }
+
+    private void DestroyExpiredCache(UIVo vo, long now)
+    {
+        if (vo.StateMachine.CurrentState != EUIState.Cache) return;
+        if (vo.Lifecycle.DestroyTime == -1 || now < vo.Lifecycle.DestroyTime) return;
+        // 二次校验：期间可能已被销毁，或同名 id 已重建为另一个 VO。
+        if (!_map.TryGetValue(vo.Id, out UIVo? current) || !ReferenceEquals(current, vo)) return;
+
+        vo.StateMachine.TransitionTo(EUIState.Destroy, vo);
     }
 }

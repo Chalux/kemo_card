@@ -1,0 +1,6 @@
+{
+  "kind": "ApplyGameplayEffect",
+  "params": {
+    "gameplayEffectId": "brothers_magical_damage"
+  }
+}

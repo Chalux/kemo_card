@@ -1,0 +1,30 @@
+{
+  "displayNameId": "buff.evil_thought_attack_down.name",
+  "descId": "buff.evil_thought_attack_down.desc",
+  "durationType": "Turns",
+  "duration": 1,
+  "deferFirstTurnEnd": true,
+  "stackRule": "Independent",
+  "maxStacks": 2147483647,
+  "tags": [
+    "debuff"
+  ],
+  "modifiers": [
+    {
+      "attributeId": "PhysicalAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -10
+      }
+    },
+    {
+      "attributeId": "MagicAttack",
+      "operation": "Add",
+      "magnitude": {
+        "kind": "Scalar",
+        "scalar": -10
+      }
+    }
+  ]
+}

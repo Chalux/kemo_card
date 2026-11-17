@@ -1,0 +1,10 @@
+{
+  "kind": "SummonEnemy",
+  "params": {
+    "enemyId": "undead_ghost",
+    "count": 1,
+    "maxAlive": 2,
+    "maxSummons": 4,
+    "trackLifeBarSummons": true
+  }
+}

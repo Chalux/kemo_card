@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/Presentation/WaterBubbleCmp.cs" id="1_script"]
+
+[node name="WaterBubbleCmp" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+z_index = 10
+script = ExtResource("1_script")

@@ -1,0 +1,16 @@
+{
+  "displayNameId": "buff.bear_slot_storm.name",
+  "descId": "buff.bear_slot_storm.desc",
+  "durationType": "Permanent",
+  "stackRule": "Replace",
+  "tags": [
+    "slot.storm"
+  ],
+  "hooks": {
+    "onSlotCardPlayed": [
+      {
+        "effectId": "bear_storm_discard"
+      }
+    ]
+  }
+}

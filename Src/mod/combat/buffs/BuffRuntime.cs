@@ -6,6 +6,7 @@ using KemoCard.Mod.Combat.Condition;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Runtime;
+using KemoCard.Mod.Combat.StateMachine;
 
 namespace KemoCard.Mod.Combat.Buffs;
 
@@ -88,6 +89,8 @@ public sealed class BuffRuntime
             return new BuffApplyResult(false, Error: $"Unknown buffId '{buffId}'.");
 
         var container = character.HandSlots[slotIndex].Buffs;
+        if (def.EffectiveTags.Contains(CombatConstants.SealedTag) && character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSeal))
+            return new BuffApplyResult(true);
         if (def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer))
         {
             if (character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotTimer))
@@ -107,6 +110,10 @@ public sealed class BuffRuntime
             def,
             parameters,
             slotIndex);
+        if (character.HandSlots[slotIndex].IsSealed)
+            foreach (var entry in simulation.CardQueue.PeekAllOrdered().Where(entry =>
+                entry.CharacterIndex == characterIndex && entry.RuntimeInstanceId == character.HandSlots[slotIndex].RuntimeInstanceId).ToArray())
+                CombatStateMachine.CancelMarkAndRefund(simulation, entry);
         return new BuffApplyResult(true, instance);
     }
 
@@ -262,6 +269,21 @@ public sealed class BuffRuntime
 
     #region 钩子节点
 
+    /// <summary>换条为状态重置而非驱散：包括不可驱散状态，不触发会重建状态的移除钩子。</summary>
+    internal void ResetEnemyLifeBar(CombatSimulation simulation, int enemyIndex)
+    {
+        var enemy = simulation.EnemyTeam.Enemies[enemyIndex];
+        var holder = new BuffHolderRef(new(ECombatSide.Enemy, enemyIndex));
+        foreach (var instance in enemy.Buffs.All.ToArray())
+            if (!instance.Def.PersistAcrossLifeBars && enemy.Buffs.Remove(instance))
+                simulation.Presentation.Emit(new BuffRemovedEvent(holder, instance.Def.Id));
+        foreach (var effect in enemy.Asc.ActiveEffects.ToArray())
+            if (!effect.Def.PersistAcrossLifeBars)
+                enemy.Asc.RemoveActiveEffect(effect.Handle, invokeRemoveHooks: false);
+        enemy.Asc.SetBaseValue(AttributeIds.Shield, 0f);
+        RefreshEnemyPresenceConditions(simulation);
+    }
+
     /// <summary>每个入场敌人只作为本次钩子的默认目标，不重放阶层开始钩子。</summary>
     internal void FireEnemyEntered(CombatSimulation simulation, int enemyIndex)
     {
@@ -313,6 +335,8 @@ public sealed class BuffRuntime
                 container.EvaluateDormancy(BuildConditionContext(simulation, holder), BuiltinCombatConditions.EnemyHasBuffTag);
         }
         finally { _refreshingEnemyPresence = false; }
+        if (simulation.Phase == KemoCard.Mod.Combat.StateMachine.ECombatPhase.Player)
+            simulation.EnemyIntents.RefreshAll();
     }
 
     /// <summary>回合开始：重估休眠 + 触发 onTurnStart（支持 per-effect <c>turnInterval</c> 按波内回合计数分档触发）。</summary>

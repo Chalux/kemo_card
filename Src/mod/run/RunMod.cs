@@ -5,6 +5,8 @@ using KemoCard.Frame.UI.Def;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Run.Events;
 using KemoCard.Mod.Run.Ui;
+using KemoCard.Mod.Combat.Runtime;
+using KemoCard.Mod.Run.Adventure;
 
 namespace KemoCard.Mod.Run;
 
@@ -71,6 +73,9 @@ public sealed partial class RunMod : BaseMod
     public IReadOnlyList<CharacterInstance> CharacterPool => _characterPool;
     public IReadOnlySet<string> CardCollection => _cardCollection;
     public int SharedGold { get; set; }
+    public CombatItemInventory Items { get; } = new();
+    public RunMapState? Map { get; set; }
+    public HashSet<string> ReservedEventIds { get; } = new(StringComparer.Ordinal);
 
     /// <summary>团队潜能池：全队共享的可消费额度；重复获得角色 +20 入池（自身已有则直充槽位）。</summary>
     public int TeamPotentialPool { get; set; }
@@ -167,6 +172,9 @@ public sealed partial class RunMod : BaseMod
     public static IEnumerable<UIRegistration> GetUIRegistrations()
     {
         yield return UIRegistration.Dialog(FeatureId, RunUiIds.StorySelect, "Src/mod/run/Ui");
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.Potion, "Src/mod/run/Ui/Items")
+            with
+        { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
         yield return UIRegistration.Window(FeatureId, RunUiIds.RunMain, "Src/mod/run/Ui")
             with
         { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
@@ -235,6 +243,10 @@ public sealed partial class RunMod : BaseMod
             CharacterPool = characterPoolDtos,
             CardCollection = _cardCollection.ToList(),
             SharedGold = SharedGold,
+            Relics = Items.Relics.ToList(),
+            Potions = Items.Potions.ToList(),
+            Map = Map?.Copy(),
+            ReservedEventIds = ReservedEventIds.ToList(),
             TeamPotentialPool = TeamPotentialPool,
             PlayerStates = playerStateDtos,
             BattleHistory = _battleHistory.ToList(),
@@ -256,6 +268,10 @@ public sealed partial class RunMod : BaseMod
         RunSeed = dto.RunSeed;
         IsMultiplayer = dto.IsMultiplayer;
         SharedGold = dto.SharedGold;
+        Items.Restore(dto.Relics, dto.Potions);
+        Map = dto.Map?.Copy();
+        ReservedEventIds.Clear();
+        ReservedEventIds.UnionWith(dto.ReservedEventIds ?? []);
         TeamPotentialPool = dto.TeamPotentialPool;
 
         _cardCollection.Clear();

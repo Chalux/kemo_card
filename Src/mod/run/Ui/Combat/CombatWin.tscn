@@ -15,6 +15,8 @@
 [ext_resource type="Script" path="res://Src/frame/ui/FitScaleBox.cs" id="13_fitscale"]
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/MarkedCardStripCmp.tscn" id="14_marked"]
 
+[ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Items/RunItemBannerCmp.tscn" id="15_items"]
+
 [node name="CombatWin" type="Control" node_paths=PackedStringArray("_itemSlots", "_sharedHp", "_bench", "_allyStage", "_enemyStage", "_btnPause", "_orbs", "_actor", "_deck", "_hand", "_grave", "_btnPlayConfirm", "_btnConfirm", "_lblHint", "_fxLayer", "_stripLayer", "_phaseBanner", "_animator")]
 layout_mode = 3
 anchors_preset = 15
@@ -23,7 +25,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
-_itemSlots = NodePath("FitScale/Root/ItemBanner/ItemSlots")
+_itemSlots = NodePath("FitScale/Root/ItemBanner")
 _sharedHp = NodePath("FitScale/Root/Middle/PartyRail/SharedHp")
 _bench = NodePath("FitScale/Root/Middle/PartyRail/Bench")
 _allyStage = NodePath("FitScale/Root/Middle/Stage/AllyStage")
@@ -77,15 +79,8 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 10
 
-[node name="ItemBanner" type="PanelContainer" parent="FitScale/Root"]
-custom_minimum_size = Vector2(0, 48)
+[node name="ItemBanner" parent="FitScale/Root" instance=ExtResource("15_items")]
 layout_mode = 2
-theme_type_variation = &"SunkenContainer"
-
-[node name="ItemSlots" type="HBoxContainer" parent="FitScale/Root/ItemBanner"]
-layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
 
 [node name="Middle" type="HBoxContainer" parent="FitScale/Root"]
 layout_mode = 2

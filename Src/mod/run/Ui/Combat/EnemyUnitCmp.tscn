@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/HpBarCmp.tscn" id="3_hp"]
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Combat/BuffListCmp.tscn" id="4_buffs"]
 
-[node name="EnemyUnitCmp" type="Control" node_paths=PackedStringArray("_presenter", "_lblName", "_hp", "_buffs", "_highlight")]
+[node name="EnemyUnitCmp" type="Control" node_paths=PackedStringArray("_presenter", "_lblName", "_lblIntent", "_hp", "_buffs", "_highlight")]
 custom_minimum_size = Vector2(128, 212)
 layout_mode = 3
 anchors_preset = 0
@@ -14,6 +14,7 @@ offset_bottom = 212.0
 script = ExtResource("1_script")
 _presenter = NodePath("Presenter")
 _lblName = NodePath("Name")
+_lblIntent = NodePath("Intent")
 _hp = NodePath("Hp")
 _buffs = NodePath("Buffs")
 _highlight = NodePath("Highlight")
@@ -70,6 +71,25 @@ mouse_filter = 2
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 clip_text = true
+
+[node name="Intent" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -106.0
+offset_right = -4.0
+offset_bottom = -62.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 1
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+text = "UI_COMBAT_INTENT_NONE"
 
 [node name="Hp" parent="." instance=ExtResource("3_hp")]
 layout_mode = 1

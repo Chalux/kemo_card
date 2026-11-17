@@ -1,0 +1,17 @@
+{
+  "displayNameId": "buff.brothers_slot_damage.name",
+  "descId": "buff.brothers_slot_damage.desc",
+  "durationType": "Combat",
+  "stackRule": "Independent",
+  "maxStacks": 2147483647,
+  "tags": [
+    "slot.damage"
+  ],
+  "hooks": {
+    "onSlotCardPlayed": [
+      {
+        "effectId": "brothers_slot_damage"
+      }
+    ]
+  }
+}

@@ -1,0 +1,771 @@
+{
+  "mode": "built-in image_gen",
+  "status": "preview-only",
+  "frameSize": [
+    800,
+    592
+  ],
+  "bodyAnchor": [
+    364,
+    280
+  ],
+  "gameAssetsReplaced": false,
+  "animations": {
+    "attack": {
+      "frameCount": 16,
+      "durationMs": [
+        70,
+        70,
+        80,
+        80,
+        90,
+        40,
+        40,
+        40,
+        50,
+        60,
+        60,
+        70,
+        70,
+        70,
+        70,
+        120
+      ],
+      "totalMs": 1080,
+      "loop": false,
+      "extraction": [
+        {
+          "sourceFrame": 1,
+          "sourceRect": [
+            0,
+            0,
+            314,
+            317
+          ],
+          "scale": 1.65,
+          "registration": [
+            90,
+            20
+          ],
+          "sourceFootCenter": 127.0,
+          "sourceFootBottom": 312,
+          "outputBounds": [
+            174,
+            31,
+            492,
+            535
+          ]
+        },
+        {
+          "sourceFrame": 2,
+          "sourceRect": [
+            314,
+            0,
+            313,
+            317
+          ],
+          "scale": 1.65,
+          "registration": [
+            113,
+            20
+          ],
+          "sourceFootCenter": 113.5,
+          "sourceFootBottom": 312,
+          "outputBounds": [
+            199,
+            35,
+            548,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 3,
+          "sourceRect": [
+            627,
+            0,
+            267,
+            317
+          ],
+          "scale": 1.65,
+          "registration": [
+            87,
+            20
+          ],
+          "sourceFootCenter": 129.0,
+          "sourceFootBottom": 312,
+          "outputBounds": [
+            148,
+            36,
+            505,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 4,
+          "sourceRect": [
+            894,
+            0,
+            360,
+            317
+          ],
+          "scale": 1.65,
+          "registration": [
+            21,
+            18
+          ],
+          "sourceFootCenter": 169.0,
+          "sourceFootBottom": 313,
+          "outputBounds": [
+            31,
+            33,
+            533,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 5,
+          "sourceRect": [
+            0,
+            317,
+            314,
+            312
+          ],
+          "scale": 1.65,
+          "registration": [
+            86,
+            26
+          ],
+          "sourceFootCenter": 129.5,
+          "sourceFootBottom": 308,
+          "outputBounds": [
+            106,
+            34,
+            540,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 6,
+          "sourceRect": [
+            314,
+            317,
+            313,
+            312
+          ],
+          "scale": 1.65,
+          "registration": [
+            112,
+            26
+          ],
+          "sourceFootCenter": 114.0,
+          "sourceFootBottom": 308,
+          "outputBounds": [
+            175,
+            34,
+            579,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 7,
+          "sourceRect": [
+            627,
+            317,
+            289,
+            312
+          ],
+          "scale": 1.65,
+          "registration": [
+            131,
+            26
+          ],
+          "sourceFootCenter": 102.5,
+          "sourceFootBottom": 308,
+          "outputBounds": [
+            185,
+            34,
+            587,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 8,
+          "sourceRect": [
+            916,
+            317,
+            338,
+            312
+          ],
+          "scale": 1.65,
+          "registration": [
+            95,
+            26
+          ],
+          "sourceFootCenter": 124.5,
+          "sourceFootBottom": 308,
+          "outputBounds": [
+            113,
+            34,
+            635,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 9,
+          "sourceRect": [
+            0,
+            629,
+            341,
+            314
+          ],
+          "scale": 1.65,
+          "registration": [
+            129,
+            23
+          ],
+          "sourceFootCenter": 103.5,
+          "sourceFootBottom": 310,
+          "outputBounds": [
+            154,
+            31,
+            692,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 10,
+          "sourceRect": [
+            314,
+            629,
+            356,
+            314
+          ],
+          "scale": 1.65,
+          "registration": [
+            125,
+            23
+          ],
+          "sourceFootCenter": 106.0,
+          "sourceFootBottom": 310,
+          "outputBounds": [
+            168,
+            30,
+            699,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 11,
+          "sourceRect": [
+            627,
+            629,
+            313,
+            314
+          ],
+          "scale": 1.65,
+          "registration": [
+            125,
+            23
+          ],
+          "sourceFootCenter": 106.0,
+          "sourceFootBottom": 310,
+          "outputBounds": [
+            165,
+            31,
+            615,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 12,
+          "sourceRect": [
+            940,
+            629,
+            314,
+            314
+          ],
+          "scale": 1.65,
+          "registration": [
+            114,
+            23
+          ],
+          "sourceFootCenter": 113.0,
+          "sourceFootBottom": 310,
+          "outputBounds": [
+            200,
+            33,
+            576,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 13,
+          "sourceRect": [
+            0,
+            943,
+            314,
+            311
+          ],
+          "scale": 1.65,
+          "registration": [
+            127,
+            28
+          ],
+          "sourceFootCenter": 105.0,
+          "sourceFootBottom": 307,
+          "outputBounds": [
+            203,
+            35,
+            582,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 14,
+          "sourceRect": [
+            314,
+            943,
+            313,
+            311
+          ],
+          "scale": 1.65,
+          "registration": [
+            118,
+            28
+          ],
+          "sourceFootCenter": 110.0,
+          "sourceFootBottom": 307,
+          "outputBounds": [
+            197,
+            35,
+            575,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 15,
+          "sourceRect": [
+            627,
+            943,
+            313,
+            311
+          ],
+          "scale": 1.65,
+          "registration": [
+            123,
+            28
+          ],
+          "sourceFootCenter": 107.0,
+          "sourceFootBottom": 307,
+          "outputBounds": [
+            199,
+            35,
+            538,
+            536
+          ]
+        },
+        {
+          "sourceFrame": 16,
+          "sourceRect": [
+            940,
+            943,
+            314,
+            311
+          ],
+          "scale": 1.65,
+          "registration": [
+            97,
+            26
+          ],
+          "sourceFootCenter": 123.0,
+          "sourceFootBottom": 308,
+          "outputBounds": [
+            174,
+            31,
+            492,
+            535
+          ]
+        }
+      ]
+    },
+    "defeat": {
+      "frameCount": 16,
+      "durationMs": [
+        80,
+        100,
+        100,
+        80,
+        60,
+        60,
+        100,
+        100,
+        100,
+        90,
+        90,
+        90,
+        100,
+        100,
+        100,
+        300
+      ],
+      "totalMs": 1650,
+      "loop": false,
+      "extraction": [
+        {
+          "sourceFrame": 1,
+          "sourceRect": [
+            0,
+            0,
+            318,
+            362
+          ],
+          "scale": 1.5,
+          "registration": [
+            113,
+            25
+          ],
+          "sourceFootCenter": 216.0,
+          "sourceFootBottom": 340,
+          "outputBounds": [
+            174,
+            31,
+            492,
+            535
+          ]
+        },
+        {
+          "sourceFrame": 2,
+          "sourceRect": [
+            318,
+            0,
+            318,
+            362
+          ],
+          "scale": 1.5,
+          "registration": [
+            114,
+            26
+          ],
+          "sourceFootCenter": 215.5,
+          "sourceFootBottom": 339,
+          "outputBounds": [
+            165,
+            68,
+            497,
+            540
+          ]
+        },
+        {
+          "sourceFrame": 3,
+          "sourceRect": [
+            636,
+            0,
+            317,
+            362
+          ],
+          "scale": 1.5,
+          "registration": [
+            112,
+            26
+          ],
+          "sourceFootCenter": 217.0,
+          "sourceFootBottom": 339,
+          "outputBounds": [
+            162,
+            95,
+            496,
+            540
+          ]
+        },
+        {
+          "sourceFrame": 4,
+          "sourceRect": [
+            953,
+            0,
+            318,
+            362
+          ],
+          "scale": 1.5,
+          "registration": [
+            98,
+            26
+          ],
+          "sourceFootCenter": 226.0,
+          "sourceFootBottom": 339,
+          "outputBounds": [
+            161,
+            122,
+            502,
+            540
+          ]
+        },
+        {
+          "sourceFile": "generated-transition.png",
+          "sourceFrame": 2,
+          "sourceRect": [
+            444,
+            0,
+            443,
+            480
+          ],
+          "scale": 1.13,
+          "registration": [
+            119,
+            47
+          ],
+          "sourceFootCenter": 281.0,
+          "sourceFootBottom": 432,
+          "outputBounds": [
+            136,
+            118,
+            508,
+            538
+          ]
+        },
+        {
+          "sourceFile": "generated-transition.png",
+          "sourceFrame": 3,
+          "sourceRect": [
+            887,
+            0,
+            443,
+            480
+          ],
+          "scale": 1.13,
+          "registration": [
+            107,
+            47
+          ],
+          "sourceFootCenter": 292.0,
+          "sourceFootBottom": 432,
+          "outputBounds": [
+            135,
+            134,
+            510,
+            546
+          ]
+        },
+        {
+          "sourceFrame": 5,
+          "sourceRect": [
+            0,
+            362,
+            318,
+            312
+          ],
+          "scale": 1.5,
+          "registration": [
+            84,
+            107
+          ],
+          "sourceFootCenter": 235.5,
+          "sourceFootBottom": 285,
+          "outputBounds": [
+            129,
+            135,
+            501,
+            547
+          ]
+        },
+        {
+          "sourceFrame": 6,
+          "sourceRect": [
+            318,
+            362,
+            318,
+            312
+          ],
+          "scale": 1.5,
+          "registration": [
+            78,
+            107
+          ],
+          "sourceFootCenter": 239.0,
+          "sourceFootBottom": 285,
+          "outputBounds": [
+            126,
+            150,
+            503,
+            545
+          ]
+        },
+        {
+          "sourceFrame": 7,
+          "sourceRect": [
+            636,
+            362,
+            317,
+            312
+          ],
+          "scale": 1.5,
+          "registration": [
+            62,
+            105
+          ],
+          "sourceFootCenter": 250.0,
+          "sourceFootBottom": 286,
+          "outputBounds": [
+            121,
+            167,
+            499,
+            546
+          ]
+        },
+        {
+          "sourceFrame": 11,
+          "sourceRect": [
+            636,
+            674,
+            317,
+            300
+          ],
+          "scale": 1.5,
+          "registration": [
+            54,
+            122
+          ],
+          "sourceFootCenter": 255.5,
+          "sourceFootBottom": 275,
+          "outputBounds": [
+            87,
+            168,
+            494,
+            551
+          ]
+        },
+        {
+          "sourceFrame": 12,
+          "sourceRect": [
+            953,
+            674,
+            318,
+            300
+          ],
+          "scale": 1.5,
+          "registration": [
+            49,
+            122
+          ],
+          "sourceFootCenter": 258.5,
+          "sourceFootBottom": 275,
+          "outputBounds": [
+            88,
+            171,
+            493,
+            551
+          ]
+        },
+        {
+          "sourceFrame": 8,
+          "sourceRect": [
+            953,
+            362,
+            318,
+            312
+          ],
+          "scale": 1.5,
+          "registration": [
+            61,
+            105
+          ],
+          "sourceFootCenter": 250.5,
+          "sourceFootBottom": 286,
+          "outputBounds": [
+            121,
+            173,
+            499,
+            546
+          ]
+        },
+        {
+          "sourceFrame": 13,
+          "sourceRect": [
+            0,
+            974,
+            318,
+            264
+          ],
+          "scale": 1.5,
+          "registration": [
+            60,
+            165
+          ],
+          "sourceFootCenter": 251.0,
+          "sourceFootBottom": 246,
+          "outputBounds": [
+            112,
+            185,
+            501,
+            542
+          ]
+        },
+        {
+          "sourceFrame": 14,
+          "sourceRect": [
+            318,
+            974,
+            318,
+            264
+          ],
+          "scale": 1.5,
+          "registration": [
+            64,
+            167
+          ],
+          "sourceFootCenter": 249.0,
+          "sourceFootBottom": 245,
+          "outputBounds": [
+            112,
+            190,
+            504,
+            544
+          ]
+        },
+        {
+          "sourceFrame": 15,
+          "sourceRect": [
+            636,
+            974,
+            317,
+            264
+          ],
+          "scale": 1.5,
+          "registration": [
+            61,
+            167
+          ],
+          "sourceFootCenter": 250.5,
+          "sourceFootBottom": 245,
+          "outputBounds": [
+            100,
+            191,
+            502,
+            545
+          ]
+        },
+        {
+          "sourceFrame": 16,
+          "sourceRect": [
+            953,
+            974,
+            318,
+            264
+          ],
+          "scale": 1.5,
+          "registration": [
+            59,
+            167
+          ],
+          "sourceFootCenter": 252.0,
+          "sourceFootBottom": 245,
+          "outputBounds": [
+            104,
+            190,
+            503,
+            545
+          ]
+        }
+      ]
+    }
+  }
+}

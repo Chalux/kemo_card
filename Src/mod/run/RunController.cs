@@ -47,6 +47,11 @@ public sealed class RunController : BaseController<RunMod>
     }
 
     public RunMod State => Model;
+    public void NotifyAdventureChanged()
+    {
+        Model.NotifyRunAdventureChanged(new RunAdventureChangedPayload());
+        AutoSaveIfSettled();
+    }
 
     /// <summary>当前战斗模拟器（未开战为 null）；调试检查器只读使用。</summary>
     public CombatSimulation? Simulation => _simulation;
@@ -65,6 +70,9 @@ public sealed class RunController : BaseController<RunMod>
         Model.IsMultiplayer = isMultiplayer;
         Model.CurrentRing = 1;
         Model.SharedGold = 0;
+        Model.Items.Restore([], []);
+        Model.Map = null;
+        Model.ReservedEventIds.Clear();
 
         if (isMultiplayer)
         {
@@ -405,12 +413,15 @@ public sealed class RunController : BaseController<RunMod>
 
         if (Model.Phase != ERunPhase.Reward)
             throw new InvalidOperationException("只能在Reward阶段进入战斗。");
+        if (Model.BattleHistory.Any(record => record.Won && (record.Ring == Model.CurrentRing ||
+            (record.Ring == 0 && record.BattleId == $"battle_r{Model.CurrentRing}"))))
+            throw new InvalidOperationException("本环战斗已经完成，请进入下一环。");
         if (!AllSlotsAssigned())
             throw new InvalidOperationException("存在未分配控制权的槽位，无法进入战斗。");
         if (!ValidateParty())
             throw new InvalidOperationException("所有槽位必须上阵角色才能进入战斗。");
 
-        var battle = ResolveBattle(definitions, battleId);
+        var battle = ResolveBattle(definitions, battleId, runSeed);
         var modId = ResolveOwnerModId(definitions, battle);
 
         // 快照必须在任何状态变更（含工厂内的角色战斗实例化）之前取。
@@ -434,6 +445,7 @@ public sealed class RunController : BaseController<RunMod>
 
         // 规格 §6.1：必须走 BattleStart 管线（注入技能 → 冻结补满 SharedHp → 每人开局抽满手牌）。
         // 不能以 initialPhase: Player 直接起手，否则被动/修饰技能、补满与开局抽牌全部失效。
+        simulation.Items = Model.Items;
         simulation.RunBattleStart();
 
         _simulation?.Dispose();
@@ -444,11 +456,10 @@ public sealed class RunController : BaseController<RunMod>
     }
 
     /// <summary>
-    /// 解析本环要打的战斗定义。环→战斗的映射尚未落地（run-mod-design §5 的环内容后置），
-    /// 因此只有在内容里恰好存在一场战斗时才可无歧义推导；否则必须由调用方显式指定，
-    /// 绝不退回硬编码的占位敌人。
+    /// 普通入口从故事的本环池抽取；显式 battleId 保留为调试入口。
+    /// 旧内容未配置故事池时，仍允许唯一战斗的无歧义推导。
     /// </summary>
-    private static BattleDto ResolveBattle(GameDefinitionRegistry definitions, string? battleId)
+    private BattleDto ResolveBattle(GameDefinitionRegistry definitions, string? battleId, int runSeed)
     {
         if (!string.IsNullOrWhiteSpace(battleId))
         {
@@ -456,6 +467,9 @@ public sealed class RunController : BaseController<RunMod>
                 throw new InvalidOperationException($"战斗定义 '{battleId}' 不存在。");
             return named;
         }
+
+        if (definitions.Store.TryGetStory(Model.StoryId, out var story) && story.RingBattlePools.Count > 0)
+            return RingBattleSelector.Select(definitions, Model.StoryId, Model.CurrentRing, runSeed);
 
         var battles = definitions.Store.Battles;
         if (battles.Count == 1)
@@ -526,6 +540,7 @@ public sealed class RunController : BaseController<RunMod>
         // 战斗结束解除卡组锁（战斗内不允许改卡组，规格 §4.5.5 的换人门闩同理）。
         SetDecksLocked(false);
 
+        var completedBattleId = _simulation?.Battle?.Id ?? $"battle_r{Model.CurrentRing}";
         if (_simulation != null)
         {
             _simulation.Dispose();
@@ -536,7 +551,8 @@ public sealed class RunController : BaseController<RunMod>
         {
             Model.AddBattleRecord(new BattleRecordDto
             {
-                BattleId = $"battle_r{Model.CurrentRing}",
+                BattleId = completedBattleId,
+                Ring = Model.CurrentRing,
                 Won = true,
             });
 

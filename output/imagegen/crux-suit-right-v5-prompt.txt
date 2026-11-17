@@ -1,0 +1,10 @@
+Mode: built-in image_gen; transparent_background=true
+Edit target: crux-academy-right-v4.png
+
+Use case: identity-preserve.
+Image 1 is the HD character edit target. Change the clothes into an unmistakable contemporary WHITE business SUIT while preserving a relaxed youthful fit: clean single-breasted white suit jacket, structured but comfortable shoulders, plain white notched lapels, natural waist shaping, neat welt/flap pockets, white dress shirt tucked in, dark navy tie, white straight-leg tailored suit trousers with pressed creases and a clean hem. Remove ALL blue piping and uniform-like cuff bands and trim. The trousers should hang cleanly with comfortable room, not baggy balloon pants or gathered ankle cuffs. Overall clothing remains predominantly white, light cool-grey shadows. Elegant tailoring, fewer random creases. No school blazer styling, no badges, no cape, no armor, no formal shoes.
+Slightly REDUCE tail length and bulk by approximately 15 percent while keeping a full, fluffy natural wolf tail and pale tip, attached at same tail root. Keep tail visible behind the left side of body; a softer compact curved silhouette, not a short stub.
+Keep the young adult athletic blue-and-white anthro furry wolf identity, gray eye, expressive wolf face and muzzle, all blue fur, body proportions, bare furry digitigrade feet, facing screen RIGHT, same illustration style.
+Character LEFT hand (on viewer RIGHT) remains empty, naturally hanging outside all pockets with relaxed visible paw fingers.
+Character RIGHT hand (on viewer LEFT) holds straight sword diagonally down-right, KEEP exact angle and convincing corrected wrist/paw grip. Pommel, grip, guard center, blade on same diagonal axis. Preserve all weapon design.
+Full body, everything inside canvas. Genuinely transparent background, no halo, no glow, no vignette or gradient, no ground shadow, no labels or text.

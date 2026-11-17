@@ -1,0 +1,7 @@
+{
+  "kind": "AttachSlotBuff",
+  "params": {
+    "buffId": "bear_slot_storm",
+    "slotSelection": "random"
+  }
+}

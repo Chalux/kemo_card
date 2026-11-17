@@ -66,6 +66,7 @@ public sealed record RunModifierDto
 
 public sealed record BattleRecordDto
 {
+    public int Ring { get; init; }
     public string BattleId { get; init; } = "";
     public bool Won { get; init; }
     public int TurnsUsed { get; init; }
@@ -79,8 +80,10 @@ public sealed record RunDto
     /// 当前 Run 存档 schema 版本。读档时高于此版本的存档会被拒绝并归档：
     /// 若照默认值反序列化，会得到一个「看似合法但错」的 Run（字段静默变成默认值）。
     /// v2：新增团体潜能池与每槽位潜能账本。
+    /// v3：新增共享道具、双路线地图、商店货架与事件去重记录。
+    /// v4：地图新增明文事件节点及已确定的卡包、遗物候选。
     /// </summary>
-    public const int CurrentSchemaVersion = 2;
+    public const int CurrentSchemaVersion = 4;
 
     public string RunId { get; init; } = "";
     public string StoryId { get; init; } = "";
@@ -100,6 +103,10 @@ public sealed record RunDto
     public List<CharacterPoolEntryDto> CharacterPool { get; init; } = [];
     public List<string> CardCollection { get; init; } = [];
     public int SharedGold { get; init; }
+    public List<string> Relics { get; init; } = [];
+    public List<string?> Potions { get; init; } = [null, null, null];
+    public Adventure.RunMapState? Map { get; init; }
+    public List<string> ReservedEventIds { get; init; } = [];
 
     /// <summary>团队潜能池（v2）：全队共享的可消费额度，重复获得角色 +20 入池。</summary>
     public int TeamPotentialPool { get; init; }
@@ -108,7 +115,7 @@ public sealed record RunDto
     public List<BattleRecordDto> BattleHistory { get; init; } = [];
 
     /// <summary>
-    /// 把已知的旧版本存档提升到当前 schema。v1 → v2 补潜能默认值（池 0、槽位账本空）。
+    /// 把已知的旧版本存档提升到当前 schema。v1 补潜能，v1/v2 补空库存与未生成地图。
     /// 后续新增版本时在此按版本追加迁移。
     /// </summary>
     /// <remarks>
@@ -121,6 +128,9 @@ public sealed record RunDto
         SchemaVersion = CurrentSchemaVersion,
         CardCollection = CardCollection ?? [],
         BattleHistory = BattleHistory ?? [],
+        Relics = Relics ?? [],
+        Potions = Potions ?? [null, null, null],
+        ReservedEventIds = ReservedEventIds ?? [],
         PlayerStates = [.. (PlayerStates ?? []).Select(state => state is null
             ? new PlayerRunStateDto()
             : state with { PotentialSpent = state.PotentialSpent ?? [] })],

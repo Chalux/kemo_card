@@ -101,6 +101,35 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var story in store.Stories.Values)
         {
+            var rings = new HashSet<int>();
+            foreach (var pool in story.RingBattlePools)
+            {
+                if (pool.Ring < 1 || !rings.Add(pool.Ring) || pool.Battles.Count == 0)
+                    errors.Add(new(EContentCategory.Story, story.Id, "ringBattlePools requires unique positive rings and nonempty pools."));
+                var ids = new HashSet<string>(StringComparer.Ordinal);
+                long totalWeight = 0;
+                foreach (var reference in pool.Battles)
+                {
+                    totalWeight += reference.Weight;
+                    if (reference.Weight < 1 || !ids.Add(reference.BattleId) || !store.TryGetBattle(reference.BattleId, out _))
+                        errors.Add(new(EContentCategory.Story, story.Id, $"Invalid ring battle reference '{reference.BattleId}'."));
+                }
+                if (totalWeight > int.MaxValue)
+                    errors.Add(new(EContentCategory.Story, story.Id, "Ring battle pool weight total exceeds Int32."));
+            }
+            var eventRings = new HashSet<int>();
+            foreach (var pool in story.RingEventPools)
+            {
+                if (pool.Ring < 1 || !eventRings.Add(pool.Ring) || pool.Events.Sum(entry => (long)entry.Weight) > int.MaxValue)
+                    errors.Add(new(EContentCategory.Story, story.Id, "Invalid ringEventPools ring or total weight."));
+                var eventIds = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var reference in pool.Events)
+                    if (reference.Weight < 1 || !eventIds.Add(reference.EventId) || !store.TryGetEvent(reference.EventId, out _))
+                        errors.Add(new(EContentCategory.Story, story.Id, $"Invalid event reference '{reference.EventId}'."));
+            }
+            foreach (var id in story.ShopItemIds)
+                if (!store.TryGetItem(id, out var item) || item.ShopPrice is null or < 0)
+                    errors.Add(new(EContentCategory.Story, story.Id, $"Invalid shop item '{id}'."));
             if (story.Unlock is not { } unlock || unlock.ValueKind == JsonValueKind.Null)
             {
                 continue;
@@ -208,6 +237,26 @@ public sealed class ContentDefinitionValidator
 
             ValidateSkillRefs(EContentCategory.Enemy, enemy.Id, enemy.SkillRefs, store, errors);
             ValidateBuffRefs(EContentCategory.Enemy, enemy.Id, enemy.BuffRefs, store, errors);
+            ValidateSkillRefs(EContentCategory.Enemy, enemy.Id, enemy.EntrySkillRefs, store, errors);
+            foreach (var bar in enemy.LifeBars)
+            {
+                ValidateSkillRefs(EContentCategory.Enemy, enemy.Id, bar.EntrySkillRefs, store, errors);
+                var priorityConditions = (bar.RequiredAliveEnemyTag is not null ? 1 : 0) +
+                    (bar.PrioritySummonCondition is not null ? 1 : 0);
+                if (bar.PrioritySkillId is null ? priorityConditions != 0 : priorityConditions != 1 ||
+                    !enemy.SkillRefs.Any(reference => reference.SkillId == bar.PrioritySkillId) ||
+                    (bar.RequiredAliveEnemyTag is not null && string.IsNullOrWhiteSpace(bar.RequiredAliveEnemyTag)))
+                    errors.Add(new(EContentCategory.Enemy, enemy.Id, "Life bar priority skill requires a declared skill and exactly one valid priority condition."));
+                if (bar.PrioritySummonCondition is { } summon && (!store.TryGetEnemy(summon.EnemyId, out _) ||
+                    summon.MaxAlive is < 1 or > 16 || summon.MaxSummons is < 1 or > 100))
+                    errors.Add(new(EContentCategory.Enemy, enemy.Id, "Invalid prioritySummonCondition enemy, maxAlive (1..16) or maxSummons (1..100)."));
+                ValidateMechanisms(EContentCategory.Enemy, enemy.Id, bar.TurnStartMechanisms, timed: true, errors);
+                if (bar.MaxHp < 1 || bar.ActionSequence.Count == 0)
+                    errors.Add(new(EContentCategory.Enemy, enemy.Id, "lifeBars requires positive maxHp and nonempty actionSequence."));
+                foreach (var action in bar.ActionSequence)
+                    if (action.ActionCount < 1 || !enemy.SkillRefs.Any(reference => reference.SkillId == action.SkillId))
+                        errors.Add(new(EContentCategory.Enemy, enemy.Id, $"Invalid life bar action '{action.SkillId}'."));
+            }
         }
     }
 
@@ -226,6 +275,7 @@ public sealed class ContentDefinitionValidator
             for (var waveIndex = 0; waveIndex < battle.Waves.Count; waveIndex++)
             {
                 var wave = battle.Waves[waveIndex];
+                ValidateMechanisms(EContentCategory.Battle, battle.Id, wave.EntryMechanisms, timed: false, errors);
                 if (wave.EnemySpawns.Count == 0)
                 {
                     errors.Add(new ContentDefinitionValidationError(
@@ -236,13 +286,16 @@ public sealed class ContentDefinitionValidator
 
                 foreach (var spawn in wave.EnemySpawns)
                 {
-                    if (!store.TryGetEnemy(spawn.EnemyId, out _))
+                    if (!store.TryGetEnemy(spawn.EnemyId, out var spawnDefinition))
                     {
                         errors.Add(new ContentDefinitionValidationError(
                             EContentCategory.Battle,
                             battle.Id,
                             $"Unknown enemyId '{spawn.EnemyId}'."));
                     }
+                    else if (spawn.InitialActionIndex < 0 || (spawnDefinition.LifeBars.Count == 0
+                        ? spawn.InitialActionIndex != 0 : spawn.InitialActionIndex >= spawnDefinition.LifeBars[0].ActionSequence.Count))
+                        errors.Add(new(EContentCategory.Battle, battle.Id, "initialActionIndex must index the enemy's first life bar actionSequence."));
 
                     if (spawn.SkillOverrides is not null)
                     {
@@ -373,6 +426,9 @@ public sealed class ContentDefinitionValidator
 
                     foreach (var option in eventDef.Options)
                     {
+                        foreach (var id in option.ItemRewards)
+                            if (!store.TryGetItem(id, out _))
+                                errors.Add(new(EContentCategory.Event, eventDef.Id, $"Invalid item reward '{id}'."));
                         ValidateEffectRefs(
                             EContentCategory.Event,
                             eventDef.Id,
@@ -400,7 +456,9 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var item in store.Items.Values)
         {
-            if (item.UseSkillRefs.Count == 0)
+            if (!Enum.IsDefined(item.Kind) || item.ShopPrice is < 0)
+                errors.Add(new(EContentCategory.Item, item.Id, "Invalid item kind or negative shopPrice."));
+            if (item.Kind == EItemKind.Potion && item.UseSkillRefs.Count == 0)
             {
                 errors.Add(new ContentDefinitionValidationError(
                     EContentCategory.Item,
@@ -409,6 +467,7 @@ public sealed class ContentDefinitionValidator
             }
 
             ValidateSkillRefs(EContentCategory.Item, item.Id, item.UseSkillRefs, store, errors);
+            ValidateSkillRefs(EContentCategory.Item, item.Id, item.BattleStartSkillRefs, store, errors);
         }
     }
 
@@ -424,6 +483,10 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var skill in store.Skills.Values)
         {
+            if (skill.EnemyRandomTargetRepeats < 1 || skill.EnemyRandomTargetRepeats > 100 ||
+                (skill.EnemyRandomTargetRepeats > 1 && (skill.TargetOverride?.Scope != ETargetScope.RandomN ||
+                 skill.TargetOverride.TargetCount != 1 || skill.TargetOverride.Side != ETargetSide.Enemy)))
+                errors.Add(new(EContentCategory.Skill, skill.Id, "enemyRandomTargetRepeats requires 1..100 repeats and an Enemy RandomN target with targetCount 1."));
             if (skill.ActionRefs.Count > 0)
             {
                 ValidateActionRefs(EContentCategory.Skill, skill.Id, skill.ActionRefs, store, errors);
@@ -444,6 +507,8 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var buff in store.Buffs.Values)
         {
+            if (buff.DeferFirstTurnEnd && (buff.DurationType != EBuffDurationType.Turns || buff.StackRule == EBuffStackRule.Add))
+                errors.Add(new(EContentCategory.Buff, buff.Id, "deferFirstTurnEnd requires Turns duration with Independent, Refresh or Replace stacking."));
             foreach (var modifier in buff.Modifiers)
                 if (modifier.Magnitude.Kind is not (EMagnitudeKind.Scalar or EMagnitudeKind.SetByCaller or
                     EMagnitudeKind.PartyCountScaled or EMagnitudeKind.TeamMaxHealthScaled))
@@ -691,6 +756,8 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var action in store.SkillActions.Values)
         {
+            if (action.Kind == ESkillActionKind.SummonEnemy)
+                ValidateSummonParams(EContentCategory.SkillAction, action.Id, action.Params, store, errors);
             if (action.Kind == ESkillActionKind.ExecuteScript && string.IsNullOrWhiteSpace(action.ScriptPath))
             {
                 errors.Add(new ContentDefinitionValidationError(
@@ -803,6 +870,11 @@ public sealed class ContentDefinitionValidator
         ValidateIntParam(category, definitionId, parameters, "turns", errors, allowNegative: false);
         ValidateIntParam(category, definitionId, parameters, "slotIndex", errors, allowNegative: false);
         ValidateIntParam(category, definitionId, parameters, "adjacentSlots", errors, allowNegative: false);
+        ValidateIntParam(category, definitionId, parameters, "stacks", errors, allowNegative: false);
+        ValidateIntParam(category, definitionId, parameters, "stackMultiplier", errors, allowNegative: false);
+        foreach (var key in new[] { "stacks", "stackMultiplier" })
+            if (parameters.ContainsKey(key) && ContentParameters.ReadInt(parameters, key, 0) is < 1 or > 100)
+                errors.Add(new(category, definitionId, $"{key} must be an integer in 1..100."));
         // 攻击次数（2026-09-27）：固定次数与"基准次数"都必须是 >= 0 的整数，按连携人数取次数必须是布尔。
         ValidateIntParam(category, definitionId, parameters, "AttackCount", errors, allowNegative: false, maximum: DamageExecution.MaxAttackCount);
         ValidateIntParam(category, definitionId, parameters, "AttackCountMinusDiscard", errors, allowNegative: false, maximum: DamageExecution.MaxAttackCount);
@@ -1409,6 +1481,45 @@ public sealed class ContentDefinitionValidator
 
     private static void ValidateReferenceCycles(GameDefinitionStore store, List<ContentDefinitionValidationError> errors) =>
         ContentSynchronousCycleValidator.Validate(store, errors);
+
+    #region 战斗机制与召唤参数
+
+    private static void ValidateMechanisms(EContentCategory category, string id,
+        IReadOnlyList<TeamHpMechanismDto> mechanisms, bool timed, List<ContentDefinitionValidationError> errors)
+    {
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var mechanism in mechanisms)
+            if (string.IsNullOrWhiteSpace(mechanism.Id) || !ids.Add(mechanism.Id) ||
+                !float.IsFinite(mechanism.MaxHpDamagePercent) || mechanism.MaxHpDamagePercent is <= 0 or > 100000 ||
+                (timed ? mechanism.Turn < 1 : mechanism.Turn != 0))
+                errors.Add(new(category, id, "Mechanisms require unique nonempty IDs, finite maxHpDamagePercent in (0,100000] and a valid trigger turn."));
+    }
+
+    private static void ValidateSummonParams(EContentCategory category, string id, Dictionary<string, object>? parameters,
+        GameDefinitionStore store, List<ContentDefinitionValidationError> errors)
+    {
+        if (parameters is null || !store.TryGetEnemy(GetStringParam(parameters, "enemyId") ?? "", out _))
+        {
+            errors.Add(new(category, id, "SummonEnemy requires a valid params.enemyId."));
+            return;
+        }
+        foreach (var key in new[] { "count", "maxAlive" })
+        {
+            var value = ContentParameters.ReadInt(parameters, key, key == "count" ? 1 : 0);
+            if (value is < 1 or > 16)
+                errors.Add(new(category, id, $"SummonEnemy {key} must be an integer in 1..16."));
+            ValidateIntParam(category, id, parameters, key, errors, allowNegative: false, maximum: 16);
+        }
+        ValidateBoolParam(category, id, parameters, "trackLifeBarSummons", errors);
+        ValidateIntParam(category, id, parameters, "maxSummons", errors, allowNegative: false, maximum: 100);
+        if (parameters.TryGetValue("trackLifeBarSummons", out var track) &&
+            bool.TryParse(track?.ToString(), out var enabled) && enabled &&
+            ContentParameters.ReadInt(parameters, "maxSummons", 0) < 1)
+            errors.Add(new(category, id, "Tracked SummonEnemy requires maxSummons in 1..100."));
+    }
+
+    #endregion
+
     private static void ValidateActionRefs(
         EContentCategory category,
         string definitionId,
@@ -1418,13 +1529,16 @@ public sealed class ContentDefinitionValidator
     {
         foreach (var actionRef in actionRefs)
         {
-            if (!store.TryGetSkillAction(actionRef.ActionId, out _))
+            if (!store.TryGetSkillAction(actionRef.ActionId, out var referencedAction))
             {
                 errors.Add(new ContentDefinitionValidationError(
                     category,
                     definitionId,
                     $"Unknown actionId '{actionRef.ActionId}'."));
             }
+            else if (referencedAction.Kind == ESkillActionKind.SummonEnemy)
+                ValidateSummonParams(category, definitionId,
+                    new Dictionary<string, object>(ContentParameters.Merge(referencedAction.Params, actionRef.Params)), store, errors);
         }
     }
 

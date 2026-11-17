@@ -1,0 +1,25 @@
+Mode: built-in image_gen; transparent_background=true
+
+Use case: stylized-concept. Asset: production pixel-art animation sheet for young blue/white anthro wolf 克鲁克斯.
+Approved character: youthful athletic blue furry wolf with gray eyes, pale muzzle, pointed ears, slightly smaller fluffy tail with pale tip. White relaxed BUSINESS SUIT (plain white lapels, white shirt, navy tie, straight white suit trousers), blue bare digitigrade furry paws. Anatomical RIGHT hand holds ONE straight sword; empty LEFT hand outside pockets. Facing screenRIGHT in3/4. Fixed upper-left light and consistent medium-density crisp pixel clusters matching idle reference; stable shadows for unchanged regions, no arbitrary shadow shimmer or costume redesign.
+Transparent PNG, no text/numbers/grid/background/ground shadow. SIXTEEN consecutive full-body poses, FOUR columns FOUR rows, reading order, exact4x4 layout. Use2048x2048 canvas, cells512x512, same scale, same groundY500, torso/root centeredX265 eachcell. Ground/support contact stays constant; NO steps, root translation, sliding, lunge, camera movement or whole-sprite shrinking. Keep the WHOLE tail, paws, ears, sword and any explicit trace INSIDE eachcell with12px clear gutters. Sword length approximately40% of full standing character height, consistent acrossframes except legitimate perspective foreshortening. Wrist aligns naturally with forearm and rigid sword hilt/guard/blade axis. One pair arms/legs, no extra paws, no ghost sword fragments.
+Input image1: approved idle STYLE/IDENTITY/PLANTED LEG reference. Create a NEW attack: ONE HORIZONTAL CUT ACROSS AT WAIST/LOWER-CHEST HEIGHT, in the horizontal plane, using torso rotation and right shoulder/elbow. This must read as a SIDEWAYS SWORD SWEEP, NOT an overhead or descending diagonal chop. NO sword raised over head. No vertical crescent trail. No second slash.
+Keep hips, lower white trouser legs and both furry paws in the EXACT same idle stance and locations through all16frames. Upper torso turns, RIGHT forearm draws sword across body, free LEFT paw counterbalances near chest, tail reacts with slight delay. Proper continuous sword-hand grip, no broken wrist.
+16 ordered stages:
+1 approvedidle blade down-right;
+2 right forearm draws hilt up to waist, blade gradually lifted;
+3 shoulder rotates back, hilt moves toward near/left hip;
+4 backswing sword lies almost horizontal extending LEFT behind the hip, elbow bent; full blade tip kept insidecell;
+5 tight windup at same waist height, torso coiled;
+6 start the horizontal rotation, blade slightly foreshortened in depth, same height;
+7 mid-sweep across front of waist, blade passes toward camera with legitimate foreshortening, NOT pointing vertically;
+8 main strike, blade FULLY HORIZONTAL pointingRIGHT at waist/lower-chest height; wrist aligned, one THIN FLAT pale-cyan horizontal elliptical slash ribbon close to blade;
+9 followthrough continues in same HORIZONTAL plane, blade still level pointingRIGHT, body rotates forward without feet moving;
+10 end of horizontal followthrough, shoulders absorb force, sword still mostly level, effect gone;
+11 elbow starts drawing back, blade stays level;
+12 begin lowering sword only now that cut has completed;
+13 hand approaches original hip and blade diagonaldownright;
+14 torso unwinds, swordarmrelaxes;
+15 almostapprovedidle;
+16 approvedidle.
+Draw ALL intermediate recovery poses. The cut itself (frames6..10) stays in a narrow waist-height band, hand and tip with similar Y, no sweeping from head to ground. Keep backswing and reach compact: hilt aroundcellX200..300, blade lengthabout190px, tipLeft>=16 and tipRight<=496. Do not enlarge sword for drama. Power comes from shoulder rotation and quick horizontal sweep. Preserve head size and suit palette, freehandvisible, no leg motion.

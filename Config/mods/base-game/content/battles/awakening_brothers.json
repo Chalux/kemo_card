@@ -1,0 +1,28 @@
+{
+  "displayNameId": "battle.awakening_brothers.name",
+  "descId": "battle.awakening_brothers.desc",
+  "waves": [
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "kyle",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "george",
+          "count": 1
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "entries": []
+  },
+  "tags": [
+    "boss"
+  ]
+}

@@ -21,9 +21,6 @@ public sealed class UIPreLoadStateHandler : IStateHandler<EUIState, IUIStateCont
         UIVo? vo = context?.UIVo;
         if (vo == null) return;
 
-        BaseWin win = vo.Runtime.UI!;
-        win.Payload = vo.Payload;
-
         int preloadFlag = vo.Load.IncrementPreLoadFlag();
         bool completed = false;
         bool TryComplete()
@@ -44,14 +41,28 @@ public sealed class UIPreLoadStateHandler : IStateHandler<EUIState, IUIStateCont
 
         void Abort(Exception ex)
         {
-            if (preloadFlag != vo.Load.PreLoadFlag || vo.IsClose) return;
+            if (preloadFlag != vo.Load.PreLoadFlag) return;
+            // 已真正打开（OpenTime > 0）之后业务再抛异常，不能把界面回滚销毁；
+            // 但 completed 之后仍停在 Create（OpenTime == 0）说明确实没打开成功，必须回收。
+            if (completed && vo.Lifecycle.OpenTime > 0) return;
+            if (vo.IsClose) return;
             AppLog.Error($"UI<{vo.Id}> 预加载/创建异常：{ex.Message}", "UI");
             try { vo.StateMachine.TransitionTo(EUIState.Destroy, context); }
             finally { context?.OpenNext(); }
         }
 
+        BaseWin? win = vo.Runtime.UI;
+        if (win == null || !GodotObject.IsInstanceValid(win))
+        {
+            Fail();
+            return;
+        }
+
         try
         {
+            // 必须在 try 内：窗口可能已被业务释放（缓存重开），赋值会抛 ObjectDisposedException。
+            win.Payload = vo.Payload;
+
             ((IUILifecycleInvoker)win).InvokePreLoad(() =>
             {
                 if (!TryComplete()) return;

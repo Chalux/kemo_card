@@ -1,0 +1,71 @@
+{
+  "displayNameId": "enemy.george.name",
+  "descId": "enemy.george.desc",
+  "maxHp": 400,
+  "baseAttributes": {
+    "MaxHealth": 400,
+    "PhysicalAttack": 0,
+    "MagicAttack": 5,
+    "PhysicalDefense": 0,
+    "MagicDefense": 0
+  },
+  "element": "Green",
+  "race": "Human",
+  "role": "None",
+  "lifeBars": [
+    {
+      "maxHp": 400,
+      "actionSequence": [
+        {
+          "skillId": "george_single_spell",
+          "actionCount": 1
+        },
+        {
+          "skillId": "george_single_spell",
+          "actionCount": 1
+        },
+        {
+          "skillId": "george_spell_sweep",
+          "actionCount": 1
+        }
+      ]
+    },
+    {
+      "maxHp": 600,
+      "actionSequence": [
+        {
+          "skillId": "george_chant_impact",
+          "actionCount": 1
+        },
+        {
+          "skillId": "george_weaken",
+          "actionCount": 1
+        },
+        {
+          "skillId": "george_chant",
+          "actionCount": 1
+        }
+      ]
+    }
+  ],
+  "skillRefs": [
+    {
+      "skillId": "george_chant"
+    },
+    {
+      "skillId": "george_chant_impact"
+    },
+    {
+      "skillId": "george_single_spell"
+    },
+    {
+      "skillId": "george_spell_sweep"
+    },
+    {
+      "skillId": "george_weaken"
+    }
+  ],
+  "tags": [
+    "boss"
+  ]
+}

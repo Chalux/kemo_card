@@ -21,6 +21,8 @@ public static class RunRuntime
     private static RunSaveService? _saveService;
 
     public static RunController? Current => _current;
+    public static Adventure.RunAdventureService? CreateAdventureService() => _current is null ? null
+        : new(_current, AppRoot.Services.ContentModPipeline.Registry);
 
     /// <summary>
     /// 单槽存档门面（懒加载；目录 user://saves/run）。

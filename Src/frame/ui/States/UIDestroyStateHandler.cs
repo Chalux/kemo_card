@@ -33,7 +33,7 @@ public sealed class UIDestroyStateHandler : IStateHandler<EUIState, IUIStateCont
         vo.Anim.ClearAnim();
         vo.Anim.ClearMaskAnim();
 
-        vo.Runtime.HideBool.Destory();
+        vo.Runtime.HideBool.Destroy();
         var mask = vo.Runtime.Mask;
         var ui = vo.Runtime.UI;
         try
@@ -53,7 +53,7 @@ public sealed class UIDestroyStateHandler : IStateHandler<EUIState, IUIStateCont
                 if (task != null) UIManager.InvokeCallback(onFail, vo.Id, "打开失败回调");
             }
             finally { vo.CompleteOpen(null, task); }
-            manager.LayerManager.UpdateLayers();
+            manager.UpdateLayers();
         }
     }
 }

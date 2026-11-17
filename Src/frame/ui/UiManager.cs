@@ -26,7 +26,7 @@ public interface IUIManager
     BaseWin? GetWin(string id);
     T? GetWin<T>(string id) where T : BaseWin;
     UILayer? GetLayer(EUILayer layer);
-    bool IsUITop(string Id);
+    bool IsUITop(string id);
     string GetPath(string id);
 
     /// <summary>UI 导航栈</summary>
@@ -57,11 +57,15 @@ public partial class UIManager : Node, IUIManager
 
     private UIRuntimeRegistry _registry = null!;
     private bool _inited;
+    private bool _updatingLayers;
     private GodotMainThreadSyncContext? _syncContext;
 
     public override void _Ready()
     {
         Instance = this;
+        // 子组件（打开队列 / 缓存回收 / 同步上下文泵）都挂在 _Process 上：
+        // 即使场景树暂停也要继续跑，否则暂停菜单、存档确认里的 await 会一起冻住。
+        ProcessMode = ProcessModeEnum.Always;
     }
 
     public override void _ExitTree()
@@ -76,7 +80,7 @@ public partial class UIManager : Node, IUIManager
         if (!_inited) return;
 
         OpenCoordinator.CheckLoadTimeout();
-        VoRegistry.TickCacheDestroy(delta);
+        VoRegistry.Tick(delta);
     }
 
     public void Init(UIManagerInitOpt opt)
@@ -122,11 +126,20 @@ public partial class UIManager : Node, IUIManager
     {
         TaskCompletionSource<UIVo?> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        // 未初始化时 _registry 为 null：宁可返回失败任务 + 明确日志，也不要 NullReferenceException。
+        if (!_inited)
+        {
+            AppLog.Error($"UI 管理器: 尚未初始化，无法打开UI<{id}>。", "UI");
+            InvokeCallback(openOpt?.OnFail, id, "打开失败回调");
+            tcs.SetResult(null);
+            return tcs.Task;
+        }
+
         UIRuntimeEntry? entry = _registry.Get(id);
         if (entry == null)
         {
             AppLog.Error($"UI 管理器: 打开UI<{id}> 失败, 路由未注册", "UI");
-            InvokeCallback(openOpt?.OnFail, id, "打开失败回调");
+            InvokeOpenFail(null, null, openOpt, id);
             tcs.SetResult(null);
             return tcs.Task;
         }
@@ -135,7 +148,7 @@ public partial class UIManager : Node, IUIManager
         if (failReason != null)
         {
             AppLog.Error(failReason, "UI");
-            InvokeCallback(openOpt?.OnFail, id, "打开失败回调");
+            InvokeOpenFail(entry, layer, openOpt, id);
             tcs.SetResult(null);
             return tcs.Task;
         }
@@ -183,7 +196,7 @@ public partial class UIManager : Node, IUIManager
 
         if (entry.Type is EUIType.Pge or EUIType.Pop)
         {
-            vo.StateMachine.TransitionTo(EUIState.Load, new UIStateContext(vo, this));
+            vo.StateMachine.TransitionTo(EUIState.Load, vo);
             return tcs.Task;
         }
 
@@ -193,6 +206,12 @@ public partial class UIManager : Node, IUIManager
 
     public Task<UIVo?> OpenChildAsync(string childId, object? payload = null, UIOpenOpt? openOpt = null)
     {
+        if (!_inited)
+        {
+            AppLog.Error($"UI 管理器: 尚未初始化，无法打开子UI<{childId}>。", "UI");
+            return Task.FromResult<UIVo?>(null);
+        }
+
         string? parent = _registry.GetParentId(childId);
         if (parent == null)
         {
@@ -220,10 +239,16 @@ public partial class UIManager : Node, IUIManager
                 return OpenAsync(cur, voForCur, optForRoot);
             }
 
-            Dictionary<string, object?> voDict = curMeta?.ParentOpenPayload as Dictionary<string, object?> ?? [];
-            if (voDict.ContainsKey("pgeId"))
+            // 必须复制：ParentOpenPayload 是启动期注册的共享实例，就地写 pgeId 会污染同路由的后续打开；
+            // 非字典载荷原样透传（不能替换成空字典，否则父界面拿不到载荷）。
+            if (curMeta?.ParentOpenPayload is Dictionary<string, object?> sharedPayload)
             {
-                voDict["pgeId"] = cur;
+                Dictionary<string, object?> voDict = new(sharedPayload);
+                if (voDict.ContainsKey("pgeId"))
+                {
+                    voDict["pgeId"] = cur;
+                }
+                voForCur = voDict;
             }
 
             string? grand = _registry.GetParentId(curParent);
@@ -236,7 +261,6 @@ public partial class UIManager : Node, IUIManager
             }
 
             cur = curParent;
-            voForCur = voDict;
         }
     }
 
@@ -253,7 +277,7 @@ public partial class UIManager : Node, IUIManager
 
         if (!vo.IsClose)
         {
-            vo.StateMachine.TransitionTo(EUIState.Close, new UIStateContext(vo, this));
+            vo.StateMachine.TransitionTo(EUIState.Close, vo);
         }
 
         OpenCoordinator.OpenNext();
@@ -282,10 +306,11 @@ public partial class UIManager : Node, IUIManager
     public void CloseAllExclude(IReadOnlyList<string>? excludeIds = null)
     {
         excludeIds ??= [];
+        HashSet<string> excludes = new(excludeIds, StringComparer.Ordinal);
         foreach (var vo in SnapshotOpenVos())
         {
             if (vo.Runtime.Layer?.IsTop == true) continue;
-            if (excludeIds.Contains(vo.Id)) continue;
+            if (excludes.Contains(vo.Id)) continue;
             Close(vo.Id);
         }
     }
@@ -377,11 +402,11 @@ public partial class UIManager : Node, IUIManager
                 {
                     vo.OpenOpt.CacheTime = 0;
                     vo.Load.Cancel();
-                    vo.StateMachine.TransitionTo(EUIState.Close, new UIStateContext(vo, this));
+                    vo.StateMachine.TransitionTo(EUIState.Close, vo);
                 }
                 else if (vo.StateMachine.CurrentState != EUIState.Destroy)
                 {
-                    vo.StateMachine.TransitionTo(EUIState.Destroy, new UIStateContext(vo, this));
+                    vo.StateMachine.TransitionTo(EUIState.Destroy, vo);
                 }
             }
         }
@@ -424,9 +449,9 @@ public partial class UIManager : Node, IUIManager
 
     public UILayer? GetLayer(EUILayer id) => LayerManager.GetLayer(id);
 
-    public bool IsUITop(string Id)
+    public bool IsUITop(string id)
     {
-        UIVo? vo = VoRegistry.Get(Id);
+        UIVo? vo = VoRegistry.Get(id);
         if (vo?.Runtime.Layer == null) return false;
 
         var allLayers = LayerManager.GetAllLayers();
@@ -440,22 +465,49 @@ public partial class UIManager : Node, IUIManager
         }
 
         IReadOnlyList<BaseWin> layerUIs = [.. vo.Runtime.Layer.UISort.Where(ui => ui.UIVo?.OpenOpt.EffectiveNoCover != true)];
-        return layerUIs.Count > 0 && layerUIs[^1].UIId == Id;
+        return layerUIs.Count > 0 && string.Equals(IdOf(layerUIs[^1]), id, StringComparison.Ordinal);
     }
+
+    /// <summary>界面标识统一取 UIVo.Id；未绑定 UIVo 时才退回 BaseUI.UIId。</summary>
+    private static string IdOf(BaseWin ui) => ui.UIVo?.Id ?? ui.UIId;
 
     public string GetPath(string id) => _registry.Get(id)?.ScenePath ?? "";
     #endregion
 
     #region 内部方法
     internal void OpenNext() => OpenCoordinator.OpenNext();
-    internal void UpdateLayers() => CallDeferred(MethodName.UpdateLayersDeferred);
 
-    private void UpdateLayersDeferred() => LayerManager.UpdateLayers();
+    /// <summary>
+    /// 立即重算层级可见性。
+    /// </summary>
+    /// <remarks>
+    /// 必须同步：打开/关闭动画结束、销毁、重新挂载等调用点都要<em>本轮内</em>看到最终可见性，
+    /// 否则同一次 <c>OpenAsync</c> 的后续逻辑（IsUITop、下一次打开、业务在 await 之后读 Visible）会读到过期状态。
+    /// 重入时直接返回——当前这一轮会基于最新状态重算，不需要嵌套执行。
+    /// </remarks>
+    internal void UpdateLayers()
+    {
+        if (_updatingLayers) return;
+
+        _updatingLayers = true;
+        try { LayerManager.UpdateLayers(); }
+        finally { _updatingLayers = false; }
+    }
 
     internal static void InvokeCallback(Action? callback, string id, string stage)
     {
         try { callback?.Invoke(); }
         catch (Exception ex) { AppLog.Error($"UI<{id}> {stage}失败：{ex.Message}", "UI"); }
+    }
+
+    /// <summary>
+    /// 打开流程在「注册表查不到路由 / 层级解析失败」这类早期失败时，也要回调 <b>合并后</b> 的 OnFail：
+    /// 调用点那份只是 merge 的一层，注册表与层级默认值同样可能声明了失败处理。
+    /// </summary>
+    private static void InvokeOpenFail(UIRuntimeEntry? entry, UILayer? layer, UIOpenOpt? openOpt, string id)
+    {
+        UIOpenOpt merged = entry != null ? MergeOpenOpt(entry, layer, openOpt) : openOpt ?? DefaultUIOpenOpt.Value;
+        InvokeCallback(merged.OnFail, id, "打开失败回调");
     }
 
     private static IEnumerable<IStateHandler<EUIState, IUIStateContext>> CreateDefaultStateHandlers()
@@ -546,13 +598,6 @@ public sealed class UIManagerInitOpt
 
     /// <summary>组合根已装配的功能 Mod id 清单，用于归属校验（见规格 §5.3 ②）。传 null 跳过该项校验。</summary>
     public IReadOnlyCollection<string>? KnownOwnerModIds { get; init; }
-}
-
-public sealed class UIStateContext(UIVo vo, UIManager manager) : IUIStateContext
-{
-    public UIVo UIVo { get; } = vo;
-    public UIManager UIManager { get; } = manager;
-    public void OpenNext() => UIManager.OpenNext();
 }
 
 public static class UIEvent

@@ -46,6 +46,16 @@ public sealed class DeckPreset
 
     public bool TryRemoveCard(string cardId) => _isLocked?.Invoke() != true && _cardIds.Remove(cardId);
 
+    /// <summary>升阶时在原位置替换旧链卡，已有新阶卡时去重；战斗锁定时拒绝修改。</summary>
+    public bool TryReplaceCards(IReadOnlySet<string> oldIds, string replacementId)
+    {
+        if (_isLocked?.Invoke() == true || !_cardIds.Any(oldIds.Contains)) return false;
+        var updated = _cardIds.Select(id => oldIds.Contains(id) ? replacementId : id).Distinct(StringComparer.Ordinal).ToList();
+        _cardIds.Clear();
+        _cardIds.AddRange(updated);
+        return true;
+    }
+
     public DeckValidationResult Validate(IReadOnlySet<string> buildableCardIds)
     {
         if (_cardIds.Count < CombatConstants.MinCardsPerDeck)

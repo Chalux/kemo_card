@@ -1,0 +1,152 @@
+{
+  "animation": "idle",
+  "frameCount": 24,
+  "frameSize": [
+    432,
+    560
+  ],
+  "columns": 6,
+  "rows": 4,
+  "fps": 10,
+  "cycleDurationMs": 2400,
+  "status": "white-academy-outfit-trial",
+  "styleBaseline": "../idle-balanced-v5",
+  "correctedGripReference": "../../crux-academy-right-v4.png",
+  "rootMotion": false,
+  "footPixelsIdentical": true,
+  "swordPixelsIdentical": true,
+  "firstLastIdentical": true,
+  "chestLiftMaxPx": 2,
+  "tailSwayMaxPx": 6,
+  "inhaleFraction": 0.44,
+  "tailDelayDegrees": 60,
+  "noRegeneratedShadowColors": true,
+  "firstLastSha256": "505f2e82d16d567af5a00d76692c3690dd29b460a8a31e29ab6b04ad4263f80c",
+  "samples": [
+    {
+      "frame": 1,
+      "chestLiftPx": 0.0,
+      "tailSwayPx": -5.196
+    },
+    {
+      "frame": 2,
+      "chestLiftPx": 0.048,
+      "tailSwayPx": -4.194
+    },
+    {
+      "frame": 3,
+      "chestLiftPx": 0.187,
+      "tailSwayPx": -2.881
+    },
+    {
+      "frame": 4,
+      "chestLiftPx": 0.403,
+      "tailSwayPx": -1.354
+    },
+    {
+      "frame": 5,
+      "chestLiftPx": 0.677,
+      "tailSwayPx": 0.273
+    },
+    {
+      "frame": 6,
+      "chestLiftPx": 0.981,
+      "tailSwayPx": 1.88
+    },
+    {
+      "frame": 7,
+      "chestLiftPx": 1.288,
+      "tailSwayPx": 3.348
+    },
+    {
+      "frame": 8,
+      "chestLiftPx": 1.566,
+      "tailSwayPx": 4.567
+    },
+    {
+      "frame": 9,
+      "chestLiftPx": 1.791,
+      "tailSwayPx": 5.447
+    },
+    {
+      "frame": 10,
+      "chestLiftPx": 1.94,
+      "tailSwayPx": 5.924
+    },
+    {
+      "frame": 11,
+      "chestLiftPx": 1.999,
+      "tailSwayPx": 5.961
+    },
+    {
+      "frame": 12,
+      "chestLiftPx": 1.977,
+      "tailSwayPx": 5.556
+    },
+    {
+      "frame": 13,
+      "chestLiftPx": 1.897,
+      "tailSwayPx": 4.739
+    },
+    {
+      "frame": 14,
+      "chestLiftPx": 1.763,
+      "tailSwayPx": 3.571
+    },
+    {
+      "frame": 15,
+      "chestLiftPx": 1.585,
+      "tailSwayPx": 2.137
+    },
+    {
+      "frame": 16,
+      "chestLiftPx": 1.371,
+      "tailSwayPx": 0.546
+    },
+    {
+      "frame": 17,
+      "chestLiftPx": 1.136,
+      "tailSwayPx": -1.087
+    },
+    {
+      "frame": 18,
+      "chestLiftPx": 0.893,
+      "tailSwayPx": -2.638
+    },
+    {
+      "frame": 19,
+      "chestLiftPx": 0.656,
+      "tailSwayPx": -3.994
+    },
+    {
+      "frame": 20,
+      "chestLiftPx": 0.439,
+      "tailSwayPx": -5.054
+    },
+    {
+      "frame": 21,
+      "chestLiftPx": 0.256,
+      "tailSwayPx": -5.739
+    },
+    {
+      "frame": 22,
+      "chestLiftPx": 0.117,
+      "tailSwayPx": -5.998
+    },
+    {
+      "frame": 23,
+      "chestLiftPx": 0.03,
+      "tailSwayPx": -5.813
+    },
+    {
+      "frame": 24,
+      "chestLiftPx": 0.0,
+      "tailSwayPx": -5.196
+    }
+  ],
+  "generatedWith": "built-in image_gen art with integer frame assembly",
+  "processing": "continuous eased timing, local integer chest and tail sampling, rigid foot and diagonal sword plates, shared preview palette",
+  "costumeReference": "../../crux-academy-right-v4.png",
+  "motionBaseline": "../idle-organic-v7",
+  "freeLeftHand": "hanging outside pockets on viewer right"
+}

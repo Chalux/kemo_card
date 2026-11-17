@@ -20,7 +20,8 @@ public sealed class UICloseStateHandler : IStateHandler<EUIState, IUIStateContex
         UIVo? vo = context?.UIVo;
         if (vo == null) return;
 
-        vo.Lifecycle.CloseTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        // 关闭耗时用 CloseStartTime 计量；CloseTime 只在 CloseDone 写一次（关闭完成时刻）。
+        vo.Lifecycle.CloseStartTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         // 出栈：与 UIOpenStateHandler 的 HideBelow 压栈配对，避免已关闭界面留在导航栈里。
         // Remove 幂等，BackAsync 已弹出的 id 再走关闭路径也不会误删下层界面。

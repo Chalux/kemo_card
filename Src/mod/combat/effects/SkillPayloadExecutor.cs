@@ -16,18 +16,21 @@ internal static class SkillPayloadExecutor
         using var scope = simulation.EffectBudget.TryEnter();
         if (scope is null)
             return;
-        if (skill.ActionRefs.Count > 0)
+        var repeats = source.Side == ECombatSide.Enemy ? Math.Clamp(skill.EnemyRandomTargetRepeats, 1, 100) : 1;
+        for (var repeat = 0; repeat < repeats; repeat++)
         {
-            foreach (var actionRef in skill.ActionRefs)
+            if (repeat > 0)
+                targets = CombatTargetResolver.ResolveEnemySkillTargets(simulation, skill, source.Index);
+            if (skill.ActionRefs.Count > 0)
             {
-                simulation.EffectExecutor.ExecuteSkillActionRef(actionRef, simulation, source, targets, skillParams);
+                foreach (var actionRef in skill.ActionRefs)
+                    simulation.EffectExecutor.ExecuteSkillActionRef(actionRef, simulation, source, targets, skillParams);
             }
-            return;
-        }
-
-        foreach (var effectRef in skill.EffectRefs)
-        {
-            simulation.EffectExecutor.ExecuteEffectRef(effectRef, simulation, source, targets, skillParams);
+            else
+            {
+                foreach (var effectRef in skill.EffectRefs)
+                    simulation.EffectExecutor.ExecuteEffectRef(effectRef, simulation, source, targets, skillParams);
+            }
         }
     }
 

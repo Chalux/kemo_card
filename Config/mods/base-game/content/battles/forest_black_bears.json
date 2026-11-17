@@ -1,0 +1,43 @@
+{
+  "displayNameId": "battle.forest_black_bears.name",
+  "descId": "battle.forest_black_bears.desc",
+  "waves": [
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "black_bear"
+        },
+        {
+          "enemyId": "black_bear",
+          "initialActionIndex": 1
+        }
+      ]
+    },
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "black_bear"
+        },
+        {
+          "enemyId": "elite_black_bear"
+        },
+        {
+          "enemyId": "black_bear"
+        }
+      ]
+    },
+    {
+      "enemySpawns": [
+        {
+          "enemyId": "black_bear_leader"
+        }
+      ]
+    }
+  ],
+  "rewards": {
+    "entries": []
+  },
+  "tags": [
+    "boss"
+  ]
+}

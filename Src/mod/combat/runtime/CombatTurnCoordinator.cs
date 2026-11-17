@@ -39,6 +39,9 @@ internal sealed class CombatTurnCoordinator(CombatSimulation simulation)
     public void Start()
     {
         var wave = simulation.CurrentWaveIndex;
+        simulation.Mechanisms.TurnStart();
+        if (simulation.PlayerTeam.IsDefeated)
+            return;
         simulation.Buffs.ExpireTurnStartBuffs(simulation);
         simulation.Rules.DispatchTurnStart(simulation.CreateContext());
         simulation.DomainManager.FireTurnStartHooks();
@@ -49,5 +52,7 @@ internal sealed class CombatTurnCoordinator(CombatSimulation simulation)
             return;
         simulation.TransitionTo(ECombatPhase.Player);
         PlayerPhasePipeline.Run(simulation, simulation.IsFirstPlayerPhase);
+        if (simulation.Phase == ECombatPhase.Player)
+            simulation.EnemyIntents.RefreshAll();
     }
 }
