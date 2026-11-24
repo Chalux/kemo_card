@@ -309,10 +309,10 @@ Root(full-rect) → Bg(PageBg)
 
 ## 7. Run 调试面板（RunDebugDlg + RunDebugService）（原 2026-09-19 §5）
 
-- `RunDebugDlg`（`EUILayer.Debug` 顶层，`CacheTime = 0`）：Tab 分组——卡牌（取卡/入卡组/回收）、角色（入池/上阵/一键满编）、战斗（开战/胜/负/充能球授予与触发）、事件（触发）、通用（金币/环数/阶段）、潜能（入账池/入账槽/分配到选中槽位/从选中槽位扣除/战斗检查）。
-- **语义全部在 `RunDebugService`**（可单测、不依赖 Godot）；对话框只做取值 + 显示 + 收集参数。调试操作走正式管线（潜能入账 → `Potential.Grant`，分配/扣除 → `TryAllocate` / `TryDeduct`），不走旁路。
+- `RunDebugDlg`（`EUILayer.Debug` 顶层，`CacheTime = 0`）：Tab 分组——卡牌（取卡/入卡组/回收）、角色（入池/上阵/一键满编）、战斗（开战/胜/负/充能球授予与触发/战斗检查）、事件（触发）、通用（金币/环数/阶段）。潜能页已随潜能系统移除。
+- **语义全部在 `RunDebugService`**（可单测、不依赖 Godot）；对话框只做取值 + 显示 + 收集参数。调试操作走正式管线（入池 / 上阵 / 开战 / 结算 / 事件触发 / 资源调整），不走旁路。
 - 入口按钮在 `RunMainWin`：**仅 `OS.IsDebugBuild()` 显示**（release 隐藏，不留死按钮）。
-- 语义测试见 `Tests/.../Run/RunDebugServiceTests.cs`（含重复角色转化为潜能、精确数额入账、整笔返还、战斗检查输出）。
+- 语义测试见 `Tests/.../Run/RunDebugServiceTests.cs`（角色入池与重复保留、战斗检查输出、事件与资源操作）。
 
 > 归属说明：`RunDebugDlg` 界面与 `RunDebugService` **归 Run 功能**（[Run 规格](./2026-06-22-run-mod-design.md)）；本条保留在本文是因为「调试面板明确豁免主题一致」是与主题规格成对的约束，`RunDebugDlg` 的取数也复用本文 §5 的按钮基类。
 
@@ -479,7 +479,7 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 
 - **只带键不带文案**：一是切语言不必重建模型，二是模型可在无引擎环境下单测。键查不到时 `TranslationServer.Translate` 原样返回键，因此 `TitleKey` 允许直接塞内容 id（没有显示名的球）。
 - **正文跳转**：正文里的 `[url=kw:<id>]` 与卡面描述同一格式（解析复用 `CardDescBuilder.TryParseKeywordMeta`），点击后跳词典内对应条目；目标被当前搜索挡住时先清空搜索再定位。
-- **新增词条**（`BuiltinKeywords`）：`normal_attack`（普通攻击）、`orb`（充能球）、`orb_element`（属性球）、`shared_hp`（共享血量）、`team_potential`（团体潜能）、`character_passive`（角色被动）。这些机制此前没有任何界面入口。
+- **新增词条**（`BuiltinKeywords`）：`normal_attack`（普通攻击）、`orb`（充能球）、`orb_element`（属性球）、`shared_hp`（共享血量）、`character_passive`（角色被动）。这些机制此前没有任何界面入口。（`team_potential` 词条随 2026-11-23 潜能移除而删除。）
   - **2026-09-23 追加**：`slot_storm`（暴风）、`action_count`（行动计数）、`domain`（领域）——冯·诺依曼套件新增的三条规则机制，词条正文分别写在 `KW_SLOT_STORM_*` / `KW_ACTION_COUNT_*` / `KW_DOMAIN_*`。
 - **入口**：Run 的 ESC 菜单；`GlobalModController.OpenGlossaryAsync()` 是唯一打开入口（主菜单后续要加入口时直接复用）。
 
@@ -579,21 +579,18 @@ ToastService.Show("UI_RUN_SAVED_AT", "第 3 环", "事件");    // 格式化占�
 > `strings.zh_CN.translation` / `strings.en.translation`（界面上直接显示原始键名）；本地验证用
 > `Godot --headless --import`，两个 `.translation` 文件随仓库提交。
 
-### 12.5 角色被动展示（2026-09-25 新增）
+### 12.5 角色被动展示（2026-11-24 现行）
 
-角色被动（`CharacterDto.passives`）在两处展示，**文案口径唯一**：卡组编辑左栏的「潜能被动」区
-（见 Run 规格 §12.4）与角色详情的被动 RichText（`CharacterDetailsDlg.RTPassives`）。每条格式为
-`[b]潜能 N[/b]【已解锁/未解锁】` 换行后接描述（描述取 buff 的 `descId`；被动没有名字）。
+角色被动（`CharacterDto.passives`）在角色详情、卡组编辑与队伍编辑中展示，**每条只显示 buff 的 `descId` 描述**；出战即全部生效，不再显示潜能门槛或解锁状态。
 
-| 事实 | 值 | 依据（文件:行） |
+| 事实 | 现行口径 | 依据 |
 |---|---|---|
-| 唯一拼接口径 | `PassiveTextBuilder.Entry`（门槛 + 可选解锁状态 + 描述）与 `TitleKey` | `Src/mod/global/Ui/PassiveTextBuilder.cs` |
-| 门槛文案 | `UI_CHARACTER_PASSIVE_THRESHOLD` = `潜能 {0}`；0 门槛走 `UI_CHARACTER_PASSIVE_THRESHOLD_ZERO` = `潜能 0` | `Resource/Locale/strings.csv` |
-| 解锁状态 | `UI_CHARACTER_PASSIVE_UNLOCKED` / `UI_CHARACTER_PASSIVE_LOCKED`；**无 Run 上下文时不显示**（图鉴里尚未入池的角色） | 同上 |
-| 解锁判定 | `PotentialService.IsPassiveUnlocked`（与开战挂载同一判定，界面不自行推断）；卡组编辑的数据入口 `RunTeamEditService.GetPassives`（纯 C#，可单测） | `Src/mod/run/potential/PotentialService.cs`、`Src/mod/run/Team/RunTeamEditService.cs` |
-| 角色详情绑定 | `BindPassives`：Run 内按 `DefinitionId` 找实例 → 附加解锁状态；标题内联在正文首行 | `Src/mod/global/Ui/CharacterDetailsDlg.cs` |
-| 卡组编辑绑定 | `RefreshPassives`：左栏 `PassiveBox`（SunkenContainer，固定高 240，内部滚动），条目之间空行分隔；无被动时整块隐藏 | `Src/mod/run/Ui/RunCharacterDeckDlg.cs`、`.tscn` |
-| 单测 | 门槛/解锁/无上下文/空描述，以及服务层视图 | `Tests/kemo_card.Ui.Tests/PassiveTextBuilderTests.cs`、`Run/RunTeamEditServiceTests.cs` |
+| 文案口径 | 遍历定义 `passives`，取各 buff 的 `descId` 并用 `Localization.Tr` 翻译；被动没有名字 | `CharacterDetailsDlg.BindPassives`、`RunTeamEditService.GetPassives` |
+| 角色详情 | 标题 + 全部被动描述；无被动时整块隐藏 | `Src/mod/global/Ui/CharacterDetailsDlg.cs` |
+| 卡组 / 队伍编辑 | `RunTeamEditService.GetPassives(instanceId)` 返回描述键列表；界面直接拼接；无被动时整块隐藏 | `Src/mod/run/Ui/RunCharacterDeckDlg.cs`、`RunTeamEditDlg.cs` |
+| 潜能 / 解锁 | **已移除**：不显示门槛 / 已解锁 / 未解锁，不依赖 `PotentialService`；原 `PassiveTextBuilder` 与 `PassiveTextBuilderTests` 已删除 | 2026-11-23 单机三人队重构 |
+
+> **2026-11-24 合并**：本节原「潜能 N + 解锁状态」表格随潜能移除而废止；历史正文见归档的决策文档。
 
 ### 12.6 角色主动技展示（2026-09-26 新增）
 

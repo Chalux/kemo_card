@@ -1,17 +1,19 @@
 # 单机三人队与即时出牌重构决策
 
+> **归档（2026-11-24）**：本文的耐用规则已并入[总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md)、[战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)与 Run 规格；此处仅保留历史决策记录，不再作为权威来源。
+
 初稿于 2026-11-18，更新于 2026-11-23。旧规格中的联机、四人队、潜能解锁、药水与遗物、角色独立牌堆与手牌上限、标记队列、固定手牌槽和元素连携规则，以本文为准。
 
 ## 单机、编队与角色被动
 
 - 移除联机模式。本地玩家直接控制三个出战位。移除联机设置、槽位所有权、按槽金币和联机奖励分发。Run 使用团队共享金币。
 - 移除团队潜能池、槽位分配和被动解锁门槛。角色池内每个角色定义只保留一个实例，重复获得时保留原角色，取消潜能补偿。
-- **角色全部被动出战即生效。** 开战时按出战槽位依次处理，每名角色按自身定义顺序挂载全部被动。回合开始、释放主动技等触发时机仍由各被动决定。角色详情、队伍编辑和卡组编辑直接展示被动描述。[开战挂载](../Src/mod/run/RunController.cs)
+- **角色全部被动出战即生效。** 开战时按出战槽位依次处理，每名角色按自身定义顺序挂载全部被动。回合开始、释放主动技等触发时机仍由各被动决定。角色详情、队伍编辑和卡组编辑直接展示被动描述。[开战挂载](../../../../Src/mod/run/RunController.cs)
 
 ## 消耗品与遗物
 
-- 原药水栏改为全队共享的 **5 个消耗品槽**。每件占一槽，同种物品也分别占槽。治疗药水作为消耗品保留，使用后恢复 20 点队伍共享生命。战斗中可在玩家阶段使用，成功后腾出对应槽位，目标无效时保留物品。[消耗品库存](../Src/mod/combat/runtime/CombatItemInventory.cs) · [治疗药水效果](../Config/mods/base-game/content/effects/potion_heal.json)
-- 满槽时，商店购买和事件奖励都可选择替换指定槽位或放弃新物品。商店在物品能够入栏后才扣款，放弃事件中的消耗品仍可结算该选项的其他奖励。[商店与事件结算](../Src/mod/run/adventure/RunAdventureService.cs)
+- 原药水栏改为全队共享的 **5 个消耗品槽**。每件占一槽，同种物品也分别占槽。治疗药水作为消耗品保留，使用后恢复 20 点队伍共享生命。战斗中可在玩家阶段使用，成功后腾出对应槽位，目标无效时保留物品。[消耗品库存](../../../../Src/mod/combat/runtime/CombatItemInventory.cs) · [治疗药水效果](../../../../Config/mods/base-game/content/effects/potion_heal.json)
+- 满槽时，商店购买和事件奖励都可选择替换指定槽位或放弃新物品。商店在物品能够入栏后才扣款，放弃事件中的消耗品仍可结算该选项的其他奖励。[商店与事件结算](../../../../Src/mod/run/adventure/RunAdventureService.cs)
 - 遗物系统暂时隐藏，后续投入时间待定。地图和战斗界面收起遗物栏，商店与事件停止投放遗物。地图明文奖励保留三类：150 金币、单职业卡包和全职业卡包。
 
 ## 存档兼容
@@ -25,7 +27,7 @@
 | 已持有的遗物 | 存档保留遗物，已持有遗物的开战效果继续生效。 |
 | 地图上的遗物奖励或商品 | 未领取的遗物选择节点改为可领取一次的 150 金币，已完成的节点保持完成。旧商店移除遗物商品，已打开的事件若只剩遗物选项，可直接离开。 |
 
-参见 [存档定义](../Src/mod/run/RunDto.cs)、[内容类型兼容](../Src/frame/content/definitions/ContentDefinitionJson.cs)、[地图迁移](../Src/mod/run/adventure/RunAdventureService.cs)。
+参见 [存档定义](../../../../Src/mod/run/RunDto.cs)、[内容类型兼容](../../../../Src/frame/content/definitions/ContentDefinitionJson.cs)、[地图迁移](../../../../Src/mod/run/adventure/RunAdventureService.cs)。
 
 ## 职业与卡包
 
@@ -37,10 +39,10 @@
 | 防御 `Defense` | `Guard`、`Shield` |
 | 支援 `Support` | `Healer`、`Support`、`Alchemist`（炼金术士） |
 
-内容 Mod 的旧职业名按表解析。`None` 用于无职业定义，此类卡牌排除在卡包候选之外。参见 [职业解析](../Src/frame/content/definitions/ContentDefinitionJson.cs)。
+内容 Mod 的旧职业名按表解析。`None` 用于无职业定义，此类卡牌排除在卡包候选之外。参见 [职业解析](../../../../Src/frame/content/definitions/ContentDefinitionJson.cs)。
 
 - 单职业包从对应职业的合资格牌池随机抽取。全职业包从三个职业合并后的牌池随机抽取，不按职业分配名额。两类包当前默认各 5 张，张数分别可配，全职业包的 5 张是暂定值。
-- 两类卡包都按实际候选发放。少于配置张数时发放剩余候选，零候选时保留地图节点并允许跳过。专属、隐藏和无职业卡排除在卡包外，已取得的卡链按现有升阶资格处理。重构时内置的 84 张牌均为专属卡，仅加载内置内容时，两类包的候选均为空。参见 [卡包发放](../Src/mod/run/adventure/RunAdventureService.cs)、[候选资格](../Src/mod/run/adventure/RunCardPackRewards.cs)。
+- 两类卡包都按实际候选发放。少于配置张数时发放剩余候选，零候选时保留地图节点并允许跳过。专属、隐藏和无职业卡排除在卡包外，已取得的卡链按现有升阶资格处理。重构时内置的 84 张牌均为专属卡，仅加载内置内容时，两类包的候选均为空。参见 [卡包发放](../../../../Src/mod/run/adventure/RunAdventureService.cs)、[候选资格](../../../../Src/mod/run/adventure/RunCardPackRewards.cs)。
 
 ## 公共手牌、即时出牌与抽弃
 
@@ -50,7 +52,7 @@
 
 ### 扇形手牌与拖拽出牌
 
-队伍手牌在战斗界面底部居中排成扇形。牌少时居中展开，牌多时根据可用宽度收紧间距。鼠标悬停时，当前牌抬起并放大，方便查看重叠的牌面。[扇形布局](../Src/mod/run/Ui/Combat/HandFan.cs) · [手牌交互](../Src/mod/run/Ui/Combat/HandSlotCmp.cs)
+队伍手牌在战斗界面底部居中排成扇形。牌少时居中展开，牌多时根据可用宽度收紧间距。鼠标悬停时，当前牌抬起并放大，方便查看重叠的牌面。[扇形布局](../../../../Src/mod/run/Ui/Combat/HandFan.cs) · [手牌交互](../../../../Src/mod/run/Ui/Combat/HandSlotCmp.cs)
 
 | 操作 | 战斗反馈 |
 | --- | --- |
@@ -58,7 +60,7 @@
 | 拖动自动选取目标的牌 | 牌面跟随指针，在战场内松开即可提交，空白处也可以。 |
 | 放回手牌区、在无效位置松开，或按 Esc、鼠标右键取消 | 卡牌回到扇形中的原位，角色保留费用。 |
 
-点击出牌仍可使用。点击和拖拽共用即时结算规则，均已移除卡牌优先级、标记队列和逐角色确认。合法出牌扣费后立即离手，腾出的空位可供本次效果抽牌。当前牌的效果完整结算后，该牌才进入队伍墓地并可参与洗回。[拖放与目标判定](../Src/mod/run/Ui/Combat/CombatWin.Hand.cs) · [出牌与结束回合](../Src/mod/combat/statemachine/CombatStateMachine.cs)
+点击出牌仍可使用。点击和拖拽共用即时结算规则，均已移除卡牌优先级、标记队列和逐角色确认。合法出牌扣费后立即离手，腾出的空位可供本次效果抽牌。当前牌的效果完整结算后，该牌才进入队伍墓地并可参与洗回。[拖放与目标判定](../../../../Src/mod/run/Ui/Combat/CombatWin.Hand.cs) · [出牌与结束回合](../../../../Src/mod/combat/statemachine/CombatStateMachine.cs)
 
 ### 共享手牌上限与抽弃
 
@@ -67,7 +69,7 @@
 - 回合内卡牌、技能和被动可触发抽牌。有明确角色筛选的抽牌效果及定向补满效果只取目标角色的牌。全队手牌有空位、抽牌堆为空且墓地内有符合条件的牌时，洗回整个队伍墓地并继续抽。洗牌保留牌的归属与实例 ID，同回合洗回次数不限。
 - 弃牌按效果的目标取牌。指定单个或多个角色时，各目标分别从自己的手牌取牌。明确指定全队手牌时，从公共区域跨角色取牌。弃置的牌统一进入队伍墓地。主动技预览、提交校验和结算共用按效果及目标分组的配额，非法选择在扣技能计数前拒绝。同次技能的随机弃牌避开已选定、待后续弃置的牌。
 
-参见 [回合补牌](../Src/mod/combat/statemachine/PlayerPhasePipeline.cs)、[队伍牌堆](../Src/mod/combat/TeamCardPiles.cs)、[弃牌配额](../Src/mod/combat/DiscardPlan.cs)。
+参见 [回合补牌](../../../../Src/mod/combat/statemachine/PlayerPhasePipeline.cs)、[队伍牌堆](../../../../Src/mod/combat/TeamCardPiles.cs)、[弃牌配额](../../../../Src/mod/combat/DiscardPlan.cs)。
 
 ## 回合、换波与 Boss 血条
 
@@ -78,7 +80,7 @@
 | 点击「结束回合」后清波 | 轮值普攻、敌方阶段或回合结束效果清波时，下一波进入下一个正常玩家回合，照常补牌和恢复资源。新敌人在这个玩家回合结束后才行动。 |
 | 卡牌打空 Boss 的非末条血 | Boss 保持换条保护，轮到自己行动时才切换到下一条血。同一张牌的后续段数以及本回合后续出牌都无法打到下一条血。 |
 
-参见 [清波判定](../Src/mod/combat/runtime/CombatSimulation.cs)、[Boss 血条切换](../Src/mod/combat/runtime/EnemyLifeBarRuntime.cs)。
+参见 [清波判定](../../../../Src/mod/combat/runtime/CombatSimulation.cs)、[Boss 血条切换](../../../../Src/mod/combat/runtime/EnemyLifeBarRuntime.cs)。
 
 ## 首版下线的机制与后续设计
 
@@ -97,4 +99,4 @@
 
 2026-11-19 回归结果为 **1484 项 NUnit 测试、36 项 Godot 无头测试全部通过**。覆盖出战被动的挂载顺序、第五槽的点击与使用、三槽 v5 存档扩容后的读写，以及旧遗物奖励的一次性领取。平衡数据留待实测。
 
-2026-11-23 回归结果为 **1490 项 NUnit 测试、37 项 Godot 无头测试全部通过**。规则测试覆盖单个角色持有全部 10 张、满手停抽和弃牌后由队友补抽。场景测试在三名角色分别持有 2、1、7 张牌时验证扇形布局，并验证拖出第三名角色的第七张牌时仅扣该角色的费用、无效目标与取消操作会使卡牌归位。[队伍手牌测试](../Tests/kemo_card.Ui.Tests/Combat/TeamCardPilesTests.cs) · [战斗手牌场景测试](../Tests/kemo_card.Ui.Headless/UiFrameworkHeadlessTests.CombatHand.cs)
+2026-11-23 回归结果为 **1490 项 NUnit 测试、37 项 Godot 无头测试全部通过**。规则测试覆盖单个角色持有全部 10 张、满手停抽和弃牌后由队友补抽。场景测试在三名角色分别持有 2、1、7 张牌时验证扇形布局，并验证拖出第三名角色的第七张牌时仅扣该角色的费用、无效目标与取消操作会使卡牌归位。[队伍手牌测试](../../../../Tests/kemo_card.Ui.Tests/Combat/TeamCardPilesTests.cs) · [战斗手牌场景测试](../../../../Tests/kemo_card.Ui.Headless/UiFrameworkHeadlessTests.CombatHand.cs)

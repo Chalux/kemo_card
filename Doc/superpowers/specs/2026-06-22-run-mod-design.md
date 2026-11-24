@@ -1,13 +1,15 @@
 # 局内数据模块 (Run Mod) 设计规范
 
-> 2026-11-19 更新。Run 已移除潜能池和槽位分配。旧 v5 物品保持原位，库存扩为五槽，遗物停止投放。 详见[单机三人队重构决策](../../2026-11-18-single-player-refactor-decisions.md)。
+> 2026-11-19 更新。Run 已移除潜能池和槽位分配。旧 v5 物品保持原位，库存扩为五槽，遗物停止投放。战斗内即时出牌 / 弹珠阶段见[战斗规格](2026-07-21-combat-system-design.md)；单机三人队规则已并入[总规格](2026-05-11-kemo-card-design.md)，原[重构决策](../../archive/superpowers/specs/2026-11-18-single-player-refactor-decisions.md)已归档。
+
+> **2026-11-24 阅读提示**：本文中「团体潜能（§13）/ 联机控制权 / 联机奖励分叉 / 旧药水与遗物」相关段落已停用或移除；五槽共享消耗品、存档 v5、队伍编辑以[总规格 §4.5–§4.7](2026-05-11-kemo-card-design.md)与本文现行章节为准。存档 schema 以 v5 为准（`RunDto`）。
 
 **日期**：2026-06-22
 **最后修订**：2026-09-24（新增 §14 战斗界面 `CombatWin`）
 **状态**：已实装（`Src/mod/run/`，`RunMod.FeatureId = "run"`）
 **关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md)（玩法边界权威）；战斗相关服从 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md)；内容定义见 [2026-05-17 内容 Mod 管理器规格](2026-05-17-content-mod-manager-design.md)；界面层遵循 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)、[2026-09-15 ui-mod-binding 规格](2026-05-15-ui-manager-design.md)、[2026-09-19 UI 主题规格](2026-09-21-global-mod-design.md) 与 [2026-09-21 羊皮纸重设计](2026-09-21-global-mod-design.md)。
-**范围**：Run 域功能 Mod（`Src/mod/run/`，`RunMod.FeatureId = "run"`）的**唯一权威规格** —— 模块结构与架构、生命周期与阶段流转、数据模型与存档 schema、奖励分发、控制权与联机边界、Run 界面流程、存档闭环、ESC 系统菜单、队伍编辑界面、团体潜能（团队池 + 槽位已分配进度值 + 分配/扣除）。
-**非范围**：战斗规则（阶段机 / SharedHp / 伤害与治疗公式 / 连携 / 槽位效果 / Buff 运行时）归 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md) 与 [2026-09-19 Buff 运行时规格](2026-07-21-combat-system-design.md) §1–§3、§5–§7；**词典（Glossary）**界面与词条目录归 Global 功能规格（其源规格见 `Doc/superpowers/specs/2026-09-21-pause-menu-and-glossary-design.md` 的词典章节）；UI 管理器与场景约定归 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)；Toast 组件本身归 [2026-08-04 Toast 组件规格](2026-09-21-global-mod-design.md)。
+**范围**：Run 域功能 Mod（`Src/mod/run/`，`RunMod.FeatureId = "run"`）的**唯一权威规格** —— 模块结构与架构、生命周期与阶段流转、数据模型与存档 schema v5、奖励分发、队伍编辑、Run 界面流程、存档闭环、ESC 系统菜单、五槽共享消耗品与商店 / 事件结算。
+**非范围**：战斗规则（阶段机 / SharedHp / 伤害与治疗公式 / 即时出牌 / 弹珠阶段 / Buff 运行时）归 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md)；产品 / 单机三人队 / 角色池 / 奖励边界归 [2026-05-11 总规格](2026-05-11-kemo-card-design.md)；**词典（Glossary）**界面与词条目录归 Global 功能规格；UI 管理器与场景约定归 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)；Toast 组件本身归 [2026-09-21 Global 规格](2026-09-21-global-mod-design.md)。
 
 ## 本文承载的下级规格（2026-09-21 合并并归档）
 

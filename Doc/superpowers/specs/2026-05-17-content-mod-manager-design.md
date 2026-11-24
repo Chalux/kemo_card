@@ -16,7 +16,7 @@
 | `2026-06-16-content-definition-dto-design.md`（卡牌 / 技能 / Buff / 效果 内容 DTO 设计规格） | `Doc/archive/superpowers/specs/2026-06-16-content-definition-dto-design.md` | 全文（原 §1–§7）→ 本文 §12 |
 | `2026-06-16-character-battle-event-item-dto-design.md`（角色 / 敌人 / 战斗 / 事件 / 道具 内容 DTO 设计规格） | `Doc/archive/superpowers/specs/2026-06-16-character-battle-event-item-dto-design.md` | 全文（原 §1–§9）→ 本文 §13 |
 | `2026-06-18-character-instance-design.md`（角色实例 / 战斗实例 / 卡组预设 / 手牌槽 设计规格） | `Doc/archive/superpowers/specs/2026-06-18-character-instance-design.md` | 全文（原 §1–§4）→ 本文 §14 |
-| `2026-09-21-reinhardt-and-normal-attack-extensions.md`（莱因哈特套件与战斗机制扩展） | **不归档**（该规格仍存活：其余章节归战斗规格与 Global 功能规格维护） | 仅原 §2 种族收敛 / §3 常驻天赋移除 / §9 卡组属性预算 / §12.1 稀有度档名收敛 / §12.2 的 `CharacterDto.descId` 删除 → 本文 §15 |
+| `2026-09-21-reinhardt-and-normal-attack-extensions.md`（莱因哈特套件与战斗机制扩展） | `Doc/archive/superpowers/specs/2026-09-21-reinhardt-and-normal-attack-extensions.md`（其余章节已并入战斗 / Global 规格） | 仅原 §2 种族收敛 / §3 常驻天赋移除 / §9 卡组属性预算 / §12.1 稀有度档名收敛 / §12.2 的 `CharacterDto.descId` 删除 → 本文 §15 |
 
 **段号映射（原规格 §N → 本文 §M.K）**：`Src/` 与 `Doc/` 里的注释按原段号引用规格（如 `ContentDefinitionValidator`、各 `*Dto.cs` 引「内容 DTO 规格」），下表用于继续定位。
 
@@ -805,7 +805,7 @@ content/items/*.json
 
 ## 15. 内容域收敛与卡组预算（并入自 2026-09-21 莱因哈特套件与战斗机制扩展规格）
 
-> **来源**：`2026-09-21-reinhardt-and-normal-attack-extensions.md` 的**内容域**章节 —— 原 §2 种族收敛、§3 常驻天赋移除、§9 卡组属性预算、§12.1 稀有度档名收敛、§12.2 的 `CharacterDto.descId` 删除。该规格**仍存活**（普攻扩展、魔法伤害、Combat 条件域、取值与槽位机制、莱因哈特/巴赫套件归战斗规格与 Buff 规格维护；角色详细界面展示形态归 Global 功能规格维护），本规格不归档。本文只承载上述内容域事实；未并入清单见本文 §16。
+> **来源**：`2026-09-21-reinhardt-and-normal-attack-extensions.md` 的**内容域**章节 —— 原 §2 种族收敛、§3 常驻天赋移除、§9 卡组属性预算、§12.1 稀有度档名收敛、§12.2 的 `CharacterDto.descId` 删除。该规格**已归档**（战斗机制、魔法伤害、Combat 条件域、取值与槽位机制、莱因哈特/巴赫套件归战斗规格；角色详细界面展示形态归 Global 功能规格）。本文只承载上述内容域事实；未并入清单见本文 §16。
 
 ### 15.1 种族收敛（2026-09-21）（原 §2）
 

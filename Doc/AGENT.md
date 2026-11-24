@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-11-23（清理归档入口）
+**最后修订**：2026-11-24（并入单机三人队 / 弹珠阶段规格）
 
 ---
 
@@ -61,15 +61,15 @@ Godot 4.7 Mono（纯 C#）单机卡牌 Roguelike，玩家指挥三名出战角�
 
 冲突时以上位为准，并回写实现或下级文档。
 
-单机三人队与即时出牌的变更见[重构决策](2026-11-18-single-player-refactor-decisions.md)。相关条目并回各领域规格前，以决策记录为准。
+单机三人队与即时出牌的变更已并入[总规格](superpowers/specs/2026-05-11-kemo-card-design.md)与[战斗规格](superpowers/specs/2026-07-21-combat-system-design.md)；原[重构决策](archive/superpowers/specs/2026-11-18-single-player-refactor-decisions.md)与[弹珠阶段设计](archive/superpowers/specs/2026-11-23-marble-phase-design.md)已归档。
 
 **2026-09-21 起活规格收敛为 6 份**。其余规格（含已落地的功能级设计）已并入下表对应文档并归档到 `Doc/archive/superpowers/specs/`。
 
 | # | 规格 | 承载 |
 |---|------|------|
-| 1 | **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md) | 产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、角色被动 |
-| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、SharedHp、能量/抽牌、主动/蓄力、指令管线、伤害包管线、普攻（次数/追打/专项倍率）、充能球、buff 运行时、战斗条件、**表现事件流（§16）** |
-| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档闭环、队伍编辑、ESC 系统菜单、**战斗界面 `CombatWin` 与表现管线（§14）**、队伍共享消耗品（5 槽） |
+| 1 | **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md) | 单机三人队、产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、角色池与被动、消耗品边界 |
+| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、即时出牌与共享手牌、SharedHp、能量/抽牌、主动/蓄力、指令管线、伤害包管线、弹珠阶段与轮值普攻（§12）、充能球、buff 运行时、战斗条件、**表现事件流（§16）** |
+| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档 v5、队伍编辑、ESC 系统菜单、**战斗界面 `CombatWin` 与表现管线（§14）**、队伍共享消耗品（5 槽）与商店/事件结算 |
 | 4 | **Global** — [global-mod-design](superpowers/specs/2026-09-21-global-mod-design.md) | `Src/mod/global`：主菜单、图鉴、卡牌/角色详情、设置、词典、界面主题（羊皮纸）、Toast、关键词提示、界面清单 |
 | 5 | **内容与数据** — [content-mod-manager-design](superpowers/specs/2026-05-17-content-mod-manager-design.md) | 内容 Mod 管道 + 内容定义 DTO（卡/技能/效果/Buff + 角色/敌人/战斗/事件/道具）+ 角色与战斗实例 |
 | 6 | **UI 与运行时** — [ui-manager-design](superpowers/specs/2026-05-15-ui-manager-design.md) | `Src/frame`：UI 管理器与 BaseUI、**界面归属功能 Mod + BindingScope 统一订阅生命周期**（`BindingScope` / 框架级 `OnExitTree`）、事件分发器、条件判断（Persistent/Combat 双域 CondType、内联 JSON 组合、Explain；已接 `StoryDto.unlock` 与效果 `conditions`）、Mod 脚本运行时（PuerTS ScriptEnv） |

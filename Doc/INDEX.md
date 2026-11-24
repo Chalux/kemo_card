@@ -2,15 +2,16 @@
 
 > Agent 请先读 [AGENT.md](AGENT.md)。本文列出活规格、归档入口与本轮维护约定。
 
-**最后修订**：2026-11-23（清理归档入口）
+**最后修订**：2026-11-24（并入单机三人队重构与弹珠阶段设计）
 
 ---
 
-## 重构决策
+## 已合并的重构文档
 
-[单机三人队与即时出牌重构决策](2026-11-18-single-player-refactor-decisions.md)记录本轮确认的单机、队伍、职业、手牌、战斗和消耗品规则，以及留待重做的效果。下列表格链接的旧规格若仍描述这些机制的旧规则，相关条目以本轮决策为准。
+《单机三人队与即时出牌重构决策》与《弹珠阶段与轮值普攻设计》的耐用规则已并入[总规格](superpowers/specs/2026-05-11-kemo-card-design.md)与[战斗规格](superpowers/specs/2026-07-21-combat-system-design.md)；原件已归档，仅作历史参考：
 
-[弹珠阶段与轮值普攻设计](2026-11-23-marble-phase-design.md) 是本轮战斗改版的设计草案。
+- [单机三人队与即时出牌重构决策](archive/superpowers/specs/2026-11-18-single-player-refactor-decisions.md)
+- [弹珠阶段与轮值普攻设计](archive/superpowers/specs/2026-11-23-marble-phase-design.md)
 
 ## 活规格（`Doc/superpowers/specs/`）
 
@@ -18,9 +19,9 @@
 
 | 文档 | 角色 |
 |------|------|
-| [2026-05-11-kemo-card-design.md](superpowers/specs/2026-05-11-kemo-card-design.md) | **权威总规格**：产品形态 / 宿主·Mod 分界 / Run 环与账本 / 卡牌双层 / 角色被动 |
-| [2026-07-21-combat-system-design.md](superpowers/specs/2026-07-21-combat-system-design.md) | **战斗规格**（`Src/mod/combat`）：阶段机 / 伤害包管线 / SharedHp / 能量·抽牌 / 普攻（次数·追打·专项倍率）/ 充能球 / buff 运行时 / 连携 / 槽位效果 / 战斗条件 |
-| [2026-06-22-run-mod-design.md](superpowers/specs/2026-06-22-run-mod-design.md) | **Run 规格**（`Src/mod/run`）：Run 环 / 奖励 / 存档闭环 / 队伍编辑 / ESC 系统菜单 |
+| [2026-05-11-kemo-card-design.md](superpowers/specs/2026-05-11-kemo-card-design.md) | **权威总规格**：单机三人队 / 产品形态 / 宿主·Mod 分界 / Run 环与账本 / 卡牌双层 / 角色池与被动 / 消耗品边界 |
+| [2026-07-21-combat-system-design.md](superpowers/specs/2026-07-21-combat-system-design.md) | **战斗规格**（`Src/mod/combat`）：阶段机 / 即时出牌与共享手牌 / 伤害包管线 / SharedHp / 能量·抽牌 / 弹珠阶段与轮值普攻 / 充能球 / buff 运行时 / 战斗条件 |
+| [2026-06-22-run-mod-design.md](superpowers/specs/2026-06-22-run-mod-design.md) | **Run 规格**（`Src/mod/run`）：Run 环 / 奖励 / 存档 v5 / 队伍编辑 / 五槽共享消耗品与商店·事件结算 / ESC 系统菜单 |
 | [2026-09-21-global-mod-design.md](superpowers/specs/2026-09-21-global-mod-design.md) | **Global 规格**（`Src/mod/global`）：主菜单 / 图鉴 / 卡牌与角色详情 / 设置 / 词典 / 界面主题（羊皮纸）/ Toast / 关键词提示 / 界面清单 |
 | [2026-05-17-content-mod-manager-design.md](superpowers/specs/2026-05-17-content-mod-manager-design.md) | **内容与数据规格**：内容 Mod 管道 + 内容定义 DTO（卡·技能·效果·Buff + 角色·敌人·战斗·事件·道具）+ 角色/战斗实例 |
 | [2026-05-15-ui-manager-design.md](superpowers/specs/2026-05-15-ui-manager-design.md) | **UI 与运行时规格**（`Src/frame`）：UI 管理器与 BaseUI / 界面归属 + `BindingScope` 统一订阅生命周期 / 事件分发器 / 条件系统 / Mod 脚本运行时 |
