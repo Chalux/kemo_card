@@ -8,7 +8,7 @@
 
 **Tech Stack:** C# / Godot 4.6 Mono / System.Text.Json / NUnit（`Tests/kemo_card.Ui.Tests`）
 
-**权威规格:** [2026-07-30-condition-system-design.md](../../../superpowers/specs/2026-07-30-condition-system-design.md)
+**权威规格:** [2026-07-30-condition-system-design.md](../specs/2026-07-30-condition-system-design.md)
 
 ## Global Constraints
 

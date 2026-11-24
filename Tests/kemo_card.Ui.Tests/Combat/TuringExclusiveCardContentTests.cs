@@ -54,8 +54,7 @@ public sealed class TuringExclusiveCardContentTests
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.BaseValue, Is.EqualTo(baseValue));
         Assert.That(card.CardType.ToString(), Is.EqualTo(cardType));
-        Assert.That(card.Priority, Is.EqualTo(priority));
-        Assert.That(card.Role, Is.EqualTo(ERole.Controller), "卡牌定位跟随角色定位");
+        Assert.That(card.Role, Is.EqualTo(ERole.Attack), "卡牌定位跟随角色定位");
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
         Assert.That(card.IsExclusive, Is.True, "专属卡必须标记 isExclusive");
         Assert.That(card.CardGroupId, Is.Null, "无升级链");
@@ -96,7 +95,7 @@ public sealed class TuringExclusiveCardContentTests
 
         Assert.That(turing!.Element, Is.EqualTo(EElement.Blue));
         Assert.That(turing.Race, Is.EqualTo(ERace.Human | ERace.Academic));
-        Assert.That(turing.Role, Is.EqualTo(ERole.Controller), "定位：控制");
+        Assert.That(turing.Role, Is.EqualTo(ERole.Attack), "定位：主攻");
 
         // 主动技蓄力链单档：谜题-进制II，cooldown 即技能进度阈值（Cap = 7）。
         Assert.That(turing.ActiveSkillChain, Has.Count.EqualTo(1));
@@ -210,7 +209,7 @@ public sealed class TuringExclusiveCardContentTests
         Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.DamageTakenScale), Is.EqualTo(0.25f).Within(0.001f));
 
         // 增伤同桶加算（战斗规格「增伤与受伤增加一律加算」）：结算末尾的普通攻击应当被 +25%。
-        var normalAttack = sim.NormalAttacks.LastResult;
+        var normalAttack = sim.NormalAttacks.LastMarbleSettlement;
         Assert.That(normalAttack, Is.Not.Null);
         Assert.That(normalAttack!.TotalDamage, Is.EqualTo(12.5f).Within(0.001f), "10 × (1 + 25%)");
     }
@@ -231,7 +230,7 @@ public sealed class TuringExclusiveCardContentTests
         MarkAndExecute(sim, ShiftCard, [Enemy(0)]);
 
         // 卡牌：12 + 100% 施法者魔攻 10 − 目标魔防 1 = 21；随后本回合普通攻击另行结算。
-        var normalAttack = sim.NormalAttacks.LastResult;
+        var normalAttack = sim.NormalAttacks.LastMarbleSettlement;
         Assert.That(normalAttack, Is.Not.Null, "卡牌结算完成后应执行普通攻击");
         Assert.That(
             enemy.Asc.GetCurrentValue(AttributeIds.Health),
@@ -284,7 +283,7 @@ public sealed class TuringExclusiveCardContentTests
 
     #endregion
 
-    #region 潜能被动（0 / 20 / 50 / 99 四档）
+    #region 角色被动
 
     [Test]
     public void Passive_one_grants_poison_immunity()
@@ -567,7 +566,8 @@ public sealed class TuringExclusiveCardContentTests
         var marked = sim.TryApply(new PlayCardCommand(0, slotIndex, targets));
         Assert.That(marked.Success, Is.True, marked.Error);
 
-        sim.TransitionTo(ECombatPhase.CardExecution);
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        MarblePhaseTests.ShootQueuedBalls(sim, 1.35f);
         sim.AdvancePhase();
     }
 

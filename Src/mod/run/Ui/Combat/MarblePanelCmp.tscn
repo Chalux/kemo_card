@@ -1,0 +1,98 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/MarblePanelCmp.cs" id="1_script"]
+[ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
+[ext_resource type="Script" path="res://Src/mod/run/Ui/Combat/MarbleBoardCmp.cs" id="3_board"]
+
+[node name="MarblePanelCmp" type="Control" node_paths=PackedStringArray("_board", "_lblTitle", "_lblStats", "_lblQueue", "_queueScroll", "_btnToggle", "_margin")]
+custom_minimum_size = Vector2(184, 0)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 184.0
+offset_bottom = 218.0
+mouse_filter = 2
+script = ExtResource("1_script")
+_board = NodePath("Margin/VBox/Board")
+_lblTitle = NodePath("Margin/VBox/Header/Title")
+_lblStats = NodePath("Margin/VBox/Stats")
+_lblQueue = NodePath("Margin/VBox/QueueScroll/Queue")
+_queueScroll = NodePath("Margin/VBox/QueueScroll")
+_btnToggle = NodePath("Margin/VBox/Header/BtnToggle")
+_margin = NodePath("Margin")
+
+[node name="Face" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Header" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Margin/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+text = "UI_MARBLE_PANEL_TITLE"
+
+[node name="BtnToggle" type="Button" parent="Margin/VBox/Header"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+theme_type_variation = &"Ghost"
+theme_override_font_sizes/font_size = 12
+text = "UI_MARBLE_PREVIEW_OPEN"
+script = ExtResource("2_kbtn")
+EnableHoverScale = false
+
+[node name="Stats" type="Label" parent="Margin/VBox"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3
+
+[node name="Board" type="Control" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+script = ExtResource("3_board")
+
+[node name="QueueScroll" type="ScrollContainer" parent="Margin/VBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Queue" type="Label" parent="Margin/VBox/QueueScroll"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_type_variation = &"Caption"
+theme_override_font_sizes/font_size = 11
+autowrap_mode = 3

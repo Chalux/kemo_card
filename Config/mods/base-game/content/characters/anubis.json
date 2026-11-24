@@ -1,7 +1,7 @@
 {
   "displayNameId": "char.anubis.name",
   "element": "Red",
-  "role": "CardPlayer",
+  "role": "Attack",
   "race": [
     "God",
     "Animal"
@@ -23,19 +23,15 @@
   "initialEnergy": 3,
   "passives": [
     {
-      "requiredPotential": 0,
       "buffId": "anubis_passive_p1"
     },
     {
-      "requiredPotential": 10,
       "buffId": "anubis_passive_p2"
     },
     {
-      "requiredPotential": 30,
       "buffId": "anubis_passive_p3"
     },
     {
-      "requiredPotential": 50,
       "buffId": "anubis_passive_p4"
     }
   ],

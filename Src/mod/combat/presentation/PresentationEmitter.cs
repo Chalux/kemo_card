@@ -10,39 +10,30 @@ namespace KemoCard.Mod.Combat.Presentation;
 /// </summary>
 public static class PresentationEmitter
 {
-    /// <summary>抽牌并记录抽到的牌（比对抽前后的手牌槽占用）。返回实际抽到张数。</summary>
-    public static int DrawAndEmit(CombatSimulation simulation, int characterIndex, int count)
+    /// <summary>从共用牌堆抽牌，按实际入手顺序及付费角色记录动画。定向补满可限定归属。</summary>
+    public static int DrawTeamAndEmit(CombatSimulation simulation, int count, int? requiredOwner = null)
     {
         ArgumentNullException.ThrowIfNull(simulation);
-        var characters = simulation.PlayerTeam.Characters;
-        if (characterIndex < 0 || characterIndex >= characters.Count)
-            return 0;
-
-        var character = characters[characterIndex];
-        var before = new string?[character.HandSlots.Count];
-        for (var i = 0; i < before.Length; i++)
-            before[i] = character.HandSlots[i].RuntimeInstanceId;
-
-        var drawn = character.DrawWithReshuffle(count, simulation.DrawRng);
-        if (drawn <= 0)
-            return drawn;
-
-        var cards = new List<DrawnCard>(drawn);
-        for (var i = 0; i < before.Length; i++)
+        var owner = -1;
+        var cards = new List<DrawnCard>();
+        var drawn = simulation.PlayerTeam.CardPiles.Draw(count, simulation.DrawRng, (index, slot) =>
         {
-            var slot = character.HandSlots[i];
-            if (slot.IsEmpty || slot.CardId is null)
-                continue;
-            if (string.Equals(before[i], slot.RuntimeInstanceId, StringComparison.Ordinal))
-                continue;
-
-            cards.Add(new DrawnCard(i, slot.CardId));
-        }
-
+            if (owner != index && cards.Count > 0)
+            {
+                simulation.Presentation.Emit(new CardsDrawnEvent(owner, cards));
+                cards = [];
+            }
+            owner = index;
+            cards.Add(new DrawnCard(slot.SlotIndex, slot.CardId!, slot.RuntimeInstanceId!));
+        }, requiredOwner);
         if (cards.Count > 0)
-            simulation.Presentation.Emit(new CardsDrawnEvent(characterIndex, cards));
+            simulation.Presentation.Emit(new CardsDrawnEvent(owner, cards));
         return drawn;
     }
+
+    /// <summary>明确指定角色的抽牌效果，仍从队伍牌堆取该角色的牌。</summary>
+    public static int DrawAndEmit(CombatSimulation simulation, int characterIndex, int count) =>
+        DrawTeamAndEmit(simulation, count, requiredOwner: characterIndex);
 
     /// <summary>手牌槽占用快照（RuntimeInstanceId 与 CardId），供弃牌前后比对。</summary>
     public static (string? RuntimeId, string? CardId)[] SnapshotHand(CharacterBattleInstance character)
@@ -83,7 +74,7 @@ public static class PresentationEmitter
             if (string.Equals(character.HandSlots[i].RuntimeInstanceId, runtimeId, StringComparison.Ordinal))
                 continue;
 
-            simulation.Presentation.Emit(new CardDiscardedEvent(characterIndex, i, cardId, channel));
+            simulation.Presentation.Emit(new CardDiscardedEvent(characterIndex, i, cardId, channel, runtimeId));
         }
     }
 

@@ -4,8 +4,11 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public sealed class ItemDto
 {
+    [JsonPropertyName("cardPhaseOnly")]
+    public bool CardPhaseOnly { get; init; }
+
     [JsonPropertyName("kind")]
-    public EItemKind Kind { get; init; } = EItemKind.Potion;
+    public EItemKind Kind { get; init; } = EItemKind.Consumable;
 
     [JsonPropertyName("battleStartSkillRefs")]
     public List<SkillRefDto> BattleStartSkillRefs { get; init; } = [];

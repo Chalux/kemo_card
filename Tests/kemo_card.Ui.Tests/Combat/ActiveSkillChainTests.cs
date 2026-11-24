@@ -199,21 +199,6 @@ public sealed class ActiveSkillChainTests
     }
 
     [Test]
-    public void Confirmed_character_may_still_cast_and_stays_confirmed()
-    {
-        var host = new RecordingScriptHost();
-        using var sim = Build(host);
-        var character = sim.PlayerTeam.Characters[0];
-        SetCounter(character, 4);
-        character.SetHasActed(true);
-
-        var result = sim.TryApply(new CastActiveSkillCommand(0, Enemy0));
-
-        Assert.That(result.Success, Is.True, result.Error);
-        Assert.That(character.HasActed, Is.True, "主动技不占已行动");
-    }
-
-    [Test]
     public void Cast_does_not_consume_available_energy()
     {
         var host = new RecordingScriptHost();
@@ -244,16 +229,8 @@ public sealed class ActiveSkillChainTests
         using var sim = Build(host);
         var character = sim.PlayerTeam.Characters[0];
         SetCounter(character, 5);
-        sim.CardQueue.Enqueue(new QueuedCardEntry(
-            CharacterIndex: 0,
-            CardId: "card.tier0",
-            RuntimeInstanceId: "rt-x",
-            Priority: 100,
-            Targets: Enemy0,
-            Sequence: sim.AllocateQueueSequence()));
-        sim.TransitionTo(ECombatPhase.CardExecution);
-
-        sim.AdvancePhase();
+        character.HandSlots[0].PlaceCard("card.tier0", "rt-x");
+        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0, "rt-x")).Success, Is.True);
 
         Assert.That(host.Invocations, Is.EqualTo(new[] { "tier0.js" }), "卡牌照常执行技能载荷");
         Assert.That(character.SkillCounter, Is.EqualTo(5), "卡牌 skillRefs 不走 S 计数器");
@@ -481,7 +458,6 @@ public sealed class ActiveSkillChainTests
                     TargetSide = ETargetSide.Enemy,
                     TargetScope = ETargetScope.Single,
                     TargetCount = 1,
-                    Priority = 100,
                     SkillRefs = [new SkillRefDto { SkillId = "skill.tier0" }],
                 },
             },

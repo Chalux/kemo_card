@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.mother_machine_cache_repair.name",
   "element": 8,
-  "role": "Healer",
+  "role": "Support",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "HealPower": 2
     }
   },
-  "priority": 9,
   "cardType": "Healing",
   "targetSide": "Ally",
   "targetScope": "Team",

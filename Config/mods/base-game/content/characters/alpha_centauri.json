@@ -23,19 +23,15 @@
   "initialEnergy": 3,
   "passives": [
     {
-      "requiredPotential": 0,
       "buffId": "alpha_centauri_passive_p1"
     },
     {
-      "requiredPotential": 10,
       "buffId": "alpha_centauri_passive_p2"
     },
     {
-      "requiredPotential": 30,
       "buffId": "alpha_centauri_passive_p3"
     },
     {
-      "requiredPotential": 50,
       "buffId": "alpha_centauri_passive_p4"
     }
   ],

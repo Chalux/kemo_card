@@ -29,7 +29,7 @@ public sealed class VisibleEventTests
     }
 
     [TestCase(EVisibleEventKind.RolePack, 5)]
-    [TestCase(EVisibleEventKind.AllRolesPack, 12)]
+    [TestCase(EVisibleEventKind.AllRolesPack, 5)]
     public void Packs_grant_every_card_without_duplicates_or_exclusives(EVisibleEventKind kind, int count)
     {
         var service = Service(kind);
@@ -40,51 +40,74 @@ public sealed class VisibleEventTests
         Assert.That(cards.All(id => !service.Store.Cards[id].IsExclusive && service.Store.Cards[id].Rarity != ERarity.Exclusive), Is.True);
         Assert.That(cards.Contains("warrior_upgrade"), Is.False, "reward pools only use the lowest card in an upgrade group");
         if (kind == EVisibleEventKind.RolePack)
-            Assert.That(cards.All(id => service.Store.Cards[id].Role == ERole.Warrior), Is.True);
-        else
-            Assert.That(cards.Select(id => service.Store.Cards[id].Role).Distinct().Count(), Is.EqualTo(12));
+            Assert.That(cards.All(id => service.Store.Cards[id].Role == ERole.Attack), Is.True);
         Assert.That(service.ClaimVisibleReward(), Is.True);
         Assert.That(service.State.CardCollection, Is.EquivalentTo(cards));
         Assert.That(service.ClaimVisibleReward(), Is.False);
     }
 
+    [TestCase(EVisibleEventKind.RolePack)]
+    [TestCase(EVisibleEventKind.AllRolesPack)]
+    public void Packs_grant_available_cards_when_fewer_than_the_configured_size(EVisibleEventKind kind)
+    {
+        var service = Service(kind, cardsPerRole: 1, packSize: 4);
+        service.OpenNode(0, 2);
+
+        var cards = service.CurrentVisibleReward!.CardIds.ToArray();
+        Assert.That(cards, Has.Length.EqualTo(kind == EVisibleEventKind.RolePack ? 1 : 3));
+        Assert.That(service.CanSkipVisibleReward, Is.False);
+        Assert.That(service.ClaimVisibleReward(), Is.True);
+        Assert.That(service.State.CardCollection, Is.EquivalentTo(cards));
+    }
+
     [Test]
-    public void Relics_offer_three_unowned_candidates_then_grant_only_the_selected_one()
+    public void All_roles_pack_honors_the_configured_draw_size()
+    {
+        var service = Service(EVisibleEventKind.AllRolesPack, packSize: 2);
+        service.OpenNode(0, 2);
+
+        Assert.That(service.CurrentVisibleReward!.CardIds, Has.Count.EqualTo(2));
+        Assert.That(service.ClaimVisibleReward(), Is.True);
+    }
+
+    [Test]
+    public void Open_legacy_relic_reward_becomes_gold_and_can_only_be_claimed_once()
     {
         var service = Service(EVisibleEventKind.RelicChoice);
         service.State.Items.TryAdd(service.Store.Items["relic0"]);
-        service.OpenNode(0, 2);
-        var candidates = service.CurrentVisibleReward!.RelicIds.ToArray();
-        Assert.That(candidates.Length, Is.EqualTo(3));
-        Assert.That(candidates.Distinct().Count(), Is.EqualTo(3));
-        Assert.That(candidates, Does.Not.Contain("relic0"));
-        Assert.That(service.ClaimVisibleReward("relic0"), Is.False);
-        Assert.That(service.ClaimVisibleReward("missing"), Is.False);
-        Assert.That(service.LeaveNode(), Is.False);
-        Assert.That(service.ClaimVisibleReward(candidates[1]), Is.True);
-        Assert.That(service.State.Items.Relics, Is.EquivalentTo(new[] { "relic0", candidates[1] }));
-        Assert.That(service.ClaimVisibleReward(candidates[0]), Is.False);
+        var map = service.State.Map!;
+        map.NodeOpen = true;
+        map.Position = 2;
+        var gold = service.State.SharedGold;
+        service.EnsureMap();
+        Assert.That(service.CurrentVisibleReward!.Kind, Is.EqualTo(EVisibleEventKind.Gold));
+        Assert.That(service.ClaimVisibleReward(), Is.True);
+        service.EnsureMap();
+        Assert.That(service.OpenNode(0, 2), Is.False);
+        Assert.That(service.ClaimVisibleReward(), Is.False);
+        Assert.That(service.State.SharedGold, Is.EqualTo(gold + 150));
+        Assert.That(service.State.Items.Relics, Is.EqualTo(new[] { "relic0" }));
     }
 
     [Test]
     public void Owned_upgradeable_cards_remain_in_pool_and_upgrade_every_deck_in_place()
     {
         var service = Service(EVisibleEventKind.RolePack);
-        foreach (var id in new[] { "Warrior_0", "Warrior_1", "Warrior_2" }) service.State.AddCard(id);
+        foreach (var id in new[] { "Attack_0", "Attack_1", "Attack_2" }) service.State.AddCard(id);
         var characters = Enumerable.Range(0, 2).Select(index => new CharacterInstance(new CharacterDto
-        { Id = $"hero{index}", Role = ERole.Warrior, Cards = ["Warrior_1", "Warrior_0", "Warrior_2"] })).ToArray();
+        { Id = $"hero{index}", Role = ERole.Attack, Cards = ["Attack_1", "Attack_0", "Attack_2"] })).ToArray();
         foreach (var character in characters) service.State.AddToCharacterPool(character);
         service.OpenNode(0, 2);
-        Assert.That(service.CurrentVisibleReward!.CardIds, Does.Contain("Warrior_0"));
-        Assert.That(service.CurrentVisibleReward.CardIds, Does.Not.Contain("Warrior_1").And.Not.Contain("Warrior_2"));
+        Assert.That(service.CurrentVisibleReward!.CardIds, Does.Contain("Attack_0"));
+        Assert.That(service.CurrentVisibleReward.CardIds, Does.Not.Contain("Attack_1").And.Not.Contain("Attack_2"));
         Assert.That(service.ClaimVisibleReward(), Is.True);
-        Assert.That(service.State.CardCollection, Does.Contain("warrior_upgrade").And.Not.Contain("Warrior_0"));
+        Assert.That(service.State.CardCollection, Does.Contain("warrior_upgrade").And.Not.Contain("Attack_0"));
         foreach (var character in characters)
         {
-            Assert.That(character.GetCurrentDeck()!.CardIds, Is.EqualTo(new[] { "Warrior_1", "warrior_upgrade", "Warrior_2" }));
+            Assert.That(character.GetCurrentDeck()!.CardIds, Is.EqualTo(new[] { "Attack_1", "warrior_upgrade", "Attack_2" }));
             var rewards = new RunCardPackRewards(new RunController(service.State), service.Store);
-            Assert.That(rewards.BuildableCards(character), Does.Not.Contain("Warrior_0"));
-            Assert.That(rewards.EligibleCards().Select(card => card.Id), Does.Not.Contain("Warrior_0"));
+            Assert.That(rewards.BuildableCards(character), Does.Not.Contain("Attack_0"));
+            Assert.That(rewards.EligibleCards().Select(card => card.Id), Does.Not.Contain("Attack_0"));
         }
     }
 
@@ -93,7 +116,7 @@ public sealed class VisibleEventTests
     {
         var service = Service(EVisibleEventKind.RolePack);
         service.OpenNode(0, 2);
-        var blocked = service.CurrentVisibleReward!.CardIds.First(id => id != "Warrior_0");
+        var blocked = service.CurrentVisibleReward!.CardIds.First(id => id != "Attack_0");
         service.State.AddCard(blocked);
         Assert.That(service.ClaimVisibleReward(), Is.False);
         Assert.That(service.State.CardCollection, Is.EquivalentTo(new[] { blocked }));
@@ -103,8 +126,7 @@ public sealed class VisibleEventTests
 
     [TestCase(EVisibleEventKind.RolePack)]
     [TestCase(EVisibleEventKind.AllRolesPack)]
-    [TestCase(EVisibleEventKind.RelicChoice)]
-    public void Insufficient_pools_allow_explicit_skip_without_partial_rewards(EVisibleEventKind kind)
+    public void Empty_pools_allow_explicit_skip(EVisibleEventKind kind)
     {
         var service = Service(kind, completePools: false);
         service.OpenNode(0, 2);
@@ -123,22 +145,22 @@ public sealed class VisibleEventTests
     [Test]
     public void Reward_contents_survive_serialization_and_snapshots_are_independent()
     {
-        var service = Service(EVisibleEventKind.RelicChoice);
+        var service = Service(EVisibleEventKind.AllRolesPack);
         service.OpenNode(0, 2);
         var snapshot = service.State.ToDto();
-        var ids = service.CurrentVisibleReward!.RelicIds.ToArray();
+        var ids = service.CurrentVisibleReward!.CardIds.ToArray();
         var restored = new RunMod();
         restored.RestoreFrom(JsonSerializer.Deserialize<RunDto>(JsonSerializer.Serialize(snapshot))!.Normalize());
         var reloaded = new RunAdventureService(new RunController(restored), Definitions());
         reloaded.EnsureMap();
-        Assert.That(reloaded.CurrentVisibleReward!.RelicIds, Is.EqualTo(ids));
-        service.CurrentVisibleReward.RelicIds.Clear();
-        Assert.That(snapshot.Map!.CurrentNode!.VisibleReward!.RelicIds, Is.EqualTo(ids));
-        Assert.That(reloaded.ClaimVisibleReward(ids[0]), Is.True);
+        Assert.That(reloaded.CurrentVisibleReward!.CardIds, Is.EqualTo(ids));
+        service.CurrentVisibleReward.CardIds.Clear();
+        Assert.That(snapshot.Map!.CurrentNode!.VisibleReward!.CardIds, Is.EqualTo(ids));
+        Assert.That(reloaded.ClaimVisibleReward(), Is.True);
     }
 
     [Test]
-    public void Four_reward_kinds_and_role_are_fixed_on_the_map_and_can_repeat_in_later_rings()
+    public void Three_reward_kinds_and_role_are_fixed_on_the_map_and_can_repeat_in_later_rings()
     {
         var service = new RunAdventureService(new RunController(new RunMod { StoryId = "empty", RunSeed = 123 }), Definitions());
         var kinds = new HashSet<EVisibleEventKind>();
@@ -155,7 +177,7 @@ public sealed class VisibleEventTests
                 if (reward.Kind == EVisibleEventKind.RolePack) Assert.That(reward.Role, Is.Not.EqualTo(ERole.None));
             }
         }
-        Assert.That(kinds, Is.EquivalentTo(Enum.GetValues<EVisibleEventKind>()));
+        Assert.That(kinds, Is.EquivalentTo(new[] { EVisibleEventKind.RolePack, EVisibleEventKind.AllRolesPack, EVisibleEventKind.Gold }));
         Assert.That(service.State.ReservedEventIds, Is.Empty, "visible rewards are not subject to random event deduplication");
     }
 
@@ -179,7 +201,9 @@ public sealed class VisibleEventTests
 
     #endregion
 
-    private static RunAdventureService Service(EVisibleEventKind kind, bool completePools = true) =>
+    private static RunAdventureService Service(
+        EVisibleEventKind kind, bool completePools = true, int cardsPerRole = 7,
+        int packSize = RunConstants.DefaultAllRolesPackSize) =>
         new(new RunController(new RunMod
         {
             StoryId = "empty", RunSeed = 51, Map = new RunMapState
@@ -187,24 +211,24 @@ public sealed class VisibleEventTests
                 Ring = 1, SelectedBranch = 0, Nodes = [
                 new() { Branch = 0, Step = 0, Kind = ERunNodeKind.Event },
                 new() { Branch = 0, Step = 1, Kind = ERunNodeKind.Shop },
-                new() { Branch = 0, Step = 2, Kind = ERunNodeKind.VisibleEvent, VisibleReward = new() { Kind = kind, Role = ERole.Warrior } },
+                new() { Branch = 0, Step = 2, Kind = ERunNodeKind.VisibleEvent, VisibleReward = new() { Kind = kind, Role = ERole.Attack } },
             ]
             }
-        }), Definitions(completePools));
+        }), Definitions(completePools, cardsPerRole), packSize, packSize);
 
-    private static GameDefinitionRegistry Definitions(bool completePools = true)
+    private static GameDefinitionRegistry Definitions(bool completePools = true, int cardsPerRole = 7)
     {
         var cards = new Dictionary<string, CardDto>();
         if (completePools)
             foreach (var role in Enum.GetValues<ERole>().Where(role => role != ERole.None))
-                for (var index = 0; index < 7; index++)
+                for (var index = 0; index < cardsPerRole; index++)
                 {
                     var id = $"{role}_{index}";
-                    cards[id] = new CardDto { Id = id, DisplayNameId = id, Role = role, CardGroupId = role == ERole.Warrior && index == 0 ? "warrior" : null };
+                    cards[id] = new CardDto { Id = id, DisplayNameId = id, Role = role, CardGroupId = role == ERole.Attack && index == 0 ? "warrior" : null };
                 }
-        cards["exclusive_flag"] = new() { Id = "exclusive_flag", Role = ERole.Warrior, IsExclusive = true };
-        cards["exclusive_rarity"] = new() { Id = "exclusive_rarity", Role = ERole.Warrior, Rarity = ERarity.Exclusive };
-        if (completePools) cards["warrior_upgrade"] = new() { Id = "warrior_upgrade", Role = ERole.Warrior, CardGroupId = "warrior", UpgradeTier = 1 };
+        cards["exclusive_flag"] = new() { Id = "exclusive_flag", Role = ERole.Attack, IsExclusive = true };
+        cards["exclusive_rarity"] = new() { Id = "exclusive_rarity", Role = ERole.Attack, Rarity = ERarity.Exclusive };
+        if (completePools) cards["warrior_upgrade"] = new() { Id = "warrior_upgrade", Role = ERole.Attack, CardGroupId = "warrior", UpgradeTier = 1 };
         var registry = new GameDefinitionRegistry();
         registry.Rebuild([new ModContentBundle("test.mod", ModDefinitionsBundle.Empty with {
             Cards = cards,

@@ -48,7 +48,7 @@ public sealed class VonNeumannContentTests
         Assert.That(definitions.Characters.TryGetValue(CharacterId, out var character), Is.True, "冯·诺依曼未随内容出货");
 
         Assert.That(character!.Element, Is.EqualTo(EElement.Red), "2026-09-24 起改为红属性");
-        Assert.That(character.Role, Is.EqualTo(ERole.Healer), "定位：Healer");
+        Assert.That(character.Role, Is.EqualTo(ERole.Support), "定位：支援");
         Assert.That(character.Race, Is.EqualTo(ERace.Human | ERace.Academic));
         Assert.That(character.MaxEnergy, Is.EqualTo(8));
         Assert.That(character.InitialEnergy, Is.EqualTo(3));
@@ -58,10 +58,6 @@ public sealed class VonNeumannContentTests
         Assert.That(character.ActiveSkillChain[0].SkillId, Is.EqualTo(ActiveSkillId));
         Assert.That(character.ActiveSkillChain[0].Cooldown, Is.EqualTo(10));
 
-        // 潜能被动保留 0/10/30/50 四档（70/99 档已删除）。
-        Assert.That(
-            character.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in character.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }
@@ -117,109 +113,9 @@ public sealed class VonNeumannContentTests
 
     #region P1：暴风
 
-    [Test]
-    public void Storm_blows_away_the_nearest_neighbour_slots()
-    {
-        var storm = StormRegistry();
-        using var sim = HandSimulation(storm, characters: 1);
-        var character = sim.PlayerTeam.Characters[0];
-        sim.Buffs.ApplyToSlot(sim, 0, slotIndex: 2, StormBuff);
-
-        sim.Buffs.FireSlotCardPlayed(sim, 0, character.HandSlots[2]);
-
-        Assert.That(character.HandSlots[1].IsEmpty, Is.True, "暴风 I = 1 个相邻槽（先左后右）");
-        Assert.That(character.HandSlots[3].IsEmpty, Is.False, "只吹散 1 个槽，右侧不受影响");
-        Assert.That(character.HandSlots[0].IsEmpty, Is.False);
-        Assert.That(character.HandSlots[4].IsEmpty, Is.False);
-        Assert.That(character.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(50f), "暴风不动血量");
-    }
-
-    [Test]
-    public void Storm_neighbour_selection_is_left_first_then_right_by_distance()
-    {
-        Assert.That(BuffRuntime.StormNeighborSlots(slotIndex: 2, spread: 1, slotCount: 5), Is.EqualTo(new[] { 1 }));
-        Assert.That(BuffRuntime.StormNeighborSlots(slotIndex: 2, spread: 2, slotCount: 5), Is.EqualTo(new[] { 1, 3 }));
-        Assert.That(BuffRuntime.StormNeighborSlots(slotIndex: 2, spread: 3, slotCount: 5), Is.EqualTo(new[] { 1, 3, 0 }));
-        Assert.That(BuffRuntime.StormNeighborSlots(slotIndex: 0, spread: 2, slotCount: 5), Is.EqualTo(new[] { 1, 2 }));
-        Assert.That(BuffRuntime.StormNeighborSlots(slotIndex: 4, spread: 1, slotCount: 5), Is.EqualTo(new[] { 3 }));
-    }
-
-    [Test]
-    public void Storm_never_discards_marked_cards()
-    {
-        var storm = StormRegistry();
-        using var sim = HandSimulation(storm, characters: 1);
-        var character = sim.PlayerTeam.Characters[0];
-
-        // 槽 1 先入队（已标记）：暴风不得借弃牌回滚确认态（规格 §2.2"其它通道"）。
-        var marked = sim.TryApply(new PlayCardCommand(0, 1, [Enemy(0)]));
-        Assert.That(marked.Success, Is.True, marked.Error);
-
-        sim.Buffs.ApplyToSlot(sim, 0, slotIndex: 2, StormBuff);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, character.HandSlots[2]);
-
-        Assert.That(character.HandSlots[1].IsEmpty, Is.False, "已标记的牌保留");
-        Assert.That(character.HandSlots[1].IsMarked, Is.True, "标记也不被清掉");
-    }
-
-    [Test]
-    public void Passive_one_blocks_the_storm_entirely()
-    {
-        var definitions = BaseGameContent.Load();
-        var registry = RegistryWith(
-            definitions,
-            cards: [ElementCard(BlueCard, EElement.Blue)],
-            buffs: Pick(definitions.Buffs, "von_neumann_passive_p1"),
-            effects: StormEffects(),
-            extraBuffs: StormBuffDefinition());
-
-        using var sim = HandSimulation(registry, characters: 1);
-        var character = sim.PlayerTeam.Characters[0];
-        sim.Buffs.Apply(sim, Player(0), "von_neumann_passive_p1");
-        sim.Buffs.ApplyToSlot(sim, 0, slotIndex: 2, StormBuff);
-
-        sim.Buffs.FireSlotCardPlayed(sim, 0, character.HandSlots[2]);
-
-        for (var slot = 0; slot < CombatConstants.HandSlotCount; slot++)
-            Assert.That(character.HandSlots[slot].IsEmpty, Is.False, $"免疫暴风：槽 {slot} 的手牌必须保留");
-    }
-
     #endregion
 
     #region P2：连携档位治疗
-
-    [Test]
-    public void Passive_two_heals_the_party_when_the_settled_card_reaches_two_chain()
-    {
-        BaseGameContent.RegisterBuiltinConditions();
-        var definitions = BaseGameContent.Load();
-        var registry = RegistryWith(
-            definitions,
-            cards: [ElementCard(BlueCard, EElement.Blue), ElementCard(YellowCard, EElement.Yellow)],
-            buffs: Pick(definitions.Buffs, "von_neumann_passive_p2"),
-            effects: Pick(definitions.Effects, "von_neumann_p2_fate_mending"));
-
-        // 2 名不同角色各打一张蓝卡 → 蓝属性 2 连携档 → 持有者那张结算时触发治疗。
-        var twoChain = LedgerHealed(registry, [BlueCard, BlueCard], withPassive: true)
-            - LedgerHealed(registry, [BlueCard, BlueCard], withPassive: false);
-        Assert.That(twoChain, Is.EqualTo(6f).Within(0.01f), "6 + 100% 治疗量 0");
-
-        // 只有自己一张蓝卡 → 1 名人头，不满足 2 连携档。
-        var lone = LedgerHealed(registry, [BlueCard], withPassive: true)
-            - LedgerHealed(registry, [BlueCard], withPassive: false);
-        Assert.That(lone, Is.Zero, "不足 2 连携档时不触发");
-
-        // 蓝只有自己 1 人、黄有 2 人：条件按"当前结算卡（蓝）"判定 → 不触发。
-        // 若错判成"任意属性达到 2 档"，这条会因为黄属性人头而误治疗。
-        var ownElementOnly = LedgerHealed(registry, [BlueCard, YellowCard, YellowCard], withPassive: true)
-            - LedgerHealed(registry, [BlueCard, YellowCard, YellowCard], withPassive: false);
-        Assert.That(ownElementOnly, Is.Zero, "条件只看当前结算卡的属性");
-
-        // 反过来：自己打黄卡且黄有 2 人 → 触发（确实读的是"这张牌"的人头）。
-        var yellowTwoChain = LedgerHealed(registry, [YellowCard, YellowCard], withPassive: true)
-            - LedgerHealed(registry, [YellowCard, YellowCard], withPassive: false);
-        Assert.That(yellowTwoChain, Is.EqualTo(6f).Within(0.01f));
-    }
 
     #endregion
 
@@ -484,7 +380,6 @@ public sealed class VonNeumannContentTests
         TargetSide = ETargetSide.Enemy,
         TargetScope = ETargetScope.Single,
         TargetCount = 1,
-        Priority = 1,
     };
 
     private static IReadOnlyDictionary<string, float> Attributes(
@@ -549,14 +444,14 @@ public sealed class VonNeumannContentTests
             .Select(index => CharacterBattleInstance.CreateForTests(
                 $"c{index}",
                 attrs,
-                drawPile: Enumerable.Range(0, CombatConstants.HandSlotCount)
+                drawPile: Enumerable.Range(0, 5)
                     .Select(slot => new CardRuntimeEntry(BlueCard, $"rt-{index}-{slot}")),
                 element: EElement.Blue,
                 race: ERace.Human | ERace.Academic))
             .ToArray();
         foreach (var character in party)
         {
-            character.DrawCards(CombatConstants.HandSlotCount);
+            character.DrawCards(5);
             character.RefillAvailableEnergy();
         }
 

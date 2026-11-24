@@ -6,15 +6,5 @@
   "tags": [
     "buff.passive",
     "buff.undispellable"
-  ],
-  "hooks": {
-    "onCardExecutionStart": [
-      {
-        "params": {
-          "oncePerTurn": true
-        },
-        "effectId": "anubis_trigger_frenzy"
-      }
-    ]
-  }
+  ]
 }

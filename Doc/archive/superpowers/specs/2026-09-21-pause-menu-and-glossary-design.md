@@ -2,7 +2,7 @@
 
 **日期**：2026-09-21
 **状态**：已实装
-**关系**：服从[总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md)与 [UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md)（§13 场景约定、§13.2 `node_paths`）；界面归属与订阅生命周期见 [ui-mod-binding 规格](../../../superpowers/specs/2026-09-15-ui-mod-binding-design.md)；视觉沿用 [UI 主题规格](../../../superpowers/specs/2026-09-19-ui-theme-and-debug-panel.md) 与[羊皮纸重设计](../../../superpowers/specs/2026-09-21-ui-parchment-redesign-design.md)。
+**关系**：服从[总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md)与 [UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md)（§13 场景约定、§13.2 `node_paths`）；界面归属与订阅生命周期见 [ui-mod-binding 规格](2026-09-15-ui-mod-binding-design.md)；视觉沿用 [UI 主题规格](2026-09-19-ui-theme-and-debug-panel.md) 与[羊皮纸重设计](2026-09-21-ui-parchment-redesign-design.md)。
 
 ---
 

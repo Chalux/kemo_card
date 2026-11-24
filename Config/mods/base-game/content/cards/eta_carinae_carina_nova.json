@@ -15,8 +15,7 @@
       "MagicAttack": 2
     }
   },
-  "role": "Elementist",
-  "priority": 10,
+  "role": "Attack",
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

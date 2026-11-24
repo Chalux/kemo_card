@@ -2,7 +2,7 @@
 
 **日期**：2026-09-21
 **状态**：已实装
-**关系**：服从 [总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)；本文扩充 [普通攻击规格](../../../superpowers/specs/2026-09-20-normal-attack-design.md)（次数 / 追打 / 专项倍率）与 [Buff/潜能/连携规格](../../../superpowers/specs/2026-09-19-buff-potential-chain-system-design.md)（统计口径、条件域、取值方式），并落地战斗规格 §7 遗留的"魔法伤害"后置项。
+**关系**：服从 [总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)；本文扩充 [普通攻击规格](2026-09-20-normal-attack-design.md)（次数 / 追打 / 专项倍率）与 [Buff/潜能/连携规格](2026-09-19-buff-potential-chain-system-design.md)（统计口径、条件域、取值方式），并落地战斗规格 §7 遗留的"魔法伤害"后置项。
 
 ---
 
@@ -77,7 +77,7 @@
 
 ## 6. 普通攻击扩展
 
-在 [普通攻击规格](../../../superpowers/specs/2026-09-20-normal-attack-design.md) 之上新增三项，全部**只作用于普通攻击**：
+在 [普通攻击规格](2026-09-20-normal-attack-design.md) 之上新增三项，全部**只作用于普通攻击**：
 
 ### 6.1 普攻次数（`NormalAttackCount`）
 
@@ -220,7 +220,7 @@
   注意不能在"回合结束产球"时清账：产球会即时触发并再次记账，那样上一回合结束时产出的球会被算进下一回合。
 - 赋格用 `slotSelection: "all"`（本轮新增）：给**全部 5 个手牌槽**各挂一份 `slot.charge` buff（空槽也挂），
   载荷复用既有充能机制（`onSlotCardPlayed` → `GainOrb{green,1}`），充能 I = 计数 1、2 回合后到期。
-- 充能互斥（本轮决议，见 [buff 运行时规格 §2](../../../superpowers/specs/2026-09-19-buff-potential-chain-system-design.md)）：
+- 充能互斥（本轮决议，见 [buff 运行时规格 §2](2026-09-19-buff-potential-chain-system-design.md)）：
   同一槽位只允许 1 个充能，新充能**无条件覆盖**旧的并**重置进度**（同 id、`Refresh`/`Add` 也一样）。
 - 四张专属卡已全部落盘。
 

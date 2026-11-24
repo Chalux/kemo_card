@@ -11,8 +11,7 @@
       "PhysicalAttack": 2
     }
   },
-  "role": "Warrior",
-  "priority": 50,
+  "role": "Attack",
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

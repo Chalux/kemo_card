@@ -26,16 +26,15 @@ public sealed class HualingContentTests
         Assert.That(report.HasIssues, Is.False, string.Join("\n", report.ValidationErrors));
         var def = BaseGameContent.Load().Characters["hualing"];
         Assert.That(def.Element, Is.EqualTo(EElement.Blue));
-        Assert.That(def.Role, Is.EqualTo(ERole.Controller));
+        Assert.That(def.Role, Is.EqualTo(ERole.Attack));
         Assert.That(def.Race, Is.EqualTo(ERace.Machine | ERace.Human));
         Assert.That(def.ActiveSkillChain.Single().Cooldown, Is.EqualTo(6));
-        Assert.That(def.Passives.Select(p => p.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(def.Cards, Has.Count.EqualTo(4));
         foreach (var id in def.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Blue));
-            Assert.That(card.Role, Is.EqualTo(ERole.Controller));
+            Assert.That(card.Role, Is.EqualTo(ERole.Attack));
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Stats!.Attributes.Sum(p => p.Key == AttributeIds.MaxHealth ? p.Value : 10 * p.Value), Is.EqualTo(40));
@@ -312,12 +311,11 @@ public sealed class HualingContentTests
     {
         var cards = BaseGameContent.Load().Characters["hualing"].Cards.ToArray();
         using var sim = Build(cards: cards);
-        for (var slot = 0; slot < 4; slot++)
+        foreach (var slot in new[] { 3, 0, 1, 2 })
         {
             var result = sim.TryApply(new PlayCardCommand(0, slot, slot == 3 ? [Enemy(3)] : []));
             Assert.That(result.Success, Is.True, result.Error);
         }
-        sim.TransitionTo(ECombatPhase.CardExecution); sim.AdvancePhase();
         Assert.That(Hp(sim, 0), Is.EqualTo(983), "12+50%*40-15");
         Assert.That(Hp(sim, 3), Is.EqualTo(971), "定格先降低魔防12");
         Assert.That(sim.EnemyTeam.Enemies.All(e => e.Asc.GetCurrentValue(AttributeIds.PhysicalAttack) == 72), Is.True);

@@ -51,7 +51,7 @@ public sealed class GlossaryBuilderTests
         Assert.That(ids, Does.Contain("orb"), "充能球");
         Assert.That(ids, Does.Contain("orb_element"), "属性球");
         Assert.That(ids, Does.Contain("normal_attack"), "普通攻击");
-        Assert.That(ids, Does.Contain("team_potential"), "团体潜能");
+        Assert.That(ids, Does.Not.Contain("team_potential"));
         Assert.That(ids, Does.Contain("character_passive"), "角色被动");
         Assert.That(ids, Does.Contain("shared_hp"), "共享血量");
         Assert.That(ids, Does.Contain("chain"), "连携");

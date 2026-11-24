@@ -171,10 +171,10 @@ public sealed class RunDebugServiceTests
         service.GrantCharacter(HeroIds[0]);
         service.GrantCharacter(HeroIds[1]);
 
-        var result = service.DeployCharacter(HeroIds[1], 3);
+        var result = service.DeployCharacter(HeroIds[1], RunConstants.SlotCount - 1);
 
         Assert.That(result.Ok, Is.True, result.Message);
-        Assert.That(controller.State.ActiveParty[3]!.DefinitionId, Is.EqualTo(HeroIds[1]));
+        Assert.That(controller.State.ActiveParty[^1]!.DefinitionId, Is.EqualTo(HeroIds[1]));
     }
 
     [Test]
@@ -298,6 +298,26 @@ public sealed class RunDebugServiceTests
 
         Assert.That(result.Ok, Is.False);
         Assert.That(controller.State.Phase, Is.Not.EqualTo(ERunPhase.Battle), "开战失败不得留下 Battle 阶段");
+    }
+
+    [Test]
+    public void StartBattle_restores_the_previous_phase_when_the_run_rejects_the_battle()
+    {
+        var (service, controller, _) = Build();
+        foreach (var hero in HeroIds)
+            service.GrantCharacter(hero);
+        controller.State.Phase = ERunPhase.Event;
+        controller.State.AddBattleRecord(new BattleRecordDto
+        {
+            Ring = controller.State.CurrentRing,
+            BattleId = BattleId,
+            Won = true,
+        });
+
+        var result = service.StartBattle(BattleId);
+
+        Assert.That(result.Ok, Is.False);
+        Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Event), "调试开战失败必须还原原来的 Run 阶段");
     }
 
     [Test]
@@ -459,64 +479,18 @@ public sealed class RunDebugServiceTests
 
     #endregion
 
-    #region 潜能与检查
+    #region 角色与检查
 
     [Test]
-    public void GrantPotential_grants_exact_amount_to_slot_or_pool()
-    {
-        var (service, controller, _) = Build();
-
-        var pool = service.GrantPotential(5);
-        var slot = service.GrantPotential(7, slotIndex: 1);
-
-        Assert.That(pool.Ok, Is.True, pool.Message);
-        Assert.That(slot.Ok, Is.True, slot.Message);
-        Assert.That(controller.Potential.TeamPool, Is.EqualTo(5), "按申请数额入团队池（不得按 20 取整）");
-        Assert.That(controller.State.PlayerStates[1].AllocatedPotential, Is.EqualTo(7));
-        Assert.That(service.GrantPotential(0).Ok, Is.False, "非正数额必须拒绝");
-    }
-
-    [Test]
-    public void AllocatePotential_moves_pool_to_slot_and_Deduct_returns_it()
-    {
-        var (service, controller, _) = Build();
-        service.GrantCharacter(HeroIds[0], deploySlot: 0);
-        service.GrantPotential(30);
-
-        var allocate = service.AllocatePotential(0, 25);
-        Assert.That(allocate.Ok, Is.True, allocate.Message);
-        Assert.That(controller.Potential.TeamPool, Is.EqualTo(5), "分配从团队池划走");
-        Assert.That(controller.State.PlayerStates[0].AllocatedPotential, Is.EqualTo(25));
-
-        var deduct = service.DeductPotential(0, 5);
-        Assert.That(deduct.Ok, Is.True, deduct.Message);
-        Assert.That(controller.Potential.TeamPool, Is.EqualTo(10), "扣除退回团队池");
-        Assert.That(controller.State.PlayerStates[0].AllocatedPotential, Is.EqualTo(20));
-    }
-
-    [Test]
-    public void AllocatePotential_reports_when_pool_is_short()
-    {
-        var (service, _, _) = Build();
-
-        var result = service.AllocatePotential(0, 10);
-
-        Assert.That(result.Ok, Is.False);
-        Assert.That(result.Message, Does.Contain("分配失败"));
-    }
-
-    [Test]
-    public void GrantCharacter_duplicate_converts_to_potential_instead_of_failing()
+    public void GrantCharacter_duplicate_keeps_one_instance()
     {
         var (service, controller, _) = Build();
         service.GrantCharacter(HeroIds[0]);
 
         var result = service.GrantCharacter(HeroIds[0]);
 
-        Assert.That(result.Ok, Is.True, "重复获得不是失败：已转化为潜能");
-        Assert.That(result.Message, Does.Contain("重复"));
+        Assert.That(result.Ok, Is.True, result.Message);
         Assert.That(controller.State.CharacterPool, Has.Count.EqualTo(1), "不入第二实例");
-        Assert.That(controller.Potential.TeamPool, Is.EqualTo(20));
     }
 
     [Test]
@@ -601,7 +575,7 @@ public sealed class RunDebugServiceTests
     {
         var registry = CreateRegistry();
         var controller = new RunController(new RunMod { MaxRing = 5 });
-        controller.CreateRun(StoryId, new HostRng(Seed, "test"), [], isMultiplayer: false);
+        controller.CreateRun(StoryId, new HostRng(Seed, "test"), []);
 
         return (new RunDebugService(controller, registry, scriptHost), controller, registry);
     }
@@ -615,9 +589,8 @@ public sealed class RunDebugServiceTests
             {
                 Id = hero,
                 Cards = [HpCardId],
-                // 给首位角色一条被动，供潜能调试操作（解锁/返还）测试使用；成本 > 0 → 默认锁定。
                 Passives = hero == HeroIds[0]
-                    ? [new PassiveRefDto { BuffId = PassiveBuffId, RequiredPotential = 10 }]
+                    ? [new PassiveRefDto { BuffId = PassiveBuffId }]
                     : [],
             };
         }

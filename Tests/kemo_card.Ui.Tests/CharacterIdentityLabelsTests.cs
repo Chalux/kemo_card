@@ -25,8 +25,7 @@ public sealed class CharacterIdentityLabelsTests
         "UI_ELEMENT_BLUE" => "蓝",
         "UI_ELEMENT_YELLOW" => "黄",
         "UI_ROLE_NONE" => "无",
-        "UI_ROLE_WARRIOR" => "战士",
-        "UI_ROLE_ELEMENTIST" => "元素师",
+        "UI_ROLE_ATTACK" => "主攻",
         "UI_RACE_ANIMAL" => "动物",
         "UI_RACE_DRAGON" => "龙族",
         "UI_RACE_HUMAN" => "人族",
@@ -40,13 +39,13 @@ public sealed class CharacterIdentityLabelsTests
         {
             Id = "chalux",
             Element = EElement.Blue,
-            Role = ERole.Warrior,
+            Role = ERole.Attack,
             Race = ERace.Animal | ERace.Dragon,
         };
 
         Assert.That(
             CharacterIdentityLabels.MetaLine(character, Tr),
-            Is.EqualTo("元素：蓝 · 定位：战士 · 种族：动物、龙族"));
+            Is.EqualTo("元素：蓝 · 定位：主攻 · 种族：动物、龙族"));
     }
 
     [Test]
@@ -55,14 +54,14 @@ public sealed class CharacterIdentityLabelsTests
         var character = new CharacterDto
         {
             Element = EElement.Yellow | EElement.Red,
-            Role = ERole.Elementist,
+            Role = ERole.Attack,
             Race = ERace.Dragon | ERace.Human,
         };
 
         // 多标志按枚举声明顺序输出（红 → 黄、人族 → 龙族），与内容 JSON 里的书写顺序无关。
         Assert.That(
             CharacterIdentityLabels.MetaLine(character, Tr),
-            Is.EqualTo("元素：红、黄 · 定位：元素师 · 种族：人族、龙族"));
+            Is.EqualTo("元素：红、黄 · 定位：主攻 · 种族：人族、龙族"));
     }
 
     [Test]

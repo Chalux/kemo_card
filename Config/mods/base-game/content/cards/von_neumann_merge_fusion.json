@@ -11,8 +11,7 @@
       "HealPower": 1
     }
   },
-  "role": "Healer",
-  "priority": 7,
+  "role": "Support",
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "Single",

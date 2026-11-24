@@ -85,15 +85,80 @@ public sealed class CombatEffectExecutor
             return;
 
         // 效果级条件（EffectDto.conditions）：战斗域求值，不通过则整条效果不执行。
-        if (!ConditionsPass(effect, simulation, source))
+        // 主动技的选牌弃置在计划阶段（玩家选牌前）已经按当时条件生成了计划；执行期间
+        // 前置动作可能改变条件（例如刚挂上 buff）。此时以计划为唯一权威：
+        //   - 计划里没有的弃置效果 → 跳过，避免"条件后来满足"时静默弃 0 张；
+        //   - 计划里有的弃置效果（含链式父节点）→ 不再用执行中的条件拦截，
+        //     保证玩家已选的手牌按计划被消耗，不留下未使用的必选框。
+        if (simulation.PlannedDiscards is { Count: > 0 } plannedDiscards)
+        {
+            var planned = ContainsPlannedDiscard(
+                effect, effectRef, plannedDiscards, new HashSet<string>(StringComparer.Ordinal), 0);
+            if (!planned)
+            {
+                if (effect.Kind == EEffectKind.Discard)
+                {
+                    // 随机弃牌不进选牌计划；钩子触发的随机弃牌仍按条件正常执行。
+                    var discardParams = ContentParameters.Merge(effect.Params, effectRef.Params, payloadOverrides);
+                    if (!DiscardSelection.ReadFlag(discardParams, "random"))
+                        return;
+                }
+
+                if (!ConditionsPass(effect, simulation, source))
+                    return;
+            }
+        }
+        else if (!ConditionsPass(effect, simulation, source))
+        {
             return;
+        }
 
         using var scope = simulation.EffectBudget.TryEnter();
         if (scope is null || (beforeExecution is not null && !beforeExecution()))
             return;
 
         var mergedParams = ContentParameters.Merge(effect.Params, effectRef.Params, payloadOverrides);
-        ExecuteKind(effect.Kind, mergedParams, effect, simulation, source, targets, depth);
+        ExecuteKind(effect.Kind, mergedParams, effect, effectRef, simulation, source, targets, depth);
+    }
+
+    /// <summary>
+    /// 计划中是否包含该效果引用下的弃置叶子（自身即弃置，或链式效果的后代中包含弃置）。
+    /// 与 <c>DiscardSelection.EnumerateEffectDiscards</c> 的展开口径一致：只沿 ChainEffects 向下。
+    /// </summary>
+    private bool ContainsPlannedDiscard(
+        EffectDto effect,
+        EffectRefDto effectRef,
+        IReadOnlyList<AssignedDiscard> planned,
+        HashSet<string> path,
+        int depth)
+    {
+        if (depth > MaxChainDepth)
+            return false;
+
+        if (effect.Kind == EEffectKind.Discard)
+            return planned.Any(group => ReferenceEquals(group.Requirement.Reference, effectRef));
+
+        if (effect.Kind != EEffectKind.ChainEffects)
+            return false;
+
+        if (!path.Add(effect.Id))
+            return false;
+
+        try
+        {
+            foreach (var childRef in effect.EffectRefs)
+            {
+                if (_registry.Store.TryGetEffect(childRef.EffectId, out var child) &&
+                    ContainsPlannedDiscard(child, childRef, planned, path, depth + 1))
+                    return true;
+            }
+
+            return false;
+        }
+        finally
+        {
+            path.Remove(effect.Id);
+        }
     }
 
     /// <summary>
@@ -101,7 +166,7 @@ public sealed class CombatEffectExecutor
     /// 运行期保守失败，内容准入阶段由 <c>ContentDefinitionValidator</c> 提前拦下。
     /// 条件主体缺省 = 来源角色（身份类条件用）。
     /// </summary>
-    private static bool ConditionsPass(
+    internal static bool ConditionsPass(
         EffectDto effect,
         CombatSimulation simulation,
         CombatTargetRef source)
@@ -128,6 +193,7 @@ public sealed class CombatEffectExecutor
         EEffectKind kind,
         IReadOnlyDictionary<string, object> mergedParams,
         EffectDto effect,
+        EffectRefDto effectRef,
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
@@ -154,7 +220,7 @@ public sealed class CombatEffectExecutor
             case EEffectKind.GainShield:
             case EEffectKind.ModifyDrawCountByDiscard:
             case EEffectKind.DispelDebuffs:
-                _skillActionExecutor.ExecuteLegacyAction(kind, effect, mergedParams, simulation, source, targets, depth);
+                _skillActionExecutor.ExecuteLegacyAction(kind, effect, effectRef, mergedParams, simulation, source, targets, depth);
                 break;
             case EEffectKind.ApplyBuff:
                 ApplyBuffEffect(simulation, source, targets, mergedParams);

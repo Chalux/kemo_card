@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.anubis_scale_judgment.name",
   "element": 1,
-  "role": "CardPlayer",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 2,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "MaxHealth": 20
     }
   },
-  "priority": 4,
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "All",

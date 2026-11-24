@@ -26,16 +26,15 @@ public sealed class ZeusContentTests
         var definitions = BaseGameContent.Load();
         var zeus = definitions.Characters["zeus"];
         Assert.That(zeus.Element, Is.EqualTo(EElement.Yellow));
-        Assert.That(zeus.Role, Is.EqualTo(ERole.Guard));
+        Assert.That(zeus.Role, Is.EqualTo(ERole.Defense));
         Assert.That(zeus.Race, Is.EqualTo(ERace.God));
-        Assert.That(zeus.Passives.Select(passive => passive.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(zeus.ActiveSkillChain.Select(tier => tier.Cooldown), Is.EqualTo(new[] { 6, 4 }));
         Assert.That(zeus.Cards, Has.Count.EqualTo(4));
         foreach (var id in zeus.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Yellow));
-            Assert.That(card.Role, Is.EqualTo(ERole.Guard));
+            Assert.That(card.Role, Is.EqualTo(ERole.Defense));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.Stats!.Attributes.Sum(pair => pair.Key == AttributeIds.MaxHealth ? pair.Value : pair.Value * 10),
@@ -119,27 +118,6 @@ public sealed class ZeusContentTests
     #endregion
 
     #region 被动边界
-
-    [Test]
-    public void Slot_damage_immunity_prevents_the_slot_payload()
-    {
-        using var sim = NewSimulation();
-        var character = sim.PlayerTeam.Characters[0];
-        var slotBuff = new BuffDto
-        {
-            Id = "test_slot_damage",
-            Tags = [BuiltinBuffTags.SlotDamage],
-            Hooks = new BuffEffectHooksDto { OnSlotCardPlayed = [new EffectRefDto { EffectId = "chalux_charge_burst" }] },
-        };
-        character.HandSlots[0].Buffs.Add(slotBuff, null);
-        // 使用真实出货伤害效果，先证明载荷可造成伤害，再验证免疫门闩。
-        sim.Buffs.FireSlotCardPlayed(sim, 0, character.HandSlots[0]);
-        var hpAfterControl = sim.PlayerTeam.SharedHp;
-        Assert.That(hpAfterControl, Is.LessThan(100));
-        sim.Buffs.Apply(sim, Player(), "zeus_passive_p1");
-        sim.Buffs.FireSlotCardPlayed(sim, 0, character.HandSlots[0]);
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hpAfterControl));
-    }
 
     [Test]
     public void Wrath_grows_per_enemy_hit_caps_at_thirty_and_clears_at_floor_start()

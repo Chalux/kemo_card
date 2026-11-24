@@ -102,7 +102,7 @@ public partial class ActorInfoCmp : BaseCmp
 
         if (_lblState != null)
         {
-            var key = character.IsSealed ? "UI_COMBAT_SEALED" : character.HasActed ? "UI_COMBAT_CONFIRMED" : "";
+            var key = character.IsSealed ? "UI_COMBAT_SEALED" : "";
             _lblState.Visible = key.Length > 0;
             _lblState.Text = key.Length > 0 ? Localization.Tr(key) : "";
         }

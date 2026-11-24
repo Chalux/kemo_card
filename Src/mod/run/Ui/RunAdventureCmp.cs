@@ -23,11 +23,11 @@ public partial class RunAdventureCmp : BaseCmp
 
     protected override void InitEvent()
     {
-        for (var branch = 0; branch < 2; branch++)
+        for (var branch = 0; branch < RunMapState.BranchCount; branch++)
         {
             var selected = branch;
             Binder.OnPressed(BranchButton(selected), () => _service?.SelectBranch(selected));
-            for (var step = 0; step < 3; step++)
+            for (var step = 0; step < RunMapState.StepsPerBranch; step++)
             {
                 var b = branch; var s = step;
                 Binder.OnPressed(NodeButton(b, s), () => _service?.OpenNode(b, s));
@@ -77,7 +77,7 @@ public partial class RunAdventureCmp : BaseCmp
         foreach (var child in _options!.GetChildren()) { _options.RemoveChild(child); child.QueueFree(); }
         var active = map.NodeOpen && service.CanNavigate;
         _leave!.Visible = active && (map.CurrentNode?.Kind == ERunNodeKind.Shop ||
-            map.CurrentNode?.Kind == ERunNodeKind.Event && map.CurrentNode.EventId is null || service.CanSkipVisibleReward);
+            map.CurrentNode?.Kind == ERunNodeKind.Event && service.CanLeaveCurrentEvent || service.CanSkipVisibleReward);
         _leave.Text = Localization.Tr(map.CurrentNode?.Kind == ERunNodeKind.Shop ? "UI_MAP_RETURN" :
             map.CurrentNode?.Kind == ERunNodeKind.VisibleEvent ? "UI_VISIBLE_SKIP" : "UI_MAP_CONTINUE");
         if (!active)
@@ -91,14 +91,15 @@ public partial class RunAdventureCmp : BaseCmp
         else PaintEvent();
     }
 
-    private static string NodeName(RunMapNode node) => node.Kind == ERunNodeKind.Shop ? Localization.Tr("UI_MAP_SHOP") :
+    private string NodeName(RunMapNode node) => node.Kind == ERunNodeKind.Shop ? Localization.Tr("UI_MAP_SHOP") :
         node.VisibleReward is { } reward ? reward.Kind switch
         {
             EVisibleEventKind.Gold => Localization.Tr("UI_VISIBLE_GOLD"),
             EVisibleEventKind.RolePack => string.Format(Localization.Tr("UI_VISIBLE_ROLE_PACK"),
-                KemoCard.Mod.Global.Ui.CharacterIdentityLabels.Role(reward.Role, Localization.Tr)),
-            EVisibleEventKind.AllRolesPack => Localization.Tr("UI_VISIBLE_ALL_PACK"),
-            EVisibleEventKind.RelicChoice => Localization.Tr("UI_VISIBLE_RELIC"),
+                KemoCard.Mod.Global.Ui.CharacterIdentityLabels.Role(reward.Role, Localization.Tr),
+                reward.Prepared ? reward.CardIds.Count : _service!.RolePackSize),
+            EVisibleEventKind.AllRolesPack => string.Format(Localization.Tr("UI_VISIBLE_ALL_PACK"),
+                reward.Prepared ? reward.CardIds.Count : _service!.AllRolesPackSize),
             _ => Localization.Tr("UI_MAP_VISIBLE_EVENT"),
         } : Localization.Tr("UI_MAP_EVENT");
 
@@ -107,17 +108,6 @@ public partial class RunAdventureCmp : BaseCmp
         var reward = _service!.CurrentVisibleReward;
         _nodeTitle!.Text = NodeName(_service.State.Map!.CurrentNode!);
         if (reward is null) { _text!.Text = Localization.Tr("UI_VISIBLE_UNAVAILABLE"); return; }
-        if (reward.Kind == EVisibleEventKind.RelicChoice)
-        {
-            _text!.Text = Localization.Tr(_service.CanSkipVisibleReward ? "UI_VISIBLE_UNAVAILABLE" : "UI_VISIBLE_RELIC_HINT");
-            foreach (var id in reward.RelicIds)
-            {
-                _service.Store.TryGetItem(id, out var item);
-                AddOption(Localization.Tr(item?.DisplayNameId ?? id), Localization.Tr(item?.DescId ?? "UI_ITEM_MISSING"),
-                    _service.CanClaimVisibleReward(id), () => _service.ClaimVisibleReward(id));
-            }
-            return;
-        }
         var ready = _service.CanClaimVisibleReward();
         _text!.Text = Localization.Tr(!ready ? "UI_VISIBLE_UNAVAILABLE" : reward.Kind == EVisibleEventKind.Gold
             ? "UI_VISIBLE_GOLD_HINT" : "UI_VISIBLE_PACK_HINT");
@@ -135,7 +125,7 @@ public partial class RunAdventureCmp : BaseCmp
         _nodeTitle!.Text = Localization.Tr(evt?.DisplayNameId ?? "UI_MAP_EVENT");
         _text!.Text = Localization.Tr(evt?.Pages.FirstOrDefault()?.TextId ?? evt?.DescId ?? "UI_EVENT_EMPTY");
         if (evt is null) return;
-        foreach (var option in evt.Options)
+        foreach (var option in evt.Options.Where(_service.IsVisibleOption))
         {
             var requirements = _service.Requirements(option);
             var details = new List<string>();
@@ -152,19 +142,45 @@ public partial class RunAdventureCmp : BaseCmp
     private void Choose(EventOptionDto option)
     {
         if (_service is null) return;
-        if (_service.ChooseOption(option.OptionId)) return;
-        var potionId = option.ItemRewards.FirstOrDefault(id => _service.Store.TryGetItem(id, out var item) && item.Kind == EItemKind.Potion);
-        if (potionId is not null && _service.State.Items.Potions.All(id => id is not null))
-            _ = RunUiController.OpenPotionAsync(new RunPotionDlgPayload
+        if (!_service.NeedsConsumableReplacement(option) && _service.ChooseOption(option.OptionId)) return;
+        var consumableId = option.ItemRewards.FirstOrDefault(id =>
+            _service.Store.TryGetItem(id, out var item) && item.Kind == EItemKind.Consumable);
+        if (consumableId is null)
+        {
+            _text!.Text = Localization.Tr("UI_ACTION_BLOCKED");
+            return;
+        }
+
+        OpenConsumableReplacement(option, consumableId, []);
+    }
+
+    /// <summary>
+    /// 库存放不下奖励时逐轮让玩家选择替换槽位；每换掉一个旧消耗品就腾出一个槽位，
+    /// 直到整份奖励提交成功，或玩家选择「放弃新增消耗品」（金币等其它奖励照常结算）。
+    /// </summary>
+    private void OpenConsumableReplacement(EventOptionDto option, string consumableId, List<int> chosenSlots)
+    {
+        var service = _service;
+        if (service is null) return;
+        _ = RunUiController.OpenConsumableAsync(new RunConsumableDlgPayload
+        {
+            ReplacementItemId = consumableId,
+            ExcludedSlots = chosenSlots,
+            ReplacementChosen = slot =>
             {
-                ReplacementItemId = potionId,
-                ReplacementChosen = slot =>
+                if (slot is null)
                 {
-                    if (_service.ChooseOption(option.OptionId, slot, declinePotions: slot is null)) return;
-                    if (_text is not null) _text.Text = Localization.Tr("UI_ACTION_BLOCKED");
-                },
-            });
-        else _text!.Text = Localization.Tr("UI_ACTION_BLOCKED");
+                    if (!service.ChooseOption(option.OptionId, chosenSlots, declineConsumables: true) && _text is not null)
+                        _text.Text = Localization.Tr("UI_ACTION_BLOCKED");
+                    return;
+                }
+
+                chosenSlots.Add(slot.Value);
+                if (service.ChooseOption(option.OptionId, chosenSlots)) return;
+                // 还差槽位：继续替换；已无未选槽位时对话框只剩「放弃」一项。
+                OpenConsumableReplacement(option, consumableId, chosenSlots);
+            },
+        });
     }
 
     private void PaintShop()
@@ -180,8 +196,7 @@ public partial class RunAdventureCmp : BaseCmp
             var name = Localization.Tr(item?.DisplayNameId ?? offer.ItemId);
             var label = offer.Sold ? string.Format(Localization.Tr("UI_SHOP_SOLD"), name)
                 : string.Format(Localization.Tr("UI_SHOP_PRICE"), name, offer.Price);
-            var enabled = !offer.Sold && item is not null && _service.State.SharedGold >= offer.Price
-                && (item.Kind != EItemKind.Relic || !_service.State.Items.Relics.Contains(offer.ItemId));
+            var enabled = !offer.Sold && item is not null && _service.State.SharedGold >= offer.Price;
             AddOption(label, Localization.Tr(item?.DescId ?? "UI_ITEM_MISSING"), enabled, () => Buy(index));
         }
     }
@@ -190,9 +205,9 @@ public partial class RunAdventureCmp : BaseCmp
     {
         if (_service is null || _service.Buy(index)) return;
         var offer = _service.State.Map!.CurrentNode!.Offers[index];
-        if (_service.Store.TryGetItem(offer.ItemId, out var item) && item.Kind == EItemKind.Potion &&
-            _service.State.Items.Potions.All(id => id is not null))
-            _ = RunUiController.OpenPotionAsync(new RunPotionDlgPayload
+        if (_service.Store.TryGetItem(offer.ItemId, out var item) && item.Kind == EItemKind.Consumable &&
+            _service.State.Items.Consumables.All(id => id is not null))
+            _ = RunUiController.OpenConsumableAsync(new RunConsumableDlgPayload
             {
                 ReplacementItemId = offer.ItemId,
                 ReplacementChosen = slot =>

@@ -27,15 +27,14 @@ public sealed class EtaCarinaeContentTests
         Assert.That(CombatContentValidator.TryValidateHealTargeting(registry, out var error), Is.True, error);
         var character = BaseGameContent.Load().Characters["eta_carinae"];
         Assert.That(character.Element, Is.EqualTo(EElement.Green));
-        Assert.That(character.Role, Is.EqualTo(ERole.Elementist));
+        Assert.That(character.Role, Is.EqualTo(ERole.Attack));
         Assert.That(character.Race, Is.EqualTo(ERace.Astronomy | ERace.Calamity));
         Assert.That(character.ActiveSkillChain.Single().Cooldown, Is.EqualTo(6));
-        Assert.That(character.Passives.Select(passive => passive.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(character.Cards, Has.Count.EqualTo(4));
         foreach (var id in character.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
-            Assert.That(card!.Role, Is.EqualTo(ERole.Elementist));
+            Assert.That(card!.Role, Is.EqualTo(ERole.Attack));
             Assert.That(card.Element, Is.EqualTo((int)EElement.Green));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
@@ -201,33 +200,6 @@ public sealed class EtaCarinaeContentTests
         sim.IncrementTurnsIntoWave();
         sim.Buffs.FireTurnStart(sim);
         Assert.That(Counters(sim), Is.EqualTo(new[] { 4, 1, 2, 0 }));
-    }
-
-    [Test]
-    public void Storm_immunity_protects_neighbouring_cards()
-    {
-        var definitions = BaseGameContent.Load();
-        var effects = new Dictionary<string, EffectDto>(definitions.Effects) { ["test_eta_discard_slot"] = new() { Id = "test_eta_discard_slot", Kind = EEffectKind.DiscardSlot } };
-        var buffs = new Dictionary<string, BuffDto>(definitions.Buffs)
-        {
-            ["test_eta_storm"] = new()
-            {
-                Id = "test_eta_storm", Tags = [BuiltinBuffTags.SlotStorm],
-                Hooks = new BuffEffectHooksDto { OnSlotCardPlayed = [new EffectRefDto { EffectId = "test_eta_discard_slot" }] },
-            }
-        };
-        var registry = BaseGameContent.BuildRegistry();
-        registry.Rebuild([new ModContentBundle("base.game", definitions with { Effects = effects, Buffs = buffs })], out var report);
-        Assert.That(report.HasIssues, Is.False);
-        using var sim = Build(Enumerable.Repeat("eta_carinae_carina_nova", 5).ToArray(), registry);
-        var caster = sim.PlayerTeam.Characters[0];
-        sim.Buffs.ApplyToSlot(sim, 0, 2, "test_eta_storm");
-        ApplyPassive(sim, 1);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, caster.HandSlots[2]);
-        Assert.That(caster.HandSlots.All(slot => !slot.IsEmpty), Is.True);
-        caster.Buffs.Remove(caster.Buffs.Find("eta_carinae_passive_p1")!);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, caster.HandSlots[2]);
-        Assert.That(caster.HandSlots[1].IsEmpty, Is.True);
     }
 
     [TestCase("eta_carinae_carina_nova", new[] { "green", "green" })]

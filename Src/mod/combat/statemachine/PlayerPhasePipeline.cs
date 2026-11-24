@@ -4,8 +4,7 @@ using KemoCard.Mod.Combat.Runtime;
 namespace KemoCard.Mod.Combat.StateMachine;
 
 /// <summary>
-/// 规格 §6.2：每个玩家阶段开始（含首个）对每名角色依次执行的权威顺序。
-/// 费用变化不在此统一扫描——那是玩家阶段内的即时对账（§3.3 / <see cref="QueuedCostReconciler"/>）。
+/// 玩家回合开始时依次补充能量、主动技进度和手牌。
 /// </summary>
 public static class PlayerPhasePipeline
 {
@@ -19,11 +18,10 @@ public static class PlayerPhasePipeline
         // 其"实际弃置张数"只对本回合的读取方（按弃牌数补抽 / 扣减行动次数）有效。
         simulation.ClearLastDiscardCount();
 
+        long drawCount = 0;
         for (var characterIndex = 0; characterIndex < characters.Count; characterIndex++)
         {
             var character = characters[characterIndex];
-            character.ResetPhaseShuffleBudget();
-
             if (!isFirstPlayerPhase)
                 character.RegenCurrentEnergy();
 
@@ -32,18 +30,13 @@ public static class PlayerPhasePipeline
             character.TickSkillCounter();
 
             if (!isFirstPlayerPhase)
-                PresentationEmitter.DrawAndEmit(simulation, characterIndex, character.ComputeDrawCount());
+                drawCount += character.ComputeDrawCount();
 
             // 抽牌数量修正只作用于本阶段的抽牌步骤，用完即弃。
             character.ClearDrawModifiers();
-
-            // 规格 §6.2 步骤 5：资源管线跑完后再套用封印行动封锁。
-            CombatStateMachine.EnforceSeal(simulation, characterIndex);
         }
 
+        PresentationEmitter.DrawTeamAndEmit(simulation, (int)Math.Min(drawCount, CombatConstants.TeamHandLimit));
         simulation.MarkFirstPlayerPhaseDone();
-
-        // 全员开局即被封印时不会有任何玩家指令到达，必须在这里推进阶段，否则停在 Player 死锁。
-        CombatStateMachine.AdvanceToCardExecutionIfAllActed(simulation);
     }
 }

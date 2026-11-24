@@ -4,13 +4,13 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-10-10（补充所有角色的像素动画制作流程与原地动作约定）
+**最后修订**：2026-11-23（清理归档入口）
 
 ---
 
 ## 1. 产品一句话
 
-Godot 4.7 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽角色；联机管道预留、当前里程碑打磨单人线。
+Godot 4.7 Mono（纯 C#）单机卡牌 Roguelike，玩家指挥三名出战角色即时出牌。
 
 ---
 
@@ -61,13 +61,15 @@ Godot 4.7 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 
 冲突时以上位为准，并回写实现或下级文档。
 
-**2026-09-21 起活规格收敛为 6 份**。其余规格（含已落地的功能级设计）已并入下表对应文档并归档到 `Doc/archive/superpowers/specs/`，**原路径留重定向 stub**，旧链接仍可解析。
+单机三人队与即时出牌的变更见[重构决策](2026-11-18-single-player-refactor-decisions.md)。相关条目并回各领域规格前，以决策记录为准。
+
+**2026-09-21 起活规格收敛为 6 份**。其余规格（含已落地的功能级设计）已并入下表对应文档并归档到 `Doc/archive/superpowers/specs/`。
 
 | # | 规格 | 承载 |
 |---|------|------|
-| 1 | **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md) | 产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、潜能/被动边界 |
-| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、SharedHp、能量/抽牌、标记队列、主动/蓄力、指令管线、伤害包管线、普攻（次数/追打/专项倍率）、充能球、buff 运行时、连携、槽位效果、战斗条件、**表现事件流（§16）** |
-| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档闭环、队伍编辑、ESC 系统菜单、**战斗界面 `CombatWin` 与表现管线（§14）**、团体潜能实现（与总规格冲突时以总规格为准） |
+| 1 | **总规格** — [kemo-card-design](superpowers/specs/2026-05-11-kemo-card-design.md) | 产品形态、宿主/Mod 分界、Run 环与账本、卡牌双层、角色被动 |
+| 2 | **战斗** — [combat-system-design](superpowers/specs/2026-07-21-combat-system-design.md) | `Src/mod/combat`：阶段机、SharedHp、能量/抽牌、主动/蓄力、指令管线、伤害包管线、普攻（次数/追打/专项倍率）、充能球、buff 运行时、战斗条件、**表现事件流（§16）** |
+| 3 | **Run** — [run-mod-design](superpowers/specs/2026-06-22-run-mod-design.md) | `Src/mod/run`：Run 环、奖励、存档闭环、队伍编辑、ESC 系统菜单、**战斗界面 `CombatWin` 与表现管线（§14）**、队伍共享消耗品（5 槽） |
 | 4 | **Global** — [global-mod-design](superpowers/specs/2026-09-21-global-mod-design.md) | `Src/mod/global`：主菜单、图鉴、卡牌/角色详情、设置、词典、界面主题（羊皮纸）、Toast、关键词提示、界面清单 |
 | 5 | **内容与数据** — [content-mod-manager-design](superpowers/specs/2026-05-17-content-mod-manager-design.md) | 内容 Mod 管道 + 内容定义 DTO（卡/技能/效果/Buff + 角色/敌人/战斗/事件/道具）+ 角色与战斗实例 |
 | 6 | **UI 与运行时** — [ui-manager-design](superpowers/specs/2026-05-15-ui-manager-design.md) | `Src/frame`：UI 管理器与 BaseUI、**界面归属功能 Mod + BindingScope 统一订阅生命周期**（`BindingScope` / 框架级 `OnExitTree`）、事件分发器、条件判断（Persistent/Combat 双域 CondType、内联 JSON 组合、Explain；已接 `StoryDto.unlock` 与效果 `conditions`）、Mod 脚本运行时（PuerTS ScriptEnv） |
@@ -84,7 +86,7 @@ Godot 4.7 Mono（纯 C#）卡牌共斗 Roguelike：单人指挥官操控四槽�
 |------|----------|------|
 | 启动 / 服务根 | `Src/MainRoot.cs`，`Src/mod/AppRoot.cs`，`Src/mod/ModFactory.cs` | `AppRoot.Services` 在 Bootstrap 后可用 |
 | 战斗模拟 | `Src/mod/combat/`（`runtime/`、`statemachine/`、`commands/`、`rules/`、`effects/`、`gas/`） | 权威见战斗规格 |
-| 战斗编排边界 | `runtime/CombatTurnCoordinator.cs`、`runtime/CombatEffectLifecycle.cs`、`statemachine/CombatCommandValidator.cs`、`CombatTargeting.cs`、`CombatTargetResolver.cs`、`effects/SkillPayloadExecutor.cs` | 回合边界、GE 持有者驱动、入队验证、目标解析与技能载荷；宿主通过 Simulation 指令入口操作 |
+| 战斗编排边界 | `runtime/CombatTurnCoordinator.cs`、`runtime/CombatEffectLifecycle.cs`、`statemachine/CombatCommandValidator.cs`、`CombatTargeting.cs`、`CombatTargetResolver.cs`、`effects/SkillPayloadExecutor.cs` | 回合边界、GE 持有者驱动、出牌校验、目标解析与技能载荷；宿主通过 Simulation 指令入口操作 |
 | 战斗伤害 / 执行保护 | `effects/DamagePipeline.cs`、`effects/EffectExecutionBudget.cs` | 统一实际损血与命中记账；同步钩子、动作与脚本提案共用预算 |
 | Run 编排 | `Src/mod/run/` | 环模型、奖励、存档；`RunRuntime` 会话门面 + `Ui/` 选故事与 Run 主界面壳 |
 | 全局 UI / 图鉴 / 设置 | `Src/mod/global/` | Menu、Codex、Card/Character UI 组件 |
@@ -149,8 +151,8 @@ README.md                 # 短入口，指向 AGENT.md 与 INDEX.md
 ```
 
 - 活规格（固定 6 份，见 §4）/ 进行中计划：`Doc/superpowers/{specs,plans}/`
-- 已落地功能文档：`Doc/archive/superpowers/`（用 `git mv`，**原路径留短重定向 stub**，避免旧链接断裂）
-- **新功能落地后**：把其耐用规则并入 §4 对应规格，再 `git mv` 原文档进归档 + 原路径留 stub + 同步 [INDEX.md](INDEX.md)；不要新增活规格，除非它属于新的域并同时更新 §4。
+- 已落地功能文档：`Doc/archive/superpowers/`（用 `git mv`，并更新引用）
+- **新功能落地后**：把其耐用规则并入 §4 对应规格，再 `git mv` 原文档进归档 + 更新引用 + 同步 [INDEX.md](INDEX.md)；不要新增活规格，除非它属于新的域并同时更新 §4。
 - **本文约束**：约 150–250 行；**不复制规格正文**（玩法权威以 §4 规格为准）；硬性约定只写在本文件，`.cursor/rules/` 仅保留指向本文的薄指针。
 - **更新本文件**：使用项目 skill [maintain-agent-doc](../.cursor/skills/maintain-agent-doc/SKILL.md)  
   触发：目录重组、新模块入口、权威规格增删、归档策略变化、**硬性约定变更**；日常小改不更新。

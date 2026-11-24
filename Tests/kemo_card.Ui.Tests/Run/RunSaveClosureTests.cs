@@ -16,7 +16,7 @@ public sealed class RunSaveClosureTests
         var controller = new RunController(new RunMod());
         controller.EnableAutoSave(saveService);
 
-        var dto = controller.CreateRun("story_a", new HostRng(1, "create"), [], isMultiplayer: false);
+        var dto = controller.CreateRun("story_a", new HostRng(1, "create"), []);
 
         Assert.That(saveService.Exists, Is.True);
         var loaded = saveService.LoadOrDefault();
@@ -32,7 +32,7 @@ public sealed class RunSaveClosureTests
         var controller = new RunController(new RunMod());
         controller.EnableAutoSave(saveService);
 
-        controller.CreateRun("story_a", new HostRng(1, "create"), [], isMultiplayer: false);
+        controller.CreateRun("story_a", new HostRng(1, "create"), []);
         controller.NextRing();
 
         var loaded = saveService.LoadOrDefault();
@@ -93,18 +93,12 @@ public sealed class RunSaveClosureTests
 
     private static RunController BuildBattleReadyController(RunSaveService saveService)
     {
-        var mod = new RunMod { Phase = ERunPhase.Reward, IsMultiplayer = false };
-        for (var i = 0; i < 4; i++)
+        var mod = new RunMod { Phase = ERunPhase.Reward };
+        for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var c = RunTestHelper.CreateCharacterWithHp(i);
             mod.AddToCharacterPool(c);
             mod.PlayerStates[i].SetActiveCharacter(c);
-        }
-
-        mod.AddPlayerController(new PlayerController("local", "Player", true));
-        for (var i = 0; i < 4; i++)
-        {
-            mod.AssignSlotInternal(i, "local");
         }
 
         var controller = new RunController(mod);

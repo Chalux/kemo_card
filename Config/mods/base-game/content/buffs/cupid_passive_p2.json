@@ -6,13 +6,5 @@
   "tags": [
     "buff.passive",
     "buff.undispellable"
-  ],
-  "hooks": {
-    "onCardExecutionEnd": [
-      {
-        "effectId": "cupid_blue_card_heal",
-        "params": { "hookTargets": "team" }
-      }
-    ]
-  }
+  ]
 }

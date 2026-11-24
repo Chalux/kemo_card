@@ -11,8 +11,7 @@
       "HealPower": 2
     }
   },
-  "role": "Healer",
-  "priority": 11,
+  "role": "Support",
   "cardType": "Healing",
   "targetSide": "Self",
   "targetScope": "Team",

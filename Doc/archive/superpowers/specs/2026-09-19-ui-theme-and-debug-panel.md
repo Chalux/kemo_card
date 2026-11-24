@@ -1,7 +1,7 @@
 # UI 主题统一与 Run 调试面板 设计
 
 **日期**：2026-09-19
-**状态**：已实装；**§1–§2 的调色板与样式描述已被 [2026-09-21 羊皮纸重构规格](../../../superpowers/specs/2026-09-21-ui-parchment-redesign-design.md) 取代**（主题资源、`KemoPalette`、页面布局以新规格为准；§3–§7 仍有效）
+**状态**：已实装；**§1–§2 的调色板与样式描述已被 [2026-09-21 羊皮纸重构规格](2026-09-21-ui-parchment-redesign-design.md) 取代**（主题资源、`KemoPalette`、页面布局以新规格为准；§3–§7 仍有效）
 **关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [2026-05-15 UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md)；调色板与按钮基类约束全部 Run 内界面。
 
 ---
@@ -39,7 +39,7 @@
 `ContentEnums.cs::EElement` 收敛为四色 `[Flags]`：`Red=1 / Blue=2 / Green=4 / Yellow=8`（`None=0`）。
 
 - 移除旧设计的阴/阳二分；内容 JSON（`Config/mods/base-game/content/**`）与连携统计、`targetFilter.elementAny` 筛选同步四色。
-- 该变更与连携系统（[buff 运行时规格 §3](../../../superpowers/specs/2026-09-19-buff-potential-chain-system-design.md)）同批落地。
+- 该变更与连携系统（[buff 运行时规格 §3](2026-09-19-buff-potential-chain-system-design.md)）同批落地。
 
 ## 5. Run 调试面板（RunDebugDlg + RunDebugService）
 

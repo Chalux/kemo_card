@@ -60,18 +60,9 @@ public static class CodexFilterDefinitions
         key = role switch
         {
             ERole.None => "UI_ROLE_NONE",
-            ERole.Warrior => "UI_ROLE_WARRIOR",
-            ERole.Wizard => "UI_ROLE_WIZARD",
-            ERole.Healer => "UI_ROLE_HEALER",
-            ERole.Guard => "UI_ROLE_GUARD",
-            ERole.Shield => "UI_ROLE_SHIELD",
-            ERole.Controller => "UI_ROLE_CONTROLLER",
+            ERole.Attack => "UI_ROLE_ATTACK",
+            ERole.Defense => "UI_ROLE_DEFENSE",
             ERole.Support => "UI_ROLE_SUPPORT",
-            ERole.CardPlayer => "UI_ROLE_CARD_PLAYER",
-            ERole.SwordMan => "UI_ROLE_SWORD_MAN",
-            ERole.Mage => "UI_ROLE_MAGE",
-            ERole.Alchemist => "UI_ROLE_ALCHEMIST",
-            ERole.Elementist => "UI_ROLE_ELEMENTIST",
             _ => "",
         };
         return key.Length > 0;

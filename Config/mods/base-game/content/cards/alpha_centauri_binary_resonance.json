@@ -17,7 +17,6 @@
     }
   },
   "role": "Support",
-  "priority": 8,
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

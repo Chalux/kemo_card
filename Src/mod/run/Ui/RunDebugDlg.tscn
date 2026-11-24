@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Src/mod/run/Ui/RunDebugDlg.cs" id="1_rundebug"]
 [ext_resource type="Script" path="res://Src/mod/global/Ui/Comp/BaseKemoButton.cs" id="2_kbtn"]
 
-[node name="RunDebugDlg" type="Control" node_paths=PackedStringArray("_tabs", "_btnClose", "_slotOption", "_cardFilter", "_cardList", "_btnGrantCard", "_btnCardToDeck", "_btnRevokeCard", "_charFilter", "_charList", "_btnGrantCharacter", "_btnDeployCharacter", "_btnFillParty", "_battleList", "_battleSeedInput", "_battleRandomSeedCheck", "_btnStartBattle", "_btnEndWin", "_btnEndLose", "_eventList", "_btnTriggerEvent", "_goldInput", "_btnAddGold", "_ringInput", "_btnSetRing", "_phaseOption", "_btnSetPhase", "_statusLabel", "_log", "_potentialInput", "_btnPotentialPool", "_btnPotentialSlot", "_btnAllocatePotential", "_btnDeductPotential", "_btnInspectBattle", "_orbOption", "_orbCountInput", "_btnGrantOrb", "_btnTriggerOrbs")]
+[node name="RunDebugDlg" type="Control" node_paths=PackedStringArray("_tabs", "_btnClose", "_slotOption", "_cardFilter", "_cardList", "_btnGrantCard", "_btnCardToDeck", "_btnRevokeCard", "_charFilter", "_charList", "_btnGrantCharacter", "_btnDeployCharacter", "_btnFillParty", "_battleList", "_battleSeedInput", "_battleRandomSeedCheck", "_btnStartBattle", "_btnEndWin", "_btnEndLose", "_eventList", "_btnTriggerEvent", "_goldInput", "_btnAddGold", "_ringInput", "_btnSetRing", "_phaseOption", "_btnSetPhase", "_statusLabel", "_log", "_btnInspectBattle", "_orbOption", "_orbCountInput", "_btnGrantOrb", "_btnTriggerOrbs")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -40,12 +40,7 @@ _phaseOption = NodePath("Panel/Margin/VBox/Tabs/Tools/PhaseRow/PhaseOption")
 _btnSetPhase = NodePath("Panel/Margin/VBox/Tabs/Tools/PhaseRow/BtnSetPhase")
 _statusLabel = NodePath("Panel/Margin/VBox/StatusLabel")
 _log = NodePath("Panel/Margin/VBox/Log")
-_potentialInput = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/PotentialInput")
-_btnPotentialPool = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/BtnPotentialPool")
-_btnPotentialSlot = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialRow/BtnPotentialSlot")
-_btnAllocatePotential = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnAllocatePotential")
-_btnDeductPotential = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnDeductPotential")
-_btnInspectBattle = NodePath("Panel/Margin/VBox/Tabs/Tools/PotentialActions/BtnInspectBattle")
+_btnInspectBattle = NodePath("Panel/Margin/VBox/Tabs/Tools/BtnInspectBattle")
 _orbOption = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/OrbOption")
 _orbCountInput = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/OrbCountInput")
 _btnGrantOrb = NodePath("Panel/Margin/VBox/Tabs/Tools/OrbRow/BtnGrantOrb")
@@ -307,49 +302,7 @@ layout_mode = 2
 text = "UI_DEBUG_SET_PHASE"
 script = ExtResource("2_kbtn")
 
-[node name="PotentialRow" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="PotentialLabel" type="Label" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
-text = "UI_DEBUG_POTENTIAL_INPUT"
-
-[node name="PotentialInput" type="LineEdit" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-text = "20"
-
-[node name="BtnPotentialPool" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
-custom_minimum_size = Vector2(180, 40)
-layout_mode = 2
-text = "UI_DEBUG_POTENTIAL_POOL"
-script = ExtResource("2_kbtn")
-
-[node name="BtnPotentialSlot" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialRow"]
-custom_minimum_size = Vector2(180, 40)
-layout_mode = 2
-text = "UI_DEBUG_POTENTIAL_SLOT"
-script = ExtResource("2_kbtn")
-
-[node name="PotentialActions" type="HBoxContainer" parent="Panel/Margin/VBox/Tabs/Tools"]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="BtnAllocatePotential" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
-custom_minimum_size = Vector2(180, 40)
-layout_mode = 2
-text = "UI_DEBUG_POTENTIAL_ALLOCATE"
-script = ExtResource("2_kbtn")
-
-[node name="BtnDeductPotential" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
-custom_minimum_size = Vector2(180, 40)
-layout_mode = 2
-text = "UI_DEBUG_POTENTIAL_DEDUCT"
-script = ExtResource("2_kbtn")
-
-[node name="BtnInspectBattle" type="Button" parent="Panel/Margin/VBox/Tabs/Tools/PotentialActions"]
+[node name="BtnInspectBattle" type="Button" parent="Panel/Margin/VBox/Tabs/Tools"]
 custom_minimum_size = Vector2(180, 40)
 layout_mode = 2
 text = "UI_DEBUG_INSPECT_BATTLE"

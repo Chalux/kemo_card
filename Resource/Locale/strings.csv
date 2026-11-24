@@ -45,18 +45,9 @@ UI_COST_TYPE_GOLD,金币,Gold
 UI_COST_TYPE_DISCARD,弃牌,Discard
 UI_COST_TYPE_X,X,X
 UI_ROLE_NONE,无,None
-UI_ROLE_WARRIOR,战士,Warrior
-UI_ROLE_WIZARD,术士,Wizard
-UI_ROLE_HEALER,治疗者,Healer
-UI_ROLE_GUARD,守护者,Guard
-UI_ROLE_SHIELD,护盾,Shield
-UI_ROLE_CONTROLLER,控制者,Controller
-UI_ROLE_SUPPORT,支援者,Support
-UI_ROLE_CARD_PLAYER,卡牌手,Card Player
-UI_ROLE_SWORD_MAN,剑士,Sword Man
-UI_ROLE_MAGE,法师,Mage
-UI_ROLE_ALCHEMIST,炼金术士,Alchemist
-UI_ROLE_ELEMENTIST,元素师,Elementist
+UI_ROLE_ATTACK,主攻,Attack
+UI_ROLE_DEFENSE,防御,Defense
+UI_ROLE_SUPPORT,支援,Support
 UI_CARD_TIP_COST_SUFFIX,费, Cost
 UI_CARD_TIP_COST_SUFFIX_X,费, Cost
 UI_CARD_TIP_EXCLUSIVE_PREFIX,专属于此角色：,Exclusive to:
@@ -155,7 +146,6 @@ UI_RUN_PHASE_LABEL,阶段,Phase
 UI_RUN_RING_LABEL,环,Ring
 UI_RUN_SEED_VALUE,种子,Seed
 UI_RUN_GOLD_LABEL,金币,Gold
-UI_RUN_POTENTIAL_LABEL,潜能,Potential
 UI_RUN_CONFIRM_ABANDON_TITLE,放弃 Run,Abandon Run
 UI_RUN_CONFIRM_ABANDON_DESC,确定要放弃本局游戏吗？,Abandon this run?
 UI_RUN_PHASE_INIT,初始,Init
@@ -186,10 +176,6 @@ UI_TEAM_ASSIGNED_SLOT_FORMAT,已在槽位 {0},Slot {0}
 UI_TEAM_DEPLOY,上阵,Deploy
 UI_TEAM_DEPLOY_TO_SLOT_FORMAT,上阵到槽位 {0},Deploy to Slot {0}
 UI_TEAM_UNASSIGN,下阵,Remove
-UI_TEAM_POTENTIAL_POOL_FORMAT,可用潜能 {0},Available {0}
-UI_TEAM_POTENTIAL_SLOT_FORMAT,本槽已分配 {0},Allocated {0}
-UI_TEAM_POTENTIAL_ALLOCATE,分配,Allocate
-UI_TEAM_POTENTIAL_DEDUCT,扣除,Deduct
 UI_TEAM_NEW_DECK,新建卡组,New Deck
 UI_TEAM_HINT_CLICK_OR_HOLD,点击增删 · 长按查看卡牌详情,Tap to edit · Hold for card details
 UI_TEAM_NO_CHARACTER,未选择角色,No character selected
@@ -217,12 +203,6 @@ UI_TEAM_DECK_CARD_ADDED,已加入卡组,Added to deck
 UI_TEAM_DECK_CARD_REMOVED,已移出卡组,Removed from deck
 UI_TEAM_DECK_CARD_MISSING,卡组中没有该牌,Card not in deck
 UI_TEAM_DECK_EMPTY,卡组至少要保留一张牌,Deck must keep at least one card
-UI_TEAM_POTENTIAL_ALLOCATED_FORMAT,已分配 {0} 点潜能,Allocated {0} potential
-UI_TEAM_POTENTIAL_DEDUCTED_FORMAT,已扣除 {0} 点潜能,Deducted {0} potential
-UI_TEAM_POTENTIAL_INVALID,请输入正整数数额,Enter a positive amount
-UI_TEAM_POTENTIAL_POOL_SHORT,可用潜能不足,Not enough available potential
-UI_TEAM_POTENTIAL_SLOT_SHORT,该槽位已分配潜能不足,Not enough allocated potential in this slot
-UI_TEAM_POTENTIAL_VOTE_FAILED,表决未通过或本环提议次数已用尽,Proposal rejected or out of proposals
 UI_TEAM_DECK_INVALID_FORMAT,卡组中有 {0} 张牌当前不可用,{0} card(s) in this deck are unavailable
 UI_TEAM_OK,完成,Done
 UI_ORB_PANEL_TITLE,充能球,Charge Orbs
@@ -275,24 +255,9 @@ KW_CHARGE_TITLE,充能,Charge
 KW_CHARGE_DESC,该手牌槽每打出一张牌即触发一次充能效果（罗马序号表示触发所需计数），持续指定回合数。,Playing a card from this slot triggers the charge payload (roman numeral = required count). Lasts for the listed turns.
 KW_CHAIN_TITLE,连携,Chain
 KW_CHAIN_DESC,同一回合内按出牌队列统计各属性的不同角色数（出牌队列里的所有卡都计入，含支援/弱化等非输出卡）：2 名 +25%，3 名 +50%，4 名 +100%。加成只作用于物理/魔法/治疗卡，多属性卡取最高档。,"Per turn the queue is tallied per element by distinct characters (every queued card counts, support and debuff cards included): 2 characters +25%, 3 +50%, 4 +100%. The bonus only applies to physical, magic and healing cards, and a multi-element card takes its best element."
-UI_MENU_MP_SETTING,联机,Multiplayer
-UI_SETTING_MP_POTENTIAL_MODE,潜能消费模式,Potential Consumption
-UI_SETTING_MP_POTENTIAL_MODE_FREE,自由消费,Free
-UI_SETTING_MP_POTENTIAL_MODE_VOTE,表决消费,Vote Required
-UI_SETTING_MP_PROPOSALS,每环提议次数,Proposals Per Ring
-UI_SETTING_MP_PROPOSALS_UNLIMITED,提议次数无限制,Unlimited Proposals
-UI_DEBUG_POTENTIAL_INPUT,潜能,Potential
-UI_DEBUG_POTENTIAL_POOL,加到团队池,Add to Team Pool
-UI_DEBUG_POTENTIAL_SLOT,直接加到选中槽位,Add Directly to Slot
-UI_DEBUG_POTENTIAL_ALLOCATE,分配输入数额到选中槽位,Allocate Amount to Slot
-UI_DEBUG_POTENTIAL_DEDUCT,从选中槽位扣除输入数额,Deduct Amount from Slot
 UI_DEBUG_INSPECT_BATTLE,战斗检查,Inspect Battle
-UI_CHARACTER_PASSIVES_TITLE,潜能被动,Potential Passives
+UI_CHARACTER_PASSIVES_TITLE,角色被动,Character Passives
 UI_CHARACTER_PASSIVE_NAME,被动技能{0},Passive Skill {0}
-UI_CHARACTER_PASSIVE_THRESHOLD,潜能 {0},Potential {0}
-UI_CHARACTER_PASSIVE_THRESHOLD_ZERO,潜能 0,Potential 0
-UI_CHARACTER_PASSIVE_UNLOCKED,【已解锁】,[Unlocked]
-UI_CHARACTER_PASSIVE_LOCKED,【未解锁】,[Locked]
 UI_CHARACTER_ACTIVE_SKILL_TITLE,主动技,Active Skill
 UI_CHARACTER_ACTIVE_SKILL_THRESHOLD,（技能 {0}）, (Skill {0})
 UI_CHARACTER_ATTRS_TITLE,属性,Attributes
@@ -308,10 +273,8 @@ KW_ORB_ELEMENT_TITLE,属性球,Element Orb
 KW_ORB_ELEMENT_DESC,红蓝绿黄四种[url=kw:orb]充能球[/url]中的元素球：单球伤害 =（每球固定值 + 产球者攻击力 × 加成比例）×（1 + 产球者增伤 + 目标受伤增加）；增伤与受伤增加一律同桶加算、不吃连携，也不吃目标的物理与魔法防御。所用攻击力按球类型取物攻、魔攻或两者较高者。,"Four elemental orbs (red / blue / green / yellow). Per-orb damage = (flat value + producer attack × scale) × (1 + producer damage bonuses + target damage-taken scale); all damage bonuses share one additive bucket, and orbs ignore chain as well as both physical and magic defense. The attack stat used depends on the orb type."
 KW_SHARED_HP_TITLE,共享血量,Shared HP
 KW_SHARED_HP_DESC,整支队伍共用一本血量账本：任何角色受到的伤害都从账本扣除；账本归零即整队失败（同归于尽判负）。治疗同样只回账本。,The party shares a single HP ledger. Damage to any character is deducted from it and the run is lost when it hits zero. Healing only refills the ledger.
-KW_TEAM_POTENTIAL_TITLE,团体潜能,Team Potential
-KW_TEAM_POTENTIAL_DESC,全队共享的解锁资源：用于解锁角色被动（阈值即成本）。重复获得同一角色会转化为潜能（见 [url=kw:character_passive]角色被动[/url]）——该角色已在某个槽位时直充那个槽位，否则进入团队池（表决模式下消费需提议通过）。,A team-shared unlock resource used to unlock character passives (the threshold is the cost). Duplicate characters convert into potential: credited to that slot when the character already holds it and to the team pool otherwise (in vote mode spending requires a passed proposal).
 KW_CHARACTER_PASSIVE_TITLE,角色被动,Character Passive
-KW_CHARACTER_PASSIVE_DESC,角色定义里声明的被动：开战时按潜能档位由低到高挂载，之后完全由 buff 钩子驱动（回合开始、释放主动技、阶层开始等）。未解锁的被动不生效。,Passives declared on the character definition. They are attached at battle start in ascending potential order and driven entirely by buff hooks (turn start / active skill cast / wave start and so on). Locked passives do nothing.
+KW_CHARACTER_PASSIVE_DESC,角色出战时获得全部被动。每个被动在其描述的时机触发。,Deployed characters gain all their passives at battle start. Each passive triggers as described.
 KW_FOLLOW_UP_TITLE,追打,Follow-Up
 KW_FOLLOW_UP_DESC,持有者在不是本回合[url=kw:normal_attack]普通攻击[/url]归属角色时，仍以标明的百分比攻击力参与该次普攻（目标与公式同普攻）。多个追打效果同时存在时只取最高值；归属角色自己持有追打不会重复出手。,"When the holder is not this turn's normal attacker, they still join that normal attack at the listed percentage of their attack power (same targets and formula). Only the highest follow-up value applies, and the acting character never strikes twice."
 KW_SEAL_TITLE,封印,Seal
@@ -345,8 +308,10 @@ UI_GLOSSARY_ORB_BODY_MAGICAL,魔法球：按魔法攻击计算（每球 {0} 点 
 UI_GLOSSARY_ORB_BODY_SUPPORT,支援球：不造成伤害；触发时改为执行自身携带的效果（效果来源为该球的产球者）。,Support orb. It deals no damage and instead runs its own effects with the orb producer as the source.
 UI_COMBAT_PAUSE,暂停,Pause
 UI_COMBAT_SHARED_HP,队伍生命,Team HP
-UI_COMBAT_DECK,卡组,Deck
-UI_COMBAT_GRAVEYARD,墓地,Graveyard
+UI_COMBAT_DECK,队伍牌堆,Team Draw Pile
+UI_COMBAT_GRAVEYARD,队伍墓地,Team Discard Pile
+UI_COMBAT_END_TURN,结束出牌,End Card Play
+UI_COMBAT_MARBLE_SPEED,速度 {0}×,Speed {0}×
 UI_COMBAT_CONFIRM,确定,Confirm
 UI_COMBAT_UNCONFIRM,取消确认,Unconfirm
 UI_COMBAT_PLAY_CONFIRM,确认出牌,Play Card
@@ -392,6 +357,19 @@ UI_COMBAT_BUFF_STACKS,层数 {0},Stacks {0}
 UI_COMBAT_MARK_NORMAL_ATTACK,普攻,Attack
 UI_COMBAT_MARK_FOLLOW_UP,追打,Follow-up
 UI_COMBAT_SLOT_CHARGE,{0} / {1},{0} / {1}
+UI_MARBLE_PANEL_TITLE,弹珠盘面,Marble Board
+UI_MARBLE_PREVIEW_TITLE,弹珠盘面预览,Marble Board Preview
+UI_MARBLE_PREVIEW_OPEN,放大,Enlarge
+UI_MARBLE_PREVIEW_CLOSE,关闭,Close
+UI_MARBLE_STATS,本轮点数 {0} · 待发 {1} · 场上 {2} / {3},Count {0} · Queue {1} · Live {2} / {3}
+UI_MARBLE_QUEUE_EMPTY,暂无待发弹珠,No queued marbles
+UI_MARBLE_QUEUE_ENTRY,{0}. 点数 {1} · 半径 {2},{0}. Points {1} · Radius {2}
+UI_MARBLE_PHASE_TITLE,弹珠阶段,Marble Phase
+UI_COMBAT_MARBLE_END,提前结束,End Marbles
+UI_COMBAT_MARBLE_HINT_AIM,移动指针瞄准，左键发射；右键或 ESC 取消瞄准,Aim with the pointer and left click to launch (right click or ESC cancels)
+UI_COMBAT_MARBLE_HINT_FLYING,弹珠飞行中……,Marbles in flight...
+UI_COMBAT_MARBLE_MARK,本轮分配标记,Allocation Mark
+UI_COMBAT_MARBLE_ACTION_INVALID,此刻无法进行该弹珠操作,That marble action is unavailable right now
 UI_DEBUG_BATTLE_SEED,战斗种子,Battle Seed
 UI_DEBUG_BATTLE_SEED_PLACEHOLDER,留空用 RunSeed,Empty = RunSeed
 UI_DEBUG_BATTLE_RANDOM_SEED,随机种子,Random Seed
@@ -442,7 +420,7 @@ UI_PAUSE_EXIT_BATTLE_DESC,将放弃当前战斗并回到战前状态，确定退
 "buff.perseus_battle_pressure.name","英神压制","Heroic Pressure"
 "buff.perseus_battle_pressure.desc","物攻·魔攻降低 6 × 珀尔修斯本回合打出的卡牌数量，持续 1 回合；数值在卡牌执行结束时取快照。","P.Atk and M.Atk are reduced by 6 times Perseus's cards played this turn for 1 turn. Snapshotted at card execution end."
 "buff.perseus_passive_p1.desc","免疫病毒。","Immune to Virus."
-"buff.perseus_passive_p2.desc","卡牌执行结束后，敌方全体 1 回合【物攻·魔攻 -6 × X】（X 为本回合自身打出的卡牌数量）。","At card execution end, all enemies suffer -6 × X P.Atk and M.Atk for 1 turn (X = your cards played this turn)."
+buff.perseus_passive_p2.desc,本版本暂未启用。,Inactive in this version.
 "buff.perseus_passive_p3.desc","阶层开始时或阶层内每 10 回合开始时：自身技能进度 +1，绿属性角色 +2，人类角色 +2，神族角色 +2（各项可叠加）。","At floor start and every 10 turns within the floor: gain +1 skill progress; Green allies gain +2, Human allies +2, and God allies +2. Bonuses stack."
 "buff.perseus_passive_p4.desc","自身释放主动技能后，1 回合【抽卡 +5】（作用于下次己方回合抽牌）。自身主动技能施加的减益替换为 3 回合【物攻·魔攻 -30】。","After casting your active skill, gain +5 draw for the next allied draw step. Replace your active skill debuff with -30 P.Atk and M.Atk for 3 turns."
 "ge.perseus_physical_damage.name","英神之刃","Heroic Blade"
@@ -466,7 +444,7 @@ UI_PAUSE_EXIT_BATTLE_DESC,将放弃当前战斗并回到战前状态，确定退
 "buff.cupid_passive_p1.name","暴风免疫","Storm Immunity"
 "buff.cupid_passive_p1.desc","免疫暴风。","Immune to hand-slot storm effects."
 "buff.cupid_passive_p2.name","蔚蓝爱意","Azure Affection"
-"buff.cupid_passive_p2.desc","卡牌执行结束后，如果本回合自身打出过至少1张蓝元素卡牌，则队伍恢复50点生命。","At the end of card execution: if Cupid played at least 1 blue card this turn, restore 50 team HP."
+buff.cupid_passive_p2.desc,本版本暂未启用。,Inactive in this version.
 "buff.cupid_passive_p3.name","爱神共鸣","Divine Resonance"
 "buff.cupid_passive_p3.desc","阶层开始时或阶层内每7回合开始时：自身技能进度+2，蓝元素角色+1，神族角色+1。各项独立叠加。","At floor start and every 7 turns: gain 2 skill progress; blue allies gain 1; God allies gain 1. Bonuses stack."
 "buff.cupid_passive_p4.name","爱神恩泽","Blessing of Love"
@@ -496,7 +474,7 @@ UI_PAUSE_EXIT_BATTLE_DESC,将放弃当前战斗并回到战前状态，确定退
 "buff.anubis_passive_p3.name","冥神兽鸣","Divine Beast Resonance"
 "buff.anubis_passive_p3.desc","阶层开始时或阶层内每8回合开始时：自身技能进度+2，红元素角色+1，神族角色+1，动物角色+1。各项独立叠加。","At floor start and every 8 turns: gain 2 skill progress; red allies gain 1; God allies gain 1; Animal allies gain 1. Bonuses stack."
 "buff.anubis_passive_p4.name","葬仪连奏","Funerary Frenzy"
-"buff.anubis_passive_p4.desc","每回合仅1次：卡牌执行之前，若自身本回合已标记至少3张卡牌，自身1回合【卡牌伤害+50%】，下一次己方抽牌数量+3。","Once per turn, before card execution: if at least 3 of your cards are queued, gain +50% card damage for 1 turn and +3 cards on your next draw."
+buff.anubis_passive_p4.desc,本版本暂未启用。,Inactive in this version.
 "buff.anubis_frenzy.name","葬仪连奏","Funerary Frenzy"
 "buff.anubis_frenzy.desc","1回合【卡牌伤害+50%】，下一次己方抽牌数量+3。","Card damage +50% for 1 turn; next draw +3."
 "ge.anubis_physical_damage.name","冥界物理伤害","Underworld Physical Damage"
@@ -705,7 +683,7 @@ UI_COMBAT_HINT_PICK_DISCARD,请选择{0}～{1}张手牌丢弃（已选{2}张，E
 "buff.mother_machine_operator_slot_5.name","超级算子进程·5号槽","Super Operator Process · Slot 5"
 "buff.mother_machine_operator_slot_5.desc","5回合充能I：队伍恢复50点生命。","Charge I for 5 turns: heal the team for 50."
 "skill.mother_machine_super_operator.name","超级算子进程","Super Operator Process"
-"skill.mother_machine_super_operator.desc","自身1号手牌槽1回合充能I【队伍恢复100点生命】，3号手牌槽3回合充能I【队伍恢复75点生命】，5号手牌槽5回合充能I【队伍恢复50点生命】。","Grant Charge I to own slots 1, 3 and 5 for 1, 3 and 5 turns, healing the team for 100, 75 and 50 respectively."
+skill.mother_machine_super_operator.desc,消耗技能进度。本次施放无效果。,Spends skill progress. This cast has no effect.
 "buff.mother_machine_preload_power.name","算力预载","Compute Preload"
 "buff.mother_machine_preload_power.desc","2回合恢复量+4。","+4 Heal Power for 2 turns."
 "skill.mother_machine_cache_repair.name","缓存修复","Cache Repair"
@@ -888,7 +866,7 @@ buff.evil_thought_attack_down.desc,物理攻击和魔法攻击各-10，持续后
 skill.ghost_strike.name,幽灵侵袭,Ghost Assault
 skill.ghost_strike.desc,随机1名角色造成50点魔法伤害。,Deal 50 magical damage to one random character.
 skill.ghost_seal_twice.name,幽灵封印,Ghost Seals
-skill.ghost_seal_twice.desc,随机1名角色随机1个手牌槽封印2回合，执行2次，每次重新随机。,"Twice, randomly select a character and one hand slot, sealing it for 2 turns. Roll a new character and slot each time."
+skill.ghost_seal_twice.desc,幽灵空过这次行动。,The ghost skips this action.
 skill.evil_thought_double.name,恶念连击,Malice Double Strike
 skill.evil_thought_double.desc,随机1名角色2次，每次造成50点魔法伤害。,"Randomly target one character twice, dealing 50 magical damage each time. Roll a new target each time."
 skill.evil_thought_weaken.name,恶念压制,Malice Suppression
@@ -919,15 +897,15 @@ UI_COMBAT_INTENT_LIFE_BAR,意图：切换血条后行动,Intent: Act after chang
 
 UI_COMBAT_STAT_SHIELD,护盾,Shield
 UI_COMBAT_SHIELD,护盾 {0},Shield {0}
-UI_ITEMS_POTIONS,药水,Potions
+UI_ITEMS_CONSUMABLES,消耗品,Consumables
 UI_ITEMS_RELICS,遗物,Relics
-UI_ITEM_USE,使用药水,Use potion
-UI_ITEM_DISCARD,丢弃药水,Discard potion
+UI_ITEM_USE,使用消耗品,Use consumable
+UI_ITEM_DISCARD,丢弃消耗品,Discard consumable
 UI_ITEM_MISSING,道具定义不可用,Item definition unavailable
-UI_ITEM_INVALID,药水槽位或定义无效,Invalid potion slot or definition
-UI_ITEM_INVALID_TARGET,药水目标无效,Invalid potion target
+UI_ITEM_INVALID,消耗品槽位或定义无效,Invalid consumable slot or definition
+UI_ITEM_INVALID_TARGET,消耗品目标无效,Invalid consumable target
 UI_ITEM_EMPTY_SLOT,空槽位,Empty slot
-UI_ITEM_REPLACE_HINT,药水槽已满。选择要替换的药水，或放弃本次获取。,Potion slots are full. Replace a potion or decline the new one.
+UI_ITEM_REPLACE_HINT,消耗品槽已满。选择要替换的消耗品，或放弃本次获取。,Consumable slots are full. Replace a consumable or decline the new one.
 UI_ITEM_REPLACE_SLOT,替换槽位 {0}：{1},Replace slot {0}: {1}
 UI_ITEM_GIVE_UP,放弃获取,Decline
 UI_MAP_TITLE,当前环路线,Ring routes
@@ -942,7 +920,7 @@ UI_MAP_FINISHED,已完成最后一环,Final ring complete
 UI_MAP_RING_COMPLETE,本环战斗已完成，可以进入下一环。,This ring is complete. Proceed to the next ring.
 UI_EVENT_EMPTY,此节点暂未配置事件，可以继续前进。,No event is configured for this node. You may continue.
 UI_SHOP_EMPTY,货架暂时为空。后续将在这里配置商品。,The shelves are empty. Goods will be configured here later.
-UI_SHOP_HINT,购买后商品售罄。药水槽满时可选择替换。,Purchased goods sell out. Full potion slots allow replacement.
+UI_SHOP_HINT,购买后商品售罄。消耗品槽满时可选择替换。,Purchased goods sell out. Full consumable slots allow replacement.
 UI_SHOP_SOLD,{0}（售罄）,{0} (sold out)
 UI_SHOP_PRICE,{0} · {1} 金币,{0} · {1} gold
 UI_EVENT_NEED_GOLD,需要金币 ≥ {0}（当前 {1}）,Requires gold ≥ {0} (current {1})
@@ -957,8 +935,8 @@ UI_MAP_ROUTE_SELECTED,已选路线 {0},Route {0} selected
 UI_MAP_RETURN,返回地图,Return to map
 UI_MAP_VISIBLE_EVENT,明文事件,Visible event
 UI_VISIBLE_GOLD,150 金币,150 gold
-UI_VISIBLE_ROLE_PACK,{0}卡包 · 5 张,{0} pack · 5 cards
-UI_VISIBLE_ALL_PACK,卡包 · 每定位各 1 张,Pack · 1 card per role
+UI_VISIBLE_ROLE_PACK,{0}卡包 · {1} 张,{0} pack · {1} cards
+UI_VISIBLE_ALL_PACK,全职业卡包 · {0} 张,All-role pack · {0} cards
 UI_VISIBLE_RELIC,选取一个遗物,Choose a relic
 UI_VISIBLE_GOLD_HINT,领取 150 金币，奖励由全队共享。,Receive 150 gold for the team.
 UI_VISIBLE_PACK_HINT,领取下列全部非专属卡牌，包内不重复；新卡加入共享收藏，已持有且可升级的卡升一阶。,Receive all the non-exclusive cards below without pack duplicates. New cards enter the shared collection; owned upgradeable cards advance one tier.

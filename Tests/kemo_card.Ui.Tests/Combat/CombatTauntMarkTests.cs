@@ -65,7 +65,7 @@ public sealed class CombatTauntMarkTests
 
         Assert.That(
             CombatTauntMarks.Resolve(sim),
-            Is.EqualTo(new[] { false, false, false, false }),
+            Is.EqualTo(new[] { false, false, false }),
             "没人有嘲讽 → 谁都不标");
     }
 
@@ -77,7 +77,7 @@ public sealed class CombatTauntMarkTests
 
         Assert.That(
             CombatTauntMarks.Resolve(sim),
-            Is.EqualTo(new[] { false, false, true, false }),
+            Is.EqualTo(new[] { false, false, true }),
             "P3 的嘲讽 +5 只落在 2 号槽");
     }
 
@@ -86,12 +86,12 @@ public sealed class CombatTauntMarkTests
     {
         using var sim = BuildSim();
         sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 1), "betelgeuse_passive_p3");
-        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 3), "betelgeuse_passive_p3");
+        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 2), "betelgeuse_passive_p3");
 
         Assert.That(
             CombatTauntMarks.Resolve(sim),
-            Is.EqualTo(new[] { false, true, false, true }),
-            "并列最高 → 1/3 号都标");
+            Is.EqualTo(new[] { false, true, true }),
+            "并列最高 → 1/2 号都标");
     }
 
     [Test]

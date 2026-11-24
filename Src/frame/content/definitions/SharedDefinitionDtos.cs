@@ -76,17 +76,13 @@ public sealed class BuffRefDto
 }
 
 /// <summary>
-/// 角色被动：解锁后开战时挂上 <see cref="BuffId"/> 指向的 buff（阈值即解锁成本，任意数值）。
+/// 角色被动：出战时挂载 <see cref="BuffId"/> 指定的 buff。
 /// 被动的触发行为全部由 buff 钩子（onWaveStart/onActiveSkillCast 等）表达，引擎不另设被动分发体系。
 /// </summary>
 public sealed class PassiveRefDto
 {
     [JsonPropertyName("buffId")]
     public string BuffId { get; init; } = "";
-
-    /// <summary>解锁成本（团体潜能消费额度）；0 = 默认解锁。</summary>
-    [JsonPropertyName("requiredPotential")]
-    public int RequiredPotential { get; init; }
 
     [JsonPropertyName("params")]
     public Dictionary<string, object>? Params { get; init; }

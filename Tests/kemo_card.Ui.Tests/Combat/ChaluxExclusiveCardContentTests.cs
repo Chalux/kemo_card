@@ -50,7 +50,6 @@ public sealed class ChaluxExclusiveCardContentTests
         Assert.That(card.CostType, Is.EqualTo(ECostType.Energy));
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.CardType.ToString(), Is.EqualTo(cardType));
-        Assert.That(card.Priority, Is.EqualTo(priority));
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
         Assert.That(card.IsExclusive, Is.True, "专属卡必须标记 isExclusive");
         Assert.That(card.CardGroupId, Is.Null, "无升级链");
@@ -86,17 +85,6 @@ public sealed class ChaluxExclusiveCardContentTests
         }
     }
 
-    [Test]
-    public void Support_cards_do_not_count_toward_chain_heads()
-    {
-        var definitions = BaseGameContent.Load();
-
-        Assert.That(ChainCalculator.AppliesToCard(definitions.Cards[OrcaCard]), Is.True);
-        Assert.That(ChainCalculator.AppliesToCard(definitions.Cards[PathCard]), Is.True);
-        Assert.That(ChainCalculator.AppliesToCard(definitions.Cards[SwordCard]), Is.False, "纯增益卡不堆连携人头");
-        Assert.That(ChainCalculator.AppliesToCard(definitions.Cards[ResolveCard]), Is.False);
-    }
-
     #endregion
 
     #region 端到端
@@ -112,7 +100,7 @@ public sealed class ChaluxExclusiveCardContentTests
 
         // 卡牌：12 + 100% 施法者物攻 10 − 目标物防 0 = 22；
         // 随后本回合普通攻击（第 1 回合归槽位 1 = 角色 0，物攻 10 − 物防 0）= 10。
-        var normalAttack = sim.NormalAttacks.LastResult;
+        var normalAttack = sim.NormalAttacks.LastMarbleSettlement;
         Assert.That(normalAttack, Is.Not.Null, "卡牌结算完成后应执行普通攻击");
         Assert.That(normalAttack!.Kind, Is.EqualTo(EDamageKind.Physical));
         Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(before - 22f - 10f).Within(0.001f));
@@ -129,13 +117,13 @@ public sealed class ChaluxExclusiveCardContentTests
 
         MarkAndExecute(sim, PathCard, [Enemy(0), Enemy(1)]);
 
-        // 卡牌 22/敌人；自身 +6 物攻在普攻之前落地 → 普攻 = 10 + 6 = 16/敌人（普攻也是敌方全体）。
-        var normalAttack = sim.NormalAttacks.LastResult;
+        // 卡牌 22/敌人；自身 +6 物攻在普攻之前落地 → 普攻 = 10 + 6 = 标记目标受到 16 点弹珠普攻。
+        var normalAttack = sim.NormalAttacks.LastMarbleSettlement;
         Assert.That(normalAttack, Is.Not.Null);
-        Assert.That(normalAttack!.TargetCount, Is.EqualTo(2), "普攻目标是敌方全体");
-        Assert.That(normalAttack.TotalDamage, Is.EqualTo(32f).Within(0.001f), "16 × 2 个敌人");
+        Assert.That(normalAttack!.AllocatedCount, Is.EqualTo(1));
+        Assert.That(normalAttack.TotalDamage, Is.EqualTo(16f).Within(0.001f));
         Assert.That(sim.EnemyTeam.Enemies[0].Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(first - 22f - 16f).Within(0.001f));
-        Assert.That(sim.EnemyTeam.Enemies[1].Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(second - 22f - 16f).Within(0.001f));
+        Assert.That(sim.EnemyTeam.Enemies[1].Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(second - 22f).Within(0.001f));
 
         var buff = caster.Buffs.Find(PathFrostBuff);
         Assert.That(buff, Is.Not.Null, "群体伤害同时必须把增益落在施法者自己身上（不是敌人）");
@@ -163,37 +151,6 @@ public sealed class ChaluxExclusiveCardContentTests
             sim.Orbs.Queue.Orbs.Select(orb => orb.ProducerIndex),
             Is.All.EqualTo(0),
             "产球者 = 打出卡牌的角色");
-    }
-
-    [Test]
-    public void Absolute_resolve_attaches_charge_two_to_second_hand_slot()
-    {
-        using var sim = BuildPlayerPhase(ResolveCard);
-        var caster = sim.PlayerTeam.Characters[0];
-
-        MarkAndExecute(sim, ResolveCard, [Player(0)]);
-
-        var slot = caster.HandSlots[1];
-        var charge = slot.Buffs.Find(VoidChargeBuff);
-        Assert.That(charge, Is.Not.Null, "2 号手牌槽（索引 1）获得充能 buff");
-        Assert.That(charge!.ChargeCounter, Is.EqualTo(2), "充能 II");
-        Assert.That(charge.RemainingTurns, Is.EqualTo(5), "持续 5 回合");
-        Assert.That(caster.Buffs.Find(ActiveFrostBuff), Is.Null, "未触发前不给增益");
-
-        // 第 1 张牌：计数 2 → 1，不触发。
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(caster.Buffs.Find(ActiveFrostBuff), Is.Null, "充能 II 需要两张牌");
-        Assert.That(charge.ChargeCounter, Is.EqualTo(1));
-
-        // 第 2 张牌：归零 → 载荷（3 回合 / 物攻 +6）并重置计数。
-        var attackBefore = caster.Asc.GetCurrentValue(AttributeIds.PhysicalAttack);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-
-        var payload = caster.Buffs.Find(ActiveFrostBuff);
-        Assert.That(payload, Is.Not.Null, "载荷复用超限增幅（物攻 +6 / 3 回合）");
-        Assert.That(payload!.RemainingTurns, Is.EqualTo(3));
-        Assert.That(caster.Asc.GetCurrentValue(AttributeIds.PhysicalAttack), Is.EqualTo(attackBefore + 6f).Within(0.001f));
-        Assert.That(charge.ChargeCounter, Is.EqualTo(2), "触发后重置计数，可持续触发");
     }
 
     #endregion
@@ -247,7 +204,8 @@ public sealed class ChaluxExclusiveCardContentTests
         var marked = sim.TryApply(new PlayCardCommand(0, slotIndex, targets));
         Assert.That(marked.Success, Is.True, marked.Error);
 
-        sim.TransitionTo(ECombatPhase.CardExecution);
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        MarblePhaseTests.ShootQueuedBalls(sim, 1.35f);
         sim.AdvancePhase();
     }
 

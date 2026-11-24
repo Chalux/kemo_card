@@ -3,7 +3,7 @@
   "descId": "enemy.training_dummy.desc",
   "maxHp": 10000,
   "element": "None",
-  "role": "Guard",
+  "role": "Defense",
   "skillRefs": [],
   "buffRefs": [{ "buffId": "training_dummy_regeneration" }],
   "baseAttributes": {

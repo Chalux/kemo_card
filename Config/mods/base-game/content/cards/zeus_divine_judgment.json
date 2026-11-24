@@ -2,7 +2,7 @@
   "rarity": "Exclusive",
   "cardType": "Magical",
   "element": 8,
-  "role": "Guard",
+  "role": "Defense",
   "targetScope": "All",
   "isExclusive": true,
   "stats": {
@@ -24,7 +24,6 @@
   "targetSide": "Enemy",
   "cost": 3,
   "costType": "Energy",
-  "priority": 3,
   "displayNameId": "card.zeus_divine_judgment.name",
   "retargetPolicy": "Default",
   "targetCount": 1

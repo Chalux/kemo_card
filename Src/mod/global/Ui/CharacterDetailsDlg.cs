@@ -8,7 +8,6 @@ using KemoCard.Frame.UI.Base;
 using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Global.Ui.Comp;
 using KemoCard.Mod.Run;
-using KemoCard.Mod.Run.Potential;
 
 namespace KemoCard.Mod.Global.Ui;
 
@@ -170,10 +169,6 @@ public partial class CharacterDetailsDlg : BaseDlg
         cardItem.SetData(store.TryGetCard(_cardIds[index], out var card) ? card : null);
     }
 
-    /// <summary>
-    /// 被动列表：名称（潜能门槛）+ 描述；进行中的 Run 内持有该角色实例时附加解锁状态。
-    /// 文案口径在 <see cref="PassiveTextBuilder"/>（与卡组编辑左栏共用）。
-    /// </summary>
     private void BindPassives(CharacterDto character)
     {
         if (_rtPassives == null)
@@ -190,26 +185,12 @@ public partial class CharacterDetailsDlg : BaseDlg
 
         _rtPassives.Visible = true;
         var store = AppRoot.Services.ContentModPipeline.Registry.Store;
-        var runInstance = RunRuntime.Current?.State.CharacterPool.FirstOrDefault(instance =>
-            string.Equals(instance.DefinitionId, character.Id, StringComparison.Ordinal));
+        var entries = character.Passives
+            .Select(passive => store.TryGetBuff(passive.BuffId, out var buff) ? buff.DescId : "")
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Select(id => Localization.Tr(id));
 
-        var entries = character.Passives.Select(passive =>
-        {
-            bool? unlocked = runInstance is null
-                ? null
-                : PotentialService.IsPassiveUnlocked(RunRuntime.Current!.State, runInstance, passive);
-
-            // 被动没有名字（2026-09-21 决议，撤销 2026-09-19 的「被动技能N」序号显示）：
-            // 直接以「潜能门槛 + 描述」呈现，描述取 buff 的 descId。
-            var desc = store.TryGetBuff(passive.BuffId, out var buff) &&
-                !string.IsNullOrWhiteSpace(buff.DescId)
-                    ? Localization.Tr(buff.DescId)
-                    : "";
-
-            return PassiveTextBuilder.Entry(passive.RequiredPotential, unlocked, desc, Localization.Tr);
-        });
-
-        _rtPassives.Text = $"[b]{Localization.Tr(PassiveTextBuilder.TitleKey)}[/b]\n"
+        _rtPassives.Text = $"[b]{Localization.Tr("UI_CHARACTER_PASSIVES_TITLE")}[/b]\n"
             + string.Join("\n", entries);
     }
 

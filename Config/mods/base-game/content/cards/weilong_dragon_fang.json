@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.weilong_dragon_fang.name",
   "element": 4,
-  "role": "Shield",
+  "role": "Defense",
   "costType": "Energy",
   "cost": 2,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "PhysicalAttack": 2
     }
   },
-  "priority": 9,
   "cardType": "Physics",
   "targetSide": "Enemy",
   "targetScope": "Single",

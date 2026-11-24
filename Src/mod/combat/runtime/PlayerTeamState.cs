@@ -14,6 +14,7 @@ public sealed class PlayerTeamState
     public int MaxHp => (int)MathF.Round(Asc.GetCurrentValue(AttributeIds.MaxHealth));
     public CombatDomain? ActiveDomain { get; set; }
     public IReadOnlyList<CharacterBattleInstance> Characters => _characters;
+    public TeamCardPiles CardPiles { get; }
 
     /// <summary>
     /// 存活判定必须用未取整的账本值：<see cref="SharedHp"/> 走 <c>MathF.Round</c>（银行家舍入），
@@ -49,6 +50,10 @@ public sealed class PlayerTeamState
         if (sharedMaxHp <= 0)
             throw new ArgumentOutOfRangeException(nameof(sharedMaxHp));
         _characters = characters.ToArray();
+        CardPiles = new TeamCardPiles(_characters);
+        for (var i = 0; i < _characters.Length; i++)
+            _characters[i].JoinTeamPiles(CardPiles, i);
+        CardPiles.ReturnExcessHandCards();
         Asc = teamAsc ?? new CombatAscFactory().CreateTeamAsc(
             new Dictionary<string, AttributeDefDto>(StringComparer.Ordinal),
             sharedMaxHp);

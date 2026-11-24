@@ -28,16 +28,15 @@ public sealed class XuanyuContentTests
         Assert.That(report.HasIssues, Is.False, string.Join("\n", report.ValidationErrors));
         var def = BaseGameContent.Load().Characters["xuanyu"];
         Assert.That(def.Element, Is.EqualTo(EElement.Red));
-        Assert.That(def.Role, Is.EqualTo(ERole.Wizard));
+        Assert.That(def.Role, Is.EqualTo(ERole.Attack));
         Assert.That(def.Race, Is.EqualTo(ERace.Machine | ERace.Animal));
         Assert.That(def.ActiveSkillChain.Single().Cooldown, Is.EqualTo(9));
-        Assert.That(def.Passives.Select(p => p.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(def.Cards, Has.Count.EqualTo(4));
         foreach (var id in def.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Red));
-            Assert.That(card.Role, Is.EqualTo(ERole.Wizard));
+            Assert.That(card.Role, Is.EqualTo(ERole.Attack));
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Stats!.Attributes.Sum(p => p.Key == AttributeIds.MaxHealth ? p.Value : 10 * p.Value), Is.EqualTo(40));
@@ -45,7 +44,7 @@ public sealed class XuanyuContentTests
     }
 
     [Test]
-    public void Battle_start_adds_two_independent_feathers_and_permanent_slot_one_charge()
+    public void Battle_start_adds_two_independent_feathers()
     {
         using var sim = Build(start: true);
         sim.RunBattleStart();
@@ -53,10 +52,6 @@ public sealed class XuanyuContentTests
         Assert.That(Feathers(sim).Select(f => f.RemainingTurns), Is.EqualTo(new int?[] { 3, 3 }));
         Assert.That(Feathers(sim).Select(f => f.Handle).Distinct().Count(), Is.EqualTo(2));
         Assert.That(sim.PlayerTeam.Characters[0].Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotDamage), Is.True);
-        var slot = sim.PlayerTeam.Characters[0].HandSlots[0].Buffs.FindByTag(BuiltinBuffTags.SlotCharge)!;
-        Assert.That(slot.ChargeRequired, Is.EqualTo(2));
-        Assert.That(slot.RemainingTurns, Is.Null);
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots.Skip(1).All(s => !s.Buffs.HasTag(BuiltinBuffTags.SlotCharge)), Is.True);
         Assert.That(sim.PlayerTeam.Characters.Skip(1).All(c => c.Buffs.Find(Feather) is null), Is.True);
     }
 
@@ -142,7 +137,7 @@ public sealed class XuanyuContentTests
     }
 
     [Test]
-    public void Cleanse_removes_role_buff_and_gas_debuffs_but_keeps_protected_buffs_slots_and_teammates()
+    public void Cleanse_removes_role_buff_and_gas_debuffs_but_keeps_protected_buffs_and_teammates()
     {
         using var sim = Build();
         AddBuff(sim, "test.debuff", ["debuff.poison"]);
@@ -153,7 +148,6 @@ public sealed class XuanyuContentTests
         sim.Buffs.Apply(sim, Player(1), "test.debuff");
         sim.Buffs.Apply(sim, Player(), "test.protected");
         sim.Buffs.Apply(sim, Player(), "test.beneficial");
-        sim.Buffs.ApplyToSlot(sim, 0, 2, "test.slot", new Dictionary<string, object> { ["timerTurns"] = 3, ["amount"] = 20 });
         AddGe(sim, "test.negative", ["debuff.weak"]);
         AddGe(sim, "test.seal", [CombatConstants.SealedTag]);
         AddGe(sim, "test.protected_ge", ["debuff.weak", BuiltinBuffTags.Undispellable]);
@@ -167,7 +161,6 @@ public sealed class XuanyuContentTests
         Assert.That(owner.Buffs.Find("test.debuff"), Is.Null);
         Assert.That(owner.Buffs.Find("test.protected"), Is.Not.Null);
         Assert.That(owner.Buffs.Find("test.beneficial"), Is.Not.Null);
-        Assert.That(owner.HandSlots[2].Buffs.Find("test.slot"), Is.Not.Null);
         Assert.That(owner.Asc.ActiveEffects.Select(e => e.Def.Id), Is.EquivalentTo(new[] { "test.protected_ge", "test.positive" }));
         Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find("test.debuff"), Is.Not.Null);
         Assert.That(sim.PlayerTeam.Characters[1].Asc.ActiveEffects.Single().Def.Id, Is.EqualTo("test.negative"));
@@ -189,49 +182,6 @@ public sealed class XuanyuContentTests
         new GameplayEffectApplicator(sim.Definitions).ApplyToTargets(sim, Enemy(), [Player()], "test.original");
         Assert.That(sim.Buffs.DispelDebuffs(sim, Player()), Is.EqualTo(1));
         Assert.That(sim.PlayerTeam.Characters[0].Asc.ActiveEffects.Single().Def.Id, Is.EqualTo("test.spawned"));
-    }
-
-    [Test]
-    public void Charge_two_cleanses_only_after_two_plays_from_slot_one_and_resets_permanently()
-    {
-        using var sim = Build();
-        Passive(sim, 1); Passive(sim, 2); Passive(sim, 4);
-        var old = Feathers(sim);
-        PlaySlot(sim, 1); PlaySlot(sim, 0);
-        Assert.That(Feathers(sim), Is.EqualTo(old));
-        Assert.That(Hp(sim), Is.EqualTo(1000));
-        PlaySlot(sim, 0);
-        Assert.That(Hp(sim), Is.EqualTo(926));
-        Assert.That(Feathers(sim).All(f => !old.Contains(f)), Is.True);
-        var charge = sim.PlayerTeam.Characters[0].HandSlots[0].Buffs.FindByTag(BuiltinBuffTags.SlotCharge)!;
-        Assert.That(charge.ChargeCounter, Is.EqualTo(2));
-        Assert.That(charge.RemainingTurns, Is.Null);
-        PlaySlot(sim, 0); PlaySlot(sim, 0);
-        Assert.That(Hp(sim), Is.EqualTo(852));
-        Assert.That(charge.ChargeCounter, Is.EqualTo(2));
-    }
-
-    [Test]
-    public void Slot_damage_immunity_does_not_prevent_charge_or_remove_slot_debuff()
-    {
-        using var sim = Build();
-        Passive(sim, 1); Passive(sim, 2);
-        sim.Definitions.Store.EffectsMutable["test.slot_damage"] = new EffectDto
-        { Id = "test.slot_damage", Kind = EEffectKind.Damage, Params = new() { ["amount"] = 25 } };
-        sim.Definitions.Store.BuffsMutable["test.slot_damage"] = new BuffDto
-        {
-            Id = "test.slot_damage", Tags = [BuiltinBuffTags.SlotDamage],
-            Hooks = new() { OnSlotCardPlayed = [new() { EffectId = "test.slot_damage" }] }
-        };
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "test.slot_damage");
-        var hp = sim.PlayerTeam.SharedHpExact;
-        PlaySlot(sim, 0); PlaySlot(sim, 0);
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(hp));
-        Assert.That(Hp(sim), Is.EqualTo(963));
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots[0].Buffs.Find("test.slot_damage"), Is.Not.Null);
-        sim.Buffs.ApplyToSlot(sim, 1, 0, "test.slot_damage");
-        PlaySlot(sim, 0, 1);
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(hp - 25));
     }
 
     [Test]
@@ -324,7 +274,6 @@ public sealed class XuanyuContentTests
         { Id = id, DurationPolicy = EDurationPolicy.HasDuration, DurationTurns = 3, GrantedTags = tags };
     private static BuffInstance[] Feathers(CombatSimulation sim) => sim.PlayerTeam.Characters[0].Buffs.All.Where(f => f.Def.Id == Feather).ToArray();
     private static void Passive(CombatSimulation sim, int i) => sim.Buffs.Apply(sim, Player(), $"xuanyu_passive_p{i}");
-    private static void PlaySlot(CombatSimulation sim, int slot, int owner = 0) => sim.Buffs.FireSlotCardPlayed(sim, owner, sim.PlayerTeam.Characters[owner].HandSlots[slot]);
     private static float Value(CombatSimulation sim, string id) => sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(id);
     private static float Hp(CombatSimulation sim, int index = 0) => sim.EnemyTeam.Enemies[index].Asc.GetCurrentValue(AttributeIds.Health);
     private static int[] Counters(CombatSimulation sim) => sim.PlayerTeam.Characters.Select(c => c.SkillCounter).ToArray();

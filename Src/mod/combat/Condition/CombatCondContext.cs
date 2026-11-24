@@ -58,11 +58,6 @@ internal sealed class CombatCondContext : ICombatCondContext
     public int CountCardsPlayedThisTurn(int characterIndex, int elementFlags) =>
         characterIndex >= 0 ? _simulation.CountCardsPlayedThisTurn(characterIndex, elementFlags) : 0;
 
-    public int CountCardsQueuedForExecution(int characterIndex, int elementFlags) =>
-        characterIndex >= 0 ? _simulation.CardQueue.PeekAllOrdered().Count(entry =>
-            entry.CharacterIndex == characterIndex && (elementFlags == 0 ||
-                (_simulation.Definitions.Store.TryGetCard(entry.CardId, out var card) && (card.Element & elementFlags) != 0))) : 0;
-
     /// <summary>本回合连携定档的参与人数：<paramref name="elementFlags"/> 为 0 时取当前结算卡牌的属性。</summary>
     public int CountChainParticipants(int elementFlags) =>
         _simulation.CountChainParticipants(elementFlags);

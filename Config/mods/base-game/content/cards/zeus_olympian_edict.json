@@ -2,7 +2,7 @@
   "rarity": "Exclusive",
   "cardType": "Support",
   "element": 8,
-  "role": "Guard",
+  "role": "Defense",
   "targetScope": "All",
   "isExclusive": true,
   "stats": {
@@ -24,7 +24,6 @@
   "targetSide": "Ally",
   "cost": 2,
   "costType": "Energy",
-  "priority": 8,
   "displayNameId": "card.zeus_olympian_edict.name",
   "retargetPolicy": "Default",
   "targetCount": 1

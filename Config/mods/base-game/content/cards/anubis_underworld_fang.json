@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.anubis_underworld_fang.name",
   "element": 1,
-  "role": "CardPlayer",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "MaxHealth": 20
     }
   },
-  "priority": 6,
   "cardType": "Physics",
   "targetSide": "Enemy",
   "targetScope": "Single",

@@ -54,11 +54,6 @@ public partial class RunDebugDlg : BaseDlg
     [Export] private OptionButton? _phaseOption;
     [Export] private Button? _btnSetPhase;
 
-    [Export] private LineEdit? _potentialInput;
-    [Export] private Button? _btnPotentialPool;
-    [Export] private Button? _btnPotentialSlot;
-    [Export] private Button? _btnAllocatePotential;
-    [Export] private Button? _btnDeductPotential;
     [Export] private Button? _btnInspectBattle;
 
     [Export] private OptionButton? _orbOption;
@@ -188,26 +183,6 @@ public partial class RunDebugDlg : BaseDlg
         if (_btnSetPhase != null)
         {
             OnClicks(_btnSetPhase, OnSetPhase);
-        }
-
-        if (_btnPotentialPool != null)
-        {
-            OnClicks(_btnPotentialPool, OnGrantPotentialPool);
-        }
-
-        if (_btnPotentialSlot != null)
-        {
-            OnClicks(_btnPotentialSlot, OnGrantPotentialSlot);
-        }
-
-        if (_btnAllocatePotential != null)
-        {
-            OnClicks(_btnAllocatePotential, OnAllocatePotential);
-        }
-
-        if (_btnDeductPotential != null)
-        {
-            OnClicks(_btnDeductPotential, OnDeductPotential);
         }
 
         if (_btnInspectBattle != null)
@@ -679,58 +654,7 @@ public partial class RunDebugDlg : BaseDlg
         Run(service => service.SetPhase(phases[index]));
     }
 
-    #region 潜能与战斗检查
-
-    private bool TryGetPotentialAmount(out int amount)
-    {
-        if (!TryParsePositive(_potentialInput?.Text, out amount))
-        {
-            SetStatus(false, Localization.Tr("UI_DEBUG_INVALID_NUMBER"));
-            return false;
-        }
-
-        return true;
-    }
-
-    private void OnGrantPotentialPool()
-    {
-        if (!TryGetPotentialAmount(out var amount))
-        {
-            return;
-        }
-
-        Run(service => service.GrantPotential(amount));
-    }
-
-    private void OnGrantPotentialSlot()
-    {
-        if (!TryGetPotentialAmount(out var amount))
-        {
-            return;
-        }
-
-        Run(service => service.GrantPotential(amount, Slot));
-    }
-
-    private void OnAllocatePotential()
-    {
-        if (!TryGetPotentialAmount(out var amount))
-        {
-            return;
-        }
-
-        Run(service => service.AllocatePotential(Slot, amount));
-    }
-
-    private void OnDeductPotential()
-    {
-        if (!TryGetPotentialAmount(out var amount))
-        {
-            return;
-        }
-
-        Run(service => service.DeductPotential(Slot, amount));
-    }
+    #region 战斗检查
 
     private void OnInspectBattle()
     {
@@ -854,10 +778,6 @@ public partial class RunDebugDlg : BaseDlg
         yield return _btnAddGold;
         yield return _btnSetRing;
         yield return _btnSetPhase;
-        yield return _btnPotentialPool;
-        yield return _btnPotentialSlot;
-        yield return _btnAllocatePotential;
-        yield return _btnDeductPotential;
         yield return _btnInspectBattle;
         yield return _btnGrantOrb;
         yield return _btnTriggerOrbs;

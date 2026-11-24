@@ -12,34 +12,11 @@ using NUnit.Framework;
 
 namespace KemoCard.Ui.Tests.Combat;
 
-/// <summary>规格 §4.3 / §4.6：中途抽牌禁令与弃牌分通道。</summary>
+/// <summary>弃牌范围、选牌和抽牌修正。</summary>
 [TestFixture]
 public sealed class DiscardChannelTests
 {
     private static readonly IReadOnlyList<CombatTargetRef> Self0 = [new CombatTargetRef(ECombatSide.Player, 0)];
-    private static readonly IReadOnlyList<CombatTargetRef> Enemy0 = [new CombatTargetRef(ECombatSide.Enemy, 0)];
-
-    #region 中途抽牌禁令
-
-    [Test]
-    public void Mid_battle_draw_effect_is_a_no_op_with_diagnostic()
-    {
-        using var sim = BuildDiscardSim(includeDrawAction: true);
-        var character = sim.PlayerTeam.Characters[0];
-        var handBefore = character.HandSlots.Count(s => !s.IsEmpty);
-        var drawBefore = character.DrawPile.Count;
-
-        sim.SetDiscardChannel(EDiscardChannel.Other);
-        sim.EffectExecutor.ExecuteSkillActionRef(
-            new SkillActionRefDto { ActionId = "action.draw" },
-            sim,
-            new CombatTargetRef(ECombatSide.Player, 0),
-            Self0);
-
-        Assert.That(character.HandSlots.Count(s => !s.IsEmpty), Is.EqualTo(handBefore));
-        Assert.That(character.DrawPile.Count, Is.EqualTo(drawBefore));
-        Assert.That(sim.BlockedMidDrawCount, Is.EqualTo(1));
-    }
 
     [Test]
     public void ModifyDrawCount_still_adds_draw_modifiers()
@@ -57,80 +34,64 @@ public sealed class DiscardChannelTests
         Assert.That(sim.BlockedMidDrawCount, Is.Zero);
     }
 
-    #endregion
-
-    #region ActiveSkill 通道
-
-    [Test]
-    public void ActiveSkill_discard_of_marked_card_cancels_refunds_and_unconfirms()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Selected_discard_accepts_another_owner_only_if_the_effect_targets_that_owner(bool shared)
     {
-        using var sim = BuildDiscardSim(includeDiscardAction: true, seed: 42);
-        var character = sim.PlayerTeam.Characters[0];
-        // 只留一张已标记牌，保证 ActiveSkill 随机弃牌必中标记。
-        ClearUnmarkedHand(character);
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True);
-        Assert.That(sim.TryApply(new ConfirmCharacterCommand(0)).Success, Is.True);
-        Assert.That(character.HasActed, Is.True);
-        Assert.That(character.AvailableEnergy, Is.EqualTo(4));
-        var markedId = character.HandSlots[0].RuntimeInstanceId!;
+        using var sim = BuildDiscardSim();
+        var source = new CombatTargetRef(ECombatSide.Player, 0);
+        var ally = new CombatTargetRef(ECombatSide.Player, 1);
+        var owner = sim.PlayerTeam.Characters[1];
+        var card = new HandCardChoice(1, owner.HandSlots[0].RuntimeInstanceId!);
+        sim.Definitions.Store.SkillActionsMutable["action.chosen"] = new()
+        {
+            Id = "action.chosen", Kind = ESkillActionKind.Discard,
+            Params = new Dictionary<string, object> { ["count"] = 1 }
+        };
+        var action = new SkillActionRefDto { ActionId = "action.chosen" };
+        var skill = new SkillDto { Id = "skill.chosen", ActionRefs = [action] };
+        var targets = new[] { shared ? CombatTargetRef.PlayerTeam : ally };
+        Assert.That(DiscardSelection.BuildPlan(sim, skill, 0, targets)!.TryAssign([card], out _), Is.True);
+        Assert.That(DiscardSelection.BuildPlan(sim, skill, 0, Self0)!.TryAssign([card], out _), Is.False);
 
         sim.SetDiscardChannel(EDiscardChannel.ActiveSkill);
+        sim.SelectedDiscardCards = [card];
+        sim.EffectExecutor.ExecuteSkillActionRef(action, sim, source, targets);
+
+        Assert.That(owner.Graveyard.Single().RuntimeInstanceId, Is.EqualTo(card.RuntimeInstanceId));
+        Assert.That(sim.PlayerTeam.CardPiles.Graveyard.Single().CharacterIndex, Is.EqualTo(card.CharacterIndex));
+    }
+
+    [Test]
+    public void Per_owner_quotas_cannot_be_met_by_cards_from_only_one_owner()
+    {
+        using var sim = BuildDiscardSim();
+        sim.Definitions.Store.SkillActionsMutable["action.chosen"] = new()
+        {
+            Id = "action.chosen", Kind = ESkillActionKind.Discard
+        };
+        var skill = new SkillDto { Id = "skill.chosen", ActionRefs = [new() { ActionId = "action.chosen" }] };
+        CombatTargetRef[] targets = [new(ECombatSide.Player, 0), new(ECombatSide.Player, 1)];
+        var plan = DiscardSelection.BuildPlan(sim, skill, 0, targets)!;
+        var first = new HandCardChoice(0, sim.PlayerTeam.Characters[0].HandSlots[0].RuntimeInstanceId!);
+        var sameOwner = new HandCardChoice(0, sim.PlayerTeam.Characters[0].HandSlots[1].RuntimeInstanceId!);
+        var otherOwner = new HandCardChoice(1, sim.PlayerTeam.Characters[1].HandSlots[0].RuntimeInstanceId!);
+
+        Assert.That(plan.Limits, Is.EqualTo(new DiscardSelection(2, 2)));
+        Assert.That(plan.TryAssign([first, sameOwner], out _), Is.False);
+        Assert.That(plan.TryAssign([otherOwner, first], out var assigned), Is.True);
+        Assert.That(assigned[0].Cards, Is.EqualTo(new[] { first }));
+        Assert.That(assigned[1].Cards, Is.EqualTo(new[] { otherOwner }));
+    }
+
+    [Test]
+    public void Random_team_discard_draws_one_card_from_the_combined_pool()
+    {
+        using var sim = BuildDiscardSim(includeDiscardAction: true);
         sim.EffectExecutor.ExecuteSkillActionRef(
-            new SkillActionRefDto { ActionId = "action.discard" },
-            sim,
-            new CombatTargetRef(ECombatSide.Player, 0),
-            Self0);
+            new SkillActionRefDto { ActionId = "action.discard" }, sim, Self0[0], [CombatTargetRef.PlayerTeam]);
 
-        Assert.That(sim.CardQueue.Count, Is.Zero);
-        Assert.That(character.HasActed, Is.False, "弃到已标记 → 回退未确认");
-        Assert.That(character.AvailableEnergy, Is.EqualTo(5), "退还 paid");
-        Assert.That(character.HandSlots[0].IsEmpty, Is.True);
-        Assert.That(character.Graveyard.Any(c => c.RuntimeInstanceId == markedId), Is.True);
-    }
-
-    #endregion
-
-    #region CardExecution / Other 通道
-
-    [Test]
-    public void CardExecution_discard_only_picks_unmarked_and_is_reproducible()
-    {
-        using var simA = BuildDiscardSim(includeDiscardAction: true, seed: 99, handSize: 4);
-        using var simB = BuildDiscardSim(includeDiscardAction: true, seed: 99, handSize: 4);
-        MarkFirstSlot(simA);
-        MarkFirstSlot(simB);
-        var markedA = simA.PlayerTeam.Characters[0].HandSlots[0].RuntimeInstanceId!;
-        var markedB = simB.PlayerTeam.Characters[0].HandSlots[0].RuntimeInstanceId!;
-
-        DiscardOnce(simA, EDiscardChannel.CardExecution);
-        DiscardOnce(simB, EDiscardChannel.CardExecution);
-
-        var graveA = simA.PlayerTeam.Characters[0].Graveyard.Select(c => c.RuntimeInstanceId).ToArray();
-        var graveB = simB.PlayerTeam.Characters[0].Graveyard.Select(c => c.RuntimeInstanceId).ToArray();
-        Assert.That(graveA, Is.EqualTo(graveB), "同种子可复现");
-        Assert.That(graveA, Does.Not.Contain(markedA));
-        Assert.That(simA.PlayerTeam.Characters[0].HandSlots[0].RuntimeInstanceId, Is.EqualTo(markedA));
-        Assert.That(simA.CardQueue.Count, Is.EqualTo(1), "已标记牌受队列保护");
-        Assert.That(simB.PlayerTeam.Characters[0].HandSlots[0].RuntimeInstanceId, Is.EqualTo(markedB));
-    }
-
-    [Test]
-    public void Other_channel_empty_unmarked_pool_discards_zero_without_touching_marks()
-    {
-        using var sim = BuildDiscardSim(includeDiscardAction: true, handSize: 1);
-        var character = sim.PlayerTeam.Characters[0];
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True);
-        Assert.That(sim.TryApply(new ConfirmCharacterCommand(0)).Success, Is.True);
-        var paid = character.AvailableEnergy;
-
-        DiscardOnce(sim, EDiscardChannel.Other);
-        DiscardOnce(sim, EDiscardChannel.Other);
-
-        Assert.That(character.Graveyard.Count, Is.Zero);
-        Assert.That(sim.CardQueue.Count, Is.EqualTo(1));
-        Assert.That(character.HasActed, Is.True, "池空不回滚确认");
-        Assert.That(character.AvailableEnergy, Is.EqualTo(paid));
-        Assert.That(character.HandSlots[0].IsMarked, Is.True);
+        Assert.That(sim.PlayerTeam.CardPiles.Graveyard, Has.Count.EqualTo(1));
     }
 
     [Test]
@@ -152,37 +113,7 @@ public sealed class DiscardChannelTests
         Assert.That(character.AvailableEnergy, Is.EqualTo(energyBefore + 2), "弃牌软失败后后续动作仍执行");
     }
 
-    #endregion
-
-    #region 辅助
-
-    private static void DiscardOnce(CombatSimulation sim, EDiscardChannel channel)
-    {
-        sim.SetDiscardChannel(channel);
-        sim.EffectExecutor.ExecuteSkillActionRef(
-            new SkillActionRefDto { ActionId = "action.discard" },
-            sim,
-            new CombatTargetRef(ECombatSide.Player, 0),
-            Self0);
-    }
-
-    private static void MarkFirstSlot(CombatSimulation sim)
-    {
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True);
-    }
-
-    private static void ClearUnmarkedHand(CharacterBattleInstance character)
-    {
-        foreach (var slot in character.HandSlots.Skip(1))
-        {
-            if (slot.IsEmpty)
-                continue;
-            character.MoveHandCardToGraveyard(slot.RuntimeInstanceId!);
-        }
-    }
-
     private static CombatSimulation BuildDiscardSim(
-        bool includeDrawAction = false,
         bool includeDiscardAction = false,
         bool includeModifyDraw = false,
         bool includeDiscardThenGain = false,
@@ -190,16 +121,6 @@ public sealed class DiscardChannelTests
         int handSize = 3)
     {
         var skillActions = new Dictionary<string, SkillActionDto>(StringComparer.Ordinal);
-        if (includeDrawAction)
-        {
-            skillActions["action.draw"] = new()
-            {
-                Id = "action.draw",
-                Kind = ESkillActionKind.Draw,
-                Params = new Dictionary<string, object> { ["count"] = 2, ["random"] = true },
-            };
-        }
-
         if (includeDiscardAction)
         {
             skillActions["action.discard"] = new()
@@ -254,7 +175,6 @@ public sealed class DiscardChannelTests
                     Id = CombatSimulationTestBuilder.MarkableCardId,
                     CostType = ECostType.Energy,
                     Cost = 1,
-                    Priority = 100,
                     TargetSide = ETargetSide.Enemy,
                     TargetScope = ETargetScope.Single,
                     TargetCount = 1,
@@ -298,5 +218,4 @@ public sealed class DiscardChannelTests
             runSeed: seed);
     }
 
-    #endregion
 }

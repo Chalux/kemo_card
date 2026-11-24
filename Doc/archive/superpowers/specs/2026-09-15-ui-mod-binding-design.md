@@ -1,7 +1,7 @@
 # 界面与功能 Mod 绑定 + 统一订阅生命周期设计
 
 **状态**：活规格（2026-09-15 起）
-**权威链**：服从 [ui-manager-design](../../../superpowers/specs/2026-05-15-ui-manager-design.md)（UI 管理器与层级/状态机）与 [event-dispatcher-design](../../../superpowers/specs/2026-07-07-event-dispatcher-design.md)（事件分发器）；本文只补充**归属**与**订阅生命周期**两条新规则，不重定义层级、状态机与遮罩语义。
+**权威链**：服从 [ui-manager-design](../../../superpowers/specs/2026-05-15-ui-manager-design.md)（UI 管理器与层级/状态机）与 [event-dispatcher-design](2026-07-07-event-dispatcher-design.md)（事件分发器）；本文只补充**归属**与**订阅生命周期**两条新规则，不重定义层级、状态机与遮罩语义。
 **影响面**：`Src/frame/ui/`、`Src/mod/*/Ui/`、`Src/MainRoot.cs`、`Src/mod/ModFactory.cs`
 
 ---

@@ -1,12 +1,10 @@
 [gd_scene format=3]
 [ext_resource type="Script" path="res://Src/mod/run/Ui/Items/RunItemBannerCmp.cs" id="1"]
 [ext_resource type="PackedScene" path="res://Src/mod/run/Ui/Items/RunItemSlotCmp.tscn" id="2"]
-[node name="RunItemBannerCmp" type="PanelContainer" node_paths=PackedStringArray("_potions", "_relics")]
+[node name="RunItemBannerCmp" type="PanelContainer" node_paths=PackedStringArray("_consumables")]
 custom_minimum_size = Vector2(400, 54)
 script = ExtResource("1")
-_potions = NodePath("Margin/Row/Potions")
-_relics = NodePath("Margin/Row/RelicScroll/Relics")
-_slotScene = ExtResource("2")
+_consumables = NodePath("Margin/Row/Consumables")
 theme_type_variation = &"SunkenContainer"
 [node name="Margin" type="MarginContainer" parent="."]
 layout_mode = 2
@@ -17,36 +15,24 @@ theme_override_constants/margin_bottom = 4
 [node name="Row" type="HBoxContainer" parent="Margin"]
 layout_mode = 2
 theme_override_constants/separation = 14
-[node name="PotionsLabel" type="Label" parent="Margin/Row"]
+[node name="ConsumablesLabel" type="Label" parent="Margin/Row"]
 layout_mode = 2
-text = "UI_ITEMS_POTIONS"
-[node name="Potions" type="HBoxContainer" parent="Margin/Row"]
+text = "UI_ITEMS_CONSUMABLES"
+[node name="Consumables" type="HBoxContainer" parent="Margin/Row"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Slot0" parent="Margin/Row/Potions" instance=ExtResource("2")]
+[node name="Slot0" parent="Margin/Row/Consumables" instance=ExtResource("2")]
 layout_mode = 2
 
-[node name="Slot1" parent="Margin/Row/Potions" instance=ExtResource("2")]
+[node name="Slot1" parent="Margin/Row/Consumables" instance=ExtResource("2")]
 layout_mode = 2
 
-[node name="Slot2" parent="Margin/Row/Potions" instance=ExtResource("2")]
+[node name="Slot2" parent="Margin/Row/Consumables" instance=ExtResource("2")]
 layout_mode = 2
 
-[node name="Spacer" type="Control" parent="Margin/Row"]
+[node name="Slot3" parent="Margin/Row/Consumables" instance=ExtResource("2")]
 layout_mode = 2
-size_flags_horizontal = 3
-[node name="RelicsLabel" type="Label" parent="Margin/Row"]
+
+[node name="Slot4" parent="Margin/Row/Consumables" instance=ExtResource("2")]
 layout_mode = 2
-text = "UI_ITEMS_RELICS"
-[node name="RelicScroll" type="ScrollContainer" parent="Margin/Row"]
-custom_minimum_size = Vector2(150, 46)
-layout_mode = 2
-size_flags_horizontal = 3
-horizontal_scroll_mode = 1
-vertical_scroll_mode = 0
-[node name="Relics" type="HBoxContainer" parent="Margin/Row/RelicScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 2
-theme_override_constants/separation = 8

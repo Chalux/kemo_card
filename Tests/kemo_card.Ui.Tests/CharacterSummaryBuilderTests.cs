@@ -11,7 +11,7 @@ public sealed class CharacterSummaryBuilderTests
     {
         "UI_ELEMENT_RED" => "红",
         "UI_ELEMENT_BLUE" => "蓝",
-        "UI_ROLE_WARRIOR" => "战士",
+        "UI_ROLE_ATTACK" => "主攻",
         "UI_RACE_ANIMAL" => "动物",
         "UI_RACE_DRAGON" => "龙族",
         "char.kemo.name" => "可萝",
@@ -29,7 +29,7 @@ public sealed class CharacterSummaryBuilderTests
         {
             DisplayNameId = "char.kemo.name",
             Element = EElement.Red | EElement.Blue,
-            Role = ERole.Warrior,
+            Role = ERole.Attack,
             Race = ERace.Animal | ERace.Dragon,
             SkillRefs =
             [
@@ -49,7 +49,7 @@ public sealed class CharacterSummaryBuilderTests
             Tr);
 
         Assert.That(tip.Title, Is.EqualTo("可萝"));
-        Assert.That(tip.Body, Is.EqualTo("红、蓝 战士 动物、龙族\n造成 6 点伤害。\n消耗"));
+        Assert.That(tip.Body, Is.EqualTo("红、蓝 主攻 动物、龙族\n造成 6 点伤害。\n消耗"));
     }
 
     [Test]
@@ -83,7 +83,7 @@ public sealed class CharacterSummaryBuilderTests
         {
             DisplayNameId = "char.kemo.name",
             Element = EElement.Red,
-            Role = ERole.Warrior,
+            Role = ERole.Attack,
             Race = ERace.Animal,
             ActiveSkillChain = [new ActiveSkillChainEntryDto { SkillId = "s1", Cooldown = 8 }],
         };
@@ -93,6 +93,6 @@ public sealed class CharacterSummaryBuilderTests
             id => id == "s1" ? new SkillDto { Id = "s1", DisplayNameId = "n1", DescId = "d1" } : null,
             Tr);
 
-        Assert.That(tip.Body, Is.EqualTo("红 战士 动物\n冰川溢出（技能 8）\n造成 6 点伤害。"));
+        Assert.That(tip.Body, Is.EqualTo("红 主攻 动物\n冰川溢出（技能 8）\n造成 6 点伤害。"));
     }
 }

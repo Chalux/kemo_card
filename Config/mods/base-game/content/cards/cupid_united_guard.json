@@ -15,8 +15,7 @@
       "MaxHealth": 20
     }
   },
-  "role": "Healer",
-  "priority": 6,
+  "role": "Support",
   "cardType": "Healing",
   "targetSide": "Ally",
   "targetScope": "Team",

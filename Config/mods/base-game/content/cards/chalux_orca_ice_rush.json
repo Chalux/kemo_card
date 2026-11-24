@@ -11,8 +11,7 @@
       "PhysicalAttack": 2
     }
   },
-  "role": "Warrior",
-  "priority": 4,
+  "role": "Attack",
   "cardType": "Physics",
   "targetSide": "Enemy",
   "targetScope": "Single",

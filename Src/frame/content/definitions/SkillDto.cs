@@ -4,6 +4,9 @@ namespace KemoCard.Frame.Content.Definitions;
 
 public sealed class SkillDto
 {
+    [JsonPropertyName("cardPhaseOnly")]
+    public bool CardPhaseOnly { get; init; }
+
     /// <summary>敌方随机单体技能的载荷次数；每次重新随机，可重复命中同一角色。</summary>
     [JsonPropertyName("enemyRandomTargetRepeats")]
     public int EnemyRandomTargetRepeats { get; init; } = 1;

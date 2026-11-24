@@ -70,53 +70,6 @@ public sealed class BuffRuntime
         return ApplyToHolder(simulation, holder, def, parameters);
     }
 
-    /// <summary>对角色手牌槽位挂 buff（充能 / 槽位伤害等）；槽位容器无 ASC，只承载钩子与 tag。</summary>
-    public BuffApplyResult ApplyToSlot(
-        CombatSimulation simulation,
-        int characterIndex,
-        int slotIndex,
-        string buffId,
-        IReadOnlyDictionary<string, object>? parameters = null)
-    {
-        ArgumentNullException.ThrowIfNull(simulation);
-        ArgumentException.ThrowIfNullOrWhiteSpace(buffId);
-
-        if (!TryGetCharacter(simulation, characterIndex, out var character, out var error) ||
-            slotIndex < 0 || slotIndex >= character.HandSlots.Count)
-            return new BuffApplyResult(false, Error: error ?? "槽位索引无效。");
-
-        if (!_registry.Store.TryGetBuff(buffId, out var def))
-            return new BuffApplyResult(false, Error: $"Unknown buffId '{buffId}'.");
-
-        var container = character.HandSlots[slotIndex].Buffs;
-        if (def.EffectiveTags.Contains(CombatConstants.SealedTag) && character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSeal))
-            return new BuffApplyResult(true);
-        if (def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer))
-        {
-            if (character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotTimer))
-                return new BuffApplyResult(true);
-            if (container.FindByTag(BuiltinBuffTags.SlotTimer) is { } timer)
-                return new BuffApplyResult(true, timer);
-        }
-        if (def.EffectiveTags.Contains(CombatConstants.VirusTag) && character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneVirus))
-            return new BuffApplyResult(true);
-        using var scope = simulation.EffectBudget.TryEnter();
-        if (scope is null)
-            return new BuffApplyResult(false, Error: "Synchronous effect budget exceeded.");
-        var instance = StackOrAdd(
-            simulation,
-            container,
-            new CombatTargetRef(ECombatSide.Player, characterIndex),
-            def,
-            parameters,
-            slotIndex);
-        if (character.HandSlots[slotIndex].IsSealed)
-            foreach (var entry in simulation.CardQueue.PeekAllOrdered().Where(entry =>
-                entry.CharacterIndex == characterIndex && entry.RuntimeInstanceId == character.HandSlots[slotIndex].RuntimeInstanceId).ToArray())
-                CombatStateMachine.CancelMarkAndRefund(simulation, entry);
-        return new BuffApplyResult(true, instance);
-    }
-
     private BuffApplyResult ApplyToHolder(
         CombatSimulation simulation,
         CombatTargetRef holder,
@@ -141,15 +94,12 @@ public sealed class BuffRuntime
         BuffContainer container,
         CombatTargetRef holder,
         BuffDto def,
-        IReadOnlyDictionary<string, object>? parameters,
-        int? slotIndex = null)
+        IReadOnlyDictionary<string, object>? parameters)
     {
-        var holderRef = new BuffHolderRef(holder, slotIndex);
+        var holderRef = new BuffHolderRef(holder);
 
         // 先发布完整替换结果，再分发移除钩子；重入投放以最后一次提交为准。
-        var charge = def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal);
         var conflicts = container.All.Where(instance => !instance.IsDomainOwned && (
-            (charge && instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotCharge, StringComparer.Ordinal)) ||
             (!string.IsNullOrWhiteSpace(def.ExclusiveGroup) && instance.Def.ExclusiveGroup == def.ExclusiveGroup) ||
             (def.StackRule == EBuffStackRule.Replace && instance.Def.Id == def.Id))).ToArray();
         var removedInstances = new List<BuffInstance>(conflicts.Length);
@@ -331,7 +281,7 @@ public sealed class BuffRuntime
         _refreshingEnemyPresence = true;
         try
         {
-            foreach (var (holder, container, _, _) in SnapshotContainers(simulation))
+            foreach (var (holder, container, _) in SnapshotContainers(simulation))
                 container.EvaluateDormancy(BuildConditionContext(simulation, holder), BuiltinCombatConditions.EnemyHasBuffTag);
         }
         finally { _refreshingEnemyPresence = false; }
@@ -344,7 +294,7 @@ public sealed class BuffRuntime
     {
         if (expireBoundary)
             ExpireTurnStartBuffs(simulation);
-        foreach (var (holder, container, _, instances) in SnapshotContainers(simulation))
+        foreach (var (holder, container, instances) in SnapshotContainers(simulation))
         {
             container.EvaluateDormancy(BuildConditionContext(simulation, holder));
             // 钩子可能对自己容器挂/删 buff，必须快照枚举（活列表枚举中修改会抛异常）。
@@ -356,16 +306,6 @@ public sealed class BuffRuntime
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnTurnStart, gateTurnInterval: true);
             }
         }
-    }
-
-    /// <summary>完整标记队列出队前：触发所有角色的 onCardExecutionStart。</summary>
-    public void FireCardExecutionStart(CombatSimulation simulation) =>
-        FireForAllPlayerCharacters(simulation, instance => instance.Def.Hooks.OnCardExecutionStart);
-
-    /// <summary>本回合全部卡牌结算结束（普攻之前）：触发所有角色的 onCardExecutionEnd。</summary>
-    public void FireCardExecutionEnd(CombatSimulation simulation)
-    {
-        FireForAllPlayerCharacters(simulation, instance => instance.Def.Hooks.OnCardExecutionEnd);
     }
 
     /// <summary>
@@ -425,10 +365,9 @@ public sealed class BuffRuntime
     /// <summary>回合结束：先触发 onTurnEnd，再递减时长，到期者触发 onRemove 并移除。</summary>
     public void FireTurnEnd(CombatSimulation simulation)
     {
-        var expiredTimers = new List<(CombatTargetRef Holder, int Slot, BuffInstance Timer)>();
-        foreach (var (holder, container, slotIndex, instances) in SnapshotContainers(simulation))
+        foreach (var (holder, container, instances) in SnapshotContainers(simulation))
         {
-            var holderRef = new BuffHolderRef(holder, slotIndex);
+            var holderRef = new BuffHolderRef(holder);
             // 以触发前的快照为本回合基准：钩子期间新增的 buff 本回合不 tick（刚挂上不应立刻扣时长）。
 
             foreach (var instance in instances)
@@ -463,14 +402,10 @@ public sealed class BuffRuntime
 
                 if (!container.Remove(instance))
                     continue;
-                if (slotIndex is { } slot && instance.Def.EffectiveTags.Contains(BuiltinBuffTags.SlotTimer))
-                    expiredTimers.Add((holder, slot, instance));
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
                 simulation.Presentation.Emit(new BuffRemovedEvent(holderRef, instance.Def.Id));
             }
         }
-        RefreshEnemyPresenceConditions(simulation);
-        SlotTimerRuntime.ResolveExpired(simulation, expiredTimers);
         RefreshEnemyPresenceConditions(simulation);
     }
 
@@ -479,7 +414,7 @@ public sealed class BuffRuntime
     {
         ExpireDuration(simulation, EBuffDurationType.Wave);
         RefreshEnemyPresenceConditions(simulation);
-        foreach (var (holder, container, _, instances) in SnapshotContainers(simulation))
+        foreach (var (holder, container, instances) in SnapshotContainers(simulation))
         {
             foreach (var instance in instances)
             {
@@ -492,9 +427,9 @@ public sealed class BuffRuntime
         }
     }
 
-    private (CombatTargetRef Holder, BuffContainer Container, int? SlotIndex, BuffInstance[] Instances)[]
+    private (CombatTargetRef Holder, BuffContainer Container, BuffInstance[] Instances)[]
         SnapshotContainers(CombatSimulation simulation) => EnumerateContainers(simulation)
-            .Select(pair => (pair.Holder, pair.Container, pair.SlotIndex, pair.Container.All.ToArray())).ToArray();
+            .Select(pair => (pair.Holder, pair.Container, pair.Container.All.ToArray())).ToArray();
 
     /// <summary>持有者释放主动技后：触发其 onActiveSkillCast。</summary>
     public void FireActiveSkillCast(CombatSimulation simulation, int characterIndex)
@@ -574,153 +509,16 @@ public sealed class BuffRuntime
 
     private void ExpireDuration(CombatSimulation simulation, EBuffDurationType durationType)
     {
-        foreach (var (holder, container, slotIndex, instances) in SnapshotContainers(simulation))
+        foreach (var (holder, container, instances) in SnapshotContainers(simulation))
         {
             foreach (var instance in instances)
             {
                 if (instance.Def.DurationType != durationType || !container.Remove(instance))
                     continue;
-                simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder, slotIndex), instance.Def.Id));
+                simulation.Presentation.Emit(new BuffRemovedEvent(new BuffHolderRef(holder), instance.Def.Id));
                 FireHook(simulation, holder, instance, instance.Def.Hooks.OnRemove);
             }
         }
-    }
-
-    /// <summary>
-    /// 该槽打出卡牌（结算前）：触发槽位 buff 的 onSlotCardPlayed。
-    /// 槽位伤害（slot.damage）目标为打出者（走共享血量账本），打出者持有免疫特征 tag 时跳过；
-    /// 充能（slot.charge）计数递减，归零触发载荷并重置计数。
-    /// </summary>
-    public void FireSlotCardPlayed(CombatSimulation simulation, int characterIndex, HandSlot slot)
-    {
-        if (!TryGetCharacter(simulation, characterIndex, out var character, out _))
-            return;
-
-        var source = new CombatTargetRef(ECombatSide.Player, characterIndex);
-        foreach (var instance in slot.Buffs.All.ToArray())
-        {
-            if (instance.IsDormant || !slot.Buffs.All.Contains(instance))
-                continue;
-
-            var hooks = instance.Def.Hooks.OnSlotCardPlayed;
-            if (hooks.Count == 0)
-                continue;
-
-            var tags = instance.Def.EffectiveTags;
-            if (tags.Contains(BuiltinBuffTags.SlotDamage))
-            {
-                if (character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotDamage))
-                    continue;
-
-                FireHookList(simulation, source, instance, hooks, [source]);
-                continue;
-            }
-
-            if (tags.Contains(BuiltinBuffTags.SlotCharge))
-            {
-                if (!instance.TryConsumeCharge())
-                    continue;
-
-                // 充能载荷按效果自带的目标参数解析（如 hookTargets: randomEnemy）。
-                FireHook(simulation, source, instance, hooks);
-                instance.ResetCharge();
-                FireSlotChargeTriggered(simulation, characterIndex);
-                continue;
-            }
-
-            if (tags.Contains(BuiltinBuffTags.SlotStorm))
-            {
-                // 暴风：自己的手牌不会被吹散（免疫特征只抵消暴风本身）。
-                if (character.Buffs.HasTag(BuiltinBuffTags.TraitImmuneSlotStorm))
-                    continue;
-
-                FireStorm(simulation, source, instance, hooks, slot, character.HandSlots.Count);
-                continue;
-            }
-
-            FireHookList(simulation, source, instance, hooks, [source]);
-        }
-    }
-
-    /// <summary>
-    /// 仅充能持有者的角色 Buff 收到通知，载荷已结算，新的属性加成从下次治疗生效。
-    /// </summary>
-    private void FireSlotChargeTriggered(CombatSimulation simulation, int characterIndex)
-    {
-        if (!TryGetCharacter(simulation, characterIndex, out var character, out _))
-            return;
-
-        var holder = new CombatTargetRef(ECombatSide.Player, characterIndex);
-        foreach (var instance in character.Buffs.All.ToArray())
-        {
-            if (!instance.IsDormant && character.Buffs.All.Contains(instance))
-                FireHook(simulation, holder, instance, instance.Def.Hooks.OnSlotChargeTriggered);
-        }
-    }
-
-    /// <summary>
-    /// 暴风（<see cref="BuiltinBuffTags.SlotStorm"/>）：对该槽<b>附近的手牌槽</b>逐槽触发一次钩子，
-    /// 每次把目标槽索引并进效果参数 <c>slotIndex</c>（载荷通常是 <c>DiscardSlot</c>，
-    /// 由 <c>CharacterBattleInstance.DiscardSlotCard</c> 只弃未标记的牌）。
-    /// </summary>
-    /// <remarks>
-    /// 扩散范围取首个效果引用的 <c>adjacentSlots</c>（缺省 1）；选槽顺序"先左后右、由近及远"——
-    /// 5 槽下手牌槽 2 的 2 个相邻槽 = 1、3，3 个 = 1、3、0。该槽自身不算相邻。
-    /// </remarks>
-    private void FireStorm(
-        CombatSimulation simulation,
-        CombatTargetRef source,
-        BuffInstance instance,
-        IReadOnlyList<EffectRefDto> hooks,
-        HandSlot slot,
-        int slotCount)
-    {
-        var spread = BuffActionParams.ReadInt(
-            MergeEffectParams(hooks[0], instance.Params).Params ?? new Dictionary<string, object>(),
-            "adjacentSlots",
-            1);
-        if (spread <= 0)
-            return;
-
-        foreach (var neighbor in StormNeighborSlots(slot.SlotIndex, spread, slotCount))
-        {
-            foreach (var effectRef in hooks)
-            {
-                var merged = MergeEffectParams(effectRef, instance.Params);
-                var withSlot = merged.Params is { Count: > 0 }
-                    ? new Dictionary<string, object>(merged.Params, StringComparer.Ordinal)
-                    : new Dictionary<string, object>(StringComparer.Ordinal);
-                withSlot["slotIndex"] = neighbor;
-
-                _executor.ExecuteEffectRef(
-                    new EffectRefDto { EffectId = effectRef.EffectId, Params = withSlot },
-                    simulation,
-                    source,
-                    [source]);
-            }
-        }
-    }
-
-    /// <summary>暴风相邻槽选择：先左后右、由近及远，最多 <paramref name="spread"/> 个（不含自身）。</summary>
-    internal static IReadOnlyList<int> StormNeighborSlots(int slotIndex, int spread, int slotCount)
-    {
-        var neighbors = new List<int>(Math.Max(0, spread));
-        for (var distance = 1; distance < slotCount && neighbors.Count < spread; distance++)
-        {
-            var left = slotIndex - distance;
-            if (left >= 0 && left < slotCount)
-            {
-                neighbors.Add(left);
-                if (neighbors.Count >= spread)
-                    break;
-            }
-
-            var right = slotIndex + distance;
-            if (right >= 0 && right < slotCount)
-                neighbors.Add(right);
-        }
-
-        return neighbors;
     }
 
     #endregion
@@ -759,20 +557,18 @@ public sealed class BuffRuntime
         return new CombatCondContext(simulation, holder, elementFlags, raceFlags);
     }
 
-    /// <summary>全部 buff 容器：角色 / 该角色各手牌槽（带槽位索引，供表现事件定位）/ 敌人。</summary>
-    private IEnumerable<(CombatTargetRef Holder, BuffContainer Container, int? SlotIndex)> EnumerateContainers(
+    /// <summary>枚举角色和敌人的 buff 容器。</summary>
+    private IEnumerable<(CombatTargetRef Holder, BuffContainer Container)> EnumerateContainers(
         CombatSimulation simulation)
     {
         for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
         {
             var character = simulation.PlayerTeam.Characters[i];
-            yield return (new CombatTargetRef(ECombatSide.Player, i), character.Buffs, null);
-            foreach (var slot in character.HandSlots)
-                yield return (new CombatTargetRef(ECombatSide.Player, i), slot.Buffs, slot.SlotIndex);
+            yield return (new CombatTargetRef(ECombatSide.Player, i), character.Buffs);
         }
 
         for (var i = 0; i < simulation.EnemyTeam.Enemies.Count; i++)
-            yield return (new CombatTargetRef(ECombatSide.Enemy, i), simulation.EnemyTeam.Enemies[i].Buffs, null);
+            yield return (new CombatTargetRef(ECombatSide.Enemy, i), simulation.EnemyTeam.Enemies[i].Buffs);
     }
 
     private static bool TryGetCharacter(
@@ -862,24 +658,6 @@ public sealed class BuffRuntime
         return value is bool flag
             ? flag
             : string.Equals(value.ToString(), "true", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private void FireHookList(
-        CombatSimulation simulation,
-        CombatTargetRef holder,
-        BuffInstance instance,
-        IReadOnlyList<EffectRefDto> hooks,
-        IReadOnlyList<CombatTargetRef> targets,
-        bool gateTurnInterval = false)
-    {
-        foreach (var effectRef in hooks)
-        {
-            var merged = MergeEffectParams(effectRef, instance.Params);
-            if (gateTurnInterval && !PassesTurnInterval(simulation, merged))
-                continue;
-
-            _executor.ExecuteEffectRef(merged, simulation, holder, targets);
-        }
     }
 
     /// <summary>波内每 N 回合触发：效果参数 <c>turnInterval</c>（N ≥ 1）；未配置则每回合触发。</summary>

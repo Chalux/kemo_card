@@ -1,7 +1,6 @@
 using KemoCard.Frame.Content;
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Mod.Combat;
-using KemoCard.Mod.Run.Potential;
 
 namespace KemoCard.Mod.Run.Team;
 
@@ -47,12 +46,6 @@ public sealed record DeckEditView(
     IReadOnlyList<string> InvalidCardIds,
     int MaxCards,
     bool IsLocked);
-
-/// <summary>
-/// 角色被动视图：门槛、当前 Run 的解锁状态、描述键（buff 的 descId；缺失为空串）。
-/// 界面只负责把 <see cref="DescriptionId"/> 交给 <c>Localization.Tr</c> 与展示。
-/// </summary>
-public readonly record struct PassiveView(int RequiredPotential, bool Unlocked, string DescriptionId);
 
 /// <summary>
 /// 队伍编辑的语义层（刻意不依赖 Godot）：槽位/角色池视图、上阵与下阵、卡组增删与校验、
@@ -222,23 +215,17 @@ public sealed class RunTeamEditService
         _run.State.CharacterPool.FirstOrDefault(character =>
             string.Equals(character.InstanceId, instanceId, StringComparison.Ordinal));
 
-    /// <summary>
-    /// 角色被动视图（展示顺序 = 定义声明顺序）：门槛 + 当前 Run 的解锁状态 + 描述键。
-    /// 解锁判定与战斗开战挂载共用 <see cref="PotentialService.IsPassiveUnlocked"/>，界面不自行推断。
-    /// </summary>
-    public IReadOnlyList<PassiveView> GetPassives(string instanceId)
+    /// <summary>按角色定义顺序列出出战被动的描述键。</summary>
+    public IReadOnlyList<string> GetPassives(string instanceId)
     {
-        if (FindCharacter(instanceId) is not { Definition: { } definition } character)
+        if (FindCharacter(instanceId) is not { Definition: { } definition })
         {
             return [];
         }
 
         return
         [
-            .. definition.Passives.Select(passive => new PassiveView(
-                passive.RequiredPotential,
-                PotentialService.IsPassiveUnlocked(_run.State, character, passive),
-                _registry.Store.TryGetBuff(passive.BuffId, out var buff) ? buff.DescId : "")),
+            .. definition.Passives.Select(passive => _registry.Store.TryGetBuff(passive.BuffId, out var buff) ? buff.DescId : ""),
         ];
     }
 
@@ -294,60 +281,6 @@ public sealed class RunTeamEditService
 
     #endregion
 
-    #region 潜能
-
-    /// <summary>团队池可用潜能（尚未分配到槽位的部分）。</summary>
-    public int AvailablePotential => _run.Potential.TeamPool;
-
-    /// <summary>指定槽位的已分配潜能（进度值；≥ 被动门槛即自动解锁）。</summary>
-    public int SlotAllocatedPotential(int slotIndex) => _run.Potential.AllocatedFor(slotIndex);
-
-    /// <summary>把 <paramref name="amount"/> 点可用潜能分配到槽位（投票模式下需表决）。</summary>
-    public TeamEditResult AllocatePotential(int slotIndex, int amount)
-    {
-        if (!CanEdit)
-            return TeamEditResult.Failure("UI_TEAM_EDIT_BLOCKED");
-        if (slotIndex < 0 || slotIndex >= RunConstants.SlotCount)
-            return TeamEditResult.Failure("UI_TEAM_SLOT_INVALID");
-        if (amount <= 0)
-            return TeamEditResult.Failure("UI_TEAM_POTENTIAL_INVALID");
-
-        var result = _run.Potential.TryAllocate(slotIndex, amount);
-        if (!result.Success)
-            return TeamEditResult.Failure(PotentialFailureKey(result.Failure));
-
-        IsDirty = true;
-        return TeamEditResult.Success("UI_TEAM_POTENTIAL_ALLOCATED");
-    }
-
-    /// <summary>从槽位扣除 <paramref name="amount"/> 点已分配潜能退回团队池（被动随门槛自动重锁）。</summary>
-    public TeamEditResult DeductPotential(int slotIndex, int amount)
-    {
-        if (!CanEdit)
-            return TeamEditResult.Failure("UI_TEAM_EDIT_BLOCKED");
-        if (slotIndex < 0 || slotIndex >= RunConstants.SlotCount)
-            return TeamEditResult.Failure("UI_TEAM_SLOT_INVALID");
-        if (amount <= 0)
-            return TeamEditResult.Failure("UI_TEAM_POTENTIAL_INVALID");
-
-        var result = _run.Potential.TryDeduct(slotIndex, amount);
-        if (!result.Success)
-            return TeamEditResult.Failure(PotentialFailureKey(result.Failure));
-
-        IsDirty = true;
-        return TeamEditResult.Success("UI_TEAM_POTENTIAL_DEDUCTED");
-    }
-
-    private static string PotentialFailureKey(EPotentialFailure failure) => failure switch
-    {
-        EPotentialFailure.InvalidAmount => "UI_TEAM_POTENTIAL_INVALID",
-        EPotentialFailure.PoolShort => "UI_TEAM_POTENTIAL_POOL_SHORT",
-        EPotentialFailure.SlotShort => "UI_TEAM_POTENTIAL_SLOT_SHORT",
-        EPotentialFailure.VoteRejected => "UI_TEAM_POTENTIAL_VOTE_FAILED",
-        _ => "UI_TEAM_SLOT_INVALID",
-    };
-
-    #endregion
 
     #region 卡组
 

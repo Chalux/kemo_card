@@ -42,14 +42,12 @@ public sealed class ForestBlackBearsTests
     }
 
     [Test]
-    public void Ordinary_bears_enter_with_storm_and_first_wave_actions_are_offset()
+    public void Ordinary_bears_skip_legacy_slot_storm_and_first_wave_actions_are_offset()
     {
         using var sim = Start();
         var entries = sim.Presentation.Drain().OfType<BuffAppliedEvent>()
             .Where(evt => evt.BuffId == "bear_slot_storm").ToArray();
-        Assert.That(entries, Has.Length.EqualTo(8));
-        Assert.That(entries.GroupBy(evt => evt.Holder.Target.Index).Select(group => group.Count()),
-            Is.EqualTo(new[] { 2, 2, 2, 2 }));
+        Assert.That(entries, Is.Empty);
         var hp = sim.PlayerTeam.SharedHp;
         Assert.That(Turn(sim).Select(evt => evt.SkillId), Is.EqualTo(new[] { "bear_double_strike", "bear_roar" }));
         Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 50));
@@ -57,20 +55,6 @@ public sealed class ForestBlackBearsTests
         Assert.That(Turn(sim).Select(evt => evt.SkillId), Is.EqualTo(new[] { "bear_roar", "bear_double_strike" }));
         Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 100));
         Assert.That(Turn(sim).Select(evt => evt.SkillId), Is.EqualTo(new[] { "bear_double_strike", "bear_roar" }));
-    }
-
-    [Test]
-    public void Storm_strength_one_discards_one_adjacent_card_and_remains_on_the_slot()
-    {
-        using var sim = Start();
-        var character = sim.PlayerTeam.Characters[0];
-        foreach (var handSlot in character.HandSlots)
-            handSlot.PlaceCard("test.bear.hp", $"storm-test-{handSlot.SlotIndex}");
-        var slot = character.HandSlots.First(candidate => candidate.Buffs.Find("bear_slot_storm") is not null);
-        var before = character.HandSlots.Count(candidate => candidate.CardId is not null);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(character.HandSlots.Count(candidate => candidate.CardId is not null), Is.EqualTo(before - 1));
-        Assert.That(slot.Buffs.Find("bear_slot_storm"), Is.Not.Null);
     }
 
     [Test]
@@ -124,11 +108,11 @@ public sealed class ForestBlackBearsTests
         Hit(sim, 2);
         var hp = sim.PlayerTeam.SharedHp;
         Assert.That(Turn(sim).Single().SkillId, Is.EqualTo("bear_elite_fury"));
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 100));
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - CombatConstants.SlotCount * 25));
         Assert.That(Turn(sim).Single().SkillId, Is.EqualTo("bear_elite_roar"));
         hp = sim.PlayerTeam.SharedHp;
         Assert.That(Turn(sim).Single().SkillId, Is.EqualTo("bear_elite_fury"));
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 150));
+        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(hp - CombatConstants.SlotCount * 37.5f));
     }
 
     [Test]
@@ -170,7 +154,7 @@ public sealed class ForestBlackBearsTests
         Assert.That(enemy.MaxHp, Is.EqualTo(1500));
         Assert.That(enemy.Buffs.Find("bear_armor_break"), Is.Null);
         Assert.That(enemy.Buffs.Find("bear_leader_roar")?.Stacks ?? 0, Is.EqualTo(expected));
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 4 * (35 + expected * 5 * 1.5)));
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - CombatConstants.SlotCount * (35 + expected * 5 * 1.5)));
         Assert.That(Turn(sim).Single().SkillId, Is.EqualTo("bear_leader_triple"));
         Assert.That(enemy.Buffs.Find("bear_leader_roar")?.Stacks ?? 0, Is.EqualTo(expected));
     }
@@ -217,11 +201,11 @@ public sealed class ForestBlackBearsTests
         ClearWave(sim);
         var before = sim.PlayerTeam.Characters.Select(character => character.CurrentEnergy).ToArray();
         ClearWave(sim);
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < sim.PlayerTeam.Characters.Count; i++)
         {
             var character = sim.PlayerTeam.Characters[i];
-            // 入场扣额度后，换波照常开始下一回合并再生1点。
-            Assert.That(character.CurrentEnergy, Is.EqualTo(Math.Min(Math.Max(0, before[i] - 2) + 1, 10)));
+            // 换波维持当前回合，入场技能仍扣减能量。
+            Assert.That(character.CurrentEnergy, Is.EqualTo(Math.Max(0, before[i] - 2)));
             Assert.That(character.AvailableEnergy, Is.EqualTo(character.CurrentEnergy));
             Assert.That(character.MaxEnergy, Is.EqualTo(10));
         }
@@ -290,7 +274,7 @@ public sealed class ForestBlackBearsTests
     {
         var registry = BaseGameContent.BuildRegistry();
         registry.Store.CardsMutable["test.bear.hp"] = new() { Id = "test.bear.hp", Stats = new() { HpCap = 10000 } };
-        var party = Enumerable.Range(0, 4).Select(index => new CharacterInstance(
+        var party = Enumerable.Range(0, KemoCard.Mod.Combat.CombatConstants.SlotCount).Select(index => new CharacterInstance(
             new CharacterDto { Id = $"hero-{index}", Cards = ["test.bear.hp"], InitialEnergy = 6, MaxEnergy = 10 }, $"inst-{index}")).ToArray();
         var sim = CombatSimulationFactory.TryCreate(registry.Store.Battles["forest_black_bears"], party,
             registry, new HostRng(42, "combat"), 42, null, null, "base.game", CombatRuleCatalog.CreateDefault(), out var error);

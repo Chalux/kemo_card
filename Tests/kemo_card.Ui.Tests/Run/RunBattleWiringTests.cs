@@ -1,4 +1,5 @@
 using KemoCard.Frame.Content;
+using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.StateMachine;
@@ -15,6 +16,24 @@ namespace KemoCard.Ui.Tests.Run;
 [TestFixture]
 public sealed class RunBattleWiringTests
 {
+    [Test]
+    public void StartBattle_applies_all_deployed_passives_in_definition_order()
+    {
+        var (controller, registry, rng) = BuildReadyRun();
+        string[] passives = ["passive.z", "passive.a"];
+        var character = controller.State.ActiveParty[1]!;
+        foreach (var id in passives)
+        {
+            registry.Store.BuffsMutable[id] = new() { Id = id, DurationType = EBuffDurationType.Permanent };
+            character.Definition!.Passives.Add(new() { BuffId = id });
+        }
+
+        using var simulation = controller.StartBattle(registry, rng, runSeed: 1);
+        var party = simulation.PlayerTeam.Characters;
+        Assert.That(party[1].Buffs.All.Select(buff => buff.Def.Id), Is.EqualTo(passives));
+        Assert.That(party[0].Buffs.Find(passives[0]), Is.Null);
+    }
+
     [TestCase(true)]
     [TestCase(false)]
     public void StartBattle_uses_the_run_owned_card_ledger(bool owned)
@@ -102,18 +121,12 @@ public sealed class RunBattleWiringTests
     private static (RunController Controller, GameDefinitionRegistry Registry, HostRng Rng) BuildReadyRun()
     {
         var registry = RunTestHelper.CreateRegistryWithHpCard();
-        var mod = new RunMod { Phase = ERunPhase.Reward, IsMultiplayer = false };
+        var mod = new RunMod { Phase = ERunPhase.Reward };
         for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(i);
             mod.AddToCharacterPool(character);
             mod.PlayerStates[i].SetActiveCharacter(character);
-        }
-
-        mod.AddPlayerController(new PlayerController("local", "Player", isOwner: true));
-        for (var i = 0; i < RunConstants.SlotCount; i++)
-        {
-            mod.AssignSlotInternal(i, "local");
         }
 
         return (new RunController(mod), registry, new HostRng(1, "battle"));

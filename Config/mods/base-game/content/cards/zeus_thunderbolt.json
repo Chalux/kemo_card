@@ -2,7 +2,7 @@
   "rarity": "Exclusive",
   "cardType": "Magical",
   "element": 8,
-  "role": "Guard",
+  "role": "Defense",
   "targetScope": "Single",
   "isExclusive": true,
   "stats": {
@@ -24,7 +24,6 @@
   "targetSide": "Enemy",
   "cost": 2,
   "costType": "Energy",
-  "priority": 4,
   "displayNameId": "card.zeus_thunderbolt.name",
   "retargetPolicy": "Default",
   "targetCount": 1

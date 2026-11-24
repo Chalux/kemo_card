@@ -10,8 +10,7 @@
       "MaxHealth": 40
     }
   },
-  "role": "Controller",
-  "priority": 30,
+  "role": "Attack",
   "cardType": "Weak",
   "targetSide": "Enemy",
   "targetScope": "Single",

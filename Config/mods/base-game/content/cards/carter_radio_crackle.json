@@ -11,8 +11,7 @@
       "MagicDefense": 2
     }
   },
-  "role": "Shield",
-  "priority": 40,
+  "role": "Defense",
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

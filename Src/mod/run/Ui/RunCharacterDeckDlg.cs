@@ -176,7 +176,7 @@ public partial class RunCharacterDeckDlg : BaseDlg
     }
 
     /// <summary>
-    /// 左栏被动区：角色的 4 条被动（门槛 + 解锁状态 + 描述），解锁状态取当前 Run 的实例。
+    /// 左栏被动区：按角色定义顺序展示所有被动描述。
     /// 没有被动的角色整块隐藏（标题与文本一起），不留空面板。
     /// </summary>
     private void RefreshPassives()
@@ -200,13 +200,7 @@ public partial class RunCharacterDeckDlg : BaseDlg
 
         _rtPassives.Text = string.Join(
             "\n\n",
-            passives.Select(passive => PassiveTextBuilder.Entry(
-                passive.RequiredPotential,
-                passive.Unlocked,
-                string.IsNullOrWhiteSpace(passive.DescriptionId)
-                    ? ""
-                    : Localization.Tr(passive.DescriptionId),
-                Localization.Tr)));
+            passives.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => Localization.Tr(id)));
     }
 
     private void RefreshDeckTabs()

@@ -59,10 +59,9 @@ public sealed class VonNeumannExclusiveCardContentTests
         Assert.That(card!.Element, Is.EqualTo((int)EElement.Red), "四张卡都是红属性");
         Assert.That(card.CostType, Is.EqualTo(ECostType.Energy));
         Assert.That(card.Cost, Is.EqualTo(cost));
-        Assert.That(card.Priority, Is.EqualTo(priority));
         Assert.That(card.CardType.ToString(), Is.EqualTo(cardType));
         Assert.That(card.BaseValue, Is.EqualTo(baseValue));
-        Assert.That(card.Role, Is.EqualTo(ERole.Healer), "卡牌定位跟随角色定位");
+        Assert.That(card.Role, Is.EqualTo(ERole.Support), "卡牌定位跟随角色定位");
         Assert.That(card.TargetSide.ToString(), Is.EqualTo(side));
         Assert.That(card.TargetScope.ToString(), Is.EqualTo(scope));
         Assert.That(card.Stats?.Attributes.GetValueOrDefault("MaxHealth"), Is.EqualTo(maxHealth));
@@ -259,7 +258,7 @@ public sealed class VonNeumannExclusiveCardContentTests
 
         // 卡牌：6 + 100% 回复量 10 − 目标魔防 2 = 14（普攻另行结算）。
         const float expectedCardDamage = 6f + BaseHealPower - 2f;
-        var normalAttack = sim.NormalAttacks.LastResult;
+        var normalAttack = sim.NormalAttacks.LastMarbleSettlement;
         Assert.That(normalAttack, Is.Not.Null, "卡牌结算完成后应执行普通攻击");
         Assert.That(
             enemyHealthBefore - enemy.Asc.GetCurrentValue(AttributeIds.Health),
@@ -341,7 +340,8 @@ public sealed class VonNeumannExclusiveCardContentTests
         var marked = sim.TryApply(new PlayCardCommand(0, slotIndex, targets));
         Assert.That(marked.Success, Is.True, marked.Error);
 
-        sim.TransitionTo(ECombatPhase.CardExecution);
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        MarblePhaseTests.ShootQueuedBalls(sim, 1.35f);
         sim.AdvancePhase();
     }
 

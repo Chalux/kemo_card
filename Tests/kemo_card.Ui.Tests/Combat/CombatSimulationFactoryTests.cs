@@ -31,7 +31,7 @@ public sealed class CombatSimulationFactoryTests
             battles: new Dictionary<string, BattleDto> { ["test_battle"] = battle });
 
         var catalog = CombatRuleCatalog.CreateDefault();
-        var party = CombatSimulationTestBuilder.CreateParty(count: 4, registry);
+        var party = CombatSimulationTestBuilder.CreateParty(count: KemoCard.Mod.Combat.CombatConstants.SlotCount, registry);
         var sim = CombatSimulationFactory.TryCreate(
             battle, party, registry, new HostRng(1, "combat"), runSeed: 1,
             runRuleIds: ["builtin.shared_hp_defeat"],

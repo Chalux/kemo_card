@@ -1,8 +1,8 @@
 # UI 视觉重构：羊皮纸卡桌 + 左栏导航 设计
 
 **日期**：2026-09-21
-**状态**：已实装（本文取代 [2026-09-19 UI 主题规格](../../../superpowers/specs/2026-09-19-ui-theme-and-debug-panel.md) §1–§2 的调色板与样式描述；§3 BaseKemoButton、§5 调试面板、§6 本地化守卫不变）
-**关系**：服从 [2026-05-15 UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md) 与 [2026-09-15 ui-mod-binding 规格](../../../superpowers/specs/2026-09-15-ui-mod-binding-design.md)。**不改 UI 代码框架**（`Src/frame/ui` 一行不动），也不改各界面 `.cs` 的业务逻辑；变更只落在场景 `.tscn`、主题资源 `.tres`、`KemoPalette` 代码镜像与个别内联魔法色值。
+**状态**：已实装（本文取代 [2026-09-19 UI 主题规格](2026-09-19-ui-theme-and-debug-panel.md) §1–§2 的调色板与样式描述；§3 BaseKemoButton、§5 调试面板、§6 本地化守卫不变）
+**关系**：服从 [2026-05-15 UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md) 与 [2026-09-15 ui-mod-binding 规格](2026-09-15-ui-mod-binding-design.md)。**不改 UI 代码框架**（`Src/frame/ui` 一行不动），也不改各界面 `.cs` 的业务逻辑；变更只落在场景 `.tscn`、主题资源 `.tres`、`KemoPalette` 代码镜像与个别内联魔法色值。
 
 ---
 

@@ -3,7 +3,7 @@
   "descId": "enemy.training_dummy_fatal.desc",
   "maxHp": 10000,
   "element": "None",
-  "role": "Guard",
+  "role": "Defense",
   "skillRefs": [{ "skillId": "training_dummy_fatal_strike" }],
   "baseAttributes": {
     "PhysicalDefense": 0,

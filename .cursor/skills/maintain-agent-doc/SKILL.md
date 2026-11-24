@@ -45,7 +45,7 @@ Agent Doc Sync:
 - [ ] 1. 读 Doc/AGENT.md 与 Doc/INDEX.md
 - [ ] 2. 对照现状（目录 / 规格 / 入口）
 - [ ] 3. 最小 diff 更新 AGENT（必要时 INDEX）
-- [ ] 4. 若有归档：git mv + 原路径 stub
+- [ ] 4. 若有归档：git mv + 更新引用
 - [ ] 5. 自检链接与「不要做」是否仍正确
 ```
 
@@ -76,15 +76,15 @@ Agent Doc Sync:
 ### 5. 归档已完成文档（若本次包含清理）
 
 1. `git mv` 到 `Doc/archive/superpowers/specs/` 或 `plans/`
-2. 在原路径写短 stub（标题、归档日期、指向归档副本、指向 INDEX / AGENT）
+2. 更新项目内引用，直接指向归档正文。
 3. 从 INDEX「活规格/进行中」移除，并在「归档」保留有用交接链接
 
-**保留为活规格的典型集合**：总规格、战斗、Run、内容 Mod、两份 DTO、脚本运行时、角色实例、UI 管理器、事件分发器。功能级 UI/音频/日志等已落地文档进归档。
+当前六份活规格见 Doc/INDEX.md 与 Doc/AGENT.md §4。
 
 ### 6. 自检
 
 - [ ] AGENT 内相对链接可解析
-- [ ] INDEX 与 `superpowers/specs` 实际文件一致（stub 不算活规格）
+- [ ] INDEX 与 `superpowers/specs` 实际文件一致
 - [ ] 项目约定只写在 AGENT，未在 `.cursor/rules/` 另起重复正文
 - [ ] 未自动 git commit（除非用户要求）
 

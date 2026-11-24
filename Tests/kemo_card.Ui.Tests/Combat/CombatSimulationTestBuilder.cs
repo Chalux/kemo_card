@@ -95,7 +95,7 @@ internal static class CombatSimulationTestBuilder
             enemies: new Dictionary<string, EnemyDto> { ["slime"] = new() { Id = "slime", MaxHp = 10 } },
             battles: new Dictionary<string, BattleDto> { [battle.Id] = battle });
         var catalog = CombatRuleCatalog.CreateDefault();
-        var party = CreateParty(count: 4, registry);
+        var party = CreateParty(count: CombatConstants.SlotCount, registry);
         var sim = CombatSimulationFactory.TryCreate(
             battle,
             party,
@@ -111,6 +111,7 @@ internal static class CombatSimulationTestBuilder
             throw new InvalidOperationException(error ?? "FullBattle 战斗模拟创建失败。");
 
         sim.TransitionTo(ECombatPhase.Player);
+        sim.Marble.BeginTurn(sim.TurnNumber, sim.PlayerTeam.Characters.Count);
         return sim;
     }
 
@@ -137,18 +138,17 @@ internal static class CombatSimulationTestBuilder
         ECostType costType = ECostType.Energy,
         int cost = 1,
         int energy = 5,
-        int handSize = 3,
-        int priority = 100)
+        int handSize = 3, int characterCount = 4, int deckSize = 5)
     {
         var registry = new GameDefinitionRegistry();
-        RebuildMarkableContent(registry, costType, cost, priority);
+        RebuildMarkableContent(registry, costType, cost);
 
         var attrs = BuildCharacterAttributes(maxEnergy: energy, initialEnergy: energy);
-        var characters = Enumerable.Range(0, 4)
+        var characters = Enumerable.Range(0, characterCount)
             .Select(i => CharacterBattleInstance.CreateForTests(
                 $"c{i}",
                 attrs,
-                Enumerable.Range(0, CombatConstants.HandSlotCount)
+                Enumerable.Range(0, deckSize)
                     .Select(slot => new CardRuntimeEntry(MarkableCardId, $"rt-c{i}-{slot}"))))
             .ToArray();
         foreach (var character in characters)
@@ -167,24 +167,10 @@ internal static class CombatSimulationTestBuilder
             initialPhase: ECombatPhase.Player);
     }
 
-    /// <summary>
-    /// 就地改写 <see cref="MarkableCardId"/> 的费用，用于模拟玩家阶段内的动态费用变化（规格 §3.3）。
-    /// </summary>
-    internal static void RepriceMarkableCard(
-        CombatSimulation simulation,
-        int newCost,
-        ECostType costType = ECostType.Energy,
-        int priority = 100)
-    {
-        ArgumentNullException.ThrowIfNull(simulation);
-        RebuildMarkableContent(simulation.Definitions, costType, newCost, priority);
-    }
-
     private static void RebuildMarkableContent(
         GameDefinitionRegistry registry,
         ECostType costType,
-        int cost,
-        int priority)
+        int cost)
     {
         var card = new CardDto
         {
@@ -192,7 +178,6 @@ internal static class CombatSimulationTestBuilder
             DisplayNameId = MarkableCardId,
             CostType = costType,
             Cost = cost,
-            Priority = priority,
             TargetSide = ETargetSide.Enemy,
             TargetScope = ETargetScope.Single,
             TargetCount = 1,
@@ -221,155 +206,4 @@ internal static class CombatSimulationTestBuilder
             });
     }
 
-    public static CombatSimulation WithQueuedCard()
-    {
-        var card = new CardDto
-        {
-            Id = "card.hit",
-            DisplayNameId = "card.hit",
-            TargetSide = ETargetSide.Enemy,
-            TargetScope = ETargetScope.Single,
-            TargetCount = 1,
-            RetargetPolicy = ERetargetPolicy.Default,
-            Priority = 1,
-            SkillRefs =
-            [
-                new SkillRefDto { SkillId = "skill.hit" },
-            ],
-        };
-        var skill = new SkillDto
-        {
-            Id = "skill.hit",
-            DisplayNameId = "skill.hit",
-            DescId = "skill.hit.desc",
-            EffectRefs =
-            [
-                new EffectRefDto { EffectId = "effect.hit" },
-            ],
-        };
-        var effect = new EffectDto
-        {
-            Id = "effect.hit",
-            Kind = EEffectKind.Damage,
-            Params = new Dictionary<string, object> { ["amount"] = 1 },
-        };
-        var registry = CombatTestHelper.CreateFullRegistry(
-            cards: new Dictionary<string, CardDto> { [card.Id] = card },
-            skills: new Dictionary<string, SkillDto> { [skill.Id] = skill },
-            effects: new Dictionary<string, EffectDto> { [effect.Id] = effect });
-
-        var attrs = BuildCharacterAttributes();
-        var characters = Enumerable.Range(0, 4)
-            .Select(i => CharacterBattleInstance.CreateForTests($"c{i}", attrs))
-            .ToArray();
-        var player = new PlayerTeamState(characters, sharedMaxHp: 40);
-        var enemyTeam = new EnemyTeamState([new EnemyUnit("e0", "slime", maxHp: 10)]);
-        var simulation = new CombatSimulation(
-            player,
-            enemyTeam,
-            new CombatRuleEngine([]),
-            registry,
-            initialPhase: ECombatPhase.CardExecution);
-        simulation.CardQueue.Enqueue(new QueuedCardEntry(
-            CharacterIndex: 0,
-            CardId: card.Id,
-            RuntimeInstanceId: "rt-card-hit",
-            Priority: card.Priority,
-            Targets: [new CombatTargetRef(ECombatSide.Enemy, 0)],
-            Sequence: simulation.AllocateQueueSequence()));
-        return simulation;
-    }
-
-    public static CombatSimulation WithQueuedCardTargetingEnemy(int index)
-    {
-        var card = new CardDto
-        {
-            Id = "card.queued",
-            DisplayNameId = "card.queued",
-            TargetSide = ETargetSide.Enemy,
-            TargetScope = ETargetScope.Single,
-            TargetCount = 1,
-            RetargetPolicy = ERetargetPolicy.Default,
-            Priority = 1,
-            SkillRefs =
-            [
-                new SkillRefDto { SkillId = "skill.queued" },
-            ],
-        };
-        var queuedSkill = new SkillDto
-        {
-            Id = "skill.queued",
-            DisplayNameId = "skill.queued",
-            DescId = "skill.queued.desc",
-            EffectRefs =
-            [
-                new EffectRefDto { EffectId = "effect.queued" },
-            ],
-        };
-        var executeSkill = new SkillDto
-        {
-            Id = "execute",
-            DisplayNameId = "execute",
-            DescId = "execute.desc",
-            EffectRefs =
-            [
-                new EffectRefDto { EffectId = "effect.execute" },
-            ],
-            TargetOverride = new TargetSpecDto
-            {
-                Side = ETargetSide.Enemy,
-                Scope = ETargetScope.Single,
-                TargetCount = 1,
-            },
-        };
-        var registry = CombatTestHelper.CreateFullRegistry(
-            cards: new Dictionary<string, CardDto> { [card.Id] = card },
-            skills: new Dictionary<string, SkillDto>
-            {
-                [queuedSkill.Id] = queuedSkill,
-                [executeSkill.Id] = executeSkill,
-            },
-            effects: new Dictionary<string, EffectDto>
-            {
-                ["effect.queued"] = new()
-                {
-                    Id = "effect.queued",
-                    Kind = EEffectKind.Damage,
-                    Params = new Dictionary<string, object> { ["amount"] = 1 },
-                },
-                ["effect.execute"] = new()
-                {
-                    Id = "effect.execute",
-                    Kind = EEffectKind.Damage,
-                    Params = new Dictionary<string, object> { ["amount"] = 999 },
-                },
-            });
-
-        var attrs = BuildCharacterAttributes();
-        var characters = Enumerable.Range(0, 4)
-            .Select(i => CharacterBattleInstance.CreateForTests(
-                $"c{i}",
-                attrs,
-                activeSkillChain: [new ActiveSkillChainEntryDto { SkillId = "execute", Cooldown = 1 }]))
-            .ToArray();
-        var player = new PlayerTeamState(characters, sharedMaxHp: 40);
-        var enemyTeam = new EnemyTeamState([new EnemyUnit("e0", "slime", maxHp: 10)]);
-        var simulation = new CombatSimulation(
-            player,
-            enemyTeam,
-            new CombatRuleEngine([]),
-            registry,
-            initialPhase: ECombatPhase.Player);
-        foreach (var character in characters)
-            character.TickSkillCounter();
-        characters[0].SetHasActed(true);
-        simulation.CardQueue.Enqueue(new QueuedCardEntry(
-            CharacterIndex: 0,
-            CardId: card.Id,
-            RuntimeInstanceId: "rt-card-queued",
-            Priority: card.Priority,
-            Targets: [new CombatTargetRef(ECombatSide.Enemy, index)],
-            Sequence: simulation.AllocateQueueSequence()));
-        return simulation;
-    }
 }

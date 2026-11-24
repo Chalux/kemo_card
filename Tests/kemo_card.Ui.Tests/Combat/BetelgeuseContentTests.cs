@@ -12,7 +12,7 @@ namespace KemoCard.Ui.Tests.Combat;
 
 /// <summary>
 /// 参宿四（<c>betelgeuse</c>）的出货内容：红 / Guard / 天文·未知；三档主动技（抽卡 + 团队防御）、
-/// 四条潜能被动（免疫封印 / 红·天文·未知防御 / 嘲讽 / 受击回血）与四张专属卡的数值、接线与端到端效果。
+/// 四条角色被动（免疫封印 / 红·天文·未知防御 / 嘲讽 / 受击回血）与四张专属卡的数值、接线与端到端效果。
 /// </summary>
 [TestFixture]
 public sealed class BetelgeuseContentTests
@@ -49,8 +49,7 @@ public sealed class BetelgeuseContentTests
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.BaseValue, Is.Zero, "四张都是纯增益卡，无数值");
         Assert.That(card.CardType.ToString(), Is.EqualTo("Guard"));
-        Assert.That(card.Priority, Is.EqualTo(priority));
-        Assert.That(card.Role, Is.EqualTo(ERole.Guard), "卡牌定位跟随角色定位");
+        Assert.That(card.Role, Is.EqualTo(ERole.Defense), "卡牌定位跟随角色定位");
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
         Assert.That(card.IsExclusive, Is.True, "专属卡必须标记 isExclusive");
         Assert.That(card.Stats?.Attributes.GetValueOrDefault("MaxHealth"), Is.EqualTo(maxHealth));
@@ -66,7 +65,7 @@ public sealed class BetelgeuseContentTests
         Assert.That(definitions.Characters.TryGetValue(CharacterId, out var character), Is.True, "参宿四未随内容出货");
 
         Assert.That(character!.Element, Is.EqualTo(EElement.Red));
-        Assert.That(character.Role, Is.EqualTo(ERole.Guard));
+        Assert.That(character.Role, Is.EqualTo(ERole.Defense));
         Assert.That(character.Race, Is.EqualTo(ERace.Astronomy | ERace.Unknown));
         Assert.That(character.MaxEnergy, Is.EqualTo(8));
         Assert.That(character.InitialEnergy, Is.EqualTo(3));
@@ -85,9 +84,6 @@ public sealed class BetelgeuseContentTests
                 ("betelgeuse_charge_three", 6),
             }));
 
-        Assert.That(
-            character.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in character.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }

@@ -9,8 +9,8 @@ namespace KemoCard.Mod.Run.Ui;
 
 public static class RunUiController
 {
-    public static Task<UIVo?> OpenPotionAsync(Items.RunPotionDlgPayload payload) =>
-        UIManager.Instance?.OpenAsync(new UiId<Items.RunPotionDlgPayload>(RunUiIds.Potion), payload)
+    public static Task<UIVo?> OpenConsumableAsync(Items.RunConsumableDlgPayload payload) =>
+        UIManager.Instance?.OpenAsync(new UiId<Items.RunConsumableDlgPayload>(RunUiIds.Consumable), payload)
             ?? Task.FromResult<UIVo?>(null);
     public static async Task<UIVo?> OpenStorySelectAsync()
     {
@@ -53,6 +53,19 @@ public static class RunUiController
     /// <summary>战斗界面是否已打开（含"正在创建"的窗口期）。</summary>
     public static bool IsCombatOpen() =>
         UIManager.Instance?.GetUIVo(RunUiIds.Combat) is { IsOpen: true };
+
+    /// <summary>
+    /// 战斗界面是否被战斗内模态覆盖（消耗品、确认框、调试面板、暂停菜单等）。
+    /// 弹珠阶段据此停表：模态打开期间不能让模拟器继续推进相位。
+    /// 没有 UI 管理器时视为未覆盖，保持无界面环境（测试）可推进。
+    /// </summary>
+    public static bool IsCombatCovered()
+    {
+        var manager = UIManager.Instance;
+        return manager is not null &&
+            manager.GetUIVo(RunUiIds.Combat) is { IsOpen: true } &&
+            !manager.IsUITop(RunUiIds.Combat);
+    }
 
     /// <summary>
     /// 打开战斗界面（Run 规格 §14.1）。只在阶段确实处于战斗且模拟器存在时打开；已打开则不重复。

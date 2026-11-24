@@ -2,7 +2,7 @@
 
 **日期**：2026-09-20
 **状态**：已实装
-**关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [2026-07-21 战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)（阶段机 §2.1 的卡牌执行阶段末尾）；伤害维度与 [充能球规格](../../../superpowers/specs/2026-09-19-charge-orb-system-design.md) 共用同一套标注。
+**关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [2026-07-21 战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)（阶段机 §2.1 的卡牌执行阶段末尾）；伤害维度与 [充能球规格](2026-09-19-charge-orb-system-design.md) 共用同一套标注。
 
 ---
 
@@ -79,7 +79,7 @@
 ## 9. 2026-09-21 扩展（莱因哈特套件）
 
 本文描述的是"每回合一次、归属槽位出手"的基础口径；以下三项在同一运行时的扩展见
-[莱因哈特套件与战斗机制扩展 §6](../../../superpowers/specs/2026-09-21-reinhardt-and-normal-attack-extensions.md)：
+[莱因哈特套件与战斗机制扩展 §6](2026-09-21-reinhardt-and-normal-attack-extensions.md)：
 
 - **普攻次数**（`NormalAttackCount`）：执行 `1 + 该属性` 轮，每轮都是"归属者 + 追打者"。
 - **追打**（`trait.follow_up`）：非归属角色以 `percent%` 攻击力参与，多个取最高，归属者不重复出手。

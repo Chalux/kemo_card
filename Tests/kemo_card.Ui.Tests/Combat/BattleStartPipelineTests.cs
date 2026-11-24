@@ -213,18 +213,14 @@ public sealed class BattleStartPipelineTests
     #region ???????????
 
     [Test]
-    public void Every_character_draws_a_full_hand_of_five()
+    public void Opening_draw_fills_ten_shared_spaces_in_deck_order()
     {
         using var sim = Build([]);
 
         sim.RunBattleStart();
 
-        foreach (var character in sim.PlayerTeam.Characters)
-        {
-            Assert.That(
-                character.HandSlots.Count(slot => !slot.IsEmpty),
-                Is.EqualTo(CombatConstants.HandSlotCount));
-        }
+        Assert.That(sim.PlayerTeam.CardPiles.HandCount, Is.EqualTo(10));
+        Assert.That(sim.PlayerTeam.Characters[^1].HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(8));
     }
 
     [Test]
@@ -253,7 +249,7 @@ public sealed class BattleStartPipelineTests
 
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
 
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots.Count(s => !s.IsEmpty), Is.EqualTo(1));
+        Assert.That(sim.PlayerTeam.CardPiles.HandCount, Is.EqualTo(sim.PlayerTeam.Characters.Count));
     }
 
     [Test]
@@ -265,8 +261,8 @@ public sealed class BattleStartPipelineTests
 
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Player));
         Assert.That(
-            sim.PlayerTeam.Characters[0].HandSlots.Count(slot => !slot.IsEmpty),
-            Is.EqualTo(CombatConstants.HandSlotCount));
+            sim.PlayerTeam.CardPiles.HandCount,
+            Is.EqualTo(CombatConstants.TeamHandLimit));
         Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(sim.PlayerTeam.MaxHp));
     }
 

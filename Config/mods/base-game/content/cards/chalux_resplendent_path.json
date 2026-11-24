@@ -10,8 +10,7 @@
       "MaxHealth": 40
     }
   },
-  "role": "Warrior",
-  "priority": 9,
+  "role": "Attack",
   "cardType": "Physics",
   "targetSide": "Enemy",
   "targetScope": "All",

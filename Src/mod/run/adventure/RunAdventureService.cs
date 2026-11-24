@@ -8,8 +8,14 @@ namespace KemoCard.Mod.Run.Adventure;
 public sealed record RunRequirement(bool Passed, string TextKey, object[] Args);
 
 /// <summary>地图、事件、商店和共享库存的宿主入口；所有随机结果与购买状态进入 Run 快照。</summary>
-public sealed class RunAdventureService(RunController run, GameDefinitionRegistry definitions)
+public sealed class RunAdventureService(
+    RunController run,
+    GameDefinitionRegistry definitions,
+    int rolePackSize = RunConstants.DefaultRolePackSize,
+    int allRolesPackSize = RunConstants.DefaultAllRolesPackSize)
 {
+    public int RolePackSize { get; } = rolePackSize;
+    public int AllRolesPackSize { get; } = allRolesPackSize;
     public RunMod State => run.State;
     public GameDefinitionStore Store => definitions.Store;
     public bool CanNavigate => !State.Phase.IsCombatPhase() && State.Phase != ERunPhase.Finished && State.Phase != ERunPhase.RingEnd;
@@ -28,13 +34,13 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
         Store.TryGetStory(State.StoryId, out var story);
         var pool = (story?.RingEventPools.FirstOrDefault(entry => entry.Ring == State.CurrentRing)?.Events ?? [])
             .Where(entry => entry.Weight > 0 && !State.ReservedEventIds.Contains(entry.EventId)
-                && Store.TryGetEvent(entry.EventId, out var evt) && evt.EventKind == EEventKind.Data)
+                && Store.TryGetEvent(entry.EventId, out var evt) && evt.EventKind == EEventKind.Data && evt.Options.Any(IsVisibleOption))
             .GroupBy(entry => entry.EventId, StringComparer.Ordinal).Select(group => group.First())
             .OrderBy(entry => entry.EventId, StringComparer.Ordinal).ToList();
         var rng = new HostRng(State.RunSeed, $"map:{State.StoryId}:{State.CurrentRing}");
         var nodes = new List<RunMapNode>();
-        for (var branch = 0; branch < 2; branch++)
-            for (var step = 0; step < 3; step++)
+        for (var branch = 0; branch < RunMapState.BranchCount; branch++)
+            for (var step = 0; step < RunMapState.StepsPerBranch; step++)
             {
                 string? eventId = null;
                 if (step == 0 && pool.Count > 0)
@@ -54,7 +60,7 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
                     EventId = eventId,
                     VisibleReward = step == 2 ? GenerateVisibleReward(branch) : null,
                     Offers = step == 1 ? (story?.ShopItemIds ?? []).Distinct(StringComparer.Ordinal)
-                        .Where(id => Store.TryGetItem(id, out var item) && item.ShopPrice is >= 0)
+                        .Where(id => Store.TryGetItem(id, out var item) && item.Kind == EItemKind.Consumable && item.ShopPrice is >= 0)
                         .Select(id => new RunShopOffer { ItemId = id, Price = Store.Items[id].ShopPrice!.Value }).ToList() : [],
                 });
             }
@@ -93,7 +99,7 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
     {
         var node = State.Map?.CurrentNode;
         if (!CanNavigate || State.Map?.NodeOpen != true || node is null ||
-            node.Kind == ERunNodeKind.Event && node.EventId is not null ||
+            node.Kind == ERunNodeKind.Event && !CanLeaveCurrentEvent ||
             node.Kind == ERunNodeKind.VisibleEvent && !CanSkipVisibleReward)
             return false;
         CompleteNode();
@@ -143,7 +149,8 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
     private RunVisibleReward GenerateVisibleReward(int branch)
     {
         var rng = new HostRng(State.RunSeed, $"visible:{State.StoryId}:{State.CurrentRing}:{branch}");
-        var kind = (EVisibleEventKind)rng.NextInt(0, 4);
+        EVisibleEventKind[] available = [EVisibleEventKind.Gold, EVisibleEventKind.RolePack, EVisibleEventKind.AllRolesPack];
+        var kind = available[rng.NextInt(0, available.Length)];
         var roles = CardRoles;
         return new RunVisibleReward { Kind = kind, Role = kind == EVisibleEventKind.RolePack ? roles[rng.NextInt(0, roles.Length)] : ERole.None };
     }
@@ -155,6 +162,14 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
         for (var index = 0; index < map.Nodes.Count; index++)
         {
             var node = map.Nodes[index];
+            if (node.Offers.RemoveAll(offer => Store.TryGetItem(offer.ItemId, out var item) && item.Kind == EItemKind.Relic) > 0)
+                changed = true;
+            if (node.VisibleReward?.Kind == EVisibleEventKind.RelicChoice)
+            {
+                map.Nodes[index] = node with { VisibleReward = new RunVisibleReward { Kind = EVisibleEventKind.Gold, Prepared = true } };
+                changed = true;
+                continue;
+            }
             // 已完成或已打开的旧随机事件保持原样，避免替换已提交奖励或中断待选选项。
             if (node.Step != 2 || node.Kind != ERunNodeKind.Event || node.Completed ||
                 map.NodeOpen && map.SelectedBranch == node.Branch && map.Position == node.Step)
@@ -176,12 +191,9 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
         var rng = new HostRng(State.RunSeed, $"visible.contents:{State.StoryId}:{State.CurrentRing}:{node.Branch}");
         var cards = new RunCardPackRewards(run, Store).EligibleCards();
         if (reward.Kind == EVisibleEventKind.RolePack)
-            reward.CardIds = Draw(cards.Where(card => card.Role == reward.Role).Select(card => card.Id), 5, rng);
+            reward.CardIds = Draw(cards.Where(card => card.Role == reward.Role).Select(card => card.Id), RolePackSize, rng);
         else if (reward.Kind == EVisibleEventKind.AllRolesPack)
-            reward.CardIds = CardRoles.SelectMany(role => Draw(cards.Where(card => card.Role == role).Select(card => card.Id), 1, rng)).ToList();
-        else if (reward.Kind == EVisibleEventKind.RelicChoice)
-            reward.RelicIds = Draw(Store.Items.Values.Where(item => item.Kind == EItemKind.Relic && !State.Items.Relics.Contains(item.Id))
-                .OrderBy(item => item.Id, StringComparer.Ordinal).Select(item => item.Id), 3, rng);
+            reward.CardIds = Draw(cards.Select(card => card.Id), AllRolesPackSize, rng);
         reward.Prepared = true;
     }
 
@@ -198,34 +210,28 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
         return drawn;
     }
 
-    public bool CanClaimVisibleReward(string? relicId = null)
+    public bool CanClaimVisibleReward()
     {
         if (!CanNavigate || CurrentVisibleReward is not { Prepared: true } reward) return false;
         return reward.Kind switch
         {
             EVisibleEventKind.Gold => (long)run.GetGold() + 150 <= int.MaxValue,
-            EVisibleEventKind.RolePack => reward.CardIds.Count == 5 && reward.CardIds.Distinct().Count() == 5 &&
+            EVisibleEventKind.RolePack => reward.CardIds.Count > 0 &&
                 reward.CardIds.All(id => Store.TryGetCard(id, out var card) && RunCardPackRewards.IsPackCard(card) && card.Role == reward.Role)
                 && new RunCardPackRewards(run, Store).CanGrant(reward.CardIds),
-            EVisibleEventKind.AllRolesPack => reward.CardIds.Count == CardRoles.Length && reward.CardIds.Distinct().Count() == CardRoles.Length &&
-                reward.CardIds.All(id => Store.TryGetCard(id, out var card) && RunCardPackRewards.IsPackCard(card)) &&
-                reward.CardIds.Select(id => Store.Cards[id].Role).Distinct().Count() == CardRoles.Length
+            EVisibleEventKind.AllRolesPack => reward.CardIds.Count > 0
                 && new RunCardPackRewards(run, Store).CanGrant(reward.CardIds),
-            EVisibleEventKind.RelicChoice => relicId is not null && reward.RelicIds.Contains(relicId) &&
-                Store.TryGetItem(relicId, out var item) && item.Kind == EItemKind.Relic && State.Items.CanAdd(item),
             _ => false,
         };
     }
 
-    public bool CanSkipVisibleReward => CurrentVisibleReward is { } reward && (reward.Kind == EVisibleEventKind.RelicChoice
-        ? !reward.RelicIds.Any(id => CanClaimVisibleReward(id)) : !CanClaimVisibleReward());
+    public bool CanSkipVisibleReward => CurrentVisibleReward is not null && !CanClaimVisibleReward();
 
-    public bool ClaimVisibleReward(string? relicId = null)
+    public bool ClaimVisibleReward()
     {
-        if (!CanClaimVisibleReward(relicId)) return false;
+        if (!CanClaimVisibleReward()) return false;
         var reward = CurrentVisibleReward!;
-        if (reward.Kind == EVisibleEventKind.Gold) run.AddGold(0, 150);
-        else if (reward.Kind == EVisibleEventKind.RelicChoice) State.Items.TryAdd(Store.Items[relicId!]);
+        if (reward.Kind == EVisibleEventKind.Gold) run.AddGold(150);
         else if (!new RunCardPackRewards(run, Store).Grant(reward.CardIds)) return false;
         CompleteNode();
         return true;
@@ -236,7 +242,13 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
     #region 事件条件与提交
 
     public EventDto? CurrentEvent => State.Map is { NodeOpen: true } map && map.CurrentNode is
-    { Kind: ERunNodeKind.Event, EventId: { } id } && Store.TryGetEvent(id, out var evt) ? evt : null;
+    { Kind: ERunNodeKind.Event, EventId: { } id } && Store.TryGetEvent(id, out var evt) && evt.Options.Any(IsVisibleOption) ? evt : null;
+
+    public bool IsVisibleOption(EventOptionDto option) =>
+        !option.ItemRewards.Any(IsRelic) && !option.Conditions.Any(condition =>
+            condition.Kind == "HasItem" && condition.Params?.TryGetValue("itemId", out var id) == true && IsRelic(id?.ToString()));
+
+    private bool IsRelic(string? id) => id is not null && Store.TryGetItem(id, out var item) && item.Kind == EItemKind.Relic;
 
     public IReadOnlyList<RunRequirement> Requirements(EventOptionDto option) => option.Conditions.Select(condition =>
     {
@@ -247,7 +259,7 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
         return condition.Kind switch
         {
             "GoldAtLeast" => new RunRequirement(amount >= 0 && run.GetGold() >= amount, "UI_EVENT_NEED_GOLD", [amount, run.GetGold()]),
-            "HasItem" => new RunRequirement(id.Length > 0 && (State.Items.Relics.Contains(id) || State.Items.Potions.Contains(id)),
+            "HasItem" => new RunRequirement(id.Length > 0 && (State.Items.Relics.Contains(id) || State.Items.Consumables.Contains(id)),
                 "UI_EVENT_NEED_ITEM", [Store.TryGetItem(id, out var dto) ? dto.DisplayNameId : id]),
             "HasFlag" => new RunRequirement(flag.Length > 0 && State.PlayerStates.Any(player =>
                 player.EventFlags.TryGetValue(flag, out var present) && string.Equals(present?.ToString(), "true", StringComparison.OrdinalIgnoreCase)),
@@ -279,30 +291,65 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
         return (long)run.GetGold() + gold is >= 0 and <= int.MaxValue;
     }
 
-    public bool CanChoose(EventOptionDto option) => TryPlan(option, out _) &&
-        option.ItemRewards.All(id => Store.TryGetItem(id, out var item) &&
-            (item.Kind != EItemKind.Relic || State.Items.CanAdd(item)));
+    public bool CanChoose(EventOptionDto option)
+    {
+        if (!IsVisibleOption(option) || !TryPlan(option, out _) ||
+            !option.ItemRewards.All(id => Store.TryGetItem(id, out _)))
+            return false;
 
-    public bool ChooseOption(string optionId, int? replaceSlot = null, bool declinePotions = false)
+        // 放得下 → 直接可选；放不下 → 界面会打开替换 / 放弃流程，玩家至少可以
+        // 「放弃新增消耗品」完成事件。不能因容量不足禁用选项：按钮不可点、事件又未完成，
+        // 节点将无法离开（只能放弃整个 Run）。
+        return !NeedsConsumableReplacement(option) ||
+            option.ItemRewards.Any(id => Store.TryGetItem(id, out var item) && item.Kind == EItemKind.Consumable);
+    }
+
+    /// <summary>
+    /// 当前事件是否已经没有可提交的选项：全部不可见，或可见但无法执行
+    /// （例如分页选项、只支持部分效果的自定义事件）。此时必须允许离开，
+    /// 否则玩家既不满足选项条件、又无法离开节点，分支将永远凑不齐完成数。
+    /// </summary>
+    public bool CanLeaveCurrentEvent => CurrentEvent is not { } evt ||
+        !evt.Options.Any(option => IsVisibleOption(option) && CanChoose(option));
+
+    /// <summary>
+    /// 选项奖励的消耗品数量超过当前空槽数：直接提交会失败，界面需要先走替换 / 放弃流程。
+    /// </summary>
+    public bool NeedsConsumableReplacement(EventOptionDto option)
+    {
+        var freeSlots = State.Items.Consumables.Count(id => id is null);
+        var granted = option.ItemRewards.Count(id =>
+            Store.TryGetItem(id, out var item) && item.Kind == EItemKind.Consumable);
+        return granted > freeSlots;
+    }
+
+    public bool ChooseOption(string optionId, int? replaceSlot = null, bool declineConsumables = false) =>
+        ChooseOption(optionId, replaceSlot is { } slot ? new[] { slot } : Array.Empty<int>(), declineConsumables);
+
+    /// <summary>
+    /// 提交事件选项。<paramref name="replaceSlots"/> 按顺序用于替换已占用的消耗品槽位
+    /// （每个放不下的新增消耗品消耗一个槽位）；整次提交仍是原子的，失败不写任何状态。
+    /// </summary>
+    public bool ChooseOption(string optionId, IReadOnlyList<int> replaceSlots, bool declineConsumables = false)
     {
         var evt = CurrentEvent;
         var option = evt?.Options.FirstOrDefault(entry => entry.OptionId == optionId);
-        if (!CanNavigate || option is null || !TryPlan(option, out var gold))
+        if (!CanNavigate || option is null || !IsVisibleOption(option) || !TryPlan(option, out var gold))
             return false;
+        var slots = new Queue<int>(replaceSlots.Distinct());
         var scratch = new CombatItemInventory();
-        scratch.Restore(State.Items.Relics, State.Items.Potions);
+        scratch.Restore(State.Items.Relics, State.Items.Consumables);
         foreach (var id in option.ItemRewards)
         {
             if (!Store.TryGetItem(id, out var item))
                 return false;
-            if (item.Kind == EItemKind.Potion && declinePotions) continue;
-            if (!scratch.TryAdd(item, replaceSlot)) return false;
-            if (item.Kind == EItemKind.Potion)
-                replaceSlot = null;
+            if (item.Kind == EItemKind.Consumable && declineConsumables) continue;
+            var slot = item.Kind == EItemKind.Consumable && slots.Count > 0 ? slots.Dequeue() : (int?)null;
+            if (!scratch.TryAdd(item, slot)) return false;
         }
-        State.Items.Restore(scratch.Relics, scratch.Potions);
-        if (gold > 0) run.AddGold(0, gold);
-        else if (gold < 0) run.SpendGold(0, -gold);
+        State.Items.Restore(scratch.Relics, scratch.Consumables);
+        if (gold > 0) run.AddGold(gold);
+        else if (gold < 0) run.SpendGold(-gold);
         foreach (var player in State.PlayerStates)
             player.EventFlags[$"event.completed:{evt!.Id}"] = true;
         CompleteNode();
@@ -316,16 +363,16 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
     public bool GrantItem(string id, int? replaceSlot = null)
     {
         if (State.Phase.IsCombatPhase() || State.Phase == ERunPhase.Finished ||
-            !Store.TryGetItem(id, out var item) || !State.Items.TryAdd(item, replaceSlot))
+            !Store.TryGetItem(id, out var item) || item.Kind != EItemKind.Consumable || !State.Items.TryAdd(item, replaceSlot))
             return false;
         run.NotifyAdventureChanged();
         return true;
     }
 
-    public bool DiscardPotion(int slot, string id)
+    public bool DiscardConsumable(int slot, string id)
     {
         if (State.Phase == ERunPhase.Finished || State.Phase.IsCombatPhase() && run.Simulation?.Phase != Combat.StateMachine.ECombatPhase.Player
-            || !State.Items.RemovePotion(slot, id))
+            || !State.Items.RemoveConsumable(slot, id))
             return false;
         run.NotifyAdventureChanged();
         return true;
@@ -339,9 +386,9 @@ public sealed class RunAdventureService(RunController run, GameDefinitionRegistr
             return false;
         var offer = node.Offers[offerIndex];
         if (offer.Sold || offer.Price < 0 || run.GetGold() < offer.Price ||
-            !Store.TryGetItem(offer.ItemId, out var item) || !State.Items.CanAdd(item, replaceSlot))
+            !Store.TryGetItem(offer.ItemId, out var item) || item.Kind != EItemKind.Consumable || !State.Items.CanAdd(item, replaceSlot))
             return false;
-        if (!run.SpendGold(0, offer.Price))
+        if (!run.SpendGold(offer.Price))
             return false;
         State.Items.TryAdd(item, replaceSlot);
         offer.Sold = true;

@@ -4,7 +4,6 @@ using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Run;
 using KemoCard.Mod.Run.Events;
-using KemoCard.Mod.Run.Potential;
 using KemoCard.Mod.Run.Team;
 using KemoCard.Ui.Tests.Combat;
 using NUnit.Framework;
@@ -89,11 +88,11 @@ public sealed class RunTeamEditServiceTests
         var (service, _, _) = Build(poolSize: 1);
 
         Assert.That(service.AssignToSlot(0, "inst-0").Ok, Is.True);
-        Assert.That(service.AssignToSlot(3, "inst-0").Ok, Is.True, "同一实例迁到别的槽");
+        Assert.That(service.AssignToSlot(RunConstants.SlotCount - 1, "inst-0").Ok, Is.True, "同一实例迁到别的槽");
 
         var slots = service.GetSlots();
         Assert.That(slots[0].InstanceId, Is.Null, "原槽自动清空（同一实例不占多槽）");
-        Assert.That(slots[3].InstanceId, Is.EqualTo("inst-0"));
+        Assert.That(slots[RunConstants.SlotCount - 1].InstanceId, Is.EqualTo("inst-0"));
     }
 
     [Test]
@@ -135,7 +134,7 @@ public sealed class RunTeamEditServiceTests
     #region 被动视图
 
     [Test]
-    public void Passives_view_reports_thresholds_unlock_state_and_desc()
+    public void Passives_view_lists_all_descriptions_in_definition_order()
     {
         var registry = CombatTestHelper.CreateFullRegistry(
             cards: new Dictionary<string, CardDto>
@@ -153,7 +152,7 @@ public sealed class RunTeamEditServiceTests
             });
 
         var controller = new RunController(new RunMod { MaxRing = 5 });
-        controller.CreateRun(StoryId, new HostRng(20260921, "test"), [], isMultiplayer: false);
+        controller.CreateRun(StoryId, new HostRng(20260921, "test"), []);
         controller.AddToCharacterPool(new CharacterInstance(
             new CharacterDto
             {
@@ -161,71 +160,16 @@ public sealed class RunTeamEditServiceTests
                 Cards = [CombatSimulationTestBuilder.PartyHpCardId],
                 Passives =
                 [
-                    new PassiveRefDto { BuffId = "buff.p1", RequiredPotential = 0 },
-                    new PassiveRefDto { BuffId = "buff.p2", RequiredPotential = 10 },
+                    new PassiveRefDto { BuffId = "buff.p1" },
+                    new PassiveRefDto { BuffId = "buff.p2" },
                 ],
             },
             "inst-passive"));
 
         var service = new RunTeamEditService(controller, registry);
 
-        var passives = service.GetPassives("inst-passive");
-        Assert.That(passives, Has.Count.EqualTo(2), "展示顺序 = 定义声明顺序");
-        Assert.That(passives[0].RequiredPotential, Is.EqualTo(0));
-        Assert.That(passives[0].Unlocked, Is.True, "门槛 0 默认解锁");
-        Assert.That(passives[0].DescriptionId, Is.EqualTo("buff.p1.desc"));
-        Assert.That(passives[1].Unlocked, Is.False);
-        Assert.That(passives[1].DescriptionId, Is.EqualTo("buff.p2.desc"));
-
-        // 上阵 + 把潜能分配到该槽位 → 达到门槛自动解锁：解锁状态与战斗挂载共用 PotentialService 判定。
-        Assert.That(controller.SetActiveCharacter(0, 0), Is.True);
-        var potential = new PotentialService(controller.State);
-        potential.Grant(10);
-        Assert.That(potential.TryAllocate(0, 10).Success, Is.True);
-
-        Assert.That(service.GetPassives("inst-passive")[1].Unlocked, Is.True, "槽位已分配达到门槛后自动解锁");
+        Assert.That(service.GetPassives("inst-passive"), Is.EqualTo(new[] { "buff.p1.desc", "buff.p2.desc" }));
         Assert.That(service.GetPassives("inst.missing"), Is.Empty, "未知实例返回空列表");
-    }
-
-    #endregion
-
-    #region 潜能划拨
-
-    [Test]
-    public void Potential_allocation_moves_pool_to_slot_and_back()
-    {
-        var (service, controller, _) = Build(poolSize: 1);
-        controller.Potential.Grant(30);
-
-        Assert.That(service.AvailablePotential, Is.EqualTo(30));
-        Assert.That(service.SlotAllocatedPotential(1), Is.EqualTo(0));
-
-        var allocated = service.AllocatePotential(1, 20);
-        Assert.That(allocated.Ok, Is.True, allocated.MessageKey);
-        Assert.That(service.AvailablePotential, Is.EqualTo(10), "分配从团队池划走");
-        Assert.That(service.SlotAllocatedPotential(1), Is.EqualTo(20));
-        Assert.That(service.IsDirty, Is.True, "划拨要置脏，关闭界面时统一保存");
-
-        var deducted = service.DeductPotential(1, 5);
-        Assert.That(deducted.Ok, Is.True, deducted.MessageKey);
-        Assert.That(service.AvailablePotential, Is.EqualTo(15), "扣除退回团队池");
-        Assert.That(service.SlotAllocatedPotential(1), Is.EqualTo(15));
-    }
-
-    [Test]
-    public void Potential_allocation_reports_reason_keys()
-    {
-        var (service, controller, _) = Build(poolSize: 1);
-        controller.Potential.Grant(10);
-
-        Assert.That(service.AllocatePotential(0, 0).MessageKey, Is.EqualTo("UI_TEAM_POTENTIAL_INVALID"));
-        Assert.That(service.AllocatePotential(0, 11).MessageKey, Is.EqualTo("UI_TEAM_POTENTIAL_POOL_SHORT"));
-        Assert.That(service.DeductPotential(0, 1).MessageKey, Is.EqualTo("UI_TEAM_POTENTIAL_SLOT_SHORT"));
-        Assert.That(service.AllocatePotential(99, 5).MessageKey, Is.EqualTo("UI_TEAM_SLOT_INVALID"));
-
-        controller.State.Phase = ERunPhase.Battle;
-        Assert.That(service.AllocatePotential(0, 5).MessageKey, Is.EqualTo("UI_TEAM_EDIT_BLOCKED"));
-        Assert.That(service.DeductPotential(0, 5).MessageKey, Is.EqualTo("UI_TEAM_EDIT_BLOCKED"));
     }
 
     #endregion
@@ -524,7 +468,7 @@ public sealed class RunTeamEditServiceTests
     {
         var registry = RunTestHelper.CreateRegistryWithHpCard();
         var controller = new RunController(new RunMod { MaxRing = 5 });
-        controller.CreateRun(StoryId, new HostRng(20260921, "test"), [], isMultiplayer: false);
+        controller.CreateRun(StoryId, new HostRng(20260921, "test"), []);
 
         for (var i = 0; i < poolSize; i++)
         {

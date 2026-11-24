@@ -209,14 +209,6 @@ public sealed class ContentDefinitionValidator
                     character.Id,
                     $"Unknown passive buffId '{passive.BuffId}'."));
             }
-
-            if (passive.RequiredPotential < 0)
-            {
-                errors.Add(new ContentDefinitionValidationError(
-                    EContentCategory.Character,
-                    character.Id,
-                    $"Passive '{passive.BuffId}' requires non-negative requiredPotential."));
-            }
         }
     }
 
@@ -458,7 +450,7 @@ public sealed class ContentDefinitionValidator
         {
             if (!Enum.IsDefined(item.Kind) || item.ShopPrice is < 0)
                 errors.Add(new(EContentCategory.Item, item.Id, "Invalid item kind or negative shopPrice."));
-            if (item.Kind == EItemKind.Potion && item.UseSkillRefs.Count == 0)
+            if (item.Kind == EItemKind.Consumable && item.UseSkillRefs.Count == 0)
             {
                 errors.Add(new ContentDefinitionValidationError(
                     EContentCategory.Item,
@@ -526,8 +518,6 @@ public sealed class ContentDefinitionValidator
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnSlotChargeTriggered, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnEnemyEntered, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardSettled, store, errors);
-            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardExecutionStart, store, errors);
-            ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnCardExecutionEnd, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbTriggered, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnOrbAutoTriggered, store, errors);
             ValidateEffectRefs(EContentCategory.Buff, buff.Id, buff.Hooks.OnShieldDepleted, store, errors);

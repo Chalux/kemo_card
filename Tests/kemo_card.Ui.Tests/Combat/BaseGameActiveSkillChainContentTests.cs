@@ -90,11 +90,10 @@ public sealed class BaseGameActiveSkillChainContentTests
     }
 
     /// <summary>
-    /// 潜能被动统一为每个角色 <b>4 条、档位 0 / 10 / 30 / 50</b>（2026-09-24：原 6 档的
-    /// <c>70</c> 与 <c>99</c> 两档连同其载荷一并删除，不做合并）。新增角色或调整档位时这里会立刻报错。
+    /// 每个基础角色有四条被动，每条都引用已注册的 buff。
     /// </summary>
     [Test]
-    public void Every_shipped_character_has_four_potential_passives()
+    public void Every_shipped_character_has_four_passives()
     {
         var definitions = LoadBaseGame();
         Assert.That(definitions.Characters, Is.Not.Empty);
@@ -104,12 +103,8 @@ public sealed class BaseGameActiveSkillChainContentTests
             Assert.That(
                 character.Passives,
                 Has.Count.EqualTo(4),
-                $"角色 {characterId} 的潜能被动应为 4 条");
+                $"角色 {characterId} 的被动应为 4 条");
 
-            Assert.That(
-                character.Passives.Select(passive => passive.RequiredPotential),
-                Is.EqualTo(new[] { 0, 10, 30, 50 }),
-                $"角色 {characterId} 的档位必须是 0 / 10 / 30 / 50");
 
             foreach (var passive in character.Passives)
                 Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");

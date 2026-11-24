@@ -20,6 +20,63 @@ public sealed class CombatReviewFixTests
 
     #region 嵌套选牌弃置
 
+    [TestCase("review.chain")]
+    [TestCase("review.discard")]
+    public void Inactive_conditional_discard_does_not_require_or_reserve_a_card(string gatedEffect)
+    {
+        using var sim = Build();
+        var skill = AddNestedDiscard(sim, useActions: false);
+        sim.Definitions.Store.EffectsMutable[gatedEffect].Conditions.Add(new()
+        {
+            Kind = "CardPlayedThisTurn", Params = new() { ["count"] = 1 }
+        });
+        sim.Definitions.Store.EffectsMutable["review.random"] = new()
+        {
+            Id = "review.random", Kind = EEffectKind.Discard, Params = new() { ["random"] = true }
+        };
+        skill.EffectRefs.Insert(0, new() { EffectId = "review.random" });
+        sim.Definitions.Store.SkillsMutable[skill.Id] = skill;
+        var character = sim.PlayerTeam.Characters[0];
+        character.GainSkillCounter(5);
+
+        Assert.That(DiscardSelection.Resolve(sim, skill, 0), Is.Null);
+        var result = sim.TryApply(new CastActiveSkillCommand(0, []));
+        Assert.That(result.Success, Is.True, result.Error);
+        Assert.That(character.Graveyard.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Random_ally_discard_reuses_the_preview_targets_at_submission()
+    {
+        using var sim = Build();
+        var skill = new SkillDto
+        {
+            Id = "review.skill",
+            TargetOverride = new() { Side = ETargetSide.Ally, Scope = ETargetScope.RandomN, TargetCount = 2 },
+            ActionRefs = AddNestedDiscard(sim, useActions: true).ActionRefs
+        };
+        sim.Definitions.Store.SkillsMutable[skill.Id] = skill;
+        foreach (var member in sim.PlayerTeam.Characters)
+            member.DrawCards(1);
+        sim.PlayerTeam.Characters[0].GainSkillCounter(5);
+
+        var targets = CombatTargeting.ResolveActiveSkillTargets(sim, skill, 0, [], out _)!;
+        Assert.That(sim.TryApply(new CastActiveSkillCommand(0, [])).Success, Is.False);
+        Assert.That(CombatTargeting.ResolveActiveSkillTargets(sim, skill, 0, [], out _), Is.EqualTo(targets));
+        Assert.That(sim.RandomTargetSkillCasts, Is.Zero);
+        var cards = targets.Select(target => new HandCardChoice(target.Index,
+            sim.PlayerTeam.Characters[target.Index].HandSlots[0].RuntimeInstanceId!)).ToArray();
+        Assert.That(cards, Has.Length.EqualTo(2));
+        Assert.That(DiscardSelection.BuildPlan(sim, skill, 0, targets)!.TryAssign(cards, out _), Is.True);
+
+        var result = sim.TryApply(new CastActiveSkillCommand(0, targets, DiscardCards: cards));
+        Assert.That(result.Success, Is.True, result.Error);
+        Assert.That(sim.RandomTargetSkillCasts, Is.EqualTo(1));
+        foreach (var card in cards)
+            Assert.That(sim.PlayerTeam.CardPiles.Graveyard.Single(entry => entry.CharacterIndex == card.CharacterIndex).RuntimeInstanceId,
+                Is.EqualTo(card.RuntimeInstanceId));
+    }
+
     [TestCase(true)]
     [TestCase(false)]
     public void Nested_discard_must_accept_selected_slot(bool useActions)

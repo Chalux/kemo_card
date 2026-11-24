@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.weilong_core_recharge.name",
   "element": 4,
-  "role": "Shield",
+  "role": "Defense",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "PhysicalDefense": 2
     }
   },
-  "priority": 13,
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

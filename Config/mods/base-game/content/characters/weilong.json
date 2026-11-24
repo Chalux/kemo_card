@@ -1,7 +1,7 @@
 {
   "displayNameId": "char.weilong.name",
   "element": "Green",
-  "role": "Shield",
+  "role": "Defense",
   "race": [
     "Machine",
     "Dragon"
@@ -27,20 +27,16 @@
   "initialEnergy": 3,
   "passives": [
     {
-      "buffId": "weilong_passive_p1",
-      "requiredPotential": 0
+      "buffId": "weilong_passive_p1"
     },
     {
-      "buffId": "weilong_passive_p2",
-      "requiredPotential": 10
+      "buffId": "weilong_passive_p2"
     },
     {
-      "buffId": "weilong_passive_p3",
-      "requiredPotential": 30
+      "buffId": "weilong_passive_p3"
     },
     {
-      "buffId": "weilong_passive_p4",
-      "requiredPotential": 50
+      "buffId": "weilong_passive_p4"
     }
   ],
   "tags": [

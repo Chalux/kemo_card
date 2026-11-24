@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.kagi_intimidating_roar.name",
   "element": 1,
-  "role": "Controller",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 2,
   "baseValue": 0,
@@ -17,7 +17,6 @@
       "MagicDefense": 1
     }
   },
-  "priority": 11,
   "cardType": "Support",
   "targetSide": "Enemy",
   "targetScope": "All",

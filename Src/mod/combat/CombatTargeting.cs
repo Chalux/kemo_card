@@ -1,5 +1,6 @@
 using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Gas;
+using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat;
@@ -10,10 +11,23 @@ namespace KemoCard.Mod.Combat;
 /// </summary>
 public static class CombatTargeting
 {
+    internal static IReadOnlyList<CombatTargetRef>? ResolveActiveSkillTargets(
+        CombatSimulation simulation, SkillDto skill, int characterIndex, IReadOnlyList<CombatTargetRef> requested,
+        out string error)
+    {
+        var spec = skill.TargetOverride;
+        // 同次施法的预览可以取消、重试。只有通过全部校验的随机目标主动技才推进施法序号。
+        var rng = spec?.Scope == ETargetScope.RandomN && requested.Count == 0
+            ? new HostRng(simulation.RunSeed, FormattableString.Invariant($"combat.active_skill.targets:{simulation.RandomTargetSkillCasts}"))
+            : null;
+        return ResolvePlayerTargets(simulation, spec?.Side ?? ETargetSide.Self, spec?.Scope ?? ETargetScope.Self,
+            spec?.TargetCount ?? 1, characterIndex, requested, out error, rng);
+    }
+
     /// <summary>扣费前验证目标集合；默认目标由模拟器展开，所有返回值都是只读快照。</summary>
     internal static IReadOnlyList<CombatTargetRef>? ResolvePlayerTargets(
         CombatSimulation simulation, ETargetSide side, ETargetScope scope, int targetCount,
-        int sourceIndex, IReadOnlyList<CombatTargetRef> requested, out string error)
+        int sourceIndex, IReadOnlyList<CombatTargetRef> requested, out string error, HostRng? randomTargetRng = null)
     {
         error = "目标数量、唯一性或合法范围不符合定义。";
         if (requested.Distinct().Count() != requested.Count)
@@ -35,7 +49,7 @@ public static class CombatTargeting
         {
             var count = Math.Min(Math.Max(1, targetCount), legal.Count);
             if (requested.Count == 0)
-                return Array.AsReadOnly(CombatTargetResolver.PickRandomTargets(legal, count, simulation.RetargetRng).ToArray());
+                return Array.AsReadOnly(CombatTargetResolver.PickRandomTargets(legal, count, randomTargetRng ?? simulation.RetargetRng).ToArray());
             return requested.Count == count ? Array.AsReadOnly(requested.ToArray()) : null;
         }
         if (requested.Count == 1 || (requested.Count == 0 && legal.Count == 0))

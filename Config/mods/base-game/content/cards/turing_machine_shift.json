@@ -11,8 +11,7 @@
       "PhysicalDefense": 2
     }
   },
-  "role": "Controller",
-  "priority": 10,
+  "role": "Attack",
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "Single",

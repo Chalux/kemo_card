@@ -12,7 +12,6 @@
     }
   },
   "role": "Support",
-  "priority": 6,
   "cardType": "Support",
   "targetSide": "Ally",
   "targetScope": "Single",

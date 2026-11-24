@@ -5,6 +5,7 @@ using KemoCard.Mod.Combat.Ai;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Commands;
 using KemoCard.Mod.Combat.Effects;
+using KemoCard.Mod.Combat.Marble;
 using KemoCard.Mod.Combat.NormalAttack;
 using KemoCard.Mod.Combat.Orbs;
 using KemoCard.Mod.Combat.Presentation;
@@ -14,19 +15,18 @@ using KemoCard.Mod.Combat.Gas;
 
 namespace KemoCard.Mod.Combat.Runtime;
 
-public sealed class CombatSimulation : IDisposable
+public sealed partial class CombatSimulation : IDisposable
 {
     public int BlockedUnselectedDiscardCount { get; private set; }
     internal void CountBlockedUnselectedDiscard() => BlockedUnselectedDiscardCount++;
-    internal Queue<int>? SelectedDiscardSlots { get; set; }
-    internal int SelectedDiscardCharacterIndex { get; set; } = -1;
+    internal List<HandCardChoice>? SelectedDiscardCards { get; set; }
+    internal List<AssignedDiscard>? PlannedDiscards { get; set; }
     private readonly ShieldLifecycle _shieldLifecycle;
     internal float CurrentOrbHealingBonus { get; set; }
     private readonly CombatStateMachine _stateMachine;
     private readonly TeamMaxHealthCoordinator _teamMaxHealthCoordinator;
     private readonly List<PlayedCardRecord> _playedThisTurn = [];
     private readonly Dictionary<string, int> _orbsTriggeredThisTurn = new(StringComparer.Ordinal);
-    private long _nextQueueSequence = 1;
 
     /// <summary>统一回合边界，包含幂等收尾、钩子与终局检查。</summary>
     private readonly CombatTurnCoordinator _turnCoordinator;
@@ -35,7 +35,6 @@ public sealed class CombatSimulation : IDisposable
     public EnemyTeamState EnemyTeam { get; }
     public CombatRuleEngine Rules { get; }
     public GameDefinitionRegistry Definitions { get; }
-    public CardExecutionQueue CardQueue { get; }
     public CombatEffectExecutor EffectExecutor { get; }
     internal EffectExecutionBudget EffectBudget { get; } = new();
     public int RejectedEffectExecutionCount => EffectBudget.RejectedCount;
@@ -58,6 +57,12 @@ public sealed class CombatSimulation : IDisposable
 
     /// <summary>普通攻击运行时：每回合卡牌结算完成后自动执行一次（槽位轮转）。</summary>
     public NormalAttackRuntime NormalAttacks { get; }
+
+    /// <summary>
+    /// 弹珠盘面与待发队列：独立于卡牌 / 能量；撞钉布局跨回合、跨波保留，
+    /// 待发队列与本轮点数在每个玩家回合开始时重置。
+    /// </summary>
+    public MarbleRuntime Marble { get; }
 
     /// <summary>
     /// 表现事件日志（规格 §16）：逻辑只在编排层 <c>Emit</c> 值事件，界面 <c>Drain</c> 后自行安排动画。
@@ -123,6 +128,8 @@ public sealed class CombatSimulation : IDisposable
 
     /// <summary>执行阶段单体目标失效时的均匀重选流（规格 §2.4）。</summary>
     internal HostRng RetargetRng { get; }
+    internal int RandomTargetSkillCasts { get; private set; }
+    internal void RecordRandomTargetSkillCast() => RandomTargetSkillCasts++;
 
     /// <summary>规格 §4.6：中途弃牌独立随机流。</summary>
     internal HostRng DiscardRng { get; }
@@ -161,7 +168,6 @@ public sealed class CombatSimulation : IDisposable
         ModId = modId;
         BattleStartSkills = battleStartSkills ?? [];
         InitialBuffs = initialBuffs ?? [];
-        CardQueue = new CardExecutionQueue();
         EnemyAiRng = new HostRng(runSeed, "combat.ai");
         DrawRng = new HostRng(runSeed, "combat.draw");
         RetargetRng = new HostRng(runSeed, "combat.retarget");
@@ -172,6 +178,7 @@ public sealed class CombatSimulation : IDisposable
         EffectExecutor.AttachBuffRuntime(Buffs);
         Orbs = new OrbRuntime(definitions);
         NormalAttacks = new NormalAttackRuntime();
+        Marble = new MarbleRuntime();
         DomainManager = new TeamDomainManager(this);
         EffectLifecycle = new CombatEffectLifecycle(this);
         EnemyLifeBars = new EnemyLifeBarRuntime(this);
@@ -184,6 +191,8 @@ public sealed class CombatSimulation : IDisposable
         _stateMachine = new CombatStateMachine(initialPhase);
         _turnCoordinator = new CombatTurnCoordinator(this);
         _shieldLifecycle = new ShieldLifecycle(this);
+        if (initialPhase == ECombatPhase.Player)
+            Marble.BeginTurn(TurnNumber, PlayerTeam.Characters.Count);
     }
 
     public CombatApplyResult TryApply(ICombatCommand command)
@@ -200,6 +209,8 @@ public sealed class CombatSimulation : IDisposable
     internal void TransitionTo(ECombatPhase phase)
     {
         var previous = _stateMachine.Phase;
+        if (previous == ECombatPhase.Marble && phase != previous)
+            Marble.RecallBalls();
         if (phase == ECombatPhase.Enemy && previous != phase)
             EnemyActionIndex = -1;
         _stateMachine.TransitionTo(phase);
@@ -210,7 +221,7 @@ public sealed class CombatSimulation : IDisposable
     public void AdvancePhase() => _stateMachine.Advance(this);
 
     /// <summary>
-    /// 宿主（战斗界面）在一条玩家指令成功后调用：把不需要玩家输入的相位（卡牌执行 → 敌方）一路推进，
+    /// 宿主（战斗界面）在一条玩家指令成功后调用：把不需要玩家输入的相位（轮值普攻 → 敌方）一路推进，
     /// 直到回到玩家阶段或战斗结束。表现事件在此期间持续记入 <see cref="Presentation"/>，界面事后统一播放。
     /// </summary>
     public void AdvanceAutomaticPhases()
@@ -224,7 +235,6 @@ public sealed class CombatSimulation : IDisposable
     /// <summary>执行 BattleStart 管线（规格 §6.1），结束后停在首个玩家阶段。</summary>
     public void RunBattleStart() => _stateMachine.RunBattleStart(this);
 
-    internal long AllocateQueueSequence() => _nextQueueSequence++;
 
     internal void MarkFirstPlayerPhaseDone() => IsFirstPlayerPhase = false;
 
@@ -563,66 +573,69 @@ public sealed class CombatSimulation : IDisposable
 
     public void CheckEndConditions()
     {
-        if (Phase is ECombatPhase.Victory or ECombatPhase.Defeat)
+        if (TryFinishBattle() || !EnemyTeam.AllDefeated)
             return;
+
+        var continuePlayerTurn = Phase == ECombatPhase.Player;
+        if (!continuePlayerTurn)
+        {
+            if (Phase == ECombatPhase.Marble)
+                TransitionTo(ECombatPhase.WaveTransition);
+            ResolveTurnEnd();
+            if (PlayerTeam.IsDefeated)
+            {
+                TransitionTo(ECombatPhase.Defeat);
+                return;
+            }
+        }
+
+        do
+        {
+            EnterNextWave();
+            if (TryFinishBattle())
+                return;
+        } while (EnemyTeam.AllDefeated);
+
+        if (continuePlayerTurn)
+        {
+            TransitionTo(ECombatPhase.Player);
+            EnemyIntents.RefreshAll();
+        }
+        else
+        {
+            BeginNextTurn(incrementTurnsIntoWave: false);
+        }
+    }
+
+    private bool TryFinishBattle()
+    {
+        if (Phase is ECombatPhase.Victory or ECombatPhase.Defeat)
+            return true;
 
         var decision = new EndDecision { Kind = EEndDecisionKind.None };
         Rules.DispatchCheckEndCondition(CreateContext(), ref decision);
 
-        if (decision.Kind == EEndDecisionKind.Defeat)
+        if (decision.Kind == EEndDecisionKind.Defeat || PlayerTeam.IsDefeated)
         {
             TransitionTo(ECombatPhase.Defeat);
-            return;
+            return true;
         }
 
-        // 玩家账本归零优先于胜利：同归于尽必须判负，不能让规则提供的 Victory 覆盖掉。
-        if (PlayerTeam.IsDefeated)
-        {
-            TransitionTo(ECombatPhase.Defeat);
-            return;
-        }
-
-        if (decision.Kind == EEndDecisionKind.Victory)
+        if (decision.Kind == EEndDecisionKind.Victory || (EnemyTeam.AllDefeated && !HasMoreWaves))
         {
             TransitionTo(ECombatPhase.Victory);
-            return;
+            return true;
         }
 
-        if (!EnemyTeam.AllDefeated)
-            return;
-
-        if (HasMoreWaves)
-        {
-            AdvanceToNextWave();
-            return;
-        }
-
-        TransitionTo(ECombatPhase.Victory);
+        return false;
     }
 
-    private void AdvanceToNextWave()
+    private void EnterNextWave()
     {
-        if (Battle is null)
-            return;
-
-        // 换波即切到下一个回合（2026-09-26 定案）：新波登场后本回合直接结束——角色解除已行动、
-        // 回合数 +1、跑完整回合开始管线（能量 / S / 抽牌），玩家在下一回合行动。
-        // 回合结束管线在此补跑（2026-09-26 修正）：敌方阶段清波时 ExecuteEnemyPhase 已跑过，
-        // ResolveTurnEnd 幂等；玩家阶段 / 卡牌执行阶段清波时本回合尚未结算，必须**在生成新敌人之前**
-        // 补跑（否则回合结束产出的球会砸到新波），两条路径不会重复结算。
-        // `TurnsIntoWave` 保持换波时的 0（新波第一回合，与开战首回合同口径），由下一次回合结束再递增。
-        ResolveTurnEnd();
-        if (PlayerTeam.IsDefeated)
-        {
-            // 回合结束效果（充能球触发 / onTurnEnd）可能反噬队伍：同归于尽仍判负（规格 §1.3）。
-            TransitionTo(ECombatPhase.Defeat);
-            return;
-        }
-
         TransitionTo(ECombatPhase.WaveTransition);
         CurrentWaveIndex++;
         var enemies = CombatSimulationFactory.SpawnWaveEnemies(
-            Battle.Waves[CurrentWaveIndex],
+            Battle!.Waves[CurrentWaveIndex],
             Definitions,
             out var error);
         if (enemies is null)
@@ -640,10 +653,7 @@ public sealed class CombatSimulation : IDisposable
             return;
         // 阶层开始钩子（波内每 N 回合的计时基准同时归零）。
         Buffs.FireWaveStart(this);
-
-        foreach (var character in PlayerTeam.Characters)
-            character.SetHasActed(false);
-        BeginNextTurn(incrementTurnsIntoWave: false);
+        FlushOnDamagedHits();
     }
 
     internal void ResolveTurnEnd() => _turnCoordinator.End();

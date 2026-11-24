@@ -4,6 +4,7 @@ using KemoCard.Frame.Gas;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Buffs;
+using KemoCard.Mod.Combat.Commands;
 using KemoCard.Mod.Combat.Effects;
 using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Rules;
@@ -41,32 +42,58 @@ public sealed class AwakeningBrothersTests
         });
     }
 
-    [Test]
-    public void Entry_brands_one_slot_per_character_and_brands_survive_life_bars_and_waves()
-    {
-        using var sim = Start();
-        var slots = sim.PlayerTeam.Characters.Select(character =>
-            character.HandSlots.Single(slot => slot.Buffs.Find("brothers_slot_damage") is not null)).ToArray();
-        Assert.That(slots, Has.Length.EqualTo(4));
-        var before = sim.PlayerTeam.SharedHp;
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slots[0]);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slots[0]);
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(before - 10));
-        Hit(sim, 999);
-        Assert.That(sim.EnemyTeam.Enemies[0].LifeBarIndex, Is.EqualTo(1));
-        Assert.That(sim.PlayerTeam.Characters.Sum(character => character.HandSlots.Sum(slot => slot.Buffs.All.Count)), Is.EqualTo(4));
-        Hit(sim, 999);
-        var turn = sim.TurnNumber;
-        sim.CheckEndConditions();
-        Assert.That(sim.CurrentWaveIndex, Is.EqualTo(1));
-        Assert.That(sim.TurnNumber, Is.EqualTo(turn + 1));
-        Assert.That(sim.EnemyTeam.Enemies[0].DefinitionId, Is.EqualTo("george"));
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots[slots[0].SlotIndex].Buffs.All, Has.Count.EqualTo(1));
-    }
-
     #endregion
 
     #region 破条边界
+
+    [Test]
+    public void Immediate_cards_cannot_hit_the_next_bar_before_the_boss_acts()
+    {
+        using var sim = Start();
+        var boss = sim.EnemyTeam.Enemies[0];
+        var hero = sim.PlayerTeam.Characters[0];
+        var store = sim.Definitions.Store;
+        store.EffectsMutable["test.break_bar"] = new()
+        {
+            Id = "test.break_bar", Kind = EEffectKind.Damage,
+            Params = new Dictionary<string, object> { ["amount"] = 450 }
+        };
+        store.SkillsMutable["test.double_hit"] = new()
+        {
+            Id = "test.double_hit",
+            EffectRefs = [new() { EffectId = "test.break_bar" }, new() { EffectId = "test.break_bar" }]
+        };
+        store.CardsMutable["test.double_hit"] = new()
+        {
+            Id = "test.double_hit", CostType = ECostType.None,
+            TargetSide = ETargetSide.Enemy, TargetScope = ETargetScope.Single,
+            SkillRefs = [new() { SkillId = "test.double_hit" }]
+        };
+        hero.HandSlots[0].PlaceCard("test.double_hit", "hit-1");
+        hero.HandSlots[1].PlaceCard("test.double_hit", "hit-2");
+        sim.Presentation.Clear();
+
+        var first = sim.TryApply(new PlayCardCommand(0, 0, [Boss], "hit-1"));
+        Assert.That(first.Success, Is.True, first.Error);
+        Assert.That(boss.LifeBarIndex, Is.Zero);
+        Assert.That(boss.CurrentHp, Is.Zero);
+        Assert.That(boss.IsAwaitingLifeBar, Is.True);
+        Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Player));
+        Assert.That(sim.Presentation.Drain().OfType<DamageDealtEvent>().Sum(hit => hit.Amount), Is.EqualTo(400f));
+
+        var second = sim.TryApply(new PlayCardCommand(0, 1, [Boss], "hit-2"));
+        Assert.That(second.Success, Is.True, second.Error);
+        Assert.That(boss.LifeBarIndex, Is.Zero);
+        Assert.That(boss.CurrentHp, Is.Zero);
+        Assert.That(sim.Presentation.Drain().OfType<EnemyLifeBarChangedEvent>(), Is.Empty);
+
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        Assert.That(sim.TryApply(new EndMarbleCommand()).Success, Is.True, "Boss 已受换条保护，允许立即结束弹珠");
+        sim.AdvanceAutomaticPhases();
+        Assert.That(boss.LifeBarIndex, Is.EqualTo(1));
+        Assert.That(boss.CurrentHp, Is.EqualTo(400));
+        Assert.That(boss.IsAwaitingLifeBar, Is.False);
+    }
 
     [Test]
     public void Card_execution_keeps_zero_hp_boss_targetable_and_blocks_every_followup_hit_until_it_acts()
@@ -240,13 +267,13 @@ public sealed class AwakeningBrothersTests
         Assert.That(enemy.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(5));
         var hp = sim.PlayerTeam.SharedHp;
         EnemyTurn(sim);
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 4 * 20));
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - CombatConstants.SlotCount * 20));
         EnemyTurn(sim);
         EnemyTurn(sim);
         Assert.That(enemy.Buffs.Find("george_chant")!.Stacks, Is.EqualTo(1));
         hp = sim.PlayerTeam.SharedHp;
         EnemyTurn(sim);
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 4 * 30));
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - CombatConstants.SlotCount * 30));
         for (var i = 0; i < 20; i++)
             sim.Buffs.Apply(sim, Boss, "george_chant");
         Assert.That(enemy.Buffs.Find("george_chant")!.Stacks, Is.EqualTo(15));
@@ -294,7 +321,7 @@ public sealed class AwakeningBrothersTests
     {
         var registry = BaseGameContent.BuildRegistry();
         registry.Store.CardsMutable["test.hp"] = new() { Id = "test.hp", Stats = new() { HpCap = 10000 } };
-        var party = Enumerable.Range(0, 4).Select(index => new CharacterInstance(
+        var party = Enumerable.Range(0, KemoCard.Mod.Combat.CombatConstants.SlotCount).Select(index => new CharacterInstance(
             new CharacterDto { Id = $"hero-{index}", Cards = ["test.hp"] }, $"inst-{index}")).ToArray();
         var sim = CombatSimulationFactory.TryCreate(registry.Store.Battles["awakening_brothers"], party,
             registry, new HostRng(42, "combat"), 42, null, null, "base.game", CombatRuleCatalog.CreateDefault(), out var error);

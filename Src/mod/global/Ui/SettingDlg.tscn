@@ -8,7 +8,7 @@
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_close"]
 
-[node name="SettingDlg" type="Control" node_paths=PackedStringArray("WindowModeRow", "ResolutionRow", "VSyncRow", "MaxFpsRow", "MasterMuteRow", "MasterVolumeRow", "MusicMuteRow", "MusicVolumeRow", "SfxMuteRow", "SfxVolumeRow", "LanguageRow", "PotentialConsumeModeRow", "PotentialProposalsRow", "PotentialUnlimitedRow")]
+[node name="SettingDlg" type="Control" node_paths=PackedStringArray("WindowModeRow", "ResolutionRow", "VSyncRow", "MaxFpsRow", "MasterMuteRow", "MasterVolumeRow", "MusicMuteRow", "MusicVolumeRow", "SfxMuteRow", "SfxVolumeRow", "LanguageRow")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -27,9 +27,6 @@ MusicVolumeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollC
 SfxMuteRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/SfxMuteRow")
 SfxVolumeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/SfxVolumeRow")
 LanguageRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/LanguageRow")
-PotentialConsumeModeRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/PotentialConsumeModeRow")
-PotentialProposalsRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/PotentialProposalsRow")
-PotentialUnlimitedRow = NodePath("Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer/PotentialUnlimitedRow")
 
 [node name="Bg" type="Panel" parent="."]
 layout_mode = 1
@@ -136,44 +133,6 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="LanguageRow" parent="Margin/VBox/TabContainer/UI_MENU_MAIN_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
-
-[node name="UI_MENU_MP_SETTING" type="MarginContainer" parent="Margin/VBox/TabContainer"]
-visible = false
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
-metadata/_tab_index = 1
-
-[node name="ScrollContainer" type="ScrollContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="Center" type="HBoxContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 1
-
-[node name="Sheet" type="PanelContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center"]
-custom_minimum_size = Vector2(760, 0)
-layout_mode = 2
-size_flags_vertical = 0
-
-[node name="SettingVBoxContainer" type="VBoxContainer" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet"]
-layout_mode = 2
-theme_override_constants/separation = 0
-
-[node name="PotentialConsumeModeRow" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
-
-[node name="PotentialProposalsRow" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("2_dropdown")]
-layout_mode = 2
-
-[node name="PotentialUnlimitedRow" parent="Margin/VBox/TabContainer/UI_MENU_MP_SETTING/ScrollContainer/Center/Sheet/SettingVBoxContainer" instance=ExtResource("3_toggle")]
 layout_mode = 2
 
 [node name="BaseDlgComp" parent="." instance=ExtResource("1_rixra")]

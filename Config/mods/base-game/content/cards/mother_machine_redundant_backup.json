@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.mother_machine_redundant_backup.name",
   "element": 8,
-  "role": "Healer",
+  "role": "Support",
   "costType": "Energy",
   "cost": 2,
   "baseValue": 0,
@@ -17,7 +17,6 @@
       "MagicDefense": 1
     }
   },
-  "priority": 10,
   "cardType": "Healing",
   "targetSide": "Ally",
   "targetScope": "Team",

@@ -2,7 +2,7 @@
 
 **日期**：2026-09-19
 **状态**：已实装
-**关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [2026-07-21 战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)；与 [buff 运行时规格](../../../superpowers/specs/2026-09-19-buff-potential-chain-system-design.md) 同批落地（槽位充能、连携、潜能）。
+**关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md) 与 [2026-07-21 战斗规格](../../../superpowers/specs/2026-07-21-combat-system-design.md)；与 [buff 运行时规格](2026-09-19-buff-potential-chain-system-design.md) 同批落地（槽位充能、连携、潜能）。
 
 ---
 

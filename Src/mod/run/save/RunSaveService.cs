@@ -33,18 +33,11 @@ public sealed class RunSaveService
         Directory.CreateDirectory(directoryPath);
     }
 
-    public bool Exists
-    {
-        get
-        {
-            lock (_ioGate)
-            {
-                return Directory.GetFiles(_directoryPath, "*.json").Any(IsPrimarySaveFile);
-            }
-        }
-    }
+    public bool Exists => FindReadableSave(archiveUnreadablePrimary: false) is not null;
 
-    public RunDto LoadOrDefault()
+    public RunDto LoadOrDefault() => FindReadableSave(archiveUnreadablePrimary: true) ?? new RunDto();
+
+    private RunDto? FindReadableSave(bool archiveUnreadablePrimary)
     {
         lock (_ioGate)
         {
@@ -54,7 +47,7 @@ public sealed class RunSaveService
 
             foreach (var file in primaryFiles)
             {
-                if (TryRead(file, out var dto, isPrimary: true))
+                if (TryRead(file, out var dto, archiveUnreadablePrimary))
                     return dto;
             }
 
@@ -66,7 +59,7 @@ public sealed class RunSaveService
                     return dto;
             }
 
-            return new RunDto();
+            return null;
         }
     }
 
@@ -166,16 +159,29 @@ public sealed class RunSaveService
             return false;
         }
 
-        if (loaded.SchemaVersion > RunDto.CurrentSchemaVersion)
+        if (loaded.SchemaVersion != RunDto.CurrentSchemaVersion)
         {
             HandleUnreadablePrimary(
                 path,
                 isPrimary,
-                $"schema version {loaded.SchemaVersion} is newer than supported {RunDto.CurrentSchemaVersion}");
+                $"schema version {loaded.SchemaVersion} does not match supported version {RunDto.CurrentSchemaVersion}");
             return false;
         }
 
-        dto = loaded.Normalize();
+        if (string.IsNullOrWhiteSpace(loaded.RunId))
+        {
+            HandleUnreadablePrimary(path, isPrimary, "missing RunId");
+            return false;
+        }
+
+        var normalized = loaded.Normalize();
+        if (!normalized.HasRestorableStructure())
+        {
+            HandleUnreadablePrimary(path, isPrimary, "invalid Run snapshot structure");
+            return false;
+        }
+
+        dto = normalized;
         return true;
     }
 

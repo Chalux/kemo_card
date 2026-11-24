@@ -80,6 +80,15 @@ public partial class HpBarCmp : BaseCmp
         RefreshLabel();
     }
 
+    public void SetMarbleForecast(float remainingHealth)
+    {
+        if (_lblValue != null)
+            _lblValue.Text = $"{_current} → {remainingHealth:0.##} / {_max}";
+    }
+
+    /// <summary>清除弹珠预计伤害预览，恢复为「当前 / 最大」。</summary>
+    public void ClearMarbleForecast() => RefreshLabel();
+
     public async Task AnimateToAsync(int current, int max, float duration)
     {
         _current = Math.Max(0, current);

@@ -134,17 +134,6 @@ public sealed class BuffEffectHooksDto
     [JsonPropertyName("onCardSettled")]
     public List<EffectRefDto> OnCardSettled { get; init; } = [];
 
-    /// <summary>全部卡牌执行前触发一次，此时完整标记队列尚未出队。</summary>
-    [JsonPropertyName("onCardExecutionStart")]
-    public List<EffectRefDto> OnCardExecutionStart { get; init; } = [];
-
-    /// <summary>
-    /// <b>本回合全部卡牌结算结束</b>后触发一次（普攻之前；2026-09-21 新增）。
-    /// 与 onCardSettled 的区别是"整段结算结束"，适合需要"本回合共打出几张"这类终局统计的效果。
-    /// </summary>
-    [JsonPropertyName("onCardExecutionEnd")]
-    public List<EffectRefDto> OnCardExecutionEnd { get; init; } = [];
-
     /// <summary>充能球整批自动触发结算后，对全队角色各触发一次。</summary>
     [JsonPropertyName("onOrbAutoTriggered")]
     public List<EffectRefDto> OnOrbAutoTriggered { get; init; } = [];

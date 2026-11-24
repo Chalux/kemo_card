@@ -1,4 +1,5 @@
 using KemoCard.Mod.Run;
+using KemoCard.Mod.Run.Adventure;
 using KemoCard.Mod.Run.Save;
 using NUnit.Framework;
 
@@ -21,6 +22,27 @@ public sealed class RunSaveServiceTests
     {
         if (Directory.Exists(_tempDir))
             Directory.Delete(_tempDir, recursive: true);
+    }
+
+    [Test]
+    public void V5_three_slot_save_preserves_positions_and_round_trips_fifth_slot()
+    {
+        var service = new RunSaveService(_tempDir);
+        var path = Path.Combine(_tempDir, "legacy.json");
+        File.WriteAllText(path, """
+            {"runId":"legacy","schemaVersion":5,"potions":["a",null,"b"],"teamPotentialPool":20,
+             "playerStates":[{"allocatedPotential":10}],"relics":["old-relic"]}
+            """);
+        var state = new RunMod();
+        state.RestoreFrom(service.LoadOrDefault());
+        Assert.That(state.Items.Consumables, Is.EqualTo(new string?[] { "a", null, "b", null, null }));
+        Assert.That(state.Items.TryAdd(new() { Id = "new-item" }, 4), Is.True);
+        service.Save(state.ToDto());
+
+        var saved = service.LoadOrDefault();
+        Assert.That(saved.Consumables, Is.EqualTo(new string?[] { "a", null, "b", null, "new-item" }));
+        Assert.That(saved.Relics, Is.EqualTo(new[] { "old-relic" }));
+        Assert.That(File.ReadAllText(path), Does.Not.Contain("Potential"));
     }
 
     [Test]
@@ -88,9 +110,12 @@ public sealed class RunSaveServiceTests
         var primaryPath = Path.Combine(_tempDir, "r-backup.json");
         File.WriteAllText(primaryPath, "not valid json{{{");
 
+        Assert.That(service.Exists, Is.True);
         var loaded = service.LoadOrDefault();
         Assert.That(loaded, Is.Not.Null);
         Assert.That(loaded!.RunSeed, Is.EqualTo(99));
+        Assert.That(File.Exists(primaryPath), Is.False);
+        Assert.That(service.Exists, Is.True, "A readable backup alone can be continued.");
     }
 
     [Test]
@@ -176,21 +201,24 @@ public sealed class RunSaveServiceTests
 
     #region P1：schema 版本语义
 
-    [Test]
-    public void LoadOrDefault_rejects_save_with_newer_schema_version()
+    [TestCase(4)]
+    [TestCase(999)]
+    public void LoadOrDefault_rejects_save_with_a_different_schema_version(int version)
     {
         var warnings = new List<string>();
         var service = new RunSaveService(_tempDir, warnings.Add);
         File.WriteAllText(
             Path.Combine(_tempDir, "r-newer.json"),
-            """{ "runId": "r-newer", "schemaVersion": 999, "runSeed": 7 }""");
+            $$"""{ "runId": "r-newer", "schemaVersion": {{version}}, "runSeed": 7 }""");
 
+        Assert.That(service.Exists, Is.False);
+        Assert.That(File.Exists(Path.Combine(_tempDir, "r-newer.json")), Is.True, "Availability checks do not archive saves.");
         var loaded = service.LoadOrDefault();
 
-        Assert.That(loaded.RunId, Is.Empty, "高于当前版本的存档必须被拒绝，不能按默认值反序列化成「看似合法但错」的 Run");
+        Assert.That(loaded.RunId, Is.Empty, "版本不兼容的存档必须被拒绝");
         Assert.That(File.Exists(Path.Combine(_tempDir, "r-newer.json")), Is.False);
         Assert.That(Directory.GetFiles(_tempDir, "*.corrupt.*.json"), Has.Length.EqualTo(1));
-        Assert.That(warnings.Any(w => w.Contains("newer than supported", StringComparison.Ordinal)), Is.True);
+        Assert.That(warnings.Any(w => w.Contains("does not match supported version", StringComparison.Ordinal)), Is.True);
     }
 
     [Test]
@@ -205,6 +233,176 @@ public sealed class RunSaveServiceTests
 
         Assert.That(loaded.RunId, Is.EqualTo("r-current"));
         Assert.That(loaded.SchemaVersion, Is.EqualTo(RunDto.CurrentSchemaVersion));
+    }
+
+    [Test]
+    public void Normalize_pads_player_states_and_accepts_a_new_run_without_characters()
+    {
+        // 新 Run 在队伍编辑前角色池为空是正常状态；PlayerStates 必须补齐到 3 槽。
+        var dto = new RunDto { RunId = "r-new", Phase = ERunPhase.Event }.Normalize();
+
+        Assert.That(dto.PlayerStates, Has.Count.EqualTo(RunConstants.SlotCount));
+        Assert.That(dto.HasRestorableStructure(), Is.True);
+    }
+
+    [Test]
+    public void Empty_character_pool_is_rejected_outside_the_starting_phases()
+    {
+        var dto = new RunDto { RunId = "r-reward", Phase = ERunPhase.Reward }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False, "Reward 阶段的空角色池永远无法开战，必须拒绝");
+    }
+
+    [TestCase(2, 0)]
+    [TestCase(0, 3)]
+    [TestCase(-1, 0)]
+    public void Map_node_outside_the_2x3_grid_is_unrestorable(int branch, int step)
+    {
+        var dto = new RunDto
+        {
+            RunId = "r-grid",
+            Map = new RunMapState
+            {
+                Nodes = [new RunMapNode { Branch = branch, Step = step, Kind = ERunNodeKind.Shop }],
+            },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False);
+    }
+
+    [Test]
+    public void Duplicate_map_cells_are_unrestorable()
+    {
+        var dto = new RunDto
+        {
+            RunId = "r-dup",
+            Map = new RunMapState
+            {
+                Nodes =
+                [
+                    new RunMapNode { Branch = 0, Step = 0, Kind = ERunNodeKind.Event },
+                    new RunMapNode { Branch = 0, Step = 0, Kind = ERunNodeKind.Shop },
+                ],
+            },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False);
+    }
+
+    [Test]
+    public void Visible_event_without_a_reward_is_unrestorable()
+    {
+        var dto = new RunDto
+        {
+            RunId = "r-visible",
+            Map = new RunMapState
+            {
+                Nodes = [new RunMapNode { Branch = 0, Step = 2, Kind = ERunNodeKind.VisibleEvent }],
+            },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False, "没有奖励的明文事件无法领取也无法离开");
+    }
+
+    [Test]
+    public void Well_formed_2x3_map_is_restorable()
+    {
+        var dto = new RunDto
+        {
+            RunId = "r-map",
+            Map = new RunMapState { Nodes = FullMapNodes() },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.True);
+    }
+
+    [Test]
+    public void Incomplete_2x3_map_is_unrestorable()
+    {
+        var nodes = FullMapNodes();
+        nodes.RemoveAt(nodes.Count - 1);
+
+        var dto = new RunDto
+        {
+            RunId = "r-map",
+            Map = new RunMapState { Nodes = nodes },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False, "缺格会让对应按钮永远不存在，Boss 无法解锁");
+    }
+
+    [TestCase(0, ERunNodeKind.Shop)]
+    [TestCase(1, ERunNodeKind.Event)]
+    [TestCase(2, ERunNodeKind.Shop)]
+    public void Map_node_kind_must_match_its_step(int step, ERunNodeKind kind)
+    {
+        var nodes = FullMapNodes();
+        var index = nodes.FindIndex(node => node.Step == step);
+        nodes[index] = nodes[index] with { Kind = kind };
+
+        var dto = new RunDto
+        {
+            RunId = "r-map",
+            Map = new RunMapState { Nodes = nodes },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False);
+    }
+
+    [Test]
+    public void Open_node_cursor_must_point_to_an_openable_node()
+    {
+        var nodes = FullMapNodes();
+        nodes[0] = nodes[0] with { Completed = true };
+
+        var dto = new RunDto
+        {
+            RunId = "r-map",
+            Map = new RunMapState { Nodes = nodes, NodeOpen = true, SelectedBranch = 0, Position = 0 },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False, "已完成的节点再次打开会同时失去领取与离开入口");
+    }
+
+    [Test]
+    public void Open_node_cursor_without_a_matching_node_is_unrestorable()
+    {
+        var dto = new RunDto
+        {
+            RunId = "r-map",
+            Map = new RunMapState { Nodes = FullMapNodes(), NodeOpen = true, SelectedBranch = -1, Position = 0 },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.False);
+    }
+
+    [Test]
+    public void Open_node_cursor_on_a_shop_is_restorable()
+    {
+        var dto = new RunDto
+        {
+            RunId = "r-map",
+            Map = new RunMapState { Nodes = FullMapNodes(), NodeOpen = true, SelectedBranch = 0, Position = 1 },
+        }.Normalize();
+
+        Assert.That(dto.HasRestorableStructure(), Is.True);
+    }
+
+    [TestCase("""{"runId":"r"}""")]
+    [TestCase("""{"runId":"r","schemaVersion":5,"characterPool":null}""")]
+    [TestCase("""{"runId":"r","schemaVersion":5,"map":{"nodes":[null]}}""")]
+    public void Unrestorable_primary_yields_to_backup_without_mutating_files_during_preview(string json)
+    {
+        var service = new RunSaveService(_tempDir);
+        var primary = Path.Combine(_tempDir, "r.json");
+        File.WriteAllText(primary, json);
+        Assert.That(service.Exists, Is.False);
+        File.WriteAllText(Path.Combine(_tempDir, "r.bak.json"), """{"runId":"r","schemaVersion":5,"runSeed":123}""");
+        Assert.That(service.Exists, Is.True);
+        Assert.That(File.ReadAllText(primary), Is.EqualTo(json));
+        var restored = service.LoadOrDefault();
+        Assert.That(restored.RunSeed, Is.EqualTo(123));
+        Assert.DoesNotThrow(() => new RunMod().RestoreFrom(restored));
     }
 
     [Test]
@@ -252,4 +450,25 @@ public sealed class RunSaveServiceTests
     }
 
     #endregion
+
+    /// <summary>生成器固定 2×3 拓扑：0 = 事件，1 = 商店，2 = 明文事件（带奖励）。</summary>
+    private static List<RunMapNode> FullMapNodes()
+    {
+        var nodes = new List<RunMapNode>();
+        for (var branch = 0; branch < RunMapState.BranchCount; branch++)
+        {
+            for (var step = 0; step < RunMapState.StepsPerBranch; step++)
+            {
+                nodes.Add(new RunMapNode
+                {
+                    Branch = branch,
+                    Step = step,
+                    Kind = step == 1 ? ERunNodeKind.Shop : step == 2 ? ERunNodeKind.VisibleEvent : ERunNodeKind.Event,
+                    VisibleReward = step == 2 ? new RunVisibleReward() : null,
+                });
+            }
+        }
+
+        return nodes;
+    }
 }

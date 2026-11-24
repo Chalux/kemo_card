@@ -12,8 +12,6 @@ internal sealed class CombatTurnCoordinator(CombatSimulation simulation)
         if (_endResolved)
             return;
         _endResolved = true;
-        foreach (var entry in simulation.CardQueue.PeekAllOrdered())
-            CombatStateMachine.CancelMarkAndRefund(simulation, entry);
         simulation.Rules.DispatchTurnEnd(simulation.CreateContext());
         simulation.DomainManager.FireTurnEndHooks();
         var orbBonuses = simulation.Orbs.CaptureTurnEndBonuses(simulation);
@@ -39,6 +37,9 @@ internal sealed class CombatTurnCoordinator(CombatSimulation simulation)
     public void Start()
     {
         var wave = simulation.CurrentWaveIndex;
+        // 回合边界先重置本轮弹珠点数 / 队列，再跑回合开始钩子：
+        // 钩子（onTurnStart / 被动）追加的弹珠必须留在队列里，不能被随后的 BeginTurn 清掉。
+        simulation.Marble.BeginTurn(simulation.TurnNumber, simulation.PlayerTeam.Characters.Count);
         simulation.Mechanisms.TurnStart();
         if (simulation.PlayerTeam.IsDefeated)
             return;

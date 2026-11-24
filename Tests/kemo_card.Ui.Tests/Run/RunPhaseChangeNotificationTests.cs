@@ -109,18 +109,12 @@ public sealed class RunPhaseChangeNotificationTests
     private static (RunController Controller, GameDefinitionRegistry Registry, HostRng Rng) BuildReadyRun()
     {
         var registry = RunTestHelper.CreateRegistryWithHpCard();
-        var mod = new RunMod { Phase = ERunPhase.Reward, IsMultiplayer = false };
+        var mod = new RunMod { Phase = ERunPhase.Reward };
         for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(i);
             mod.AddToCharacterPool(character);
             mod.PlayerStates[i].SetActiveCharacter(character);
-        }
-
-        mod.AddPlayerController(new PlayerController("local", "Player", isOwner: true));
-        for (var i = 0; i < RunConstants.SlotCount; i++)
-        {
-            mod.AssignSlotInternal(i, "local");
         }
 
         return (new RunController(mod), registry, new HostRng(1, "battle"));

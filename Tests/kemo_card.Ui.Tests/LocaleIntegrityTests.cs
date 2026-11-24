@@ -114,7 +114,7 @@ public sealed class LocaleIntegrityTests
         var literalPattern = new Regex("\"(UI_[A-Z0-9_]+)\"");
 
         // 这两处的文案键有一部分是"先存进常量/局部变量、再交给 Tr(key)"的形式
-        // （GlossaryBuilder 的分组键与正文键、RunPauseDlg 的禁用原因键、角色被动/主动技的
+        // （GlossaryBuilder 的分组键与正文键、RunPauseDlg 的禁用原因键、主动技的
         // 文案构造器），Tr("KEY") 的通用扫描匹配不到——漏一个就只会在界面上显示原始键名。
         // CodexDlg 的页签标题同理（键存在 string[] 里逐个 SetTabTitle）。
         string[] files =
@@ -122,7 +122,7 @@ public sealed class LocaleIntegrityTests
             Path.Combine("Src", "mod", "run", "Ui", "RunPauseDlg.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "GlossaryDlg.cs"),
             Path.Combine("Src", "mod", "global", "Glossary", "GlossaryBuilder.cs"),
-            Path.Combine("Src", "mod", "global", "Ui", "PassiveTextBuilder.cs"),
+            Path.Combine("Src", "mod", "global", "Ui", "CharacterDetailsDlg.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "ActiveSkillTextBuilder.cs"),
             Path.Combine("Src", "mod", "run", "Ui", "Combat", "CombatActiveSkillTips.cs"),
             Path.Combine("Src", "mod", "global", "Ui", "CodexDlg.cs"),
@@ -284,7 +284,7 @@ public sealed class LocaleIntegrityTests
         return Directory.EnumerateFiles(dir, pattern, SearchOption.AllDirectories);
     }
 
-    /// <summary>从测试输出目录向上找到仓库内文件（与 <c>RunRewardDistributorTests</c> 同约定）。</summary>
+    /// <summary>从测试输出目录向上查找仓库内文件。</summary>
     private static string LocateRepoFile(string relativePath)
     {
         var dir = new DirectoryInfo(AppContext.BaseDirectory);

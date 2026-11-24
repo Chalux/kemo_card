@@ -82,7 +82,7 @@ public sealed class UndeadDiscoveryTests
     public void Wave_two_mechanism_can_defeat_the_party_before_turn_start_healing()
     {
         using var sim = Start();
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(30000));
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(sim.PlayerTeam.MaxHp * 0.75));
         Hit(sim, 0);
         Hit(sim, 1);
         sim.CheckEndConditions();
@@ -109,57 +109,6 @@ public sealed class UndeadDiscoveryTests
     }
 
     [Test]
-    public void Two_seals_reroll_character_and_slot_and_allow_repeated_picks()
-    {
-        using var sim = Start();
-        var duplicate = false;
-        var differentCharacters = false;
-        var differentSlots = false;
-        for (var i = 0; i < 40; i++)
-        {
-            var seals = Execute(sim, 0, "ghost_seal_twice").OfType<BuffAppliedEvent>().ToArray();
-            Assert.That(seals, Has.Length.EqualTo(2));
-            Assert.That(seals.All(evt => evt.Holder.HandSlotIndex is not null), Is.True);
-            duplicate |= seals[0].Holder == seals[1].Holder;
-            differentCharacters |= seals[0].Holder.Target != seals[1].Holder.Target;
-            differentSlots |= seals[0].Holder.HandSlotIndex != seals[1].Holder.HandSlotIndex;
-        }
-        Assert.That(duplicate && differentCharacters && differentSlots, Is.True);
-    }
-
-    [Test]
-    public void Slot_seal_blocks_only_that_slot_refunds_its_mark_and_lasts_two_subsequent_turns()
-    {
-        using var sim = Start();
-        var character = sim.PlayerTeam.Characters[0];
-        foreach (var slot in character.HandSlots)
-            slot.PlaceCard("test.undead.hp", $"slot-seal-{slot.SlotIndex}");
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, [new(ECombatSide.Enemy, 0)])).Success, Is.True);
-        var energyAfterMark = character.AvailableEnergy;
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "ghost_slot_seal");
-        Assert.That(character.HandSlots[0].IsMarked, Is.False);
-        Assert.That(character.AvailableEnergy, Is.EqualTo(energyAfterMark + 1));
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, [new(ECombatSide.Enemy, 0)])).Success, Is.False);
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 1, [new(ECombatSide.Enemy, 0)])).Success, Is.True);
-        Assert.That(character.IsSealed, Is.False);
-        sim.Buffs.FireTurnEnd(sim); // 施加回合不消耗后续回合时长。
-        Assert.That(character.HandSlots[0].Buffs.Find("ghost_slot_seal")!.RemainingTurns, Is.EqualTo(2));
-        sim.Buffs.FireTurnEnd(sim);
-        Assert.That(character.HandSlots[0].IsSealed, Is.True);
-        sim.Buffs.FireTurnEnd(sim);
-        Assert.That(character.HandSlots[0].IsSealed, Is.False);
-    }
-
-    [Test]
-    public void Seal_immunity_blocks_hand_slot_seals()
-    {
-        using var sim = Start();
-        sim.Buffs.Apply(sim, Hero, "anubis_passive_p1");
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "ghost_slot_seal");
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots[0].IsSealed, Is.False);
-    }
-
-    [Test]
     public void Malice_attack_down_survives_application_turn_end_and_expires_after_one_full_turn()
     {
         using var sim = Start();
@@ -174,7 +123,7 @@ public sealed class UndeadDiscoveryTests
         }
         var hp = sim.PlayerTeam.SharedHp;
         Turn(sim);
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 300)); // 两只幽灵各50 + 恶念全体4×50。
+        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hp - 50 * (2 + CombatConstants.SlotCount))); // 两只幽灵各 50，恶念攻击全队。
         Assert.That(sim.PlayerTeam.Characters.All(character => character.Buffs.Find("evil_thought_attack_down") is null), Is.True);
     }
 
@@ -366,7 +315,7 @@ public sealed class UndeadDiscoveryTests
             catalog.Register(rule.Id, () => rule);
             battle = new BattleDto { Id = battle.Id, Waves = battle.Waves, CombatRuleIds = [rule.Id] };
         }
-        var party = Enumerable.Range(0, 4).Select(index => new CharacterInstance(
+        var party = Enumerable.Range(0, KemoCard.Mod.Combat.CombatConstants.SlotCount).Select(index => new CharacterInstance(
             new CharacterDto { Id = $"hero-{index}", Cards = ["test.undead.hp"], InitialEnergy = 6, MaxEnergy = 10 }, $"inst-{index}")).ToArray();
         var sim = CombatSimulationFactory.TryCreate(battle, party, registry, new HostRng(42, "combat"), 42,
             null, null, "base.game", catalog, out var error);

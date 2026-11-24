@@ -1,6 +1,6 @@
 namespace KemoCard.Frame.Content.Definitions;
 
-public enum EItemKind { Potion, Relic }
+public enum EItemKind { Consumable, Relic }
 
 public enum ECostType
 {
@@ -225,7 +225,7 @@ public enum ESkillActionKind
     /// 读取不清账，供同链后续伤害继续使用实际弃牌数；目标选择与 ModifyDrawCount 相同。
     /// </summary>
     DrawByDiscard,
-    /// <summary>仅主动技能通道：立即补满目标角色空手牌槽，遵守本阶段一次洗牌预算。</summary>
+    /// <summary>仅主动技能通道：抽取目标角色的牌，直到队伍满手或无符合条件的牌可抽。</summary>
     FillHand,
     /// <summary>驱散目标角色身上的可驱散负面 Buff 和 GameplayEffect，不处理手牌槽。</summary>
     DispelDebuffs,
@@ -264,54 +264,9 @@ public enum EDamageKind
 public enum ERole
 {
     None,
-    /// <summary>
-    /// 战士 物理输出
-    /// </summary>
-    Warrior,
-    /// <summary>
-    /// 术士 魔法输出
-    /// </summary>
-    Wizard,
-    /// <summary>
-    /// 治疗者 治疗
-    /// </summary>
-    Healer,
-    /// <summary>
-    /// 守护者 防御
-    /// </summary>
-    Guard,
-    /// <summary>
-    /// 护盾
-    /// </summary>
-    Shield,
-    /// <summary>
-    /// 控制者 控制
-    /// </summary>
-    Controller,
-    /// <summary>
-    /// 支援者 支援
-    /// </summary>
+    Attack,
+    Defense,
     Support,
-    /// <summary>
-    /// 卡牌手 卡牌伤害
-    /// </summary>
-    CardPlayer,
-    /// <summary>
-    /// 剑士 物理普攻输出
-    /// </summary>
-    SwordMan,
-    /// <summary>
-    /// 法师 魔法普攻输出
-    /// </summary>
-    Mage,
-    /// <summary>
-    /// 炼金术士 道具制造
-    /// </summary>
-    Alchemist,
-    /// <summary>
-    /// 元素师 元素球伤害
-    /// </summary>
-    Elementist,
 }
 
 public enum EEventKind

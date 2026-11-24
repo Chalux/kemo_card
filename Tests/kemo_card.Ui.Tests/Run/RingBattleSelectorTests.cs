@@ -60,15 +60,12 @@ public sealed class RingBattleSelectorTests
             new() { Ring = 2, Battles = [new() { BattleId = RunTestHelper.TestBattleId }] } ]
         };
         var model = new RunMod { StoryId = "pool-test", CurrentRing = 1, Phase = ERunPhase.Reward };
-        for (var index = 0; index < 4; index++)
+        for (var index = 0; index < RunConstants.SlotCount; index++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(index);
             model.AddToCharacterPool(character);
             model.PlayerStates[index].SetActiveCharacter(character);
         }
-        model.AddPlayerController(new PlayerController("local", "Player", true));
-        for (var index = 0; index < 4; index++)
-            model.AssignSlotInternal(index, "local");
         var controller = new RunController(model);
         controller.StartBattle(registry, new HostRng(42, "run"), 42);
         controller.EndBattle(true);

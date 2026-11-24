@@ -10,7 +10,7 @@ public sealed class CharacterCodexQueryTests
     private static CharacterDto Character(
         string id = "ch1",
         EElement element = EElement.Red,
-        ERole role = ERole.Warrior,
+        ERole role = ERole.Attack,
         ERace race = ERace.Human,
         IEnumerable<string>? tags = null,
         string displayNameId = "char.ch1.name",
@@ -48,10 +48,10 @@ public sealed class CharacterCodexQueryTests
     [Test]
     public void MatchesCondition_role_equal_and_not_equal()
     {
-        var character = Character(role: ERole.Healer);
-        Assert.That(CharacterCodexQuery.MatchesCondition(character, new(ECharFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Healer), "")), Is.True);
-        Assert.That(CharacterCodexQuery.MatchesCondition(character, new(ECharFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Warrior), "")), Is.False);
-        Assert.That(CharacterCodexQuery.MatchesCondition(character, new(ECharFilterField.Role, ECardFilterOp.NotEqual, nameof(ERole.Warrior), "")), Is.True);
+        var character = Character(role: ERole.Support);
+        Assert.That(CharacterCodexQuery.MatchesCondition(character, new(ECharFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Support), "")), Is.True);
+        Assert.That(CharacterCodexQuery.MatchesCondition(character, new(ECharFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Attack), "")), Is.False);
+        Assert.That(CharacterCodexQuery.MatchesCondition(character, new(ECharFilterField.Role, ECardFilterOp.NotEqual, nameof(ERole.Attack), "")), Is.True);
     }
 
     [Test]
@@ -69,15 +69,15 @@ public sealed class CharacterCodexQueryTests
     {
         var characters = new Dictionary<string, CharacterDto>
         {
-            ["a"] = Character(id: "a", element: EElement.Red, role: ERole.Warrior),
-            ["b"] = Character(id: "b", element: EElement.Red, role: ERole.Healer),
-            ["c"] = Character(id: "c", element: EElement.Blue, role: ERole.Warrior),
+            ["a"] = Character(id: "a", element: EElement.Red, role: ERole.Attack),
+            ["b"] = Character(id: "b", element: EElement.Red, role: ERole.Support),
+            ["c"] = Character(id: "c", element: EElement.Blue, role: ERole.Attack),
         };
 
         var conditions = new[]
         {
             new CharFilterCondition(ECharFilterField.Element, ECardFilterOp.Contains, nameof(EElement.Red), ""),
-            new CharFilterCondition(ECharFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Warrior), ""),
+            new CharFilterCondition(ECharFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Attack), ""),
         };
 
         var result = CharacterCodexQuery.Filter(characters.Values, conditions, textQuery: "", _ => "", _ => null);

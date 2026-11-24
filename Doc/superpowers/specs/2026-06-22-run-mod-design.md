@@ -1,5 +1,7 @@
 # 局内数据模块 (Run Mod) 设计规范
 
+> 2026-11-19 更新。Run 已移除潜能池和槽位分配。旧 v5 物品保持原位，库存扩为五槽，遗物停止投放。 详见[单机三人队重构决策](../../2026-11-18-single-player-refactor-decisions.md)。
+
 **日期**：2026-06-22
 **最后修订**：2026-09-24（新增 §14 战斗界面 `CombatWin`）
 **状态**：已实装（`Src/mod/run/`，`RunMod.FeatureId = "run"`）
@@ -1060,7 +1062,7 @@ CombatWin
       │  ├─ PartyRail      HpBarCmp（队伍总血 SharedHp/MaxHp）+ 3 × PartyMemberCmp（非当前操控角色）
       │  ├─ Stage          左：4 × AllyUnitCmp；右：EnemyUnitCmp × 敌人数（动态实例化）
       │  └─ RightRail      BtnPause + OrbQueueCmp（充能球）
-      └─ BottomBar (HBox)  ActorInfoCmp | CardPileCmp(卡组) | 5 × HandSlotCmp | CardPileCmp(墓地) | BtnPlayConfirm / BtnConfirm
+      └─ BottomBar (HBox)  ActorInfoCmp | CardPileCmp(卡组) | HandFan（三名角色共用）| CardPileCmp(墓地) | BtnPlayConfirm / BtnConfirm
 ```
 
 > **设计区兜底**（2026-09-25）：`Root` 的合并最小尺寸超过 1280×720 设计区（无敌人 1264×686、
@@ -1087,7 +1089,7 @@ CombatWin
 | `EnemyUnitCmp` | 边框占位（**预留** `BindPresentation(CharacterPresentationDto?)`，`EnemyDto` 暂无字段）+ 常驻 `HpBarCmp` + 下一行动意图（技能名/行动计数，悬停查看技能说明）+ `BuffListCmp`；合法目标高亮；**阵亡即退场**（淡出到全透明后隐藏，存活敌人自动重排，2026-09-26） | 悬停：名字 / 种族·定位 / 剩余生命 / 物理攻击 / 魔法攻击 / 物理防御 / 魔法防御；点击 = 选为目标 |
 | `OrbQueueCmp` | 7 球位 FIFO 上色 + `n/7` + 提示 + 触发按钮；**悬停球位**：球名 + 触发效果（与词典共用同一份正文键 `UI_GLOSSARY_ORB_BODY_*`）+ 产球者（`CombatOrbTips`；产球者取 `OrbInstance.ProducerIndex`，无产球者回落「触发时按全队最高攻击者」） | 触发 → `TriggerOrbsCommand` |
 | `ActorInfoCmp` | 当前操控：名字、元素·定位、能量 可用/当前/上限、`S`/Cap + **主动技状态行**（达标 → 「主动技能可用」/ 满档 → 「主动技能最大」）、物理攻击 / 魔法攻击 / 物理防御 / 魔法防御 + 回复 + 护盾、buff 列表、本回合普攻/追打标识；根节点为 `PanelContainer`（最小尺寸随内容传播，2026-09-26） | **悬停：该角色主动技**（每一档 + 当前可释放档高亮）；**常驻「释放」按钮，未准备好或当前不可操作时灰显**（二次确认后释放） |
-| `HandSlotCmp` | `BaseCardItem`（悬停摘要 / 长按详情）+ 已标记遮罩 + 待出牌高亮 + 槽位 buff 图标 + 充能指示（`SlotChargeCmp`：光晕框包住「X / N」进度条与卡牌，不含 buff 列表；无充能时隐藏） | 点击：未标记 → 进入待出牌；已标记 → `CancelQueuedCardCommand` |
+| `HandSlotCmp` | 卡面、所属角色和待选高亮。公共手牌按角色及槽位顺序呈扇形排列，空槽收拢，悬停抬起牌面并显示摘要 | 单击或拖动出牌，长按查看详情，主动技能选弃牌时单击切换选择 |
 | `CardPileCmp` | 标题 + 张数 | — |
 
 > **敌人生命条与意图（2026-10-11）**：名字不带「生命条1/2」。当前血条按剩余管数（含当前管）着色：1白、2绿、3橙、4紫、5及以上红；打掉一管后退一级颜色，白色恒为最后一管。两管叠加显示：上层当前血条随当前生命值缩短，下层保持下一管的满血颜色；倒数第二管为绿覆盖白，最后一管为白覆盖透明，受伤后露出底层。换管时同时更新上下层，待换管的零血状态仍保留下一管底色。单独复制 fill 与 background 样式，最后一管 background 使用空样式，不能修改共用主题或队伍血条。意图常驻敌人框内，显示预定技能和行动计数；无技能显示无行动，待换条显示切换血条后行动。技能描述在悬停时提供，数值事件由动画逐条更新，播放结束按 `EnemyUnit.Intent` 对账。
@@ -1134,13 +1136,16 @@ CombatWin
 
 ### 14.3 交互状态（`CombatUiState`，纯 C#）
 
+- 战斗底栏的牌堆与墓地张数均读取队伍共享牌堆。切换操控角色时更新该角色的能量、属性与技能。战前队伍编辑仍分别配置三名角色的构筑。
+
 - **选牌弃置（2026-10-08）**：主动释放确认后，若需要非随机弃牌，切换操控到该角色并进入 `PickDiscard`。点击非空手牌（含已标记）切换选择，选中高亮，确认按钮显示“确认弃牌并释放”，提示显示允许数量及已选数量；确认前不改模拟器。固定数量与至多数量由内容规则决定，未达到最小值时确认禁用；ESC/切换角色清空选牌态。确认发送不可变的 `DiscardSlots` 快照，状态机先验证再扣进度。
 
 - **操控槽**：`ControlledSlot` 初始为首个有权控制的槽位；`CanControl(slot)` = `RunMod.SlotOwnership[slot] == 本地玩家 id`（本地玩家 = `PlayerControllers` 中 `IsOwner`；单人四槽皆有权）。
-- **待操作**：`PendingMode ∈ { None, ConfirmPlay, PickTarget, PickDiscard, PickActiveTarget }` + `PendingSlot`。
+- **待操作**：`PendingMode ∈ { None, PickTarget, PickDiscard, PickActiveTarget }`。选定的手牌以角色索引和运行时实例 ID 标识。
 - **主动技能选目标（2026-10-09）**：释放确认后，非自身的单体主动技能进入 `PickActiveTarget`，切换到施法角色，高亮合法目标，点击目标后发送 `CastActiveSkillCommand`。选目标前不扣进度，ESC / 切换角色清除待操作。嘉极目标锁定走此路径；合法池与指令共用敌方嘲讽筛选，全体技能不受嘲讽限制。
 - **定时槽位展示（2026-10-09）**：定时为普通槽位 Buff 图标，下方显示剩余回合，悬停附加实例倒计时与引爆伤害；与充能光晕/进度条同时存在，互不替代。
-  - 点未标记手牌 → `CombatTargeting.RequiresExplicitTarget(card)`：需要 → `PickTarget`（合法单位高亮，点单位即出牌）；不需要 → `ConfirmPlay`（显示「确认出牌」按钮，点它以 `TryResolveAutoTargets` 的结果出牌）。
+  - 单击单体指向牌进入 `PickTarget`，再点合法单位出牌。单击自动选目标的牌直接出牌。
+  - 拖动单体指向牌时显示瞄准箭头，在合法单位上松手出牌。自动选目标的牌跟随指针，在中央战场松手出牌。拖回手牌、在无效位置松手、右键或 Esc 均取消。出牌指令携带原牌的拥有者、槽位和运行时实例 ID。
   - 再点同一张 / 点别的牌 / ESC / 切换角色 → 清待出牌态。
 - **确定按钮**：当前角色未确认 → `ConfirmCharacterCommand`；已确认 → 显示「取消确认」→ `UnconfirmCharacterCommand`。
 - **播放锁**：`InputLocked` 为真时手牌 / 单位 / 确定 / 触发球全部禁用，暂停可用。

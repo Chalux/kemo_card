@@ -98,10 +98,11 @@ public sealed class CombatEndConditionTests
     [Test]
     public void Card_kill_of_the_last_enemy_settles_immediately_without_normal_attack()
     {
-        using var sim = CombatSimulationTestBuilder.WithQueuedCard();
-        sim.EnemyTeam.Enemies[0].ApplyDamage(9); // 10 → 1：卡牌那 1 点就是致命一击
+        using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand();
+        sim.EnemyTeam.Enemies[0].ApplyDamage(99);
 
-        sim.AdvancePhase(); // CardExecution：结算卡牌 → 全灭判定
+        var result = sim.TryApply(new PlayCardCommand(0, 0, [new(ECombatSide.Enemy, 0)]));
+        Assert.That(result.Success, Is.True, result.Error);
 
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Victory));
         Assert.That(sim.NormalAttacks.ExecutionCount, Is.Zero, "全灭后不再空放普攻");
@@ -122,36 +123,58 @@ public sealed class CombatEndConditionTests
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Victory), "最后一名敌人死亡即结算");
     }
 
-    /// <summary>
-    /// 换波即切到下一个回合（2026-09-26）：卡牌杀光一波 → 新波立即登场、回合数 +1、
-    /// 全员解除已行动，玩家在下一回合行动；被切掉的回合不空放普攻。
-    /// </summary>
-    [Test]
-    public void Wave_change_advances_to_the_next_turn()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Wave_entry_kill_settles_before_returning_control(bool hasSurvivingWave)
     {
-        using var sim = TwoWaveBattle(enemyHp: 10, withOrbs: false, queueLethalCard: true, initialPhase: ECombatPhase.CardExecution);
+        const string buffId = "buff.wave_strike";
+        var strike = new BuffDto
+        {
+            Id = buffId, DurationType = EBuffDurationType.Permanent,
+            Hooks = new() { OnWaveStart = [new() { EffectId = "effect.turn_end_strike",
+                Params = new() { ["hookTargets"] = "allEnemies", ["oncePerTurn"] = true } }] }
+        };
+        using var sim = TwoWaveBattle(1, false, true, ECombatPhase.Player, new Dictionary<string, BuffDto> { [buffId] = strike });
+        if (hasSurvivingWave)
+            sim.Battle!.Waves.Add(sim.Battle.Waves[1]);
+        sim.Buffs.Apply(sim, new(ECombatSide.Player, 0), buffId);
+        var turn = sim.TurnNumber;
+
+        var result = sim.TryApply(new PlayCardCommand(0, 0, [new(ECombatSide.Enemy, 0)]));
+
+        Assert.That(result.Success, Is.True, result.Error);
+        Assert.That(sim.CurrentWaveIndex, Is.EqualTo(hasSurvivingWave ? 2 : 1));
+        Assert.That(sim.Phase, Is.EqualTo(hasSurvivingWave ? ECombatPhase.Player : ECombatPhase.Victory));
+        Assert.That(sim.EnemyTeam.AllDefeated, Is.EqualTo(!hasSurvivingWave));
+        Assert.That(sim.TurnNumber, Is.EqualTo(turn));
+        Assert.That(sim.NormalAttacks.ExecutionCount, Is.Zero);
+    }
+
+    [Test]
+    public void Card_wave_clear_keeps_the_current_turn()
+    {
+        using var sim = TwoWaveBattle(enemyHp: 10, withOrbs: false, withLethalCard: true, initialPhase: ECombatPhase.Player);
         sim.EnemyTeam.Enemies[0].ApplyDamage(9); // 第一波 10 → 1
         var turnBefore = sim.TurnNumber;
 
-        sim.AdvancePhase(); // CardExecution：卡牌杀光第一波 → 换波 + 切到下一回合
+        var result = sim.TryApply(new PlayCardCommand(0, 0, [new(ECombatSide.Enemy, 0)]));
+        Assert.That(result.Success, Is.True, result.Error);
 
         Assert.That(sim.CurrentWaveIndex, Is.EqualTo(1), "换波已发生");
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Player));
-        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore + 1), "换波即切到下一个回合");
+        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore), "玩家行动中换波保留回合");
         Assert.That(sim.EnemyTeam.Enemies, Has.Count.EqualTo(1));
         Assert.That(sim.EnemyTeam.Enemies[0].IsAlive, Is.True, "新波敌人已登场");
         Assert.That(sim.NormalAttacks.ExecutionCount, Is.Zero, "被切掉的回合不空放普攻");
-        foreach (var character in sim.PlayerTeam.Characters)
-            Assert.That(character.HasActed, Is.False, "新回合全员解除已行动");
     }
 
     /// <summary>
     /// 玩家阶段全灭 + 还有下一波：同样切到下一个回合（新波登场、回合 +1、全员解除已行动）。
     /// </summary>
     [Test]
-    public void Player_phase_wave_clear_advances_to_the_next_turn()
+    public void Orb_wave_clear_keeps_the_current_turn()
     {
-        using var sim = TwoWaveBattle(enemyHp: 15, withOrbs: true, queueLethalCard: false, initialPhase: ECombatPhase.Player);
+        using var sim = TwoWaveBattle(enemyHp: 15, withOrbs: true, withLethalCard: false, initialPhase: ECombatPhase.Player);
         Assert.That(sim.Orbs.Grant(sim, BuiltinOrbTypes.Blue, producerIndex: 0, count: 3), Is.True);
         var turnBefore = sim.TurnNumber;
 
@@ -160,10 +183,8 @@ public sealed class CombatEndConditionTests
         Assert.That(result.Success, Is.True, result.Error);
         Assert.That(sim.CurrentWaveIndex, Is.EqualTo(1), "换波已发生");
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Player));
-        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore + 1), "换波即切到下一个回合");
+        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore), "玩家行动中换波保留回合");
         Assert.That(sim.EnemyTeam.Enemies[0].IsAlive, Is.True, "新波敌人已登场");
-        foreach (var character in sim.PlayerTeam.Characters)
-            Assert.That(character.HasActed, Is.False, "新回合全员解除已行动");
     }
 
     #region 换波补跑回合结束（2026-09-26）
@@ -172,35 +193,36 @@ public sealed class CombatEndConditionTests
     /// 卡牌清波：本回合的回合结束管线必须在换波前补跑一次（buff 时长 tick 一次、不重复结算）。
     /// </summary>
     [Test]
-    public void Card_wave_clear_resolves_turn_end_exactly_once()
+    public void Card_wave_clear_does_not_resolve_turn_end()
     {
         using var sim = TwoWaveBattle(
             enemyHp: 10,
             withOrbs: false,
-            queueLethalCard: true,
-            initialPhase: ECombatPhase.CardExecution,
+            withLethalCard: true,
+            initialPhase: ECombatPhase.Player,
             buffs: WaveTurnEndBuffs());
         var ticking = ApplyTickingBuff(sim);
         sim.EnemyTeam.Enemies[0].ApplyDamage(9); // 第一波 10 → 1
         var turnBefore = sim.TurnNumber;
 
-        sim.AdvancePhase(); // CardExecution：卡牌杀光第一波 → 补跑回合结束 → 换波
+        var result = sim.TryApply(new PlayCardCommand(0, 0, [new(ECombatSide.Enemy, 0)]));
+        Assert.That(result.Success, Is.True, result.Error);
 
         Assert.That(sim.CurrentWaveIndex, Is.EqualTo(1), "换波已发生");
-        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore + 1));
-        Assert.That(ticking.RemainingTurns, Is.EqualTo(1), "回合结束只结算一次（时长 2 → 1）");
+        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore));
+        Assert.That(ticking.RemainingTurns, Is.EqualTo(2), "当前回合尚未结束");
     }
 
     /// <summary>
     /// 玩家阶段（充能球）清波：与卡牌清波同口径，补跑回合结束且只跑一次。
     /// </summary>
     [Test]
-    public void Player_phase_wave_clear_resolves_turn_end_exactly_once()
+    public void Orb_wave_clear_does_not_resolve_turn_end()
     {
         using var sim = TwoWaveBattle(
             enemyHp: 15,
             withOrbs: true,
-            queueLethalCard: false,
+            withLethalCard: false,
             initialPhase: ECombatPhase.Player,
             buffs: WaveTurnEndBuffs());
         var ticking = ApplyTickingBuff(sim);
@@ -211,8 +233,8 @@ public sealed class CombatEndConditionTests
 
         Assert.That(result.Success, Is.True, result.Error);
         Assert.That(sim.CurrentWaveIndex, Is.EqualTo(1), "换波已发生");
-        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore + 1));
-        Assert.That(ticking.RemainingTurns, Is.EqualTo(1), "玩家阶段清波同样补跑回合结束（只一次）");
+        Assert.That(sim.TurnNumber, Is.EqualTo(turnBefore));
+        Assert.That(ticking.RemainingTurns, Is.EqualTo(2), "当前回合尚未结束");
     }
 
     /// <summary>
@@ -224,7 +246,7 @@ public sealed class CombatEndConditionTests
         using var sim = TwoWaveBattle(
             enemyHp: 10,
             withOrbs: false,
-            queueLethalCard: false,
+            withLethalCard: false,
             initialPhase: ECombatPhase.CardExecution,
             buffs: WaveTurnEndBuffs());
         var ticking = ApplyTickingBuff(sim);
@@ -325,7 +347,7 @@ public sealed class CombatEndConditionTests
     private static CombatSimulation TwoWaveBattle(
         int enemyHp,
         bool withOrbs,
-        bool queueLethalCard,
+        bool withLethalCard,
         ECombatPhase initialPhase,
         IReadOnlyDictionary<string, BuffDto>? buffs = null)
     {
@@ -336,7 +358,6 @@ public sealed class CombatEndConditionTests
             TargetSide = ETargetSide.Enemy,
             TargetScope = ETargetScope.Single,
             TargetCount = 1,
-            Priority = 1,
             SkillRefs = [new SkillRefDto { SkillId = "skill.hit" }],
         };
         var skill = new SkillDto
@@ -404,16 +425,8 @@ public sealed class CombatEndConditionTests
             throw new InvalidOperationException(error ?? "两波战斗模拟创建失败。");
 
         sim.TransitionTo(initialPhase);
-        if (queueLethalCard)
-        {
-            sim.CardQueue.Enqueue(new QueuedCardEntry(
-                CharacterIndex: 0,
-                CardId: card.Id,
-                RuntimeInstanceId: "rt-card-hit",
-                Priority: card.Priority,
-                Targets: [new CombatTargetRef(ECombatSide.Enemy, 0)],
-                Sequence: sim.AllocateQueueSequence()));
-        }
+        if (withLethalCard)
+            sim.PlayerTeam.Characters[0].HandSlots[0].PlaceCard(card.Id, "rt-card-hit");
 
         return sim;
     }

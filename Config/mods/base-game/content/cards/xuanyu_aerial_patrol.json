@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.xuanyu_aerial_patrol.name",
   "element": 1,
-  "role": "Wizard",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -17,7 +17,6 @@
       "MagicDefense": 1
     }
   },
-  "priority": 13,
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

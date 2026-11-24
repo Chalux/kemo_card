@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.xuanyu_thunder_raid.name",
   "element": 1,
-  "role": "Wizard",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 2,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "MagicAttack": 2
     }
   },
-  "priority": 8,
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "Single",

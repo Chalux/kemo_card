@@ -76,6 +76,9 @@ public partial class UiFrameworkHeadlessTests : Node
             (nameof(DestroyDuringCloseAsync), DestroyDuringCloseAsync),
             (nameof(CharacterSpriteFitsAndPlaysAsync), CharacterSpriteFitsAndPlaysAsync),
             (nameof(AllyActionsSurviveStateSyncAsync), AllyActionsSurviveStateSyncAsync),
+            (nameof(CombatHandDragAsync), CombatHandDragAsync),
+            (nameof(CombatMarblePreviewAsync), CombatMarblePreviewAsync),
+            (nameof(CombatMarblePhaseAsync), CombatMarblePhaseAsync),
             (nameof(EnemyIntentColorsAndSharedDamageAsync), EnemyIntentColorsAndSharedDamageAsync),
             (nameof(SkillButtonsChargesAndShieldsAsync), SkillButtonsChargesAndShieldsAsync),
             (nameof(EnemyWaterBubbleAsync), EnemyWaterBubbleAsync),
@@ -321,7 +324,7 @@ public partial class UiFrameworkHeadlessTests : Node
         try
         {
             var registry = new GameDefinitionRegistry();
-            var potion = new ItemDto { Id = "potion", DisplayNameId = "Potion", UseSkillRefs = [new() { SkillId = "use" }] };
+            var potion = new ItemDto { Id = "potion", DisplayNameId = "Consumable", UseSkillRefs = [new() { SkillId = "use" }] };
             var relic = new ItemDto { Id = "relic", DisplayNameId = "Relic", Kind = EItemKind.Relic };
             registry.Rebuild([new ModContentBundle("test.mod", ModDefinitionsBundle.Empty with
             {
@@ -345,25 +348,24 @@ public partial class UiFrameworkHeadlessTests : Node
             map.Position = new Vector2(0, 80);
             banner.Bind(controller.State.Items, registry.Store, true);
             await NextFramesAsync();
-            var slots = banner.GetNode<Container>("Margin/Row/Potions").GetChildren().OfType<KemoCard.Mod.Run.Ui.Items.RunItemSlotCmp>().ToArray();
-            Require(slots.Length == 3 && slots.All(slot => slot.GetNode<Label>("Dot").Visible && !slot.GetNode<Button>("Item").Visible),
-                "three empty potion slots must retain fixed dots");
-            controller.State.Items.TryAdd(potion);
+            var slots = banner.GetNode<Container>("Margin/Row/Consumables").GetChildren().OfType<KemoCard.Mod.Run.Ui.Items.RunItemSlotCmp>().ToArray();
+            Require(slots.Length == 5 && slots.All(slot => slot.GetNode<Label>("Dot").Visible && !slot.GetNode<Button>("Item").Visible),
+                "five empty consumable slots must retain fixed dots");
+            controller.State.Items.TryAdd(potion, 4);
             controller.State.Items.TryAdd(relic);
             banner.Bind(controller.State.Items, registry.Store, true);
             var requested = -1;
-            banner.PotionRequested = slot => requested = slot;
-            slots[0].GetNode<Button>("Item").EmitSignal(BaseButton.SignalName.Pressed);
-            Require(requested == 0 && slots[0].GetNode<Button>("Item").Visible && slots[0].GetNode<Label>("Dot").Visible,
+            banner.ConsumableRequested = slot => requested = slot;
+            slots[4].GetNode<Button>("Item").EmitSignal(BaseButton.SignalName.Pressed);
+            Require(requested == 4 && slots[4].GetNode<Button>("Item").Visible && slots[4].GetNode<Label>("Dot").Visible,
                 "potion overlay must not hide the underlying dot");
             await NextFramesAsync();
-            var relicNode = banner.GetNode<Container>("Margin/Row/RelicScroll/Relics").GetChildren().OfType<KemoCard.Mod.Run.Ui.Items.RunItemSlotCmp>().Single();
-            Require(relicNode.GetGlobalRect().Position.X > slots[2].GetGlobalRect().End.X, "relics must be right of potions");
+            Require(!banner.HasNode("Margin/Row/RelicScroll"), "owned relics must stay hidden");
             banner.SetEnabled(false);
-            Require(slots[0].GetNode<Button>("Item").Disabled, "combat playback must disable potion input");
-            controller.State.Items.RemovePotion(0);
+            Require(slots[4].GetNode<Button>("Item").Disabled, "combat playback must disable potion input");
+            controller.State.Items.RemoveConsumable(4);
             banner.Bind(controller.State.Items, registry.Store, true);
-            Require(!slots[0].GetNode<Button>("Item").Visible && slots[0].GetNode<Label>("Dot").Visible,
+            Require(!slots[4].GetNode<Button>("Item").Visible && slots[4].GetNode<Label>("Dot").Visible,
                 "consumed potion must reveal the fixed empty slot dot");
 
             map.Bind(service);
@@ -444,7 +446,7 @@ public partial class UiFrameworkHeadlessTests : Node
             {
                 var nodes = Enumerable.Range(0, 2).SelectMany(branch => Enumerable.Range(0, 3).Select(step => new RunMapNode {
                     Branch = branch, Step = step, Kind = step == 0 ? ERunNodeKind.Event : step == 1 ? ERunNodeKind.Shop : ERunNodeKind.VisibleEvent,
-                    VisibleReward = step == 2 ? new() { Kind = kind, Role = ERole.Warrior } : null,
+                    VisibleReward = step == 2 ? new() { Kind = kind, Role = ERole.Attack } : null,
                 })).ToList();
                 var controller = new RunController(new RunMod { Map = new() { Ring = 1, Nodes = nodes } });
                 var service = new RunAdventureService(controller, registry);
@@ -454,26 +456,28 @@ public partial class UiFrameworkHeadlessTests : Node
                 var visible = map.GetNode<Button>("Map/Routes/Lanes/Branch0/Node2");
                 var label = visible.Text;
                 if (kind == EVisibleEventKind.RolePack)
-                    Require(label.Contains("5") && label.Contains(KemoCard.Mod.Global.Ui.CharacterIdentityLabels.Role(ERole.Warrior, KemoCard.Fixed.Godot.Localization.Tr)),
+                    Require(label.Contains("5") && label.Contains(KemoCard.Mod.Global.Ui.CharacterIdentityLabels.Role(ERole.Attack, KemoCard.Fixed.Godot.Localization.Tr)),
                         "single-role pack must reveal its role and five-card count on the route");
                 else if (kind == EVisibleEventKind.AllRolesPack)
-                    Require(label == KemoCard.Fixed.Godot.Localization.Tr("UI_VISIBLE_ALL_PACK"), "all-role pack must be explicit on the route");
-                else Require(label == KemoCard.Fixed.Godot.Localization.Tr("UI_VISIBLE_RELIC"), "relic choice must be explicit on the route");
+                    Require(label == string.Format(KemoCard.Fixed.Godot.Localization.Tr("UI_VISIBLE_ALL_PACK"), service.AllRolesPackSize),
+                        "all-role pack must reveal its configured count on the route");
+                else Require(label == KemoCard.Fixed.Godot.Localization.Tr("UI_VISIBLE_GOLD"), "legacy relic choice must show its gold replacement");
                 map.GetNode<Button>("Map/Routes/Lanes/Branch0/Select").EmitSignal(BaseButton.SignalName.Pressed);
                 map.Bind(service);
                 visible.EmitSignal(BaseButton.SignalName.Pressed);
                 map.Bind(service);
                 var options = map.GetNode<Container>("Scroll/Options").GetChildren().OfType<KemoCard.Mod.Run.Ui.Items.RunOptionCmp>().ToArray();
-                Require(options.Length == (kind == EVisibleEventKind.RelicChoice ? 3 : 1), "reward options did not match pack claim or three relic candidates");
+                Require(options.Length == 1, "each available reward has one claim button");
                 Require(options.All(option => !option.GetNode<Button>("Button").Disabled), "valid reward options should be enabled");
                 if (kind != EVisibleEventKind.RelicChoice)
-                    Require(options[0].GetNode<Label>("Details").Text.Split('\n').Length == (kind == EVisibleEventKind.RolePack ? 5 : 12),
+                    Require(options[0].GetNode<Label>("Details").Text.Split('\n').Length == (kind == EVisibleEventKind.RolePack ? service.RolePackSize : service.AllRolesPackSize),
                         "card pack must preview every awarded card");
                 options[0].GetNode<Button>("Button").EmitSignal(BaseButton.SignalName.Pressed);
                 map.Bind(service);
                 Require(visible.Disabled && visible.Text.Contains("✓"), "claimed visible reward must become single-use");
-                Require(kind == EVisibleEventKind.RelicChoice ? controller.State.Items.Relics.Count == 1 :
-                    controller.State.CardCollection.Count == (kind == EVisibleEventKind.RolePack ? 5 : 12), "reward did not grant exactly the intended contents");
+                Require(kind == EVisibleEventKind.RelicChoice ? controller.State.SharedGold == 150 && controller.State.Items.Relics.Count == 0 :
+                    controller.State.CardCollection.Count == (kind == EVisibleEventKind.RolePack ? service.RolePackSize : service.AllRolesPackSize),
+                    "reward did not grant exactly the intended contents");
             }
             finally { map.QueueFree(); await NextFramesAsync(); }
         }
@@ -485,7 +489,7 @@ public partial class UiFrameworkHeadlessTests : Node
         var registry = new GameDefinitionRegistry();
         registry.Rebuild([new ModContentBundle("test.mod", ModDefinitionsBundle.Empty with
         {
-            Items = new Dictionary<string, ItemDto> { ["potion"] = new() { Id = "potion", DisplayNameId = "Potion", UseSkillRefs = [new() { SkillId = "use" }] } },
+            Items = new Dictionary<string, ItemDto> { ["potion"] = new() { Id = "potion", DisplayNameId = "Consumable", UseSkillRefs = [new() { SkillId = "use" }] } },
             Skills = new Dictionary<string, SkillDto> { ["use"] = new() { Id = "use" } },
             Events = new Dictionary<string, EventDto>
             {
@@ -632,7 +636,7 @@ public partial class UiFrameworkHeadlessTests : Node
         public void AddSummonedEnemy(int enemyIndex) { }
         public void RefreshEnemy(int enemyIndex) { }
         public void RefreshBuffs(BuffHolderRef holder) { }
-        public void RefreshHandSlot(int characterIndex, int slotIndex) { }
+        public void ShowDrawnCard(int characterIndex, DrawnCard card) { }
         public void RefreshOrbs() { }
         public void PaintOrb(int index, string orbTypeId, int queueCount, int producerIndex) { }
     }

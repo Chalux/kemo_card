@@ -13,7 +13,6 @@ namespace KemoCard.Mod.Run.Ui.CombatUi;
 /// 左栏的非操控角色卡片：名字、攻防、回复量、护盾、常驻技能按钮与多档充能；点击切换操控。
 /// 悬停显示该角色的主动技（每一档 + 当前可释放档高亮，见 <see cref="CombatActiveSkillTips"/>）。
 /// 已标记卡牌条不挂在本组件内（Godot GUI 拾取按树序，挂左栏会被战场单位截走悬停），
-/// 由 <see cref="CombatWin"/> 的浮层跟随本卡定位，见 <see cref="MarkedCardStripCmp"/>。
 /// </summary>
 public partial class PartyMemberCmp : BaseCmp
 {
@@ -102,13 +101,7 @@ public partial class PartyMemberCmp : BaseCmp
 
         if (_lblState != null)
         {
-            var stateKey = !canControl
-                ? "UI_COMBAT_NO_CONTROL"
-                : character.IsSealed
-                    ? "UI_COMBAT_SEALED"
-                    : character.HasActed
-                        ? "UI_COMBAT_CONFIRMED"
-                        : "";
+            var stateKey = !canControl ? "UI_COMBAT_NO_CONTROL" : character.IsSealed ? "UI_COMBAT_SEALED" : "";
             _lblState.Visible = stateKey.Length > 0;
             _lblState.Text = stateKey.Length > 0 ? Localization.Tr(stateKey) : "";
         }

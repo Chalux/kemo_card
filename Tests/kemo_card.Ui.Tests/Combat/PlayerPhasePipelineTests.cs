@@ -130,12 +130,12 @@ public sealed class PlayerPhasePipelineTests
     [Test]
     public void Draw_stops_when_hand_is_full()
     {
-        var character = CreateCharacter(deckSize: 10);
+        var character = CreateCharacter(deckSize: 12);
 
-        var drawn = character.DrawWithReshuffle(9, new HostRng(1, "combat.draw"));
+        var drawn = character.DrawWithReshuffle(12, new HostRng(1, "combat.draw"));
 
-        Assert.That(drawn, Is.EqualTo(CombatConstants.HandSlotCount));
-        Assert.That(character.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(5));
+        Assert.That(drawn, Is.EqualTo(10));
+        Assert.That(character.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(10));
     }
 
     #endregion
@@ -152,7 +152,6 @@ public sealed class PlayerPhasePipelineTests
         Assert.That(character.DrawPile, Is.Empty);
         Assert.That(character.Graveyard, Has.Count.EqualTo(3));
 
-        character.ResetPhaseShuffleBudget();
         var drawn = character.DrawWithReshuffle(2, rng);
 
         Assert.That(drawn, Is.EqualTo(2));
@@ -161,44 +160,9 @@ public sealed class PlayerPhasePipelineTests
     }
 
     [Test]
-    public void Only_one_reshuffle_is_allowed_per_phase()
-    {
-        var character = CreateCharacter(deckSize: 2);
-        var rng = new HostRng(7, "combat.draw");
-        character.ResetPhaseShuffleBudget();
-
-        // ? 2 ? ? ?? ? ?? ? ??????? 2 ? ? ?? ? ??????????
-        character.DrawWithReshuffle(2, rng);
-        DumpHandToGraveyard(character, 2);
-        Assert.That(character.DrawWithReshuffle(2, rng), Is.EqualTo(2), "??????????");
-        DumpHandToGraveyard(character, 2);
-
-        Assert.That(character.DrawWithReshuffle(2, rng), Is.Zero, "???????????????");
-        Assert.That(character.Graveyard, Has.Count.EqualTo(2));
-    }
-
-    [Test]
-    public void Reshuffle_budget_resets_each_phase()
-    {
-        var character = CreateCharacter(deckSize: 2);
-        var rng = new HostRng(7, "combat.draw");
-        character.ResetPhaseShuffleBudget();
-        character.DrawWithReshuffle(2, rng);
-        DumpHandToGraveyard(character, 2);
-        character.DrawWithReshuffle(2, rng);
-        DumpHandToGraveyard(character, 2);
-        Assert.That(character.DrawWithReshuffle(1, rng), Is.Zero);
-
-        character.ResetPhaseShuffleBudget();
-
-        Assert.That(character.DrawWithReshuffle(1, rng), Is.EqualTo(1), "?????????");
-    }
-
-    [Test]
     public void Empty_draw_pile_and_empty_graveyard_draws_nothing()
     {
         var character = CreateCharacter(deckSize: 0);
-        character.ResetPhaseShuffleBudget();
 
         Assert.That(character.DrawWithReshuffle(3, new HostRng(1, "combat.draw")), Is.Zero);
     }
@@ -218,7 +182,6 @@ public sealed class PlayerPhasePipelineTests
     {
         var character = CreateCharacter(deckSize: 6);
         var rng = new HostRng(seed, "combat.draw");
-        character.ResetPhaseShuffleBudget();
         character.DrawWithReshuffle(5, rng);
         DumpHandToGraveyard(character, 5);
         character.DrawWithReshuffle(5, rng);
@@ -230,12 +193,11 @@ public sealed class PlayerPhasePipelineTests
     #region ????
 
     [Test]
-    public void Pipeline_resets_shuffle_budget_at_phase_start()
+    public void Pipeline_can_reshuffle_after_already_reshuffling_in_the_previous_turn()
     {
         using var sim = BuildSimulation(deckSize: 2);
         var character = sim.PlayerTeam.Characters[0];
         var rng = new HostRng(1, "combat.draw");
-        character.ResetPhaseShuffleBudget();
         character.DrawWithReshuffle(2, rng);
         DumpHandToGraveyard(character, 2);
         character.DrawWithReshuffle(2, rng);
@@ -256,8 +218,8 @@ public sealed class PlayerPhasePipelineTests
         for (var index = 0; index < 4; index++)
         {
             Assert.That(sim.PlayerTeam.Characters[index].AvailableEnergy, Is.EqualTo(2), $"?? {index}");
-            Assert.That(HandCount(sim, index), Is.EqualTo(1), $"?? {index}");
         }
+        Assert.That(Enumerable.Range(0, 4).Sum(i => HandCount(sim, i)), Is.EqualTo(4));
     }
 
     #endregion

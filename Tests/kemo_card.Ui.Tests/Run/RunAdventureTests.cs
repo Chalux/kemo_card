@@ -20,44 +20,60 @@ public sealed class RunAdventureTests
 {
     #region 库存与指令
 
+    [TestCase("Potion")]
+    [TestCase("Consumable")]
+    public void Old_and_current_item_kinds_load_as_consumables(string kind)
+    {
+        var json = JsonSerializer.Serialize(new { kind });
+        var item = JsonSerializer.Deserialize<ItemDto>(json, ContentDefinitionJson.Options)!;
+        Assert.That(item.Kind, Is.EqualTo(EItemKind.Consumable));
+        Assert.That(JsonSerializer.Serialize(item, ContentDefinitionJson.Options), Does.Contain("\"Consumable\""));
+    }
+
     [Test]
-    public void Inventory_has_three_nonstacking_slots_unique_relics_and_checked_replacement()
+    public void Inventory_has_five_nonstacking_slots_unique_relics_and_checked_replacement()
     {
         var inventory = new CombatItemInventory();
         var potion = new ItemDto { Id = "potion" };
         var relic = new ItemDto { Id = "relic", Kind = EItemKind.Relic };
         Assert.That(inventory.TryAdd(relic), Is.True);
         Assert.That(inventory.TryAdd(relic), Is.False);
-        for (var i = 0; i < 3; i++) Assert.That(inventory.TryAdd(potion), Is.True);
+        for (var i = 0; i < 5; i++) Assert.That(inventory.TryAdd(potion), Is.True);
         Assert.That(inventory.TryAdd(potion), Is.False);
         Assert.That(inventory.TryAdd(potion, -1), Is.False);
-        Assert.That(inventory.TryAdd(potion, 3), Is.False);
+        Assert.That(inventory.TryAdd(potion, 5), Is.False);
         Assert.That(inventory.TryAdd(new ItemDto { Id = "other" }, 1), Is.True);
-        Assert.That(inventory.Potions, Is.EqualTo(new[] { "potion", "other", "potion" }));
-        Assert.That(inventory.RemovePotion(1, "potion"), Is.False);
-        Assert.That(inventory.RemovePotion(1, "other"), Is.True);
-        Assert.That(inventory.Potions[1], Is.Null);
+        Assert.That(inventory.Consumables, Is.EqualTo(new[] { "potion", "other", "potion", "potion", "potion" }));
+        Assert.That(inventory.RemoveConsumable(1, "potion"), Is.False);
+        Assert.That(inventory.RemoveConsumable(1, "other"), Is.True);
+        Assert.That(inventory.Consumables[1], Is.Null);
         Assert.That(inventory.TryAdd(potion, -1), Is.False, "invalid replacement must not index a free slot");
     }
 
-    [Test]
-    public void Potion_heals_shared_hp_without_energy_action_or_active_skill_cost()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Consumable_heals_shared_hp_without_energy_action_or_active_skill_cost(bool duringMarbleFlight)
     {
         var registry = Definitions();
         var character = CharacterBattleInstance.CreateForTests("c", new Dictionary<string, float>
         { [AttributeIds.MaxHealth] = 100, [AttributeIds.MaxEnergy] = 5, [AttributeIds.InitialEnergy] = 5 });
         using var sim = new CombatSimulation(new PlayerTeamState([character], 100), new EnemyTeamState([new EnemyUnit("e", "enemy", 100)]),
             new CombatRuleEngine([]), registry, initialPhase: ECombatPhase.Player);
-        sim.Items.TryAdd(registry.Store.Items["potion"]);
+        sim.Items.TryAdd(registry.Store.Items["potion"], 4);
         DamagePipeline.Settle(sim, new(ECombatSide.Enemy, 0), new(ECombatSide.Player, 0), 40);
         var energy = character.CurrentEnergy;
-        var command = new UsePotionCommand(0, "potion", 0, []);
+        if (duringMarbleFlight)
+        {
+            Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+            Assert.That(sim.TryApply(new LaunchMarbleCommand(1.35f)).Success, Is.True);
+            Assert.That(sim.CanUseItemInCurrentPhase(new ItemDto { Id = "restricted", CardPhaseOnly = true }), Is.False);
+        }
+        var command = new UseConsumableCommand(4, "potion", 0, []);
         Assert.That(sim.TryApply(command).Success, Is.True);
         Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(80));
         Assert.That(character.CurrentEnergy, Is.EqualTo(energy));
-        Assert.That(character.HasActed, Is.False);
         Assert.That(character.SkillCounter, Is.Zero);
-        Assert.That(sim.Items.Potions[0], Is.Null);
+        Assert.That(sim.Items.Consumables[4], Is.Null);
         Assert.That(sim.TryApply(command).Success, Is.False);
     }
 
@@ -69,14 +85,14 @@ public sealed class RunAdventureTests
         using var sim = new CombatSimulation(new PlayerTeamState([character], 100), new EnemyTeamState([new EnemyUnit("e", "enemy", 100)]),
             new CombatRuleEngine([]), registry, initialPhase: ECombatPhase.Player);
         sim.Items.TryAdd(registry.Store.Items["potion"]);
-        Assert.That(sim.TryApply(new UsePotionCommand(0, "wrong", 0, [])).Success, Is.False);
-        Assert.That(sim.TryApply(new UsePotionCommand(0, "potion", 0, [new(ECombatSide.Enemy, 0)])).Success, Is.False);
-        Assert.That(sim.Items.Potions[0], Is.EqualTo("potion"));
+        Assert.That(sim.TryApply(new UseConsumableCommand(0, "wrong", 0, [])).Success, Is.False);
+        Assert.That(sim.TryApply(new UseConsumableCommand(0, "potion", 0, [new(ECombatSide.Enemy, 0)])).Success, Is.False);
+        Assert.That(sim.Items.Consumables[0], Is.EqualTo("potion"));
         using var enemyPhase = new CombatSimulation(new PlayerTeamState([character], 100), new EnemyTeamState([new EnemyUnit("e", "enemy", 100)]),
             new CombatRuleEngine([]), registry, initialPhase: ECombatPhase.Enemy);
         enemyPhase.Items.TryAdd(registry.Store.Items["potion"]);
-        Assert.That(enemyPhase.TryApply(new UsePotionCommand(0, "potion", 0, [])).Success, Is.False);
-        Assert.That(enemyPhase.Items.Potions[0], Is.EqualTo("potion"));
+        Assert.That(enemyPhase.TryApply(new UseConsumableCommand(0, "potion", 0, [])).Success, Is.False);
+        Assert.That(enemyPhase.Items.Consumables[0], Is.EqualTo("potion"));
     }
 
     #endregion
@@ -122,9 +138,7 @@ public sealed class RunAdventureTests
             Assert.That(service.OpenNode(0, step), Is.False);
             Assert.That(service.OpenNode(1, 1), Is.False, "an open node must be resolved or left first");
             Assert.That(service.CanStartBoss, Is.False);
-            var relic = service.CurrentVisibleReward?.RelicIds.FirstOrDefault(id => service.CanClaimVisibleReward(id));
-            Assert.That(relic is not null ? service.ClaimVisibleReward(relic) :
-                service.CanClaimVisibleReward() ? service.ClaimVisibleReward() : service.LeaveNode(), Is.True);
+            Assert.That(service.CanClaimVisibleReward() ? service.ClaimVisibleReward() : service.LeaveNode(), Is.True);
         }
         Assert.That(service.OpenNode(1, 0), Is.False);
         Assert.That(service.OpenNode(1, 2), Is.False);
@@ -171,19 +185,122 @@ public sealed class RunAdventureTests
     }
 
     [Test]
+    public void Legacy_event_with_only_relic_options_can_be_left_without_granting_a_reward()
+    {
+        var controller = new RunController(new RunMod { StoryId = "story" });
+        var service = new RunAdventureService(controller, Definitions());
+        service.EnsureMap();
+        service.SelectBranch(0);
+        service.OpenNode(0, 0);
+        var options = service.CurrentEvent!.Options;
+        options.Clear();
+        options.Add(new() { OptionId = "claim", ItemRewards = ["relic"] });
+        options.Add(new() { OptionId = "show", Conditions = [new() { Kind = "HasItem", Params = new() { ["itemId"] = "relic" } }] });
+
+        Assert.That(options.Any(service.IsVisibleOption), Is.False);
+        Assert.That(service.ChooseOption("claim"), Is.False);
+        Assert.That(service.GrantItem("relic"), Is.False);
+        Assert.That(service.State.Items.Relics, Is.Empty);
+        Assert.That(service.LeaveNode(), Is.True);
+        Assert.That(service.OpenNode(0, 0), Is.False);
+    }
+
+    [Test]
+    public void Event_with_only_unexecutable_options_can_be_left()
+    {
+        var controller = new RunController(new RunMod { StoryId = "story", SharedGold = 50 });
+        var service = new RunAdventureService(controller, Definitions());
+        service.EnsureMap();
+        service.SelectBranch(0);
+        service.OpenNode(0, 0);
+        var options = service.CurrentEvent!.Options;
+        options.Clear();
+        // 分页选项当前不可执行（NextPageIndex 尚未实现）；它仍然可见，旧逻辑会同时禁用按钮并拒绝离开。
+        options.Add(new() { OptionId = "page", LabelId = "page", NextPageIndex = 0 });
+
+        Assert.That(service.IsVisibleOption(options[0]), Is.True);
+        Assert.That(service.CanChoose(options[0]), Is.False);
+        Assert.That(service.CanLeaveCurrentEvent, Is.True);
+        Assert.That(service.LeaveNode(), Is.True);
+        Assert.That(controller.State.Map!.CurrentNode!.Completed, Is.True);
+    }
+
+    [Test]
+    public void Event_with_an_unmet_requirement_can_be_left()
+    {
+        var controller = new RunController(new RunMod { StoryId = "story" });
+        var service = new RunAdventureService(controller, Definitions());
+        service.EnsureMap();
+        service.SelectBranch(0);
+        service.OpenNode(0, 0);
+
+        Assert.That(service.CurrentEvent, Is.Not.Null);
+        Assert.That(service.CanChoose(service.CurrentEvent!.Options.Single()), Is.False, "金币不足");
+        Assert.That(service.CanLeaveCurrentEvent, Is.True);
+        Assert.That(service.LeaveNode(), Is.True);
+    }
+
+    [Test]
     public void Failed_event_inventory_grant_is_atomic_and_declining_new_potion_completes_event()
     {
         var controller = new RunController(new RunMod { StoryId = "story", SharedGold = 50 });
         var service = new RunAdventureService(controller, Definitions());
         service.EnsureMap(); service.SelectBranch(0); service.OpenNode(0, 0);
-        for (var i = 0; i < 3; i++) controller.State.Items.TryAdd(service.Store.Items["potion"]);
+        for (var i = 0; i < 5; i++) controller.State.Items.TryAdd(service.Store.Items["potion"]);
         Assert.That(service.ChooseOption("take"), Is.False);
         Assert.That(controller.State.SharedGold, Is.EqualTo(50));
         Assert.That(controller.State.Map!.Position, Is.Zero);
-        Assert.That(service.ChooseOption("take", declinePotions: true), Is.True);
+        Assert.That(service.ChooseOption("take", declineConsumables: true), Is.True);
         Assert.That(controller.State.SharedGold, Is.EqualTo(60));
-        Assert.That(controller.State.Items.Potions.All(id => id == "potion"), Is.True);
+        Assert.That(controller.State.Items.Consumables.All(id => id == "potion"), Is.True);
         Assert.That(controller.State.Map.Nodes.Single(node => node.Branch == 0 && node.Step == 0).Completed, Is.True);
+    }
+
+    [Test]
+    public void Event_rewarding_two_consumables_into_one_free_slot_can_complete_with_one_replacement()
+    {
+        var controller = new RunController(new RunMod { StoryId = "story", SharedGold = 50 });
+        var service = new RunAdventureService(controller, Definitions());
+        service.EnsureMap(); service.SelectBranch(0); service.OpenNode(0, 0);
+        for (var i = 0; i < 4; i++)
+            controller.State.Items.TryAdd(service.Store.Items["potion"]);
+
+        var option = service.CurrentEvent!.Options.Single();
+        option.ItemRewards.Clear();
+        option.ItemRewards.Add("potion");
+        option.ItemRewards.Add("potion");
+
+        Assert.That(service.CanChoose(option), Is.True, "容量不足不能禁用选项，否则事件节点无法离开");
+        Assert.That(service.NeedsConsumableReplacement(option), Is.True);
+        Assert.That(service.ChooseOption(option.OptionId), Is.False, "直接提交必须原子失败");
+        Assert.That(
+            controller.State.Items.Consumables.Count(id => id is null),
+            Is.EqualTo(1),
+            "失败的提交不得改变库存");
+
+        Assert.That(service.ChooseOption(option.OptionId, 0), Is.True, "替换一个槽后两件奖励都放得下");
+        Assert.That(controller.State.Items.Consumables.All(id => id == "potion"), Is.True);
+        Assert.That(controller.State.Map!.CurrentNode!.Completed, Is.True);
+    }
+
+    [Test]
+    public void Event_rewarding_two_consumables_into_a_full_inventory_supports_multiple_replacements()
+    {
+        var controller = new RunController(new RunMod { StoryId = "story", SharedGold = 50 });
+        var service = new RunAdventureService(controller, Definitions());
+        service.EnsureMap(); service.SelectBranch(0); service.OpenNode(0, 0);
+        for (var i = 0; i < 5; i++)
+            controller.State.Items.TryAdd(service.Store.Items["potion"]);
+
+        var option = service.CurrentEvent!.Options.Single();
+        option.ItemRewards.Clear();
+        option.ItemRewards.Add("potion");
+        option.ItemRewards.Add("potion");
+
+        Assert.That(service.ChooseOption(option.OptionId, 0), Is.False, "满槽时一个替换位仍不够");
+        Assert.That(service.ChooseOption(option.OptionId, new[] { 0, 1 }), Is.True);
+        Assert.That(controller.State.Items.Consumables.All(id => id == "potion"), Is.True);
+        Assert.That(controller.State.Map!.CurrentNode!.Completed, Is.True);
     }
 
     #endregion
@@ -196,21 +313,21 @@ public sealed class RunAdventureTests
         var controller = new RunController(new RunMod { StoryId = "story", SharedGold = 50 });
         var service = new RunAdventureService(controller, Definitions());
         service.EnsureMap(); service.SelectBranch(0); service.OpenNode(0, 0); service.ChooseOption("take"); service.OpenNode(0, 1);
-        for (var i = 0; i < 2; i++) controller.State.Items.TryAdd(service.Store.Items["potion"]);
+        for (var i = 0; i < 4; i++) controller.State.Items.TryAdd(service.Store.Items["potion"]);
         var before = controller.State.SharedGold;
         Assert.That(service.Buy(0), Is.False);
         Assert.That(controller.State.SharedGold, Is.EqualTo(before));
-        Assert.That(service.Buy(0, 1), Is.True);
+        Assert.That(service.Buy(0, 4), Is.True);
         Assert.That(controller.State.SharedGold, Is.EqualTo(before - 10));
-        Assert.That(service.Buy(0, 1), Is.False);
+        Assert.That(service.Buy(0, 4), Is.False);
         var restored = new RunMod(); restored.RestoreFrom(controller.State.ToDto());
         Assert.That(restored.Map!.CurrentNode!.Offers[0].Sold, Is.True);
-        Assert.That(restored.Items.Potions, Is.EqualTo(controller.State.Items.Potions));
-        Assert.That(service.Buy(1), Is.True);
-        Assert.That(controller.State.Items.Relics, Is.EqualTo(new[] { "relic" }));
+        Assert.That(restored.Items.Consumables, Is.EqualTo(controller.State.Items.Consumables));
+        Assert.That(service.Buy(1), Is.False);
+        Assert.That(controller.State.Items.Relics, Is.Empty);
         Assert.That(service.LeaveNode(), Is.True);
         Assert.That(service.OpenNode(0, 1), Is.True);
-        Assert.That(service.Buy(0, 1), Is.False, "reentry must not refresh sold goods");
+        Assert.That(service.Buy(0, 4), Is.False, "reentry must not refresh sold goods");
         restored.RestoreFrom(controller.State.ToDto());
         var restoredService = new RunAdventureService(new RunController(restored), Definitions());
         Assert.That(restoredService.LeaveNode(), Is.True);
@@ -230,13 +347,13 @@ public sealed class RunAdventureTests
         var service = new RunAdventureService(controller, Definitions()); service.EnsureMap();
         controller.State.Items.TryAdd(service.Store.Items["potion"]);
         var snapshot = controller.State.ToDto();
-        service.SelectBranch(1); service.OpenNode(1, 0); controller.State.Items.RemovePotion(0);
+        service.SelectBranch(1); service.OpenNode(1, 0); controller.State.Items.RemoveConsumable(0);
         Assert.That(snapshot.Map!.SelectedBranch, Is.EqualTo(-1));
-        Assert.That(snapshot.Potions[0], Is.EqualTo("potion"));
+        Assert.That(snapshot.Consumables[0], Is.EqualTo("potion"));
         var normalized = new RunDto { SchemaVersion = 2 }.Normalize();
-        Assert.That(normalized.SchemaVersion, Is.EqualTo(RunDto.CurrentSchemaVersion));
+        Assert.That(normalized.SchemaVersion, Is.EqualTo(2));
         var old = new RunMod(); old.RestoreFrom(normalized);
-        Assert.That(old.Items.Potions, Is.EqualTo(new string?[] { null, null, null }));
+        Assert.That(old.Items.Consumables, Is.EqualTo(new string?[5]));
         Assert.That(old.Items.Relics, Is.Empty);
     }
 
@@ -245,12 +362,11 @@ public sealed class RunAdventureTests
     {
         var registry = Definitions();
         var controller = new RunController(new RunMod { StoryId = "story", Phase = ERunPhase.Reward });
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = new CharacterInstance(new CharacterDto { Id = $"hero{i}", Cards = ["hp"] });
             controller.State.AddToCharacterPool(character);
             controller.State.PlayerStates[i].SetActiveCharacter(character);
-            controller.State.AssignSlotInternal(i, "local");
         }
         controller.State.Items.TryAdd(registry.Store.Items["potion"]);
         controller.State.Items.TryAdd(registry.Store.Items["relic"]);
@@ -264,10 +380,10 @@ public sealed class RunAdventureTests
         };
         var sim = controller.StartBattle(registry, new HostRng(1, "battle"), 1, "battle");
         Assert.That(sim.PlayerTeam.Characters.All(character => character.Asc.GetCurrentValue(AttributeIds.Shield) == 7), Is.True);
-        Assert.That(sim.TryApply(new UsePotionCommand(0, "potion", 0, [])).Success, Is.True);
-        Assert.That(controller.State.Items.Potions[0], Is.Null);
+        Assert.That(sim.TryApply(new UseConsumableCommand(0, "potion", 0, [])).Success, Is.True);
+        Assert.That(controller.State.Items.Consumables[0], Is.Null);
         controller.EndBattle(false);
-        Assert.That(controller.State.Items.Potions[0], Is.EqualTo("potion"));
+        Assert.That(controller.State.Items.Consumables[0], Is.EqualTo("potion"));
         Assert.That(controller.State.Items.Relics, Is.EqualTo(new[] { "relic" }));
         Assert.That(controller.State.Map!.Position, Is.Zero);
         Assert.That(controller.State.Map.SelectedBranch, Is.EqualTo(1));

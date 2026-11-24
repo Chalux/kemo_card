@@ -14,8 +14,7 @@
       "MaxHealth": 40
     }
   },
-  "role": "Controller",
-  "priority": 8,
+  "role": "Attack",
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

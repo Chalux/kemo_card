@@ -9,9 +9,9 @@
 **设计阶段：** grilling 会话已完成全部决策（见 `../specs/2026-08-04-run-save-continue-design.md` 与 `../specs/2026-08-04-toast-component-design.md`）。代码未开始。
 
 **权威规格:**
-- [run-save-continue-design](../../../superpowers/specs/2026-08-04-run-save-continue-design.md)（本任务权威）
-- [toast-component-design](../../../superpowers/specs/2026-08-04-toast-component-design.md)
-- [multiplayer-save-impact](../../../superpowers/specs/2026-08-04-multiplayer-save-impact.md)
+- [run-save-continue-design](../specs/2026-08-04-run-save-continue-design.md)（本任务权威）
+- [toast-component-design](../specs/2026-08-04-toast-component-design.md)
+- [multiplayer-save-impact](../specs/2026-08-04-multiplayer-save-impact.md)
 - [run-mod-design](../../../superpowers/specs/2026-06-22-run-mod-design.md)
 - [ui-manager-design](../../../superpowers/specs/2026-05-15-ui-manager-design.md)
 

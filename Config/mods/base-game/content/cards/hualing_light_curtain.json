@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.hualing_light_curtain.name",
   "element": 2,
-  "role": "Controller",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "MagicDefense": 1
     }
   },
-  "priority": 13,
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

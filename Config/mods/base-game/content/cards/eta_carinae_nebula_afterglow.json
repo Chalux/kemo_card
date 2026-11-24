@@ -15,8 +15,7 @@
       "HealPower": 2
     }
   },
-  "role": "Elementist",
-  "priority": 8,
+  "role": "Attack",
   "cardType": "Healing",
   "targetSide": "Ally",
   "targetScope": "Team",

@@ -1,7 +1,7 @@
 {
   "displayNameId": "char.cupid.name",
   "element": "Blue",
-  "role": "Healer",
+  "role": "Support",
   "race": [
     "God"
   ],
@@ -22,19 +22,15 @@
   "initialEnergy": 3,
   "passives": [
     {
-      "requiredPotential": 0,
       "buffId": "cupid_passive_p1"
     },
     {
-      "requiredPotential": 10,
       "buffId": "cupid_passive_p2"
     },
     {
-      "requiredPotential": 30,
       "buffId": "cupid_passive_p3"
     },
     {
-      "requiredPotential": 50,
       "buffId": "cupid_passive_p4"
     }
   ],

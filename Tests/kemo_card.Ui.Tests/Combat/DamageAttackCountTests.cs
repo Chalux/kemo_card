@@ -365,7 +365,6 @@ public sealed class DamageAttackCountTests
                     TargetSide = ETargetSide.Enemy,
                     TargetScope = ETargetScope.Single,
                     TargetCount = 1,
-                    Priority = 1,
                 },
             },
             effects: new Dictionary<string, EffectDto>(StringComparer.Ordinal)

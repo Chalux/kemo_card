@@ -4,7 +4,7 @@
   "race": [
     "God"
   ],
-  "role": "Guard",
+  "role": "Defense",
   "tags": [
     "starter"
   ],
@@ -29,19 +29,15 @@
   "displayNameId": "char.zeus.name",
   "passives": [
     {
-      "requiredPotential": 0,
       "buffId": "zeus_passive_p1"
     },
     {
-      "requiredPotential": 10,
       "buffId": "zeus_passive_p2"
     },
     {
-      "requiredPotential": 30,
       "buffId": "zeus_passive_p3"
     },
     {
-      "requiredPotential": 50,
       "buffId": "zeus_passive_p4"
     }
   ]

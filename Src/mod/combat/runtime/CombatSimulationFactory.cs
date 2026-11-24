@@ -32,9 +32,9 @@ public static class CombatSimulationFactory
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
 
-        if (party.Count != 4)
+        if (party.Count != CombatConstants.SlotCount)
         {
-            error = "队伍必须包含 4 名角色。";
+            error = $"队伍必须包含 {CombatConstants.SlotCount} 名角色。";
             return null;
         }
 
@@ -73,7 +73,7 @@ public static class CombatSimulationFactory
         var battleCharacters = new CharacterBattleInstance[party.Count];
         for (var i = 0; i < party.Count; i++)
         {
-            var battleInstance = CharacterBattleInstance.TryCreate(party[i], definitions, rng, out var memberError, obtainedCardIds);
+            var battleInstance = CharacterBattleInstance.FromLoadout(party[i], definitions, out var memberError, obtainedCardIds);
             if (battleInstance is null)
             {
                 error = memberError ?? "角色战斗实例创建失败。";
@@ -103,6 +103,7 @@ public static class CombatSimulationFactory
             battleCharacters,
             (int)MathF.Round(sharedMaxHp),
             teamAsc: playerTeamAsc);
+        playerTeam.CardPiles.ShuffleDrawPile(rng);
         var enemyTotalMaxHp = enemies.Sum(enemy => enemy.Asc.GetCurrentValue(AttributeIds.MaxHealth));
         var enemyTeamAsc = ascFactory.CreateTeamAsc(definitions.Store.Attributes, enemyTotalMaxHp);
         var enemyTeam = new EnemyTeamState(enemies, teamAsc: enemyTeamAsc);

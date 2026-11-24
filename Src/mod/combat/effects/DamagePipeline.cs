@@ -22,9 +22,12 @@ namespace KemoCard.Mod.Combat.Effects;
 internal static class DamagePipeline
 {
     /// <summary>统一结算入口：未截断数额 → 规则/护盾 → 生命写入 → 命中与实际损血事件。</summary>
+    /// <param name="absorbTargetShield">目标（敌方）护盾是否按 1:1 抵扣本包伤害。
+    /// 缺省 false，保持既有卡牌 / 充能球 / 敌方伤害口径不变；弹珠普攻显式启用。</param>
     public static DamageSettlementResult Settle(
         CombatSimulation simulation, CombatTargetRef source, CombatTargetRef target, float amount,
-        string? effectId = null, EDamageKind kind = EDamageKind.Physical, EElement element = EElement.None)
+        string? effectId = null, EDamageKind kind = EDamageKind.Physical, EElement element = EElement.None,
+        bool absorbTargetShield = false)
     {
         var asc = CombatGasBridge.ResolveTargetAsc(simulation, target);
         if (asc is null || !float.IsFinite(amount) || amount < 0f)
@@ -42,6 +45,14 @@ internal static class DamagePipeline
         var shieldBefore = asc.GetCurrentValue(AttributeIds.Shield);
         var finalAmount = RunBefore(simulation, source, target, amount, effectId, kind, element);
         var absorbed = MathF.Max(0f, shieldBefore - asc.GetCurrentValue(AttributeIds.Shield));
+        if (absorbTargetShield && finalAmount > 0f && target.Side == ECombatSide.Enemy)
+        {
+            // 敌方护盾不在 RunBefore 的玩家分槽口径里，按调用方要求单独抵扣。
+            var consumed = asc.Aggregator.ConsumeCurrentValue(AttributeIds.Shield, finalAmount);
+            finalAmount -= consumed;
+            absorbed += consumed;
+        }
+
         float loss;
         var advanceLifeBar = false;
         if (target.Side == ECombatSide.Player)
@@ -67,6 +78,67 @@ internal static class DamagePipeline
         if (advanceLifeBar)
             simulation.EnemyLifeBars.PrepareAction(target.Index);
         return new DamageSettlementResult(amount, absorbed, loss, MathF.Max(0f, finalAmount - loss));
+    }
+
+    /// <summary>
+    /// 无副作用的伤害预演：与 <see cref="Settle"/> 共用<b>规则修正 → 免疫 → 护盾 → 生命损失</b>口径，
+    /// 但不写生命 / 护盾、不发表现事件、不触发致命伤 / 受击钩子、不消耗效果预算。
+    /// </summary>
+    /// <remarks>
+    /// 规则的纯数值修正作用于本地伤害包；只有真正提交伤害才运行受击钩子。
+    /// </remarks>
+    /// <param name="targetShieldOverride">预演用的目标护盾余量；<c>null</c> 时读取目标当前护盾
+    /// （追打预演需要传入基础普攻抵扣后的剩余量）。</param>
+    /// <param name="targetHealthOverride">预演用的目标当前生命；<c>null</c> 时读取目标当前值
+    /// （连续追打预演需要传入上一包之后的生命）。</param>
+    internal static DamageSettlementResult Preview(
+        CombatSimulation simulation,
+        CombatTargetRef source,
+        CombatTargetRef target,
+        float amount,
+        EDamageKind kind = EDamageKind.Physical,
+        EElement element = EElement.None,
+        bool absorbTargetShield = false,
+        float? targetShieldOverride = null,
+        float? targetHealthOverride = null)
+    {
+        ArgumentNullException.ThrowIfNull(simulation);
+
+        var asc = CombatGasBridge.ResolveTargetAsc(simulation, target);
+        if (asc is null || !float.IsFinite(amount) || amount <= 0f)
+            return default;
+
+        var packet = CreatePacket(source, target, amount, null, kind, element);
+        simulation.Rules.PreviewDamage(simulation.CreateContext(), ref packet);
+        if (IsImmune(simulation, target))
+            return default;
+
+        var packetAmount = MathF.Max(0f, packet.Amount);
+        var shield = targetShieldOverride ?? asc.GetCurrentValue(AttributeIds.Shield);
+        if (!float.IsFinite(shield) || shield < 0f)
+            shield = 0f;
+
+        var absorbed = 0f;
+        if (SharedHpSettlement.IsPlayerSlot(target))
+        {
+            if (source.Side == ECombatSide.Enemy)
+                absorbed = MathF.Min(shield, packetAmount);
+        }
+        else if (absorbTargetShield && target.Side == ECombatSide.Enemy)
+        {
+            absorbed = MathF.Min(shield, packetAmount);
+        }
+
+        var afterShield = MathF.Max(0f, packetAmount - absorbed);
+        var health = targetHealthOverride ??
+            (SharedHpSettlement.IsPlayerSlot(target) || SharedHpSettlement.IsPlayerTeamLedger(target)
+                ? simulation.PlayerTeam.SharedHpExact
+                : asc.GetCurrentValue(AttributeIds.Health));
+        if (!float.IsFinite(health) || health < 0f)
+            health = 0f;
+
+        var loss = MathF.Min(health, afterShield);
+        return new DamageSettlementResult(amount, absorbed, loss, afterShield - loss);
     }
 
     /// <summary>

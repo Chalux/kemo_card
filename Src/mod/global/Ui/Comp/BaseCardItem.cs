@@ -42,6 +42,9 @@ public partial class BaseCardItem : Control
     /// <summary>长按回调（<see cref="EnableLongPress"/> 为 true 时生效）；长按后不再触发单击。</summary>
     public Action<BaseCardItem, CardDto>? LongPressed { get; set; }
 
+    /// <summary>宿主可选择提供 Godot 原生拖放数据；拖过阈值即结束本次点击和长按。</summary>
+    public Func<CardDto, Variant>? DragRequested { get; set; }
+
     private Tween? _longPressTween;
     private bool _pressed;
     private bool _longPressFired;
@@ -154,6 +157,24 @@ public partial class BaseCardItem : Control
                 AcceptEvent();
                 break;
         }
+    }
+
+    public override Variant _GetDragData(Vector2 atPosition)
+    {
+        if (DragRequested is null || _card is null || !_pressed || _longPressFired)
+            return default;
+
+        // 先问宿主是否接受这次拖拽：被拒绝（未到出牌阶段 / 正在选弃牌 / 输入锁定）时
+        // 保留 _pressed，鼠标抬起仍按普通点击处理；否则拖拽阈值一过，点击就被吞掉。
+        var data = DragRequested(_card);
+        if (data.VariantType == Variant.Type.Nil)
+            return default;
+
+        _pressed = false;
+        CancelLongPressDelay();
+        CancelHoverTipDelay();
+        HideTips();
+        return data;
     }
 
     private void ScheduleLongPress()

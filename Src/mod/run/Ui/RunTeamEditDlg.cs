@@ -15,7 +15,7 @@ using KemoCard.Mod.Run.Team;
 namespace KemoCard.Mod.Run.Ui;
 
 /// <summary>
-/// 队伍编辑：顶部 4 个槽位选项卡，左"当前上阵"、中"角色池"、右"详细信息预览"
+/// 队伍编辑：顶部出战位选项卡，左"当前上阵"、中"角色池"、右"详细信息预览"
 /// （立绘 + 身份行 + 属性 / 技能两栏各占半行宽、各自滚动 + 底部卡组缩略）。
 /// </summary>
 /// <remarks>
@@ -46,11 +46,6 @@ public partial class RunTeamEditDlg : BaseDlg
     [Export] private Label? _lblDeckCaption;
     [Export] private VirtualList? _deckStrip;
     [Export] private Label? _lblStatus;
-    [Export] private Label? _lblPotentialPool;
-    [Export] private Label? _lblSlotPotential;
-    [Export] private LineEdit? _potentialInput;
-    [Export] private Button? _btnAllocate;
-    [Export] private Button? _btnDeduct;
 
     private RunTeamEditService? _service;
     private int _slotIndex;
@@ -73,16 +68,6 @@ public partial class RunTeamEditDlg : BaseDlg
         if (_btnUnassign != null)
         {
             OnClicks(_btnUnassign, OnUnassign);
-        }
-
-        if (_btnAllocate != null)
-        {
-            OnClicks(_btnAllocate, OnAllocate);
-        }
-
-        if (_btnDeduct != null)
-        {
-            OnClicks(_btnDeduct, OnDeduct);
         }
 
         if (_slotTabs != null)
@@ -196,7 +181,6 @@ public partial class RunTeamEditDlg : BaseDlg
 
         RefreshSlotTabs();
         RefreshCurrentSlot();
-        RefreshPotential();
         RefreshPool();
         RefreshPreview();
     }
@@ -448,11 +432,6 @@ public partial class RunTeamEditDlg : BaseDlg
         _rtActiveSkill.Text = string.Join("\n\n", entries);
     }
 
-    /// <summary>
-    /// 被动区：潜能门槛 + 解锁状态 + 描述（文案口径 <see cref="PassiveTextBuilder"/>）。解锁状态由
-    /// <see cref="RunTeamEditService.GetPassives"/> 判定（与开战挂载共用同一处），界面不自行推断；
-    /// 没有被动的角色整块隐藏。
-    /// </summary>
     private void BindPassives(string? instanceId)
     {
         if (_rtPassives is null)
@@ -460,7 +439,7 @@ public partial class RunTeamEditDlg : BaseDlg
             return;
         }
 
-        IReadOnlyList<PassiveView> passives = instanceId is null || _service is null
+        IReadOnlyList<string> passives = instanceId is null || _service is null
             ? []
             : _service.GetPassives(instanceId);
 
@@ -471,11 +450,7 @@ public partial class RunTeamEditDlg : BaseDlg
 
         _rtPassives.Text = string.Join(
             "\n\n",
-            passives.Select(passive => PassiveTextBuilder.Entry(
-                passive.RequiredPotential,
-                passive.Unlocked,
-                string.IsNullOrWhiteSpace(passive.DescriptionId) ? "" : Localization.Tr(passive.DescriptionId),
-                Localization.Tr)));
+            passives.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => Localization.Tr(id)));
     }
 
     /// <summary>
@@ -509,83 +484,7 @@ public partial class RunTeamEditDlg : BaseDlg
     {
         _slotIndex = (int)tab;
         RefreshCurrentSlot();
-        RefreshPotential();
         RefreshPreview();
-    }
-
-    /// <summary>
-    /// 潜能区：团队池可用 + 当前槽位已分配（进度值）；按钮在不可编辑或对应方向没有额度时禁用。
-    /// 数额用输入框，超额的请求由服务层拒绝并回报可翻译的原因键。
-    /// </summary>
-    private void RefreshPotential()
-    {
-        if (_service is null)
-        {
-            return;
-        }
-
-        var available = _service.AvailablePotential;
-        var allocated = _service.SlotAllocatedPotential(_slotIndex);
-        if (_lblPotentialPool != null)
-        {
-            _lblPotentialPool.Text = string.Format(Localization.Tr("UI_TEAM_POTENTIAL_POOL_FORMAT"), available);
-        }
-
-        if (_lblSlotPotential != null)
-        {
-            _lblSlotPotential.Text = string.Format(Localization.Tr("UI_TEAM_POTENTIAL_SLOT_FORMAT"), allocated);
-        }
-
-        var editable = _service.CanEdit;
-        if (_btnAllocate != null)
-        {
-            _btnAllocate.Disabled = !editable || available <= 0;
-        }
-
-        if (_btnDeduct != null)
-        {
-            _btnDeduct.Disabled = !editable || allocated <= 0;
-        }
-
-        if (_potentialInput != null)
-        {
-            _potentialInput.Editable = editable;
-        }
-    }
-
-    private void OnAllocate() => ApplyPotential(allocate: true);
-
-    private void OnDeduct() => ApplyPotential(allocate: false);
-
-    private void ApplyPotential(bool allocate)
-    {
-        if (_service is null)
-        {
-            return;
-        }
-
-        if (!TryGetPotentialAmount(out var amount))
-        {
-            SetStatus(false, Localization.Tr("UI_TEAM_POTENTIAL_INVALID"));
-            return;
-        }
-
-        var result = allocate
-            ? _service.AllocatePotential(_slotIndex, amount)
-            : _service.DeductPotential(_slotIndex, amount);
-
-        SetStatus(result.Ok, result.Ok
-            ? string.Format(
-                Localization.Tr(allocate ? "UI_TEAM_POTENTIAL_ALLOCATED_FORMAT" : "UI_TEAM_POTENTIAL_DEDUCTED_FORMAT"),
-                amount)
-            : Localization.Tr(result.MessageKey));
-        RefreshAll();
-    }
-
-    private bool TryGetPotentialAmount(out int amount)
-    {
-        amount = 0;
-        return int.TryParse(_potentialInput?.Text?.Trim(), out amount) && amount > 0;
     }
 
     private void OnUnassign()

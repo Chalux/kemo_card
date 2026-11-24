@@ -16,8 +16,7 @@
       "MaxHealth": 20
     }
   },
-  "role": "Healer",
-  "priority": 7,
+  "role": "Support",
   "cardType": "Weak",
   "targetSide": "Enemy",
   "targetScope": "All",

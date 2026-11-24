@@ -18,5 +18,5 @@
     "potion",
     "healing"
   ],
-  "kind": "Potion"
+  "kind": "Consumable"
 }

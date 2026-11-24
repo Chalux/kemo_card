@@ -42,7 +42,7 @@ public sealed class EinsteinContentTests
         Assert.That(definitions.Characters.TryGetValue(CharacterId, out var einstein), Is.True, "爱因斯坦未随内容出货");
         Assert.That(einstein!.DisplayNameId, Is.EqualTo("char.einstein.name"));
         Assert.That(einstein.Element, Is.EqualTo(EElement.Yellow));
-        Assert.That(einstein.Role, Is.EqualTo(ERole.Wizard));
+        Assert.That(einstein.Role, Is.EqualTo(ERole.Attack));
         Assert.That(einstein.Race, Is.EqualTo(ERace.Human | ERace.Academic), "人类 + 学术");
         Assert.That(einstein.MaxEnergy, Is.EqualTo(8));
         Assert.That(einstein.InitialEnergy, Is.EqualTo(3));
@@ -56,15 +56,12 @@ public sealed class EinsteinContentTests
     }
 
     [Test]
-    public void Character_has_four_potential_passives_on_the_standard_tiers()
+    public void Character_has_four_passives_in_definition_order()
     {
         var definitions = BaseGameContent.Load();
         var einstein = definitions.Characters[CharacterId];
 
         Assert.That(einstein.Passives, Has.Count.EqualTo(4));
-        Assert.That(
-            einstein.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(
             einstein.Passives.Select(passive => passive.BuffId),
             Is.EqualTo(new[] { "einstein_passive_p1", "einstein_passive_p2", "einstein_passive_p3", "einstein_passive_p4" }));
@@ -163,7 +160,7 @@ public sealed class EinsteinContentTests
         {
             Assert.That(definitions.Cards.TryGetValue(cardId, out var card), Is.True, $"{cardId} 未随内容出货");
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Yellow), $"{cardId} 是黄属性（整数位掩码 8）");
-            Assert.That(card.Role, Is.EqualTo(ERole.Wizard), $"{cardId} 职业跟随角色");
+            Assert.That(card.Role, Is.EqualTo(ERole.Attack), $"{cardId} 职业跟随角色");
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.CardGroupId, Is.Null, "无升级链");
@@ -183,7 +180,6 @@ public sealed class EinsteinContentTests
         Assert.That(card.CostType, Is.EqualTo(ECostType.Energy));
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.CardType.ToString(), Is.EqualTo(cardType));
-        Assert.That(card.Priority, Is.EqualTo(priority));
     }
 
     [Test]
@@ -361,20 +357,21 @@ public sealed class EinsteinContentTests
         Assert.That(caster.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(before + 12f).Within(0.001f));
     }
 
-    /// <summary>
-    /// 光电效应：30 + 225% 魔攻。魔攻 40 → 30 + 90 = 120 点；段数 = 当前连携参与人数（此处只出 1 张卡 → 1 段）。
-    /// 同样叠加一次普攻（40 点）。
-    /// </summary>
     [Test]
-    public void Photoelectric_deals_thirty_plus_two_hundred_twenty_five_percent_magic_attack()
+    public void Photoelectric_spends_energy_and_goes_to_graveyard_without_dealing_damage()
     {
         using var sim = BuildPlayerPhase(PhotoelectricCard);
+        var caster = sim.PlayerTeam.Characters[0];
+        var energy = caster.AvailableEnergy;
+        var hp = enemy(sim).CurrentHp;
+        var instanceId = caster.HandSlots[0].RuntimeInstanceId;
 
-        MarkAndExecute(sim, PhotoelectricCard, [Enemy(0)]);
+        var result = sim.TryApply(new PlayCardCommand(0, 0, [Enemy(0)], instanceId));
 
-        Assert.That(
-            enemy(sim).Asc.GetCurrentValue(AttributeIds.Health),
-            Is.EqualTo(500f - TotalDamage(120f)).Within(0.001f));
+        Assert.That(result.Success, Is.True, result.Error);
+        Assert.That(caster.AvailableEnergy, Is.EqualTo(energy - 5));
+        Assert.That(caster.Graveyard.Single().RuntimeInstanceId, Is.EqualTo(instanceId));
+        Assert.That(enemy(sim).CurrentHp, Is.EqualTo(hp));
     }
 
     /// <summary>玻色-爱因斯坦凝聚：自身挂 buff 并获得 1 个黄球。</summary>
@@ -608,7 +605,8 @@ public sealed class EinsteinContentTests
         var marked = sim.TryApply(new PlayCardCommand(0, slotIndex, targets));
         Assert.That(marked.Success, Is.True, marked.Error);
 
-        sim.TransitionTo(ECombatPhase.CardExecution);
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        MarblePhaseTests.ShootQueuedBalls(sim, 1.35f);
         sim.AdvancePhase();
     }
 

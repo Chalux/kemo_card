@@ -4,10 +4,10 @@ using KemoCard.Mod.Combat.Runtime;
 
 namespace KemoCard.Mod.Combat.StateMachine;
 
-/// <summary>指令进入费用与队列写入前的状态、内容及目标校验。</summary>
+/// <summary>出牌扣费前的状态、内容及目标校验。</summary>
 internal static class CombatCommandValidator
 {
-    public static CombatApplyResult ValidateCardMark(CombatSimulation simulation, PlayCardCommand command,
+    public static CombatApplyResult ValidateCardPlay(CombatSimulation simulation, PlayCardCommand command,
         out CharacterBattleInstance character, out HandSlot slot, out CardDto card,
         out IReadOnlyList<CombatTargetRef> targets, out int paid)
     {
@@ -19,25 +19,21 @@ internal static class CombatCommandValidator
         if (!TryGetCharacter(simulation, command.CharacterIndex, out character, out var error))
             return new CombatApplyResult(false, error);
         if (character.IsSealed)
-            return new CombatApplyResult(false, "角色处于封印，无法标记卡牌。");
-        if (character.HasActed)
-            return new CombatApplyResult(false, "角色已确认，须先取消确认才能标记卡牌。");
+            return new CombatApplyResult(false, "角色处于封印，无法打出卡牌。");
         if (command.HandSlotIndex < 0 || command.HandSlotIndex >= character.HandSlots.Count)
             return new CombatApplyResult(false, "手牌槽位无效。");
 
         slot = character.HandSlots[command.HandSlotIndex];
-        if (slot.IsSealed)
-            return new CombatApplyResult(false, "手牌槽处于封印，无法标记卡牌。");
         if (slot.IsEmpty || slot.CardId is null || slot.RuntimeInstanceId is null)
             return new CombatApplyResult(false, "指定槽位没有卡牌。");
-        if (slot.IsMarked)
-            return new CombatApplyResult(false, "该卡牌已标记入队。");
+        if (command.RuntimeInstanceId is { } expected && !string.Equals(expected, slot.RuntimeInstanceId, StringComparison.Ordinal))
+            return new CombatApplyResult(false, "该卡牌已离开手牌。");
         if (!simulation.Definitions.Store.TryGetCard(slot.CardId, out card))
             return new CombatApplyResult(false, "卡牌定义不存在。");
         if (card.CostType is not (ECostType.None or ECostType.Energy))
-            return new CombatApplyResult(false, "该费用类型尚未实装，无法标记入队。");
+            return new CombatApplyResult(false, "该费用类型尚未实装，无法打出卡牌。");
 
-        paid = CardCostCalculator.Compute(simulation, command.CharacterIndex, card, slot.RuntimeInstanceId);
+        paid = CardCostCalculator.Compute(card);
         if (character.AvailableEnergy < paid)
             return new CombatApplyResult(false, "可用能量不足。");
 

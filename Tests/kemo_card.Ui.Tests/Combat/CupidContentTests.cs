@@ -25,16 +25,15 @@ public sealed class CupidContentTests
         Assert.That(CombatContentValidator.TryValidateHealTargeting(registry, out var error), Is.True, error);
         var character = BaseGameContent.Load().Characters["cupid"];
         Assert.That(character.Element, Is.EqualTo(EElement.Blue));
-        Assert.That(character.Role, Is.EqualTo(ERole.Healer));
+        Assert.That(character.Role, Is.EqualTo(ERole.Support));
         Assert.That(character.Race, Is.EqualTo(ERace.God));
         Assert.That(character.ActiveSkillChain.Single().Cooldown, Is.EqualTo(7));
-        Assert.That(character.Passives.Select(passive => passive.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(character.Cards, Has.Count.EqualTo(4));
         foreach (var id in character.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Blue));
-            Assert.That(card.Role, Is.EqualTo(ERole.Healer));
+            Assert.That(card.Role, Is.EqualTo(ERole.Support));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.Stats!.Attributes.Sum(pair => pair.Key == AttributeIds.MaxHealth ? pair.Value : pair.Value * 10),
@@ -54,7 +53,6 @@ public sealed class CupidContentTests
         Assert.That(sim.PlayerTeam.Characters.Select(character => character.AvailableEnergy), Is.EqualTo(new[] { 11, 11, 11, 11 }));
         Assert.That(sim.PlayerTeam.Characters.Select(character => character.CurrentEnergy), Is.EqualTo(currentEnergy));
         Assert.That(Counters(sim), Is.EqualTo(new[] { 0, 0, 0, 0 }));
-        Assert.That(sim.PlayerTeam.Characters[0].HasActed, Is.False);
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
         Assert.That(sim.PlayerTeam.Characters.Select(character => character.AvailableEnergy), Is.EqualTo(currentEnergy),
             "下个己方阶段重新填充可用能量，临时点数不保留");
@@ -76,44 +74,6 @@ public sealed class CupidContentTests
     #endregion
 
     #region 被动技能
-
-    [TestCase(0, 0, 3, 0)]
-    [TestCase(0, 3, 0, 0)]
-    [TestCase(1, 0, 0, 50)]
-    [TestCase(3, 2, 2, 50)]
-    public void Passive_two_requires_own_blue_card_and_heals_only_once(int ownBlue, int ownOther, int allyBlue, int healed)
-    {
-        using var sim = NewSimulation();
-        sim.Buffs.Apply(sim, Player(), "cupid_passive_p2");
-        sim.Buffs.Apply(sim, Player(), "cupid_passive_p4");
-        sim.PlayerTeam.ApplySharedDamage(600);
-        for (var index = 0; index < ownBlue; index++)
-            sim.RecordPlayedCard("cupid_golden_blessing", 0);
-        for (var index = 0; index < ownOther; index++)
-            sim.RecordPlayedCard("perseus_hero_blade", 0);
-        for (var index = 0; index < allyBlue; index++)
-            sim.RecordPlayedCard("cupid_golden_blessing", 1);
-        sim.Buffs.FireCardExecutionEnd(sim);
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(400 + healed), "至少 1 张，不按张数累乘，也不额外吃恢复量");
-        Assert.That(sim.PlayerTeam.RejectedSlotHealCount, Is.Zero);
-        sim.TakePlayedThisTurn();
-        sim.Buffs.FireCardExecutionEnd(sim);
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(400 + healed), "回合出牌账清除后不可沿用上回合条件");
-    }
-
-    [Test]
-    public void Execution_of_two_blue_cards_triggers_one_fifty_point_heal_at_the_end()
-    {
-        using var sim = NewSimulation(["cupid_golden_blessing", "cupid_leaden_peace"]);
-        sim.Buffs.Apply(sim, Player(), "cupid_passive_p2");
-        sim.PlayerTeam.ApplySharedDamage(600);
-        Mark(sim, 0);
-        Mark(sim, 1);
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(400), "标记阶段不执行被动治疗");
-        Execute(sim);
-        Assert.That(sim.CountCardsPlayedThisTurn(0, (int)EElement.Blue), Is.EqualTo(2));
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(450));
-    }
 
     [Test]
     public void Passive_three_stacks_self_blue_and_god_and_repeats_every_seven_floor_turns()
@@ -163,40 +123,6 @@ public sealed class CupidContentTests
         Cast(sim);
         Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(500), "主动治疗保持定值 100，不随被动恢复量加算");
         Assert.That(sim.PlayerTeam.RejectedSlotHealCount, Is.Zero);
-    }
-
-    [Test]
-    public void Passive_one_preserves_neighbour_cards_when_storm_fires()
-    {
-        var definitions = BaseGameContent.Load();
-        var buffs = new Dictionary<string, BuffDto>(definitions.Buffs)
-        {
-            ["test_cupid_storm"] = new()
-            {
-                Id = "test_cupid_storm", DurationType = EBuffDurationType.Permanent,
-                Tags = [BuiltinBuffTags.SlotStorm],
-                Hooks = new BuffEffectHooksDto
-                {
-                    OnSlotCardPlayed = [new EffectRefDto { EffectId = "test_cupid_discard" }],
-                },
-            },
-        };
-        var effects = new Dictionary<string, EffectDto>(definitions.Effects)
-        {
-            ["test_cupid_discard"] = new() { Id = "test_cupid_discard", Kind = EEffectKind.DiscardSlot },
-        };
-        var registry = BaseGameContent.BuildRegistry();
-        registry.Rebuild([new ModContentBundle("base.game", definitions with { Buffs = buffs, Effects = effects })], out var report);
-        Assert.That(report.HasIssues, Is.False);
-        using var sim = NewSimulation(Enumerable.Repeat("cupid_love_nectar", 5).ToArray(), registry);
-        var cupid = sim.PlayerTeam.Characters[0];
-        sim.Buffs.ApplyToSlot(sim, 0, 2, "test_cupid_storm");
-        sim.Buffs.Apply(sim, Player(), "cupid_passive_p1");
-        sim.Buffs.FireSlotCardPlayed(sim, 0, cupid.HandSlots[2]);
-        Assert.That(cupid.HandSlots.All(slot => !slot.IsEmpty), Is.True);
-        cupid.Buffs.Remove(cupid.Buffs.Find("cupid_passive_p1")!);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, cupid.HandSlots[2]);
-        Assert.That(cupid.HandSlots[1].IsEmpty, Is.True, "对照：没有免疫时暴风仍吹散相邻牌");
     }
 
     #endregion

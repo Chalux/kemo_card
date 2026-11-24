@@ -1,12 +1,11 @@
+using KemoCard.Mod.Combat;
+
 namespace KemoCard.Mod.Run.Ui.CombatUi;
 
 /// <summary>待出牌态（Run 规格 §14.3）。</summary>
 public enum ECombatPendingMode
 {
     None,
-
-    /// <summary>目标可自动解析，等待玩家点「确认出牌」。</summary>
-    ConfirmPlay,
 
     /// <summary>需要玩家点选一个合法单位作为目标。</summary>
     PickTarget,
@@ -43,14 +42,13 @@ public sealed class CombatUiState
 
     public ECombatPendingMode PendingMode { get; private set; }
 
-    /// <summary>待出牌的手牌槽索引；无待出牌时为 -1。</summary>
-    public int PendingHandSlot { get; private set; } = -1;
+    public HandCardChoice? PendingCard { get; private set; }
 
-    private readonly List<int> _discardSlots = [];
-    public IReadOnlyList<int> DiscardSlots => _discardSlots.AsReadOnly();
+    private readonly List<HandCardChoice> _discardCards = [];
+    public IReadOnlyList<HandCardChoice> DiscardCards => _discardCards.AsReadOnly();
     public int DiscardMinimum { get; private set; }
     public int DiscardMaximum { get; private set; }
-    public bool CanConfirmDiscard => PendingMode == ECombatPendingMode.PickDiscard && _discardSlots.Count >= DiscardMinimum;
+    public bool CanConfirmDiscard => PendingMode == ECombatPendingMode.PickDiscard && _discardCards.Count >= DiscardMinimum;
 
     public void BeginDiscard(int minimum, int maximum)
     {
@@ -66,18 +64,26 @@ public sealed class CombatUiState
         PendingMode = ECombatPendingMode.PickActiveTarget;
     }
 
-    public void ToggleDiscard(int slot)
+    public void ToggleDiscard(HandCardChoice card)
     {
         if (InputLocked || PendingMode != ECombatPendingMode.PickDiscard)
             return;
-        if (!_discardSlots.Remove(slot) && _discardSlots.Count < DiscardMaximum)
-            _discardSlots.Add(slot);
+        if (!_discardCards.Remove(card) && _discardCards.Count < DiscardMaximum)
+            _discardCards.Add(card);
     }
 
     public bool HasPending => PendingMode != ECombatPendingMode.None;
 
     /// <summary>表现播放期间锁输入（暂停按钮除外）。</summary>
     public bool InputLocked { get; set; }
+
+    internal bool CanSelectHandCard(bool ownerSealed, bool inDiscardPool) =>
+        !InputLocked && PendingMode switch
+        {
+            ECombatPendingMode.PickActiveTarget => false,
+            ECombatPendingMode.PickDiscard => inDiscardPool,
+            _ => !ownerSealed,
+        };
 
     /// <summary>本地玩家是否有权控制该槽位。</summary>
     public bool CanControl(int slot) => slot >= 0 && slot < SlotCount && _canControl(slot);
@@ -101,27 +107,27 @@ public sealed class CombatUiState
     /// <summary>
     /// 点手牌的切换语义：同一张再点一次 = 取消；否则进入新的待出牌态。返回当前是否处于待出牌。
     /// </summary>
-    public bool TogglePending(int handSlot, ECombatPendingMode mode)
+    public bool TogglePending(HandCardChoice card, ECombatPendingMode mode)
     {
         if (mode == ECombatPendingMode.None)
             throw new ArgumentOutOfRangeException(nameof(mode));
 
-        if (HasPending && PendingHandSlot == handSlot)
+        if (HasPending && PendingCard == card)
         {
             ClearPending();
             return false;
         }
 
         PendingMode = mode;
-        PendingHandSlot = handSlot;
+        PendingCard = card;
         return true;
     }
 
     public void ClearPending()
     {
         PendingMode = ECombatPendingMode.None;
-        PendingHandSlot = -1;
-        _discardSlots.Clear();
+        PendingCard = null;
+        _discardCards.Clear();
         DiscardMinimum = DiscardMaximum = 0;
     }
 
@@ -138,28 +144,5 @@ public sealed class CombatUiState
 
     #endregion
 
-    #region 与 Run 的接线
-
-    /// <summary>
-    /// 本地玩家 id：当前里程碑是单人，本地玩家即房主（<c>IsOwner</c>）。
-    /// 联机接入后应改为读本地会话身份（Run 规格 §14.5 后置项）。
-    /// </summary>
-    public static string? ResolveLocalPlayerId(RunMod run)
-    {
-        ArgumentNullException.ThrowIfNull(run);
-        return run.PlayerControllers.FirstOrDefault(controller => controller.IsOwner)?.PlayerId;
-    }
-
-    /// <summary>按 Run 的槽位控制权表构造：有权 = 该槽位归属本地玩家。</summary>
-    public static CombatUiState FromRun(RunMod run)
-    {
-        ArgumentNullException.ThrowIfNull(run);
-        var localId = ResolveLocalPlayerId(run);
-        return new CombatUiState(RunConstants.SlotCount, slot =>
-            localId is not null &&
-            run.SlotOwnership.TryGetValue(slot, out var owner) &&
-            string.Equals(owner, localId, StringComparison.Ordinal));
-    }
-
-    #endregion
+    public static CombatUiState CreateLocal() => new(RunConstants.SlotCount, _ => true);
 }

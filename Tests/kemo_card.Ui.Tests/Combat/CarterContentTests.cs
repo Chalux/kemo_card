@@ -64,8 +64,7 @@ public sealed class CarterContentTests
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.BaseValue, Is.Zero, "四张都是纯增益卡，无数值");
         Assert.That(card.CardType.ToString(), Is.EqualTo("Guard"));
-        Assert.That(card.Priority, Is.EqualTo(priority));
-        Assert.That(card.Role, Is.EqualTo(ERole.Shield), "卡牌定位跟随角色定位");
+        Assert.That(card.Role, Is.EqualTo(ERole.Defense), "卡牌定位跟随角色定位");
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
         Assert.That(card.IsExclusive, Is.True, "专属卡必须标记 isExclusive");
         Assert.That(card.CardGroupId, Is.Null, "无升级链");
@@ -124,7 +123,7 @@ public sealed class CarterContentTests
         Assert.That(definitions.Characters.TryGetValue(CharacterId, out var carter), Is.True, "卡特未随内容出货");
 
         Assert.That(carter!.Element, Is.EqualTo(EElement.Red));
-        Assert.That(carter.Role, Is.EqualTo(ERole.Shield));
+        Assert.That(carter.Role, Is.EqualTo(ERole.Defense));
         Assert.That(carter.Race, Is.EqualTo(ERace.Animal));
         Assert.That(carter.MaxEnergy, Is.EqualTo(8));
         Assert.That(carter.InitialEnergy, Is.EqualTo(3));
@@ -137,9 +136,6 @@ public sealed class CarterContentTests
             Is.EqualTo(new[] { (ActiveSkill, 6) }),
             "单档主动技，CD 6");
 
-        Assert.That(
-            carter.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in carter.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }

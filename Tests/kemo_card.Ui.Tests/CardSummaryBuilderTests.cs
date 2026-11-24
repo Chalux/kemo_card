@@ -16,7 +16,7 @@ public sealed class CardSummaryBuilderTests
         "UI_CARD_TIP_EXCLUSIVE_PREFIX" => "专属于此角色：",
         "UI_ELEMENT_RED" => "红",
         "UI_ELEMENT_BLUE" => "蓝",
-        "UI_ROLE_WARRIOR" => "战士",
+        "UI_ROLE_ATTACK" => "主攻",
         "card.strike.name" => "打击",
         "char.chalux.name" => "克鲁克斯",
         "d1" => "造成 6 点伤害。",
@@ -73,7 +73,7 @@ public sealed class CardSummaryBuilderTests
             CostType = ECostType.Energy,
             Cost = 3,
             Element = (int)EElement.Red,
-            Role = ERole.Warrior,
+            Role = ERole.Attack,
             IsExclusive = true,
             SkillRefs = [new SkillRefDto { SkillId = "s1" }],
         };
@@ -85,7 +85,7 @@ public sealed class CardSummaryBuilderTests
             cardId => cardId == "strike" ? "可萝" : null);
 
         Assert.That(tip.Title, Is.EqualTo("打击"));
-        Assert.That(tip.Body, Is.EqualTo("3费 红 战士\n造成 6 点伤害。\n专属于此角色：可萝"));
+        Assert.That(tip.Body, Is.EqualTo("3费 红 主攻\n造成 6 点伤害。\n专属于此角色：可萝"));
     }
 
     [Test]

@@ -25,15 +25,14 @@ public sealed class FomalhautContentTests
         Assert.That(report.HasIssues, Is.False, string.Join("\n", report.RemovedValidationErrors.Select(error => error.Message)));
         var character = BaseGameContent.Load().Characters["fomalhaut"];
         Assert.That(character.Element, Is.EqualTo(EElement.Blue));
-        Assert.That(character.Role, Is.EqualTo(ERole.Mage));
+        Assert.That(character.Role, Is.EqualTo(ERole.Attack));
         Assert.That(character.Race, Is.EqualTo(ERace.Astronomy | ERace.Unknown));
         Assert.That(character.ActiveSkillChain.Single().Cooldown, Is.EqualTo(8));
-        Assert.That(character.Passives.Select(passive => passive.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(character.Cards, Has.Count.EqualTo(4));
         foreach (var id in character.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
-            Assert.That(card!.Role, Is.EqualTo(ERole.Mage));
+            Assert.That(card!.Role, Is.EqualTo(ERole.Attack));
             Assert.That(card.Element, Is.EqualTo((int)EElement.Blue));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
@@ -52,7 +51,6 @@ public sealed class FomalhautContentTests
         Assert.That(sim.PlayerTeam.Characters.Skip(1).All(character => character.Asc.GetCurrentValue(AttributeIds.MagicAttack) == 20), Is.True);
         Assert.That(caster.SkillCounter, Is.Zero);
         Assert.That(caster.AvailableEnergy, Is.EqualTo(10));
-        Assert.That(caster.HasActed, Is.False);
         for (var turn = 0; turn < 2; turn++)
         {
             sim.Buffs.FireTurnEnd(sim);
@@ -81,24 +79,6 @@ public sealed class FomalhautContentTests
     #endregion
 
     #region 被动和普攻
-
-    [Test]
-    public void Slot_damage_immunity_blocks_real_slot_damage_payload()
-    {
-        using var sim = NewSimulation();
-        var caster = sim.PlayerTeam.Characters[0];
-        caster.HandSlots[0].Buffs.Add(new BuffDto
-        {
-            Id = "test_fomalhaut_slot", Tags = [BuiltinBuffTags.SlotDamage],
-            Hooks = new BuffEffectHooksDto { OnSlotCardPlayed = [new EffectRefDto { EffectId = "chalux_charge_burst" }] },
-        }, null);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, caster.HandSlots[0]);
-        var hp = sim.PlayerTeam.SharedHpExact;
-        Assert.That(hp, Is.LessThan(1000));
-        ApplyPassive(sim, 1);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, caster.HandSlots[0]);
-        Assert.That(sim.PlayerTeam.SharedHpExact, Is.EqualTo(hp));
-    }
 
     [Test]
     public void Extra_attack_adds_one_round_and_followup_does_not_repeat_on_own_turn()

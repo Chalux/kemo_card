@@ -15,8 +15,7 @@
       "MaxHealth": 20
     }
   },
-  "role": "Controller",
-  "priority": 4,
+  "role": "Attack",
   "cardType": "Physics",
   "targetSide": "Enemy",
   "targetScope": "Single",

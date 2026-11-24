@@ -13,7 +13,7 @@ public sealed class CardCodexQueryTests
         int cost = 1,
         ECostType costType = ECostType.Energy,
         int element = (int)EElement.Red,
-        ERole role = ERole.Warrior,
+        ERole role = ERole.Attack,
         IEnumerable<string>? tags = null,
         bool hideInDex = false,
         string displayNameId = "card.c1.name",
@@ -74,9 +74,9 @@ public sealed class CardCodexQueryTests
     [Test]
     public void MatchesCondition_role_and_cost_type()
     {
-        var card = Card(role: ERole.Healer, costType: ECostType.Health);
-        Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Healer), "")), Is.True);
-        Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.Role, ECardFilterOp.NotEqual, nameof(ERole.Warrior), "")), Is.True);
+        var card = Card(role: ERole.Support, costType: ECostType.Health);
+        Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.Role, ECardFilterOp.Equal, nameof(ERole.Support), "")), Is.True);
+        Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.Role, ECardFilterOp.NotEqual, nameof(ERole.Attack), "")), Is.True);
         Assert.That(CardCodexQuery.MatchesCondition(card, new(ECardFilterField.CostType, ECardFilterOp.Equal, nameof(ECostType.Health), "")), Is.True);
     }
 

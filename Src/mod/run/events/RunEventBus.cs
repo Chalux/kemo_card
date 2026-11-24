@@ -9,9 +9,6 @@ public enum ERunEvent
     [EventPayload(typeof(RunPhaseChangedPayload))]
     RunPhaseChanged,
 
-    [EventPayload(typeof(RunSlotOwnershipChangedPayload))]
-    RunSlotOwnershipChanged,
-
     [EventPayload(typeof(RunGoldChangedPayload))]
     RunGoldChanged,
 
@@ -30,21 +27,9 @@ public readonly struct RunPhaseChangedPayload
     public ERunPhase CurrentPhase { get; init; }
 }
 
-public readonly struct RunSlotOwnershipChangedPayload
-{
-    public int SlotIndex { get; init; }
-    public string? PreviousPlayerId { get; init; }
-    public string? CurrentPlayerId { get; init; }
-}
-
 /// <summary>
 /// 槽位上阵角色发生变化。
 /// </summary>
-/// <remarks>
-/// 注意与 <see cref="RunSlotOwnershipChangedPayload"/> 的区别：那个事件描述的是
-/// <b>玩家占槽</b>（联机时谁坐在几号位，<c>RunMod.SlotOwnership</c>），本事件描述的是
-/// <b>该槽上了哪个角色实例</b>（<c>PlayerRunState.ActiveCharacter</c>），载荷是角色实例 id。
-/// </remarks>
 public readonly struct RunCharacterAssignedPayload
 {
     public int SlotIndex { get; init; }

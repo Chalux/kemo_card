@@ -20,7 +20,7 @@
 
 **Tech Stack:** C# / Godot 4.6 Mono / System.Text.Json / NUnit（`Tests/kemo_card.Ui.Tests`）
 
-**权威规格:** [run-mod-design](../../../superpowers/specs/2026-06-22-run-mod-design.md)、[content-mod-manager](../../../superpowers/specs/2026-05-17-content-mod-manager-design.md)、[condition-system-design](../../../superpowers/specs/2026-07-30-condition-system-design.md)、[kemo-card-design](../../../superpowers/specs/2026-05-11-kemo-card-design.md)
+**权威规格:** [run-mod-design](../../../superpowers/specs/2026-06-22-run-mod-design.md)、[content-mod-manager](../../../superpowers/specs/2026-05-17-content-mod-manager-design.md)、[condition-system-design](../specs/2026-07-30-condition-system-design.md)、[kemo-card-design](../../../superpowers/specs/2026-05-11-kemo-card-design.md)
 
 ## Global Constraints
 

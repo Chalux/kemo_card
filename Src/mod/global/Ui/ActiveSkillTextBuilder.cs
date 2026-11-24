@@ -10,7 +10,7 @@ namespace KemoCard.Mod.Global.Ui;
 /// <para>门槛 = 蓄力链各档 <c>cooldown</c> 的**累计值**（战斗规格 §5.1/§5.2：第 k 档在
 /// <c>S ≥ ΣC0..Ck</c> 时可放），因此多档角色逐档显示 6 / 10 / 16 这类阈值。</para>
 /// <para>取 <paramref name="translate"/> 委托而不是直接调 <c>Localization.Tr</c>：拼接逻辑要能脱离
-/// Godot 单测（与 <see cref="PassiveTextBuilder"/> / <see cref="AttributeLabels"/> 同约定）。</para>
+/// Godot 单测（与 <see cref="AttributeLabels"/> 同约定）。</para>
 /// </remarks>
 public static class ActiveSkillTextBuilder
 {

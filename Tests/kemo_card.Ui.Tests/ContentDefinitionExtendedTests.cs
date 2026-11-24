@@ -160,9 +160,9 @@ public sealed class ContentDefinitionExtendedTests
             Id = "kemo",
             DisplayNameId = "char.kemo.name",
             Element = EElement.Red,
-            Role = ERole.Warrior,
+            Role = ERole.Attack,
             SkillRefs = [new SkillRefDto { SkillId = "kemo_dash" }],
-            Passives = [new PassiveRefDto { BuffId = "kemo_talent", RequiredPotential = 10 }],
+            Passives = [new PassiveRefDto { BuffId = "kemo_talent" }],
             Cards = ["strike"],
         };
 
@@ -172,7 +172,7 @@ public sealed class ContentDefinitionExtendedTests
         Assert.That(restored, Is.Not.Null);
         Assert.That(restored!.Element, Is.EqualTo(EElement.Red));
         Assert.That(restored.Passives[0].BuffId, Is.EqualTo("kemo_talent"));
-        Assert.That(restored.Passives[0].RequiredPotential, Is.EqualTo(10));
+        Assert.That(restored.Passives[0].BuffId, Is.EqualTo("kemo_talent"));
     }
 
     [Test]

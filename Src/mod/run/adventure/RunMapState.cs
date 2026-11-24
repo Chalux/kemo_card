@@ -35,6 +35,10 @@ public sealed record RunMapNode
 
 public sealed record RunMapState
 {
+    /// <summary>地图固定 2 条分支 × 每分支 3 步；生成与读档校验共用同一口径。</summary>
+    public const int BranchCount = 2;
+    public const int StepsPerBranch = 3;
+
     public int Ring { get; init; }
     public int SelectedBranch { get; set; } = -1;
     // 保留存档字段名：当前打开的节点编号，不再表示必须依次推进的路线进度。

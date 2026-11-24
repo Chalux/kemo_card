@@ -3,9 +3,7 @@ using KemoCard.Frame.Content.Definitions;
 using KemoCard.Frame.Logging;
 using KemoCard.Frame.Scripting;
 using KemoCard.Frame.UI;
-using KemoCard.Mod.Global.Def;
 using KemoCard.Mod.Run.Debug;
-using KemoCard.Mod.Run.Potential;
 using KemoCard.Mod.Run.Save;
 
 namespace KemoCard.Mod.Run;
@@ -62,7 +60,7 @@ public static class RunRuntime
         var hostRng = seed >= 0
             ? new HostRng(seed, "story_select")
             : new HostRng(Random.Shared.Next(1, int.MaxValue), "story_select");
-        controller.CreateRun(storyId, hostRng, candidates, isMultiplayer: false);
+        controller.CreateRun(storyId, hostRng, candidates);
         _current = controller;
         return controller;
     }
@@ -82,7 +80,6 @@ public static class RunRuntime
     /// </summary>
     private static RunController CreateController() =>
         new(new RunMod(), AppRoot.Services.ContentEffectScriptHost,
-            potentialPolicyProvider: ReadPotentialPolicy,
             characterDefinitionResolver: ResolveCharacterDefinition);
 
     /// <summary>
@@ -93,27 +90,6 @@ public static class RunRuntime
         AppRoot.Services.ContentModPipeline.Registry.Store.TryGetCharacter(definitionId, out var dto)
             ? dto
             : null;
-
-    /// <summary>潜能消费策略从全局联机设置读取（组合根装配点，Run 层不直接碰全局存档）。</summary>
-    private static PotentialPolicySettings ReadPotentialPolicy()
-    {
-        var settings = AppRoot.Services.GlobalController.Snapshot.Settings;
-        string? Get(string key) => settings.TryGetValue(key, out var value) ? value : null;
-
-        var mode = Get(MultiplayerSettingKeys.PotentialConsumeMode);
-        var requireVote = string.Equals(
-            mode ?? MultiplayerSettingKeys.PotentialConsumeModeDefault,
-            MultiplayerSettingKeys.PotentialConsumeModeVote,
-            StringComparison.OrdinalIgnoreCase);
-        var unlimited = Get(MultiplayerSettingKeys.PotentialProposalsUnlimited) == "1";
-        var proposals = int.TryParse(
-            Get(MultiplayerSettingKeys.PotentialProposalsPerRing),
-            out var parsed) && parsed > 0
-            ? parsed
-            : MultiplayerSettingKeys.DefaultProposalsPerRing;
-
-        return new PotentialPolicySettings(requireVote, proposals, unlimited);
-    }
 
     /// <summary>
     /// 手动 / 退出前保存当前会话。

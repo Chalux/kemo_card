@@ -129,11 +129,11 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
     {
         foreach (var drawn in evt.Cards)
         {
-            var slot = _view!.GetHandSlot(evt.CharacterIndex, drawn.SlotIndex);
+            _view!.ShowDrawnCard(evt.CharacterIndex, drawn);
+            var slot = _view.GetHandSlot(evt.CharacterIndex, drawn.SlotIndex);
             if (slot is null)
                 continue;
 
-            _view.RefreshHandSlot(evt.CharacterIndex, drawn.SlotIndex);
             await slot.PopInAsync(CombatAnimationTiming.CardDraw);
         }
     }
@@ -141,11 +141,11 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
     private async Task PlayCardDiscardedAsync(CardDiscardedEvent evt)
     {
         var slot = _view!.GetHandSlot(evt.CharacterIndex, evt.SlotIndex);
-        if (slot is null || !slot.HasCard)
+        if (slot is null || slot.RuntimeInstanceId != evt.RuntimeInstanceId)
             return;
 
         await slot.FlyOutAsync(_view.GraveyardGlobalCenter, CombatAnimationTiming.CardDiscard);
-        _view.RefreshHandSlot(evt.CharacterIndex, evt.SlotIndex);
+        slot.Clear();
     }
 
     private async Task PlayCardSettleStartedAsync(CardSettleStartedEvent evt)
@@ -283,7 +283,7 @@ public partial class CombatAnimator : Node, ICombatEventPlayer
         var icon = _view.GetBuffList(holder)?.FindIcon(buffId);
         await Task.WhenAll(
             icon is not null ? UnitTweens.PulseAsync(icon, 1.3f, CombatAnimationTiming.BuffPop) : Task.CompletedTask,
-            holder.HandSlotIndex is null ? PlayAllyActionAsync(holder.Target, "buff") : Task.CompletedTask);
+            PlayAllyActionAsync(holder.Target, "buff"));
     }
 
     private Task PlayAllyActionAsync(CombatTargetRef target, string animation, bool returnToIdle = true)

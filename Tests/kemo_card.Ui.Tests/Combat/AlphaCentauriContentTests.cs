@@ -26,7 +26,7 @@ public sealed class AlphaCentauriContentTests
         var caster = sim.PlayerTeam.Characters[0];
         caster.GainSkillCounter(9);
         Assert.That(sim.TryApply(new CastActiveSkillCommand(0, [], [1, 4])).Success, Is.True);
-        Assert.That(caster.HandSlots.Select(slot => slot.IsEmpty), Is.EqualTo(new[] { false, true, false, false, true }));
+        Assert.That(caster.HandSlots.Where(slot => !slot.IsEmpty).Select(slot => slot.SlotIndex), Is.EqualTo(new[] { 0, 2, 3 }));
         Assert.That(sim.LastDiscardCount, Is.EqualTo(2));
         Assert.That(sim.DiscardRng.NextInt(0, 100000), Is.EqualTo(control.DiscardRng.NextInt(0, 100000)));
     }
@@ -35,11 +35,11 @@ public sealed class AlphaCentauriContentTests
     [TestCase(1)]
     public void Up_to_two_allows_fewer_cards_even_with_a_full_hand(int count)
     {
-        using var sim = NewSimulation(Enumerable.Repeat("alpha_centauri_southern_light", 5).ToArray());
+        using var sim = NewSimulation(Enumerable.Repeat("alpha_centauri_southern_light", CombatConstants.TeamHandLimit).ToArray());
         sim.PlayerTeam.Characters[0].GainSkillCounter(9);
         Assert.That(sim.TryApply(new CastActiveSkillCommand(0, [], Enumerable.Range(0, count).ToArray())).Success, Is.True);
         Assert.That(sim.LastDiscardCount, Is.EqualTo(count));
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(5 - count));
+        Assert.That(sim.PlayerTeam.CardPiles.HandCount, Is.EqualTo(CombatConstants.TeamHandLimit - count));
     }
 
     [TestCase(new[] { 0, 0 })]
@@ -68,7 +68,6 @@ public sealed class AlphaCentauriContentTests
         Assert.That(character.Role, Is.EqualTo(ERole.Support));
         Assert.That(character.Race, Is.EqualTo(ERace.Astronomy | ERace.Academic));
         Assert.That(character.ActiveSkillChain.Single().Cooldown, Is.EqualTo(9));
-        Assert.That(character.Passives.Select(passive => passive.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(character.Cards, Has.Count.EqualTo(4));
         foreach (var id in character.Cards)
         {
@@ -106,19 +105,6 @@ public sealed class AlphaCentauriContentTests
     }
 
     [Test]
-    public void Active_discard_cancels_marked_cards_and_refunds_paid_energy()
-    {
-        using var sim = NewSimulation(["alpha_centauri_southern_light", "alpha_centauri_binary_resonance"]);
-        Mark(sim, 0);
-        Mark(sim, 1);
-        Assert.That(sim.PlayerTeam.Characters[0].AvailableEnergy, Is.EqualTo(7));
-        Cast(sim);
-        Assert.That(sim.CardQueue.Count, Is.Zero);
-        Assert.That(sim.PlayerTeam.Characters[0].AvailableEnergy, Is.EqualTo(10));
-        Assert.That(sim.LastDiscardCount, Is.EqualTo(2));
-    }
-
-    [Test]
     public void Extra_draw_stacks_with_ordinary_bonus_and_other_casts_then_is_consumed()
     {
         using var sim = NewSimulation(Enumerable.Repeat("alpha_centauri_southern_light", 4).ToArray(), reserves: 12);
@@ -131,7 +117,7 @@ public sealed class AlphaCentauriContentTests
         Assert.That(caster.ComputeDrawCount(), Is.EqualTo(7), "1 + 普通最大增益3 - 减益1 + 两次额外2");
         Assert.That(caster.Asc.GetCurrentValue(AttributeIds.MagicAttack), Is.EqualTo(50), "主动增益按最新快照替换，不叠层");
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
-        Assert.That(caster.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(5), "额外抽牌仍遵守手牌上限");
+        Assert.That(caster.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(10), "一名角色可以持有全部十张");
         Assert.That(caster.ComputeDrawCount(), Is.EqualTo(1));
         Assert.That(sim.LastDiscardCount, Is.Zero);
     }

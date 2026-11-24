@@ -11,8 +11,7 @@
       "MagicAttack": 1
     }
   },
-  "role": "Elementist",
-  "priority": 1,
+  "role": "Attack",
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "Single",

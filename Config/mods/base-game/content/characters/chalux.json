@@ -13,7 +13,7 @@
     "anims": ["idle"]
   },
   "element": "Blue",
-  "role": "Warrior",
+  "role": "Attack",
   "race": ["Animal", "Dragon"],
   "skillRefs": [],
   "activeSkillChain": [
@@ -28,10 +28,10 @@
   "maxEnergy": 8,
   "initialEnergy": 3,
   "passives": [
-    { "buffId": "chalux_passive_p1", "requiredPotential": 0 },
-    { "buffId": "chalux_passive_p2", "requiredPotential": 10 },
-    { "buffId": "chalux_passive_p3", "requiredPotential": 30 },
-    { "buffId": "chalux_passive_p4", "requiredPotential": 50 }
+    { "buffId": "chalux_passive_p1" },
+    { "buffId": "chalux_passive_p2" },
+    { "buffId": "chalux_passive_p3" },
+    { "buffId": "chalux_passive_p4" }
   ],
   "tags": ["starter"]
 }

@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.xuanyu_feather_shed.name",
   "element": 1,
-  "role": "Wizard",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -17,7 +17,6 @@
       "MagicDefense": 1
     }
   },
-  "priority": 11,
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

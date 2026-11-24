@@ -26,15 +26,14 @@ public sealed class PerseusContentTests
         Assert.That(report.HasIssues, Is.False, string.Join("\n", report.RemovedValidationErrors.Select(error => error.Message)));
         var character = BaseGameContent.Load().Characters["perseus"];
         Assert.That(character.Element, Is.EqualTo(EElement.Green));
-        Assert.That(character.Role, Is.EqualTo(ERole.Controller));
+        Assert.That(character.Role, Is.EqualTo(ERole.Attack));
         Assert.That(character.Race, Is.EqualTo(ERace.Human | ERace.God));
         Assert.That(character.ActiveSkillChain.Single().Cooldown, Is.EqualTo(10));
-        Assert.That(character.Passives.Select(passive => passive.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(character.Cards, Has.Count.EqualTo(4));
         foreach (var id in character.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
-            Assert.That(card!.Role, Is.EqualTo(ERole.Controller));
+            Assert.That(card!.Role, Is.EqualTo(ERole.Attack));
             Assert.That(card.Element, Is.EqualTo((int)EElement.Green));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
@@ -85,39 +84,6 @@ public sealed class PerseusContentTests
 
     #region 被动
 
-    [TestCase(0)]
-    [TestCase(1)]
-    [TestCase(3)]
-    [TestCase(5)]
-    public void Pressure_counts_only_own_played_cards_and_expires_at_turn_end(int ownCards)
-    {
-        using var sim = NewSimulation();
-        sim.Buffs.Apply(sim, Player(), "perseus_passive_p2");
-        for (var index = 0; index < ownCards; index++)
-            sim.RecordPlayedCard("perseus_hero_blade", 0);
-        for (var index = 0; index < 4; index++)
-            sim.RecordPlayedCard("perseus_serpent_slayer", 1);
-        sim.Buffs.FireCardExecutionEnd(sim);
-        AssertAttacks(sim, 80 - 6 * ownCards);
-        if (ownCards == 0)
-            Assert.That(sim.EnemyTeam.Enemies[0].Buffs.Find("perseus_battle_pressure"), Is.Null);
-        sim.Buffs.FireTurnEnd(sim);
-        AssertAttacks(sim, 80);
-    }
-
-    [Test]
-    public void Pressure_takes_a_snapshot_and_reapplication_updates_the_amount()
-    {
-        using var sim = NewSimulation();
-        sim.Buffs.Apply(sim, Player(), "perseus_passive_p2");
-        sim.RecordPlayedCard("perseus_hero_blade", 0);
-        sim.Buffs.FireCardExecutionEnd(sim);
-        sim.RecordPlayedCard("perseus_hero_blade", 0);
-        AssertAttacks(sim, 74, "已投放实例不能随出牌账变化");
-        sim.Buffs.FireCardExecutionEnd(sim);
-        AssertAttacks(sim, 68, "新快照替换旧快照，不能叠加为 -18");
-    }
-
     [Test]
     public void Floor_charge_stacks_the_three_identities_but_only_repeats_every_ten_turns()
     {
@@ -152,26 +118,8 @@ public sealed class PerseusContentTests
         Assert.That(perseus.ComputeDrawCount(), Is.EqualTo(6));
         Assert.That(perseus.HandSlots.Count(slot => !slot.IsEmpty), Is.Zero, "释放后不立即抽牌");
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
-        Assert.That(perseus.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(5), "抽牌遵守手牌槽上限");
+        Assert.That(perseus.HandSlots.Count(slot => !slot.IsEmpty), Is.EqualTo(9), "四名测试角色贡献基础抽牌，技能额外抽五张");
         Assert.That(perseus.ComputeDrawCount(), Is.EqualTo(1), "一次抽牌步骤后清除 +5");
-    }
-
-    [Test]
-    public void Empowered_active_and_one_turn_pressure_have_independent_durations()
-    {
-        using var sim = NewSimulation();
-        sim.Buffs.Apply(sim, Player(), "perseus_passive_p2");
-        sim.Buffs.Apply(sim, Player(), "perseus_passive_p4");
-        Cast(sim);
-        sim.RecordPlayedCard("perseus_hero_blade", 0);
-        sim.RecordPlayedCard("perseus_serpent_slayer", 0);
-        sim.Buffs.FireCardExecutionEnd(sim);
-        AssertAttacks(sim, 38);
-        sim.Buffs.FireTurnEnd(sim);
-        AssertAttacks(sim, 50, "仅出牌压制到期；强化主动仍生效");
-        sim.Buffs.FireTurnEnd(sim);
-        sim.Buffs.FireTurnEnd(sim);
-        AssertAttacks(sim, 80);
     }
 
     [Test]
@@ -208,9 +156,6 @@ public sealed class PerseusContentTests
         Assert.That(sim.Buffs.Apply(sim, Player(), "test_virus").Success, Is.True);
         Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find("test_virus"), Is.Null);
         Assert.That(Counters(sim)[0], Is.Zero, "病毒 onApply 不得执行");
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "test_virus");
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots[0].Buffs.Find("test_virus"), Is.Null);
-        Assert.That(Counters(sim)[0], Is.Zero, "病毒槽位载荷也不得执行");
         sim.Buffs.Apply(sim, Player(1), "test_virus");
         Assert.That(Counters(sim)[1], Is.EqualTo(3), "对照角色仍受病毒影响");
         var applicator = new GameplayEffectApplicator(registry);
@@ -257,14 +202,14 @@ public sealed class PerseusContentTests
     }
 
     [Test]
-    public void Two_hit_serpent_card_counts_as_one_played_card_for_pressure()
+    public void Two_hit_serpent_card_counts_as_one_played_card()
     {
         using var sim = NewSimulation("perseus_serpent_slayer");
         sim.Buffs.Apply(sim, Player(), "perseus_passive_p2");
         Play(sim, Enemy(1));
         Assert.That(EnemyHp(sim, 0), Is.EqualTo(500));
         Assert.That(EnemyHp(sim, 1), Is.EqualTo(396));
-        AssertAttacks(sim, 74, "两段攻击仍只是一张出牌");
+        Assert.That(sim.CountCardsPlayedThisTurn(0, 0), Is.EqualTo(1));
     }
 
     #endregion

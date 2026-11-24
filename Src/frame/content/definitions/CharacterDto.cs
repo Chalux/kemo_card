@@ -27,7 +27,7 @@ public sealed class CharacterDto
     public List<ActiveSkillChainEntryDto> ActiveSkillChain { get; init; } = [];
 
     /// <summary>
-    /// 潜能门闩被动：解锁后开战挂对应 buff（见 <see cref="PassiveRefDto"/>）。
+    /// 角色被动：出战时按顺序挂载对应 buff（见 <see cref="PassiveRefDto"/>）。
     /// 2026-09-21 起这是角色唯一的"常驻增益"通道——旧的 <c>buffRefs</c>（常驻天赋）已移除，
     /// 因为它与被动重复却走另一条挂载路径。
     /// </summary>

@@ -50,9 +50,8 @@ public sealed class ReinhardtContentTests
         Assert.That(card.CostType, Is.EqualTo(ECostType.Energy));
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.CardType.ToString(), Is.EqualTo(cardType));
-        Assert.That(card.Priority, Is.EqualTo(priority));
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
-        Assert.That(card.Role, Is.EqualTo(ERole.SwordMan), "Role 与角色一致");
+        Assert.That(card.Role, Is.EqualTo(ERole.Attack), "Role 与角色一致");
         Assert.That(card.IsExclusive, Is.True, "专属卡必须标记 isExclusive");
         Assert.That(card.CardGroupId, Is.Null, "无升级链");
         Assert.That(card.UpgradeTier, Is.Zero);
@@ -88,7 +87,7 @@ public sealed class ReinhardtContentTests
         var reinhardt = definitions.Characters["reinhardt"];
 
         Assert.That(reinhardt.Element, Is.EqualTo(EElement.Yellow));
-        Assert.That(reinhardt.Role, Is.EqualTo(ERole.SwordMan));
+        Assert.That(reinhardt.Role, Is.EqualTo(ERole.Attack));
         Assert.That(reinhardt.Race, Is.EqualTo(ERace.Animal));
         Assert.That(reinhardt.MaxEnergy, Is.EqualTo(8));
         Assert.That(reinhardt.InitialEnergy, Is.EqualTo(3));
@@ -96,10 +95,6 @@ public sealed class ReinhardtContentTests
         Assert.That(reinhardt.ActiveSkillChain[0].SkillId, Is.EqualTo("reinhardt_yellow_tide_command"));
         Assert.That(reinhardt.ActiveSkillChain[0].Cooldown, Is.EqualTo(10));
 
-        // 潜能被动保留 0/10/30/50 四档（70/99 档已删除）。
-        Assert.That(
-            reinhardt.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in reinhardt.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }
@@ -119,10 +114,10 @@ public sealed class ReinhardtContentTests
         Assert.That(caster.Buffs.Find(ExtraAttackBuff), Is.Not.Null);
         Assert.That(caster.Asc.GetCurrentValue(AttributeIds.NormalAttackCount), Is.EqualTo(1f));
 
-        // 普攻在卡牌结算之后执行，因此本回合就打两次：2 × 物攻 10。
-        var normalAttack = sim.NormalAttacks.LastResult;
+        // 第一颗与额外的第三颗球各命中一次：2 × 物攻 10。
+        var normalAttack = sim.NormalAttacks.LastMarbleSettlement;
         Assert.That(normalAttack, Is.Not.Null);
-        Assert.That(normalAttack!.Executions, Is.EqualTo(2));
+        Assert.That(normalAttack!.TotalCount, Is.EqualTo(2));
         Assert.That(enemy(sim).Asc.GetCurrentValue(AttributeIds.Health), Is.EqualTo(500f - 20f).Within(0.001f));
     }
 
@@ -173,11 +168,11 @@ public sealed class ReinhardtContentTests
 
         sim.Buffs.Apply(sim, Player(0), "reinhardt_passive_p4");
 
-        // 4 名黄·动物角色（描述 `·` = 或：黄 或 动物，这里两者都命中）→ +160，且队伍账本上限同步抬高。
+        // 3 名黄·动物角色（描述 `·` = 或：黄 或 动物，这里两者都命中）→ +120，且队伍账本上限同步抬高。
         Assert.That(
             sim.PlayerTeam.Characters[0].Asc.GetCurrentValue(AttributeIds.MaxHealth),
-            Is.EqualTo(210f).Within(0.001f));
-        Assert.That(sim.PlayerTeam.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(360f).Within(0.001f));
+            Is.EqualTo(170f).Within(0.001f));
+        Assert.That(sim.PlayerTeam.Asc.GetCurrentValue(AttributeIds.MaxHealth), Is.EqualTo(270f).Within(0.001f));
     }
 
     [Test]
@@ -313,7 +308,6 @@ public sealed class ReinhardtContentTests
         TargetSide = ETargetSide.Enemy,
         TargetScope = ETargetScope.Single,
         TargetCount = 1,
-        Priority = 1,
     };
 
     private static CombatTargetRef Self() => Player(0);
@@ -408,7 +402,8 @@ public sealed class ReinhardtContentTests
         var marked = sim.TryApply(new PlayCardCommand(0, slotIndex, targets));
         Assert.That(marked.Success, Is.True, marked.Error);
 
-        sim.TransitionTo(ECombatPhase.CardExecution);
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        MarblePhaseTests.ShootQueuedBalls(sim, 1.35f, bonusAngle: 1.35f);
         sim.AdvancePhase();
     }
 

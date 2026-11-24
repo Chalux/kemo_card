@@ -32,13 +32,13 @@ public sealed record EnemyLifeBarChangedEvent(int EnemyIndex, int LifeBarIndex, 
     : CombatPresentationEvent;
 
 /// <summary>一次抽到的牌：落到哪个手牌槽、是哪张卡。</summary>
-public sealed record DrawnCard(int SlotIndex, string CardId);
+public sealed record DrawnCard(int SlotIndex, string CardId, string RuntimeInstanceId);
 
 /// <summary>某角色一次抽牌步骤抽到的全部牌（开局抽满 / 阶段抽牌各发一次）。</summary>
 public sealed record CardsDrawnEvent(int CharacterIndex, IReadOnlyList<DrawnCard> Cards) : CombatPresentationEvent;
 
 /// <summary>一张牌离开手牌槽进入弃牌堆。</summary>
-public sealed record CardDiscardedEvent(int CharacterIndex, int SlotIndex, string CardId, EDiscardChannel Channel)
+public sealed record CardDiscardedEvent(int CharacterIndex, int SlotIndex, string CardId, EDiscardChannel Channel, string RuntimeInstanceId)
     : CombatPresentationEvent;
 
 /// <summary>一张已标记牌开始结算（"角色移动到目标面前攻击"挂这里）。</summary>
@@ -74,11 +74,8 @@ public sealed record HealedEvent(
     int HpAfter,
     int MaxHp) : CombatPresentationEvent;
 
-/// <summary>buff 持有者：角色 / 敌人（<see cref="HandSlotIndex"/> 为 null）或角色的手牌槽位容器。</summary>
-public readonly record struct BuffHolderRef(CombatTargetRef Target, int? HandSlotIndex = null)
-{
-    public bool IsHandSlot => HandSlotIndex.HasValue;
-}
+/// <summary>持有 buff 的角色或敌人。</summary>
+public readonly record struct BuffHolderRef(CombatTargetRef Target);
 
 /// <summary>新 buff 实例挂上持有者。</summary>
 public sealed record BuffAppliedEvent(BuffHolderRef Holder, string BuffId, int Stacks) : CombatPresentationEvent;

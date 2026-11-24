@@ -5,7 +5,6 @@ using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Buffs;
 using KemoCard.Mod.Combat.Orbs;
-using KemoCard.Mod.Run.Potential;
 
 namespace KemoCard.Mod.Run.Debug;
 
@@ -187,21 +186,9 @@ public sealed class RunDebugService
         }
 
         var instance = new CharacterInstance(definition);
-        if (!_run.AddToCharacterPool(instance, sourceSlotIndex: deploySlot))
+        if (!_run.AddToCharacterPool(instance))
         {
-            // 重复获得（角色定义唯一）：已转化为 +20 潜能。目标槽位有效**且**该槽上阵的正是这个
-            // 角色定义时才是"直充该槽位"，否则进的是团队池——提示必须与真实去向一致。
-            var creditedToSlot = deploySlot >= 0 &&
-                deploySlot < RunConstants.SlotCount &&
-                string.Equals(
-                    _run.State.PlayerStates[deploySlot].ActiveCharacter?.DefinitionId,
-                    characterId,
-                    StringComparison.Ordinal);
-            return RunDebugResult.Success(creditedToSlot
-                ? $"重复获得角色 '{characterId}'：不入池，直接分配到槽位 {deploySlot + 1} 潜能 +{PotentialService.DuplicateReward}"
-                    + $"（该槽位已分配 {_run.State.PlayerStates[deploySlot].AllocatedPotential}）。"
-                : $"重复获得角色 '{characterId}'：不入池，转化为团队潜能 +{PotentialService.DuplicateReward}"
-                    + $"（团队池 {_run.Potential.TeamPool}）。");
+            return RunDebugResult.Success($"角色池中已有角色 '{characterId}'。");
         }
 
         var poolIndex = State.CharacterPool.Count - 1;
@@ -317,34 +304,6 @@ public sealed class RunDebugService
         return RunDebugResult.Success($"已自动补位 {assigned} 个槽位（角色池 {State.CharacterPool.Count} 个）。");
     }
 
-    /// <summary>补齐控制权分配（单机演示时把全部槽位交给第一个玩家控制器）。</summary>
-    public RunDebugResult EnsureSlotsAssigned()
-    {
-        if (State.AllSlotsAssigned())
-        {
-            return RunDebugResult.Success("全部槽位已有控制权。");
-        }
-
-        if (State.PlayerControllers.Count == 0)
-        {
-            return RunDebugResult.Failure("本局没有任何玩家控制器，无法分配控制权。");
-        }
-
-        var playerId = State.PlayerControllers[0].PlayerId;
-        var assigned = 0;
-        for (var slot = 0; slot < RunConstants.SlotCount; slot++)
-        {
-            if (_run.AssignSlot(slot, playerId))
-            {
-                assigned++;
-            }
-        }
-
-        return State.AllSlotsAssigned()
-            ? RunDebugResult.Success($"已把 {assigned} 个槽位的控制权交给 '{playerId}'。")
-            : RunDebugResult.Failure("控制权分配未完成（当前阶段可能不允许改控制权）。");
-    }
-
     #endregion
 
     #region 战斗
@@ -375,12 +334,6 @@ public sealed class RunDebugService
             return RunDebugResult.Failure($"内容中不存在战斗 '{battleId}'。");
         }
 
-        var slots = EnsureSlotsAssigned();
-        if (!slots.Ok)
-        {
-            return slots;
-        }
-
         var party = FillPartyFromPool();
         if (!State.ValidateParty())
         {
@@ -388,6 +341,8 @@ public sealed class RunDebugService
         }
 
         // StartBattle 只接受 Reward 阶段；调试面板显式前置到这里，绕过的是流程而不是战斗管线。
+        // 失败时必须还原原阶段：否则下一次自动存档会把错误的 Reward 阶段写进存档。
+        var previousPhase = State.Phase;
         State.Phase = ERunPhase.Reward;
 
         try
@@ -407,7 +362,14 @@ public sealed class RunDebugService
         }
         catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
         {
+            State.Phase = previousPhase;
             return RunDebugResult.Failure($"开战失败：{ex.Message}");
+        }
+        catch
+        {
+            // 未预期异常同样不能把 Run 留在 Reward 阶段。
+            State.Phase = previousPhase;
+            throw;
         }
     }
 
@@ -517,7 +479,7 @@ public sealed class RunDebugService
             return RunDebugResult.Failure("金币数量必须为正数。");
         }
 
-        if (!_run.AddGold(0, amount))
+        if (!_run.AddGold(amount))
         {
             return RunDebugResult.Failure($"加金币失败：{amount}。");
         }
@@ -544,46 +506,9 @@ public sealed class RunDebugService
 
     #endregion
 
-    #region 潜能
+    #region 战斗检查
 
-    public RunDebugResult GrantPotential(int amount, int slotIndex = -1)
-    {
-        if (amount <= 0)
-        {
-            return RunDebugResult.Failure("潜能数量必须为正数。");
-        }
-
-        // 调试通道按申请数额精确入账（语义与重复角色奖励一致：槽位直充或团队池）。
-        _run.Potential.Grant(amount, slotIndex);
-
-        return RunDebugResult.Success(slotIndex >= 0
-            ? $"槽位 {slotIndex + 1} 直接分配 +{amount} → 现有 {_run.State.PlayerStates[slotIndex].AllocatedPotential}"
-            : $"团队潜能池 +{amount} → 现有 {_run.Potential.TeamPool}");
-    }
-
-    /// <summary>把输入数额从团队池分配到选中槽位（走正式划拨管线，含表决）。</summary>
-    public RunDebugResult AllocatePotential(int slotIndex, int amount)
-    {
-        var result = _run.Potential.TryAllocate(slotIndex, amount);
-        return result.Success
-            ? RunDebugResult.Success(
-                $"槽位 {slotIndex + 1} 已分配 +{amount} → 现有 {_run.State.PlayerStates[slotIndex].AllocatedPotential}，"
-                + $"团队池 {_run.Potential.TeamPool}。")
-            : RunDebugResult.Failure($"分配失败：{result.Detail}");
-    }
-
-    /// <summary>从选中槽位扣除输入数额，退回团队池（无需表决）。</summary>
-    public RunDebugResult DeductPotential(int slotIndex, int amount)
-    {
-        var result = _run.Potential.TryDeduct(slotIndex, amount);
-        return result.Success
-            ? RunDebugResult.Success(
-                $"槽位 {slotIndex + 1} 已扣除 -{amount} → 现有 {_run.State.PlayerStates[slotIndex].AllocatedPotential}，"
-                + $"团队池 {_run.Potential.TeamPool}。")
-            : RunDebugResult.Failure($"扣除失败：{result.Detail}");
-    }
-
-    /// <summary>战斗检查快照：波次/回合/连携档位、充能球、各角色（S/能量/buff/手牌槽与槽位buff）、敌人状态。</summary>
+    /// <summary>战斗检查快照：波次/回合、充能球、各角色（S/能量/buff/手牌）、敌人状态。</summary>
     public string InspectBattle()
     {
         var simulation = _run.Simulation;
@@ -596,12 +521,6 @@ public sealed class RunDebugService
         builder.Append($"战斗 {simulation.Battle?.Id ?? "-"}：波 {simulation.CurrentWaveIndex + 1}/{simulation.WaveCount}，"
             + $"回合 {simulation.TurnNumber}（波内 {simulation.TurnsIntoWave}），阶段 {simulation.Phase}。\n");
 
-        var chainCounts = ChainCalculator.CountDistinctCharacters(simulation);
-        var chainText = string.Join("、", chainCounts
-            .Where(pair => ChainCalculator.TierScale(pair.Value) > 0)
-            .Select(pair => $"{pair.Key}×{pair.Value}({ChainCalculator.TierScale(pair.Value):P0})"));
-        builder.Append($"连携（按当前出牌队列）：{(chainText.Length > 0 ? chainText : "无")}\n");
-
         var orbText = string.Join("、", simulation.Orbs.Queue.Orbs
             .GroupBy(orb => orb.OrbTypeId, StringComparer.Ordinal)
             .Select(group => $"{group.Key}×{group.Count()}"));
@@ -610,14 +529,13 @@ public sealed class RunDebugService
             + $"{(simulation.Orbs.Queue.CanTriggerManually ? "可主动触发" : $"满 {OrbQueue.ManualTriggerThreshold} 可主动触发")}）\n");
 
         var normalAttackSlot = simulation.NormalAttacks.ResolveSlotIndex(simulation);
-        var lastNormalAttack = simulation.NormalAttacks.LastResult;
+        var lastNormalAttack = simulation.NormalAttacks.LastMarbleSettlement;
         builder.Append($"普通攻击：本回合归槽位 {(normalAttackSlot >= 0 ? (normalAttackSlot + 1).ToString() : "-")}"
-            + $"（累计 {simulation.NormalAttacks.ExecutionCount} 次）"
             + (lastNormalAttack is null
                 ? "；尚未执行"
                 : $";上次 槽位 {lastNormalAttack.SlotIndex + 1} {lastNormalAttack.CharacterDefinitionId}"
                     + $" {lastNormalAttack.Kind} 元素={lastNormalAttack.Element}"
-                    + $" 命中 {lastNormalAttack.TargetCount} 总伤 {lastNormalAttack.TotalDamage:0.##}")
+                    + $" 弹珠计数 {lastNormalAttack.TotalCount} 总伤 {lastNormalAttack.TotalDamage:0.##}")
             + "\n");
 
         for (var i = 0; i < simulation.PlayerTeam.Characters.Count; i++)
@@ -634,16 +552,8 @@ public sealed class RunDebugService
                     + (instance.IsDormant ? " [休眠]" : "") + "\n");
             }
 
-            foreach (var slot in character.HandSlots)
-            {
-                var slotBuffText = string.Join("、", slot.Buffs.All.Select(instance =>
-                    $"{instance.Def.Id}(充能{instance.ChargeCounter}, 剩{instance.RemainingTurns}回合)"));
-                if (slot.CardId is not null || slotBuffText.Length > 0)
-                {
-                    builder.Append($"    槽{slot.SlotIndex + 1}: {slot.CardId ?? "-"}"
-                        + (slotBuffText.Length > 0 ? $" | {slotBuffText}" : "") + "\n");
-                }
-            }
+            foreach (var card in character.HandSlots.Where(card => !card.IsEmpty))
+                builder.Append($"    手牌 {card.CardId}\n");
         }
 
         for (var i = 0; i < simulation.EnemyTeam.Enemies.Count; i++)

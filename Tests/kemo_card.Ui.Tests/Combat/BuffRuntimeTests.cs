@@ -571,119 +571,9 @@ public sealed class BuffRuntimeTests
             });
     }
 
-    [Test]
-    public void Slot_damage_buff_deals_shared_hp_damage_on_play()
-    {
-        var registry = BuildSlotDamageRegistry();
-        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            buffs: registry.Store.Buffs.ToDictionary(pair => pair.Key, pair => pair.Value),
-            effects: new Dictionary<string, EffectDto>
-            {
-                ["effect.slot_damage"] = new()
-                {
-                    Id = "effect.slot_damage",
-                    Kind = EEffectKind.Damage,
-                    Params = new Dictionary<string, object> { ["amount"] = 5 },
-                },
-            });
-
-        var hpBefore = sim.PlayerTeam.SharedHp;
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "buff.slot_damage");
-
-        sim.Buffs.FireSlotCardPlayed(sim, 0, sim.PlayerTeam.Characters[0].HandSlots[0]);
-
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hpBefore - 5), "槽位伤害结算到共享血量");
-    }
-
-    [Test]
-    public void Slot_damage_is_immune_when_holder_has_trait_tag()
-    {
-        var registry = BuildSlotDamageRegistry();
-        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            buffs: registry.Store.Buffs.ToDictionary(pair => pair.Key, pair => pair.Value),
-            effects: new Dictionary<string, EffectDto>
-            {
-                ["effect.slot_damage"] = new()
-                {
-                    Id = "effect.slot_damage",
-                    Kind = EEffectKind.Damage,
-                    Params = new Dictionary<string, object> { ["amount"] = 5 },
-                },
-            });
-
-        var hpBefore = sim.PlayerTeam.SharedHp;
-        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 0), "buff.immunity");
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "buff.slot_damage");
-
-        sim.Buffs.FireSlotCardPlayed(sim, 0, sim.PlayerTeam.Characters[0].HandSlots[0]);
-
-        Assert.That(sim.PlayerTeam.SharedHp, Is.EqualTo(hpBefore), "持有免疫特征 tag 的角色不受槽位伤害");
-    }
-
     #endregion
 
     #region 槽位 buff：充能
-
-    [Test]
-    public void Charge_buff_fires_payload_on_threshold_and_expires_after_duration()
-    {
-        var charge = new BuffDto
-        {
-            Id = "buff.charge",
-            DurationType = EBuffDurationType.Turns,
-            Duration = 3,
-            Tags = [BuiltinBuffTags.SlotCharge],
-            Hooks = new BuffEffectHooksDto
-            {
-                OnSlotCardPlayed =
-                [
-                    new EffectRefDto
-                    {
-                        EffectId = "effect.charge_burst",
-                        Params = new Dictionary<string, object> { ["hookTargets"] = "randomEnemy" },
-                    },
-                ],
-            },
-        };
-        using var sim = BuildSim(
-            registry => CombatTestHelper.RebuildInto(
-                registry,
-                buffs: new Dictionary<string, BuffDto> { [charge.Id] = charge },
-                effects: new Dictionary<string, EffectDto>
-                {
-                    ["effect.charge_burst"] = new()
-                    {
-                        Id = "effect.charge_burst",
-                        Kind = EEffectKind.Damage,
-                        Params = new Dictionary<string, object> { ["amount"] = 12 },
-                    },
-                }),
-            enemyHp: 100);
-
-        sim.Buffs.ApplyToSlot(sim, 0, 1, charge.Id);
-        var slot = sim.PlayerTeam.Characters[0].HandSlots[1];
-        var enemyHpBefore = sim.EnemyTeam.Enemies[0].CurrentHp;
-
-        // 充能 I：打出一张即触发并重置。
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(enemyHpBefore - 12), "充能 I 触发载荷");
-
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(enemyHpBefore - 24), "触发后重置，可再次触发");
-
-        // 3 回合到期移除，之后不再触发。
-        sim.Buffs.FireTurnEnd(sim);
-        sim.Buffs.FireTurnEnd(sim);
-        sim.Buffs.FireTurnEnd(sim);
-        Assert.That(slot.Buffs.Find(charge.Id), Is.Null, "3 回合后到期移除");
-
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(sim.EnemyTeam.Enemies[0].CurrentHp, Is.EqualTo(enemyHpBefore - 24), "移除后不再触发");
-    }
 
     #endregion
 
@@ -698,105 +588,7 @@ public sealed class BuffRuntimeTests
         TargetSide = ETargetSide.Enemy,
         TargetScope = ETargetScope.Single,
         TargetCount = 1,
-        Priority = 1,
     };
-
-    [Test]
-    public void Chain_counts_distinct_characters_per_element()
-    {
-        var blue = ElementCard("card.blue", EElement.Blue);
-        var red = ElementCard("card.red", EElement.Red);
-        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            cards: new Dictionary<string, CardDto> { [blue.Id] = blue, [red.Id] = red });
-
-        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blue.Id, "rt1", 1, [], sim.AllocateQueueSequence()));
-        sim.CardQueue.Enqueue(new QueuedCardEntry(1, blue.Id, "rt2", 1, [], sim.AllocateQueueSequence()));
-        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blue.Id, "rt3", 1, [], sim.AllocateQueueSequence()));
-        sim.CardQueue.Enqueue(new QueuedCardEntry(2, red.Id, "rt4", 1, [], sim.AllocateQueueSequence()));
-
-        var counts = ChainCalculator.CountDistinctCharacters(sim);
-
-        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(2), "同一角色多张只计 1 人");
-        Assert.That(counts.GetValueOrDefault(EElement.Red), Is.EqualTo(1));
-
-        // 档位数值是可调平衡参数，断言对比常量而不是写死百分比；本用例只钉结构（1 人无增益 / ≥4 封顶 / 单调递增）。
-        Assert.That(ChainCalculator.TierScale(0), Is.Zero);
-        Assert.That(ChainCalculator.TierScale(1), Is.Zero, "1 人无增益");
-        Assert.That(ChainCalculator.TierScale(2), Is.EqualTo(ChainCalculator.TwoChainScale));
-        Assert.That(ChainCalculator.TierScale(3), Is.EqualTo(ChainCalculator.ThreeChainScale));
-        Assert.That(ChainCalculator.TierScale(4), Is.EqualTo(ChainCalculator.FourChainScale));
-        Assert.That(ChainCalculator.TierScale(9), Is.EqualTo(ChainCalculator.FourChainScale), "≥4 人封顶");
-        Assert.That(ChainCalculator.TwoChainScale, Is.LessThan(ChainCalculator.ThreeChainScale));
-        Assert.That(ChainCalculator.ThreeChainScale, Is.LessThan(ChainCalculator.FourChainScale));
-    }
-
-    [Test]
-    public void Chain_element_inject_adds_red_counting_for_holder_cards()
-    {
-        var blueCard = ElementCard("card.blue2", EElement.Blue);
-        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            cards: new Dictionary<string, CardDto> { [blueCard.Id] = blueCard });
-
-        // 手工把 StandardPlayerPhase 的角色换成带注入的角色不可行（team 不可变），
-        // 改用注入的 buff 走正式 Apply 通道（2026-09-26 参数化，取代 trait tag）。
-        var inject = new BuffDto
-        {
-            Id = "buff.inject",
-            DurationType = EBuffDurationType.Permanent,
-            ChainElementInject = [new ChainElementInjectDto { Add = [EElement.Red] }],
-        };
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            cards: new Dictionary<string, CardDto> { [blueCard.Id] = blueCard },
-            buffs: new Dictionary<string, BuffDto> { [inject.Id] = inject });
-        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 1), inject.Id);
-
-        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blueCard.Id, "rt-a", 1, [], sim.AllocateQueueSequence()));
-        sim.CardQueue.Enqueue(new QueuedCardEntry(1, blueCard.Id, "rt-b", 1, [], sim.AllocateQueueSequence()));
-
-        var counts = ChainCalculator.CountDistinctCharacters(sim);
-
-        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(2));
-        Assert.That(counts.GetValueOrDefault(EElement.Red), Is.EqualTo(1), "被动2：持有者的蓝卡计入红属性统计（暂 1 人）");
-
-        var bonusForHolder = ChainCalculator.BonusForCard(counts, blueCard, sim.PlayerTeam.Characters[1]);
-        Assert.That(bonusForHolder, Is.EqualTo(ChainCalculator.TwoChainScale), "持有者的蓝卡取蓝/红中的最高档（蓝 2 人 = 二连档）");
-    }
-
-    [Test]
-    public void Chain_element_inject_maps_from_element_to_added_element()
-    {
-        var yellowCard = ElementCard("card.yellow2", EElement.Yellow);
-        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            cards: new Dictionary<string, CardDto> { [yellowCard.Id] = yellowCard });
-
-        // 参数化注入（2026-09-26）：含黄属性的卡额外计入蓝属性（取代 trait.chain_yellow_counts_blue）。
-        var inject = new BuffDto
-        {
-            Id = "buff.inject_yellow_blue",
-            DurationType = EBuffDurationType.Permanent,
-            ChainElementInject = [new ChainElementInjectDto { From = [EElement.Yellow], Add = [EElement.Blue] }],
-        };
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            cards: new Dictionary<string, CardDto> { [yellowCard.Id] = yellowCard },
-            buffs: new Dictionary<string, BuffDto> { [inject.Id] = inject });
-        sim.Buffs.Apply(sim, new CombatTargetRef(ECombatSide.Player, 1), inject.Id);
-
-        sim.CardQueue.Enqueue(new QueuedCardEntry(0, yellowCard.Id, "rt-a", 1, [], sim.AllocateQueueSequence()));
-        sim.CardQueue.Enqueue(new QueuedCardEntry(1, yellowCard.Id, "rt-b", 1, [], sim.AllocateQueueSequence()));
-
-        var counts = ChainCalculator.CountDistinctCharacters(sim);
-
-        Assert.That(counts.GetValueOrDefault(EElement.Yellow), Is.EqualTo(2));
-        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(1), "from=Yellow add=Blue：只有持有者的黄卡计入蓝");
-    }
 
     /// <summary>
     /// IdentityMatch 的队伍人数门闩（2026-09-26 统一）：与主体维度取"且"，
@@ -833,35 +625,6 @@ public sealed class BuffRuntimeTests
         Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find(buff.Id)!.IsDormant, Is.False, "蓝主体 + 队伍 2 蓝 → 激活");
         Assert.That(sim.PlayerTeam.Characters[1].Buffs.Find(buff.Id)!.IsDormant, Is.False, "第二蓝同样激活");
         Assert.That(sim.PlayerTeam.Characters[2].Buffs.Find(buff.Id)!.IsDormant, Is.True, "红主体不命中（人数够也没用）");
-    }
-
-    /// <summary>
-    /// 槽位容器没有 ASC 与持有者身份：经 <see cref="BuffRuntime.ApplyToSlot"/> 挂载的身份条件
-    /// <b>不按所属角色求值</b>，一律休眠（与 <c>BuffContainer</c> 类注释口径一致）。
-    /// </summary>
-    [Test]
-    public void Slot_buff_identity_condition_stays_dormant_even_when_owner_matches()
-    {
-        var slotBuff = new BuffDto
-        {
-            Id = "buff.slot_condition",
-            DurationType = EBuffDurationType.Permanent,
-            Tags = [BuiltinBuffTags.SlotCharge],
-            Conditions = [IdentityMatch(elementAny: [EElement.Green])],
-        };
-        var green = CharacterBattleInstance.CreateForTests("green", BaseAttrs, element: EElement.Green);
-        using var sim = BuildSim(
-            registry => CombatTestHelper.RebuildInto(
-                registry,
-                buffs: new Dictionary<string, BuffDto> { [slotBuff.Id] = slotBuff }),
-            [green]);
-
-        var result = sim.Buffs.ApplyToSlot(sim, characterIndex: 0, slotIndex: 0, slotBuff.Id);
-
-        Assert.That(result.Success, Is.True, result.Error);
-        var instance = green.HandSlots[0].Buffs.Find(slotBuff.Id);
-        Assert.That(instance, Is.Not.Null);
-        Assert.That(instance!.IsDormant, Is.True, "槽位 buff 的身份条件不按所属角色求值 → 休眠");
     }
 
     /// <summary>
@@ -925,46 +688,6 @@ public sealed class BuffRuntimeTests
             targets,
             Is.EqualTo(new[] { new CombatTargetRef(ECombatSide.Player, 2) }),
             "只命中非来源的蓝属性候选");
-    }
-
-    [Test]
-    public void Chain_does_not_apply_to_non_damage_heal_card_types()    {
-        var curseCard = ElementCard("card.curse", EElement.Blue, ECardType.Curse);
-        Assert.That(ChainCalculator.AppliesToCard(curseCard), Is.False);
-
-        var healCard = ElementCard("card.heal", EElement.Blue, ECardType.Healing);
-        Assert.That(ChainCalculator.AppliesToCard(healCard), Is.True);
-    }
-
-    /// <summary>
-    /// 统计侧统计队列里的<b>所有</b>卡：控制/诅咒等非输出卡同样把它打出的角色计入人头；
-    /// 只有加成侧（<see cref="ChainCalculator.AppliesToCard"/>）限定物/魔/治疗卡。
-    /// </summary>
-    [Test]
-    public void Chain_counting_includes_non_output_cards_in_queue()
-    {
-        var blue = ElementCard("card.blue3", EElement.Blue);
-        var curse = ElementCard("card.curse3", EElement.Blue, ECardType.Curse);
-        var sim = CombatSimulationTestBuilder.StandardPlayerPhase();
-        CombatTestHelper.RebuildInto(
-            sim.Definitions,
-            cards: new Dictionary<string, CardDto> { [blue.Id] = blue, [curse.Id] = curse });
-
-        sim.CardQueue.Enqueue(new QueuedCardEntry(0, blue.Id, "rt-n0", 1, [], sim.AllocateQueueSequence()));
-        sim.CardQueue.Enqueue(new QueuedCardEntry(1, curse.Id, "rt-n1", 1, [], sim.AllocateQueueSequence()));
-
-        var counts = ChainCalculator.CountDistinctCharacters(sim);
-
-        Assert.That(counts.GetValueOrDefault(EElement.Blue), Is.EqualTo(2),
-            "诅咒卡也堆人头：2 人即二连档");
-        Assert.That(
-            ChainCalculator.BonusForCard(counts, curse, sim.PlayerTeam.Characters[1]),
-            Is.Zero,
-            "但非输出卡自身不吃连携加成");
-        Assert.That(
-            ChainCalculator.BonusForCard(counts, blue, sim.PlayerTeam.Characters[0]),
-            Is.EqualTo(ChainCalculator.TwoChainScale),
-            "同一档位下物/魔/治疗卡照常吃加成");
     }
 
     #endregion

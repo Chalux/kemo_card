@@ -37,9 +37,6 @@ public sealed class CardDto
     [JsonPropertyName("isExclusive")]
     public bool IsExclusive { get; init; }
 
-    [JsonPropertyName("priority")]
-    public int Priority { get; init; }
-
     [JsonPropertyName("cardType")]
     public ECardType CardType { get; init; }
 

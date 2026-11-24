@@ -141,11 +141,10 @@ public sealed class EnemyIntentAndDamageTests
         var registry = BaseGameContent.BuildRegistry();
         registry.Store.CardsMutable["test.intent.hp"] = new() { Id = "test.intent.hp", Stats = new() { HpCap = 10000 } };
         var actualPartyIds = new[] { "chalux", "Kagi", "mother_machine", "betelgeuse" };
-        var party = Enumerable.Range(0, 4).Select(index => new CharacterInstance(realParty
+        var party = Enumerable.Range(0, KemoCard.Mod.Combat.CombatConstants.SlotCount).Select(index => new CharacterInstance(realParty
             ? registry.Store.Characters[actualPartyIds[index]]
             : new CharacterDto { Id = $"intent-{index}", Cards = ["test.intent.hp"] }, $"intent-{index}")).ToArray();
         var initialBuffs = realParty ? party.SelectMany((character, index) => character.Definition!.Passives
-            .Where(passive => passive.RequiredPotential == 0)
             .Select(passive => new BattleStartBuffEntry(index, passive.BuffId, passive.Params))).ToArray() : [];
         var sim = CombatSimulationFactory.TryCreate(registry.Store.Battles[battleId], party, registry,
             new HostRng(42, "combat"), 42, null, null, "base.game", CombatRuleCatalog.CreateDefault(), out var error,

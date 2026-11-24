@@ -49,10 +49,14 @@ public partial class MenuWin : BaseWin
         if (RunRuntime.TryLoadLatest())
         {
             _ = RunUiController.OpenRunMainAsync();
+            return;
         }
+        RefreshContinue();
     }
 
-    protected override void OnOpen()
+    protected override void OnOpen() => RefreshContinue();
+
+    private void RefreshContinue()
     {
         if (LoadBtn != null)
         {

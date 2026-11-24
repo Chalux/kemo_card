@@ -16,8 +16,7 @@
       "HealPower": 1
     }
   },
-  "role": "Elementist",
-  "priority": 9,
+  "role": "Attack",
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

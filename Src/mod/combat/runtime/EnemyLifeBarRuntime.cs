@@ -22,7 +22,8 @@ internal sealed class EnemyLifeBarRuntime(CombatSimulation simulation)
         if (!enemy.HasNextLifeBar || enemy.IsAwaitingLifeBar || enemy.CurrentHpExact > 0f)
             return false;
         enemy.IsAwaitingLifeBar = true;
-        if (simulation.Phase == ECombatPhase.CardExecution ||
+        if (simulation.CurrentCardType is not null ||
+            simulation.Phase is ECombatPhase.CardExecution or ECombatPhase.Marble ||
             (simulation.Phase == ECombatPhase.Enemy && simulation.EnemyActionIndex < enemyIndex))
         {
             enemy.Buffs.Add(TransitionImmunity, null);

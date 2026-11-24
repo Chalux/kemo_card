@@ -65,12 +65,13 @@ public sealed class SkillActionExecutor
             return;
 
         var mergedParams = ContentParameters.Merge(action.Params, actionRef.Params, payloadOverrides);
-        ExecuteAction(action, mergedParams, simulation, source, targets, depth);
+        ExecuteAction(action, mergedParams, simulation, source, targets, depth, discardReference: actionRef);
     }
 
     public void ExecuteLegacyAction(
         EEffectKind kind,
         EffectDto effect,
+        EffectRefDto effectRef,
         IReadOnlyDictionary<string, object> mergedParams,
         CombatSimulation simulation,
         CombatTargetRef source,
@@ -108,7 +109,7 @@ public sealed class SkillActionExecutor
             return;
         }
 
-        ExecuteAction(legacyAction, mergedParams, simulation, source, targets, depth, EContentCategory.Effect);
+        ExecuteAction(legacyAction, mergedParams, simulation, source, targets, depth, EContentCategory.Effect, discardReference: effectRef);
     }
 
     private void ExecuteAction(
@@ -119,11 +120,24 @@ public sealed class SkillActionExecutor
         IReadOnlyList<CombatTargetRef> targets,
         int depth,
         EContentCategory originCategory = EContentCategory.SkillAction,
-        string? inheritedOwner = null)
+        string? inheritedOwner = null,
+        object? discardReference = null)
     {
         using var scope = simulation.EffectBudget.TryEnter();
         if (scope is null)
             return;
+        if (simulation.Phase == ECombatPhase.Marble)
+        {
+            if (action.Kind == ESkillActionKind.DiscardAndRecord)
+            {
+                simulation.SetLastDiscardCount(0);
+                return;
+            }
+            if (action.Kind is ESkillActionKind.Draw or ESkillActionKind.Discard or ESkillActionKind.DrawByDiscard
+                or ESkillActionKind.FillHand or ESkillActionKind.ModifyDrawCount or ESkillActionKind.ModifyDrawCountByDiscard ||
+                action.Kind == ESkillActionKind.GainResource && ReadResourceName(mergedParams) == "energy")
+                return;
+        }
         switch (action.Kind)
         {
             case ESkillActionKind.SummonEnemy:
@@ -136,15 +150,15 @@ public sealed class SkillActionExecutor
                         bool.TryParse(trackSummonsValue?.ToString(), out var trackSummonsEnabled) && trackSummonsEnabled);
                 break;
             case ESkillActionKind.Draw:
-                ApplyDraw(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1));
+                ApplyDraw(simulation, source, targets, mergedParams);
                 break;
             case ESkillActionKind.Discard:
                 // 实际弃置张数只有 DiscardAndRecord 需要；本动作保持原语义（不记账）。
-                ApplyDiscard(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1), mergedParams);
+                ApplyDiscard(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1), mergedParams, discardReference);
                 break;
             case ESkillActionKind.DiscardAndRecord:
                 simulation.SetLastDiscardCount(
-                    ApplyDiscard(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1), mergedParams));
+                    ApplyDiscard(simulation, source, targets, ContentParameters.ReadInt(mergedParams, "count", 1), mergedParams, discardReference));
                 break;
             case ESkillActionKind.GainResource:
                 ApplyGainResource(simulation, source, targets, mergedParams);
@@ -190,7 +204,8 @@ public sealed class SkillActionExecutor
                     simulation.Buffs.DispelDebuffs(simulation, target);
                 break;
             case ESkillActionKind.AttachSlotBuff:
-                AttachSlotBuff(simulation, source, targets, mergedParams);
+            case ESkillActionKind.DiscardSlot:
+                // 固定手牌槽效果已停用。引用它们的旧技能仍按原时机施放。
                 break;
             case ESkillActionKind.GainOrb:
                 GainOrb(simulation, source, mergedParams);
@@ -200,9 +215,6 @@ public sealed class SkillActionExecutor
                 break;
             case ESkillActionKind.SetDomain:
                 SetDomain(simulation, mergedParams);
-                break;
-            case ESkillActionKind.DiscardSlot:
-                DiscardSlot(simulation, source, mergedParams);
                 break;
         }
     }
@@ -265,25 +277,6 @@ public sealed class SkillActionExecutor
     /// 弃置来源角色指定手牌槽的牌（<c>params.slotIndex</c>，0 起）：只弃未标记的牌，
     /// 已入队/已确认的牌不动（规格 §2.2"其它通道"不得借钩子回滚确认态）。
     /// </summary>
-    private static void DiscardSlot(
-        CombatSimulation simulation,
-        CombatTargetRef source,
-        IReadOnlyDictionary<string, object> parameters)
-    {
-        var slotIndex = ContentParameters.ReadInt(parameters, "slotIndex", -1);
-        if (source.Side != ECombatSide.Player ||
-            source.Index < 0 ||
-            source.Index >= simulation.PlayerTeam.Characters.Count)
-        {
-            return;
-        }
-
-        var character = simulation.PlayerTeam.Characters[source.Index];
-        var before = PresentationEmitter.SnapshotHand(character);
-        character.DiscardSlotCard(slotIndex);
-        PresentationEmitter.EmitDiscardsByDiff(simulation, source.Index, before, simulation.CurrentDiscardChannel);
-    }
-
     private void ApplyExecuteScript(
         SkillActionDto action,
         IReadOnlyDictionary<string, object> mergedParams,
@@ -470,80 +463,6 @@ public sealed class SkillActionExecutor
             simulation.Buffs.Dispel(simulation, target, buffId, withTags);
     }
 
-    /// <summary>
-    /// 玩家来源给自身挂槽位 buff；敌方来源给传入的玩家角色目标挂。参数为 buffId + 槽位选择。
-    /// 槽位选择：<c>params.slotIndex</c>（0 起，显式指定）；
-    /// <c>params.slotSelection: "randomNonEmpty"</c>（当前有牌的槽里随机一个，用于「随机一张手牌费用变为 0」）；
-    /// <c>params.slotSelection: "random"</c>（包含空槽，定时投放使用）；
-    /// <c>params.slotSelection: "all"</c>（全部手牌槽，空槽也挂，用于「1~5 号槽都获得充能」）。都不给时零操作。
-    /// </summary>
-    private static void AttachSlotBuff(
-        CombatSimulation simulation,
-        CombatTargetRef source,
-        IReadOnlyList<CombatTargetRef> targets,
-        IReadOnlyDictionary<string, object> parameters)
-    {
-        if (!BuffActionParams.TryGetBuffId(parameters, out var buffId))
-            return;
-
-        var instanceParams = BuffActionParams.BuildInstanceParams(parameters, "buffId", "slotIndex", "slotSelection");
-        var holders = source.Side == ECombatSide.Player ? new[] { source } : targets;
-        foreach (var holder in holders.Distinct())
-        {
-            if (holder.Side != ECombatSide.Player || holder.Index < 0 || holder.Index >= simulation.PlayerTeam.Characters.Count)
-                continue;
-            foreach (var slotIndex in ResolveSlotIndexes(simulation, holder.Index, parameters))
-                simulation.Buffs.ApplyToSlot(simulation, holder.Index, slotIndex, buffId, instanceParams);
-        }
-    }
-
-    /// <summary>解析目标槽位集合：显式 slotIndex 优先，其次 randomNonEmpty / random / all。</summary>
-    private static IEnumerable<int> ResolveSlotIndexes(
-        CombatSimulation simulation,
-        int characterIndex,
-        IReadOnlyDictionary<string, object> parameters)
-    {
-        var explicitIndex = ContentParameters.ReadInt(parameters, "slotIndex", -1);
-        if (explicitIndex >= 0)
-        {
-            yield return explicitIndex;
-            yield break;
-        }
-
-        if (!BuffActionParams.TryGetString(parameters, "slotSelection", out var selection))
-            yield break;
-
-        if (string.Equals(selection, "all", StringComparison.OrdinalIgnoreCase))
-        {
-            var slotCount = simulation.PlayerTeam.Characters[characterIndex].HandSlots.Count;
-            for (var index = 0; index < slotCount; index++)
-                yield return index;
-            yield break;
-        }
-
-        if (string.Equals(selection, "random", StringComparison.OrdinalIgnoreCase))
-        {
-            var count = simulation.PlayerTeam.Characters[characterIndex].HandSlots.Count;
-            if (count > 0)
-                yield return simulation.RetargetRng.NextInt(0, count);
-            yield break;
-        }
-
-        if (!string.Equals(selection, "randomNonEmpty", StringComparison.OrdinalIgnoreCase))
-            yield break;
-
-        var candidates = new List<int>();
-        var slots = simulation.PlayerTeam.Characters[characterIndex].HandSlots;
-        for (var index = 0; index < slots.Count; index++)
-        {
-            if (!slots[index].IsEmpty)
-                candidates.Add(index);
-        }
-
-        if (candidates.Count > 0)
-            yield return candidates[simulation.RetargetRng.NextInt(0, candidates.Count)];
-    }
-
     private static Dictionary<string, object>? BuildScriptContext(
         IReadOnlyDictionary<string, object> mergedParams,
         CombatSimulation simulation,
@@ -562,32 +481,25 @@ public sealed class SkillActionExecutor
         return context;
     }
 
-    /// <summary>规格 §4.3：普通 Draw 禁止战斗中途即时抽牌；计诊断并无操作。</summary>
     private static void ApplyDraw(
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
-        int count)
+        IReadOnlyDictionary<string, object> parameters)
     {
-        _ = source;
-        _ = targets;
-        _ = count;
-        simulation.CountBlockedMidDraw();
+        var count = ContentParameters.ReadInt(parameters, "count", 1);
+        var hasSelector = BuffActionParams.HasTargetSelector(parameters);
+        var resolved = hasSelector ? CombatTargetSelector.Resolve(simulation, source, parameters) : targets;
+        DrawForPlayerTargets(simulation, resolved, hasSelector, count);
     }
 
-    /// <summary>主动技能专用的补满手牌动作：只填空槽，不替换既有牌或重置洗牌预算。</summary>
+    /// <summary>将受影响角色的手牌补到上限。</summary>
     private static void ApplyFillHand(
         CombatSimulation simulation,
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
         IReadOnlyDictionary<string, object> parameters)
     {
-        if (simulation.CurrentDiscardChannel != EDiscardChannel.ActiveSkill)
-        {
-            simulation.CountBlockedMidDraw();
-            return;
-        }
-
         var hasSelector = BuffActionParams.HasTargetSelector(parameters);
         var resolved = hasSelector ? CombatTargetSelector.Resolve(simulation, source, parameters) : targets;
         if (hasSelector && resolved.Count == 0)
@@ -595,7 +507,7 @@ public sealed class SkillActionExecutor
 
         foreach (var character in ResolvePlayerCharacters(simulation, source, resolved, allowSourceFallback: !hasSelector))
             PresentationEmitter.DrawAndEmit(simulation, IndexOfCharacter(simulation, character),
-                character.HandSlots.Count(slot => slot.IsEmpty));
+                simulation.PlayerTeam.CardPiles.RemainingHandSpace);
     }
 
     /// <summary>规格 §4.3：按实际弃牌数即时补抽，保留弃牌记录供后续伤害读取。</summary>
@@ -610,13 +522,46 @@ public sealed class SkillActionExecutor
         if (amount <= 0)
             return;
 
-        var resolvedTargets = BuffActionParams.HasTargetSelector(parameters)
+        var hasSelector = BuffActionParams.HasTargetSelector(parameters);
+        var resolvedTargets = hasSelector
             ? CombatTargetSelector.Resolve(simulation, source, parameters)
             : targets;
 
-        foreach (var character in ResolvePlayerCharacters(simulation, source, resolvedTargets,
-                     allowSourceFallback: !BuffActionParams.HasTargetSelector(parameters)))
-            PresentationEmitter.DrawAndEmit(simulation, IndexOfCharacter(simulation, character), amount);
+        DrawForPlayerTargets(simulation, resolvedTargets, hasSelector, amount);
+    }
+
+    /// <summary>
+    /// 按技能的显式目标抽牌：每个被点名的角色各抽 <paramref name="count"/> 张，并只取该角色归属的牌；
+    /// 没有显式玩家目标时（队伍抽牌 / 仅敌方目标）从共享牌堆抽一次，不限定归属。
+    /// 选择器显式筛选但未命中玩家时绝不回落到来源，避免把 AoE / 敌方技能误奖励给施法者。
+    /// </summary>
+    private static void DrawForPlayerTargets(
+        CombatSimulation simulation,
+        IReadOnlyList<CombatTargetRef> resolved,
+        bool hasSelector,
+        int count)
+    {
+        if (count <= 0)
+            return;
+
+        var characterCount = simulation.PlayerTeam.Characters.Count;
+        var playerIndices = resolved
+            .Where(target => target.Side == ECombatSide.Player && target.Index >= 0 && target.Index < characterCount)
+            .Select(target => target.Index)
+            .Distinct()
+            .Order()
+            .ToArray();
+        if (playerIndices.Length > 0)
+        {
+            foreach (var index in playerIndices)
+                PresentationEmitter.DrawTeamAndEmit(simulation, count, requiredOwner: index);
+            return;
+        }
+
+        if (hasSelector)
+            return;
+
+        PresentationEmitter.DrawTeamAndEmit(simulation, count, requiredOwner: null);
     }
 
     /// <summary>规格 §4.6：按 <see cref="CombatSimulation.CurrentDiscardChannel"/> 分流弃牌。</summary>
@@ -629,31 +574,22 @@ public sealed class SkillActionExecutor
         CombatTargetRef source,
         IReadOnlyList<CombatTargetRef> targets,
         int count,
-        IReadOnlyDictionary<string, object> parameters)
+        IReadOnlyDictionary<string, object> parameters,
+        object? reference)
     {
         if (count <= 0)
             return 0;
 
         var random = DiscardSelection.ReadFlag(parameters, "random");
-        if (!random && (simulation.CurrentDiscardChannel != EDiscardChannel.ActiveSkill || simulation.SelectedDiscardSlots is null))
+        if (!random && (simulation.CurrentDiscardChannel != EDiscardChannel.ActiveSkill ||
+            simulation.SelectedDiscardCards is null && simulation.PlannedDiscards is null))
         {
             simulation.CountBlockedUnselectedDiscard();
             return 0;
         }
-        var discarded = 0;
-        foreach (var character in ResolvePlayerCharacters(simulation, source, targets))
-        {
-            var before = PresentationEmitter.SnapshotHand(character);
-            if (simulation.CurrentDiscardChannel == EDiscardChannel.ActiveSkill)
-                discarded += DiscardViaActiveSkillChannel(simulation, character, count, random);
-            else if (random)
-                discarded += character.DiscardRandomUnmarked(count, simulation.DiscardRng);
 
-            var characterIndex = IndexOfCharacter(simulation, character);
-            PresentationEmitter.EmitDiscardsByDiff(simulation, characterIndex, before, simulation.CurrentDiscardChannel);
-        }
-
-        return discarded;
+        return DiscardSelection.ResolvePools(simulation, source, targets, parameters)
+            .Sum(owners => DiscardFromPool(simulation, owners, count, random, reference));
     }
 
     private static int IndexOfCharacter(CombatSimulation simulation, CharacterBattleInstance character)
@@ -668,43 +604,47 @@ public sealed class SkillActionExecutor
         return -1;
     }
 
-    /// <summary>
-    /// ActiveSkill 通道：选牌或显式随机，可含已标记；命中标记则取消、退 <c>paid</c>、回退未确认，再进弃牌堆。
-    /// </summary>
-    /// <returns>实际移入弃牌堆的张数；选牌不消耗随机流。</returns>
-    private static int DiscardViaActiveSkillChannel(
-        CombatSimulation simulation,
-        CharacterBattleInstance character,
-        int count, bool random)
+    private static int DiscardFromPool(CombatSimulation simulation, IReadOnlyList<int> owners, int count, bool random, object? reference)
     {
-        var discarded = 0;
-        for (var i = 0; i < count; i++)
+        var characters = simulation.PlayerTeam.Characters;
+        IReadOnlyList<HandCardChoice>? selected = simulation.SelectedDiscardCards;
+        if (!random && simulation.PlannedDiscards is { } plan)
         {
-            HandSlot? slot;
-            if (random)
-                slot = character.PickRandomOccupiedSlot(simulation.DiscardRng);
-            else if (simulation.SelectedDiscardCharacterIndex == IndexOfCharacter(simulation, character) &&
-                simulation.SelectedDiscardSlots is { Count: > 0 } selected)
-                slot = character.HandSlots[selected.Dequeue()];
-            else
-                break;
-            if (slot is null || slot.IsEmpty)
+            var index = plan.FindIndex(group => ReferenceEquals(group.Requirement.Reference, reference) &&
+                group.Requirement.Owners.SequenceEqual(owners));
+            if (index < 0)
+                return 0;
+            selected = plan[index].Cards;
+            plan.RemoveAt(index);
+        }
+        var pool = owners.SelectMany(owner => characters[owner].HandSlots
+            .Where(slot => !slot.IsEmpty)
+            .Select(slot => new HandCardChoice(owner, slot.RuntimeInstanceId!))).ToList();
+        if (random && simulation.PlannedDiscards is { Count: > 0 } remaining)
+        {
+            var reserved = remaining.SelectMany(group => group.Cards).ToHashSet();
+            pool.RemoveAll(reserved.Contains);
+        }
+        var discarded = 0;
+        while (discarded < count && pool.Count > 0)
+        {
+            var index = random
+                ? simulation.DiscardRng.NextInt(0, pool.Count)
+                : pool.IndexOf(selected!.FirstOrDefault(pool.Contains));
+            if (index < 0)
                 break;
 
-            var runtimeId = slot.RuntimeInstanceId!;
-            if (slot.IsMarked)
-            {
-                var entry = simulation.CardQueue
-                    .PeekAllOrdered()
-                    .FirstOrDefault(candidate =>
-                        string.Equals(candidate.RuntimeInstanceId, runtimeId, StringComparison.Ordinal));
-                if (entry is not null)
-                    CombatStateMachine.CancelMarkAndRefund(simulation, entry);
-                character.SetHasActed(false);
-            }
+            var card = pool[index];
+            pool.RemoveAt(index);
+            var character = characters[card.CharacterIndex];
+            var slot = character.HandSlots.First(candidate => candidate.RuntimeInstanceId == card.RuntimeInstanceId);
+            var evt = new CardDiscardedEvent(card.CharacterIndex, slot.SlotIndex, slot.CardId!, simulation.CurrentDiscardChannel, card.RuntimeInstanceId);
+            if (!character.MoveHandCardToGraveyard(card.RuntimeInstanceId))
+                continue;
 
-            if (character.MoveHandCardToGraveyard(runtimeId))
-                discarded++;
+            simulation.SelectedDiscardCards?.Remove(card);
+            simulation.Presentation.Emit(evt);
+            discarded++;
         }
 
         return discarded;

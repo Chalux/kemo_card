@@ -17,7 +17,6 @@
     }
   },
   "role": "Support",
-  "priority": 7,
   "cardType": "Healing",
   "targetSide": "Ally",
   "targetScope": "Team",

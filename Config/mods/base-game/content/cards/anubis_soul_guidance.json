@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.anubis_soul_guidance.name",
   "element": 1,
-  "role": "CardPlayer",
+  "role": "Attack",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "MaxHealth": 20
     }
   },
-  "priority": 5,
   "cardType": "Physics",
   "targetSide": "Enemy",
   "targetScope": "Single",

@@ -19,8 +19,6 @@ public sealed partial class RunMod : BaseMod
 
     private readonly List<CharacterInstance> _characterPool = [];
     private readonly HashSet<string> _cardCollection = new(StringComparer.Ordinal);
-    private readonly List<PlayerController> _playerControllers = [];
-    private readonly Dictionary<int, string> _slotOwnership = new();
     private readonly List<BattleRecordDto> _battleHistory = [];
 
     /// <summary><see cref="Phase"/> 的存储；变化时广播 <c>RunPhaseChanged</c>。</summary>
@@ -68,7 +66,6 @@ public sealed partial class RunMod : BaseMod
     }
 
     public int RunSeed { get; set; }
-    public bool IsMultiplayer { get; set; }
 
     public IReadOnlyList<CharacterInstance> CharacterPool => _characterPool;
     public IReadOnlySet<string> CardCollection => _cardCollection;
@@ -77,10 +74,6 @@ public sealed partial class RunMod : BaseMod
     public RunMapState? Map { get; set; }
     public HashSet<string> ReservedEventIds { get; } = new(StringComparer.Ordinal);
 
-    /// <summary>团队潜能池：全队共享的可消费额度；重复获得角色 +20 入池（自身已有则直充槽位）。</summary>
-    public int TeamPotentialPool { get; set; }
-    public IReadOnlyList<PlayerController> PlayerControllers => _playerControllers;
-    public IReadOnlyDictionary<int, string> SlotOwnership => _slotOwnership;
     public IReadOnlyList<BattleRecordDto> BattleHistory => _battleHistory;
 
     public PlayerRunState[] PlayerStates { get; } = Enumerable.Range(0, RunConstants.SlotCount)
@@ -134,27 +127,6 @@ public sealed partial class RunMod : BaseMod
         return true;
     }
 
-    public void AddPlayerController(PlayerController controller)
-    {
-        ArgumentNullException.ThrowIfNull(controller);
-        _playerControllers.Add(controller);
-    }
-
-    public void AssignSlotInternal(int slotIndex, string playerId)
-    {
-        _slotOwnership[slotIndex] = playerId;
-    }
-
-    public bool AllSlotsAssigned()
-    {
-        for (var i = 0; i < RunConstants.SlotCount; i++)
-        {
-            if (!_slotOwnership.TryGetValue(i, out var playerId) || string.IsNullOrEmpty(playerId))
-                return false;
-        }
-        return true;
-    }
-
     public void AddBattleRecord(BattleRecordDto record)
     {
         _battleHistory.Add(record);
@@ -172,7 +144,7 @@ public sealed partial class RunMod : BaseMod
     public static IEnumerable<UIRegistration> GetUIRegistrations()
     {
         yield return UIRegistration.Dialog(FeatureId, RunUiIds.StorySelect, "Src/mod/run/Ui");
-        yield return UIRegistration.Dialog(FeatureId, RunUiIds.Potion, "Src/mod/run/Ui/Items")
+        yield return UIRegistration.Dialog(FeatureId, RunUiIds.Consumable, "Src/mod/run/Ui/Items")
             with
         { OpenOpt = new UIOpenOpt { CacheTime = 0 } };
         yield return UIRegistration.Window(FeatureId, RunUiIds.RunMain, "Src/mod/run/Ui")
@@ -237,17 +209,13 @@ public sealed partial class RunMod : BaseMod
             MaxRing = MaxRing,
             Phase = Phase,
             RunSeed = RunSeed,
-            IsMultiplayer = IsMultiplayer,
-            PlayerControllers = _playerControllers.Select(pc => pc.ToDto()).ToList(),
-            SlotOwnership = new Dictionary<int, string>(_slotOwnership),
             CharacterPool = characterPoolDtos,
             CardCollection = _cardCollection.ToList(),
             SharedGold = SharedGold,
             Relics = Items.Relics.ToList(),
-            Potions = Items.Potions.ToList(),
+            Consumables = Items.Consumables.ToList(),
             Map = Map?.Copy(),
             ReservedEventIds = ReservedEventIds.ToList(),
-            TeamPotentialPool = TeamPotentialPool,
             PlayerStates = playerStateDtos,
             BattleHistory = _battleHistory.ToList(),
         };
@@ -266,13 +234,11 @@ public sealed partial class RunMod : BaseMod
         MaxRing = dto.MaxRing;
         Phase = dto.Phase;
         RunSeed = dto.RunSeed;
-        IsMultiplayer = dto.IsMultiplayer;
         SharedGold = dto.SharedGold;
-        Items.Restore(dto.Relics, dto.Potions);
+        Items.Restore(dto.Relics, dto.Consumables);
         Map = dto.Map?.Copy();
         ReservedEventIds.Clear();
         ReservedEventIds.UnionWith(dto.ReservedEventIds ?? []);
-        TeamPotentialPool = dto.TeamPotentialPool;
 
         _cardCollection.Clear();
         foreach (var cardId in dto.CardCollection)
@@ -303,28 +269,17 @@ public sealed partial class RunMod : BaseMod
             _characterPool.Add(instance);
         }
 
-        _slotOwnership.Clear();
-        foreach (var (slot, playerId) in dto.SlotOwnership)
-            _slotOwnership[slot] = playerId;
-
-        _playerControllers.Clear();
-        foreach (var pcDto in dto.PlayerControllers)
-            _playerControllers.Add(new PlayerController(pcDto.PlayerId, pcDto.DisplayName, pcDto.IsOwner));
-
         _battleHistory.Clear();
         _battleHistory.AddRange(dto.BattleHistory);
 
         for (var i = 0; i < Math.Min(dto.PlayerStates.Count, RunConstants.SlotCount); i++)
         {
             var stateDto = dto.PlayerStates[i];
-            PlayerStates[i].SetGold(stateDto.Gold);
             PlayerStates[i].Modifiers.Clear();
             PlayerStates[i].Modifiers.AddRange(stateDto.Modifiers);
             PlayerStates[i].EventFlags.Clear();
             foreach (var (k, v) in stateDto.EventFlags)
                 PlayerStates[i].EventFlags[k] = v;
-            PlayerStates[i].ResetAllocatedPotential();
-            PlayerStates[i].AllocatePotential(stateDto.PotentialDirectCredit);
 
             if (stateDto.ActiveCharacterIndex.HasValue
                 && stateDto.ActiveCharacterIndex.Value >= 0

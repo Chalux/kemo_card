@@ -2,7 +2,7 @@
 
 **日期**：2026-09-21
 **状态**：已实装
-**关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md)（§4.5 角色池/上场、§4.6 卡牌构筑）、[2026-06-22 Run 模块规格](../../../superpowers/specs/2026-06-22-run-mod-design.md)；界面层遵循 [2026-05-15 UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md) 与 [2026-09-19 UI 主题规格](../../../superpowers/specs/2026-09-19-ui-theme-and-debug-panel.md)。
+**关系**：服从 [2026-05-11 总规格](../../../superpowers/specs/2026-05-11-kemo-card-design.md)（§4.5 角色池/上场、§4.6 卡牌构筑）、[2026-06-22 Run 模块规格](../../../superpowers/specs/2026-06-22-run-mod-design.md)；界面层遵循 [2026-05-15 UI 管理器规格](../../../superpowers/specs/2026-05-15-ui-manager-design.md) 与 [2026-09-19 UI 主题规格](2026-09-19-ui-theme-and-debug-panel.md)。
 
 ---
 

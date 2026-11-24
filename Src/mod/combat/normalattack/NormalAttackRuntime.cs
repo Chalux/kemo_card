@@ -66,7 +66,7 @@ public sealed record NormalAttackResult(
 /// <para><b>解耦</b>：不算"打出牌"——不触发槽位 buff（充能/槽位伤害/onSlotCardPlayed），不计入连携人头，
 /// 也不计入回合结束的充能球产出统计；不消耗能量、不占"已行动"、不可取消；被封印的角色仍会普攻。</para>
 /// </remarks>
-public sealed class NormalAttackRuntime
+public sealed partial class NormalAttackRuntime
 {
     /// <summary>上一次执行结果（未执行过为 null）；调试面板与 UI 用它展示。</summary>
     public NormalAttackResult? LastResult { get; private set; }

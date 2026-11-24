@@ -26,17 +26,16 @@ public sealed class KagiContentTests
         Assert.That(report.HasIssues, Is.False, string.Join("\n", report.RemovedValidationErrors.Select(e => e.Message)));
         Assert.That(CombatContentValidator.TryValidateHealTargeting(registry, out var error), Is.True, error);
         var def = BaseGameContent.Load().Characters["Kagi"];
-        Assert.That(def.Role, Is.EqualTo(ERole.Controller));
+        Assert.That(def.Role, Is.EqualTo(ERole.Attack));
         Assert.That(def.Race, Is.EqualTo(ERace.Animal));
         Assert.That(def.Element, Is.EqualTo(EElement.Red));
         Assert.That(def.ActiveSkillChain.Single().Cooldown, Is.EqualTo(8));
-        Assert.That(def.Passives.Select(p => p.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(def.Cards, Has.Count.EqualTo(4));
         foreach (var id in def.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Red));
-            Assert.That(card.Role, Is.EqualTo(ERole.Controller));
+            Assert.That(card.Role, Is.EqualTo(ERole.Attack));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.Stats!.Attributes.Sum(p => p.Key == AttributeIds.MaxHealth ? p.Value : 10 * p.Value), Is.EqualTo(40));
@@ -153,33 +152,6 @@ public sealed class KagiContentTests
     #endregion
 
     #region 第五槽充能与卡牌
-
-    [Test]
-    public void Fifth_slot_charge_triggers_each_three_cards_without_expiring_or_ticking_from_other_slots()
-    {
-        using var sim = Build();
-        ApplyPassive(sim, 1);
-        ApplyPassive(sim, 4);
-        var slots = sim.PlayerTeam.Characters[0].HandSlots;
-        Assert.That(slots.Take(4).All(s => !s.Buffs.HasTag(BuiltinBuffTags.SlotCharge)), Is.True);
-        var charge = slots[4].Buffs.FindByTag(BuiltinBuffTags.SlotCharge)!;
-        Assert.That(charge.ChargeRequired, Is.EqualTo(3));
-        Assert.That(charge.RemainingTurns, Is.Null);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slots[3]);
-        Assert.That(charge.ChargeCounter, Is.EqualTo(3));
-        for (var round = 0; round < 2; round++)
-        {
-            foreach (var enemy in sim.EnemyTeam.Enemies) enemy.ActionCount = 1;
-            sim.Buffs.FireSlotCardPlayed(sim, 0, slots[4]);
-            sim.Buffs.FireSlotCardPlayed(sim, 0, slots[4]);
-            Assert.That(sim.EnemyTeam.Enemies.All(e => e.ActionCount == 1), Is.True);
-            sim.Buffs.FireSlotCardPlayed(sim, 0, slots[4]);
-            Assert.That(sim.EnemyTeam.Enemies.Count(e => e.ActionCount == 2), Is.EqualTo(1));
-            Assert.That(charge.ChargeCounter, Is.EqualTo(3));
-            sim.Buffs.FireTurnEnd(sim);
-            Assert.That(slots[4].Buffs.FindByTag(BuiltinBuffTags.SlotCharge), Is.SameAs(charge));
-        }
-    }
 
     [Test]
     public void Exclusive_cards_apply_marks_hit_twice_weaken_every_enemy_and_prepare_self()

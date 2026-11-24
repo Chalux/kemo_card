@@ -189,43 +189,6 @@ public sealed class NormalAttackTests
     #region 解耦与流程
 
     [Test]
-    public void Attack_does_not_trigger_slot_buffs_or_consume_charge()
-    {
-        var charge = new BuffDto
-        {
-            Id = "buff.charge",
-            DurationType = EBuffDurationType.Turns,
-            Duration = 3,
-            StackRule = EBuffStackRule.Replace,
-            Tags = [BuiltinBuffTags.SlotCharge],
-            Hooks = new BuffEffectHooksDto
-            {
-                OnSlotCardPlayed = [new EffectRefDto { EffectId = "effect.charge_load" }],
-            },
-        };
-        using var sim = Build(
-            attacks: new[] { (10f, 0f), (1f, 1f), (1f, 1f), (1f, 1f) },
-            buffs: new Dictionary<string, BuffDto> { [charge.Id] = charge },
-            effects: new Dictionary<string, EffectDto>
-            {
-                ["effect.charge_load"] = new()
-                {
-                    Id = "effect.charge_load",
-                    Kind = EEffectKind.Damage,
-                    Params = new Dictionary<string, object> { ["amount"] = 7 },
-                },
-            });
-        var slot = sim.PlayerTeam.Characters[0].HandSlots[0];
-        sim.Buffs.ApplyToSlot(sim, 0, 0, charge.Id);
-
-        sim.NormalAttacks.Execute(sim);
-
-        var instance = slot.Buffs.Find(charge.Id);
-        Assert.That(instance, Is.Not.Null);
-        Assert.That(instance!.ChargeCounter, Is.EqualTo(1), "普攻不算打出牌，充能计数不变");
-    }
-
-    [Test]
     public void Attack_does_not_take_the_characters_action_or_energy()
     {
         using var sim = Build(attacks: new[] { (10f, 0f), (1f, 1f), (1f, 1f), (1f, 1f) });
@@ -235,7 +198,6 @@ public sealed class NormalAttackTests
 
         sim.NormalAttacks.Execute(sim);
 
-        Assert.That(character.HasActed, Is.False, "普攻不占已行动");
         Assert.That(character.AvailableEnergy, Is.EqualTo(energyBefore), "普攻不消耗能量");
     }
 
@@ -251,7 +213,6 @@ public sealed class NormalAttackTests
         Assert.That(character.IsSealed, Is.True, "封印只挡出牌");
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.TotalDamage, Is.EqualTo(10f).Within(0.001f));
-        Assert.That(character.HasActed, Is.False, "普攻不占已行动");
     }
 
     [Test]
@@ -285,11 +246,12 @@ public sealed class NormalAttackTests
         using var sim = Build(
             attacks: new[] { (300f, 0f), (1f, 1f), (1f, 1f), (1f, 1f) },
             rules: [new AllEnemiesDefeatedVictoryRule()]);
-        sim.TransitionTo(ECombatPhase.CardExecution);
+        sim.TryApply(new KemoCard.Mod.Combat.Commands.EndTurnCommand());
+        MarblePhaseTests.ShootQueuedBalls(sim, 1.35f);
 
         sim.AdvancePhase();
 
-        Assert.That(sim.NormalAttacks.LastResult, Is.Not.Null, "卡牌执行阶段末尾必执行普攻");
+        Assert.That(sim.NormalAttacks.LastMarbleSettlement?.TotalCount, Is.EqualTo(1));
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Victory), "普攻击杀最后一名敌人 → 本回合敌人不再行动");
     }
 

@@ -282,7 +282,7 @@ public sealed partial class CombatAuditRegressionTests
     }
 
     [Test]
-    public void Command_queue_and_presentation_keep_immutable_target_snapshots()
+    public void Command_and_presentation_keep_immutable_target_snapshots()
     {
         var card = new CardDto { Id = "card", TargetSide = ETargetSide.Enemy, TargetScope = ETargetScope.Single };
         using var sim = Build(CombatTestHelper.CreateRegistry(card), enemyCount: 2);
@@ -291,7 +291,7 @@ public sealed partial class CombatAuditRegressionTests
         sim.PlayerTeam.Characters[0].HandSlots[0].PlaceCard(card.Id, "rt");
         targets[0] = Enemy(1);
         Assert.That(sim.TryApply(command).Success, Is.True);
-        Assert.That(sim.CardQueue.PeekAllOrdered().Single().Targets.Single(), Is.EqualTo(Enemy()));
+        Assert.That(sim.Presentation.Drain().OfType<CardSettleStartedEvent>().Single().Targets.Single(), Is.EqualTo(Enemy()));
         sim.Presentation.Emit(new CardSettleStartedEvent(0, 0, card.Id, targets));
         targets.Clear();
         Assert.That(sim.Presentation.Pending.OfType<CardSettleStartedEvent>().Single().Targets.Single(), Is.EqualTo(Enemy(1)));
@@ -299,7 +299,7 @@ public sealed partial class CombatAuditRegressionTests
     }
 
     [Test]
-    public void Invalid_single_target_set_does_not_spend_energy_or_mark_a_card()
+    public void Invalid_single_target_set_does_not_spend_energy_or_remove_a_card()
     {
         var card = new CardDto
         {
@@ -311,26 +311,7 @@ public sealed partial class CombatAuditRegressionTests
         holder.HandSlots[0].PlaceCard(card.Id, "rt");
         Assert.That(sim.TryApply(new PlayCardCommand(0, 0, [])).Success, Is.False);
         Assert.That(holder.AvailableEnergy, Is.EqualTo(5));
-        Assert.That(holder.HandSlots[0].IsMarked, Is.False);
-        Assert.That(sim.CardQueue.Count, Is.Zero);
-    }
-
-    [Test]
-    public void Mark_and_cancel_conserve_card_identity_and_paid_energy()
-    {
-        var card = new CardDto { Id = "card", CostType = ECostType.Energy, Cost = 2 };
-        using var sim = Build(CombatTestHelper.CreateRegistry(card));
-        var holder = sim.PlayerTeam.Characters[0];
-        holder.HandSlots[0].PlaceCard(card.Id, "rt");
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, [])).Success, Is.True);
-        var entry = sim.CardQueue.PeekAllOrdered().Single();
-        Assert.That(holder.AvailableEnergy + entry.Paid, Is.EqualTo(5));
-        CombatStateMachine.CancelMarkAndRefund(sim, entry);
-        CombatStateMachine.CancelMarkAndRefund(sim, entry);
-        Assert.That(holder.AvailableEnergy, Is.EqualTo(5));
         Assert.That(holder.HandSlots[0].RuntimeInstanceId, Is.EqualTo("rt"));
-        Assert.That(holder.HandSlots[0].IsMarked, Is.False);
-        Assert.That(sim.CardQueue.Count, Is.Zero);
     }
 
     [Test]
@@ -403,7 +384,7 @@ public sealed partial class CombatAuditRegressionTests
         sim.RunBattleStart();
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Defeat));
         Assert.That(sim.PlayerTeam.Characters[0].AvailableEnergy, Is.EqualTo(2));
-        Assert.That(sim.TryApply(new ConfirmCharacterCommand(0)).Success, Is.False);
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.False);
     }
 
     private sealed class DefeatAtStartRule : ICombatRule

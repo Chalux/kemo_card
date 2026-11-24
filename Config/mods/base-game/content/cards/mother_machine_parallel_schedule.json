@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.mother_machine_parallel_schedule.name",
   "element": 8,
-  "role": "Healer",
+  "role": "Support",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -16,7 +16,6 @@
       "HealPower": 1
     }
   },
-  "priority": 11,
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

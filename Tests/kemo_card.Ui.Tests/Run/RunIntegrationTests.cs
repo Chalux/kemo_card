@@ -31,18 +31,18 @@ public sealed class RunIntegrationTests
                 new() { Id = "hero_d", Cards = [CombatSimulationTestBuilder.PartyHpCardId] },
             };
 
-            var dto = controller.CreateRun("story_a", rng, candidates, isMultiplayer: false);
+            var dto = controller.CreateRun("story_a", rng, candidates);
             Assert.That(dto.Phase, Is.EqualTo(ERunPhase.Event));
             Assert.That(dto.CurrentRing, Is.EqualTo(1));
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < RunConstants.SlotCount; i++)
             {
                 var character = RunTestHelper.CreateCharacterWithHp(i);
                 controller.AddToCharacterPool(character);
                 controller.SetActiveCharacter(i, poolIndex: i);
             }
 
-            controller.AddGold(slotIndex: 0, amount: 200);
+            controller.AddGold(200);
             Assert.That(controller.GetGold(), Is.EqualTo(200));
             Assert.That(controller.ValidateParty(), Is.True);
 
@@ -85,22 +85,22 @@ public sealed class RunIntegrationTests
         var controller = new RunController(mod);
         var rng = new HostRng(99, "rollback");
 
-        controller.CreateRun("story_a", rng, [], isMultiplayer: false);
+        controller.CreateRun("story_a", rng, []);
         mod.Phase = ERunPhase.Reward;
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(i);
             controller.AddToCharacterPool(character);
             controller.SetActiveCharacter(i, poolIndex: i);
         }
 
-        controller.AddGold(slotIndex: 0, amount: 300);
+        controller.AddGold(300);
         var goldBefore = controller.GetGold();
         controller.AddCard("card.test");
 
         controller.StartBattle(registry, rng, 1);
-        controller.SpendGold(slotIndex: 0, amount: 100);
+        controller.SpendGold(100);
         controller.RemoveCard("card.test");
 
         controller.EndBattle(won: false);

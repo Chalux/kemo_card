@@ -9,4 +9,5 @@ public enum ECombatPhase
     WaveTransition,
     Victory,
     Defeat,
+    Marble,
 }

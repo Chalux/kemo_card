@@ -10,8 +10,7 @@
       "MaxHealth": 40
     }
   },
-  "role": "Wizard",
-  "priority": 8,
+  "role": "Attack",
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

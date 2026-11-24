@@ -1,7 +1,7 @@
 {
   "displayNameId": "char.fomalhaut.name",
   "element": "Blue",
-  "role": "Mage",
+  "role": "Attack",
   "race": [
     "Astronomy",
     "Unknown"
@@ -23,19 +23,15 @@
   "initialEnergy": 3,
   "passives": [
     {
-      "requiredPotential": 0,
       "buffId": "fomalhaut_passive_p1"
     },
     {
-      "requiredPotential": 10,
       "buffId": "fomalhaut_passive_p2"
     },
     {
-      "requiredPotential": 30,
       "buffId": "fomalhaut_passive_p3"
     },
     {
-      "requiredPotential": 50,
       "buffId": "fomalhaut_passive_p4",
       "params": {
         "percent": 200

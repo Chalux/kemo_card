@@ -16,8 +16,7 @@
       "MagicDefense": 1
     }
   },
-  "role": "Mage",
-  "priority": 9,
+  "role": "Attack",
   "cardType": "Support",
   "targetSide": "Self",
   "targetScope": "Self",

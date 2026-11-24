@@ -24,7 +24,21 @@ public sealed class CombatRuleEngine
     public void DispatchBeforeDamage(CombatContext ctx, ref DamagePacket packet)
     {
         foreach (var rule in _rules)
+        {
+            rule.ModifyDamage(ctx, ref packet);
             rule.OnBeforeDamage(ctx, ref packet);
+        }
+    }
+
+    /// <summary>
+    /// 无副作用预演：只运行 <see cref="ICombatRule.ModifyDamage"/>。
+    /// 影响伤害数额的规则必须实现在该钩子；<see cref="ICombatRule.OnBeforeDamage"/> 属于实际受击副作用，
+    /// 预演不得触发（否则会写入战斗状态）。
+    /// </summary>
+    internal void PreviewDamage(CombatContext ctx, ref DamagePacket packet)
+    {
+        foreach (var rule in _rules)
+            rule.ModifyDamage(ctx, ref packet);
     }
 
     /// <summary>伤害写入完成后广播（<paramref name="packet"/> 为只读的最终数额，供观测/记日志类规则使用）。</summary>

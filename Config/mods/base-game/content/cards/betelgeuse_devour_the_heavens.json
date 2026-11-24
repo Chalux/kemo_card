@@ -10,8 +10,7 @@
       "MaxHealth": 40
     }
   },
-  "role": "Guard",
-  "priority": 30,
+  "role": "Defense",
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

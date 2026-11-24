@@ -5,12 +5,5 @@
   "tags": [
     "buff.passive",
     "buff.undispellable"
-  ],
-  "hooks": {
-    "onCardExecutionEnd": [
-      {
-        "effectId": "perseus_apply_pressure"
-      }
-    ]
-  }
+  ]
 }

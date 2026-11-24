@@ -4,7 +4,7 @@ public static class RunUiIds
 {
     public const string StorySelect = "StorySelectDlg";
     public const string RunMain = "RunMainWin";
-    public const string Potion = "RunPotionDlg";
+    public const string Consumable = "RunConsumableDlg";
 
     /// <summary>Run 调试面板（开发期工具，注册在 <c>EUILayer.Debug</c> 顶层）。</summary>
     public const string RunDebug = "RunDebugDlg";

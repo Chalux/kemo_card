@@ -16,8 +16,7 @@
       "PhysicalDefense": 1
     }
   },
-  "role": "Controller",
-  "priority": 9,
+  "role": "Attack",
   "cardType": "Weak",
   "targetSide": "Enemy",
   "targetScope": "Single",

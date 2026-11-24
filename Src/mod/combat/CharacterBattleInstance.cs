@@ -9,23 +9,23 @@ namespace KemoCard.Mod.Combat;
 
 public sealed class CharacterBattleInstance
 {
-    private readonly List<CardRuntimeEntry> _drawPile = [];
-    private readonly List<CardRuntimeEntry> _graveyard = [];
+    private TeamCardPiles _piles;
+    private int _ownerIndex;
     private readonly HandSlot[] _handSlots;
     private readonly IReadOnlyList<HandSlot> _handView;
-    private readonly IReadOnlyList<CardRuntimeEntry> _drawView;
-    private readonly IReadOnlyList<CardRuntimeEntry> _graveyardView;
     private readonly List<int> _drawModifiers = [];
     private int _extraDrawCount;
     private readonly ActiveSkillTier[] _activeSkillChain;
-    private bool _phaseShuffleUsed;
+    private CardRuntimeEntry? _resolvingCard;
     private Func<int, int, bool, int>? _partyCountQuery;
     private Func<float>? _teamMaxHealthQuery;
 
     public string SourceInstanceId { get; }
     public string DefinitionId { get; }
-    public IReadOnlyList<CardRuntimeEntry> DrawPile => _drawView;
-    public IReadOnlyList<CardRuntimeEntry> Graveyard => _graveyardView;
+    /// <summary>组队后指向队伍抽牌堆。按角色检查构筑请使用 OwnedCardIds。</summary>
+    public IReadOnlyList<CardRuntimeEntry> DrawPile => _piles.DrawPile;
+    /// <summary>组队后指向队伍共用墓地。</summary>
+    public IReadOnlyList<CardRuntimeEntry> Graveyard => _piles.Graveyard;
     public IReadOnlyList<HandSlot> HandSlots => _handView;
 
     /// <summary>
@@ -36,17 +36,16 @@ public sealed class CharacterBattleInstance
     {
         get
         {
-            var ids = new List<string>(_drawPile.Count + _handSlots.Length + _graveyard.Count);
-            foreach (var entry in _drawPile)
-                ids.Add(entry.CardId);
+            var ids = DrawPile.Where(card => card.CharacterIndex == _ownerIndex).Select(card => card.CardId).ToList();
             foreach (var slot in _handSlots)
             {
                 if (!slot.IsEmpty && slot.CardId is not null)
                     ids.Add(slot.CardId);
             }
 
-            foreach (var entry in _graveyard)
-                ids.Add(entry.CardId);
+            ids.AddRange(Graveyard.Where(card => card.CharacterIndex == _ownerIndex).Select(card => card.CardId));
+            if (_resolvingCard is { } resolving)
+                ids.Add(resolving.CardId);
             return ids;
         }
     }
@@ -68,7 +67,6 @@ public sealed class CharacterBattleInstance
     public int AvailableEnergy { get; private set; }
 
     public int MaxEnergy => ReadAscEnergy(AttributeIds.MaxEnergy);
-    public bool HasActed { get; private set; }
 
     /// <summary>规格 §2.5：是否持有约定封印标签 <see cref="CombatConstants.SealedTag"/>。</summary>
     public bool IsSealed => Asc.Tags.HasTag(CombatConstants.SealedTag);
@@ -106,19 +104,25 @@ public sealed class CharacterBattleInstance
             () => Race,
             ResolveCustomMagnitude,
             CountPartyMembers);
-        _drawPile.AddRange(drawPile);
+        _piles = new TeamCardPiles([this], drawPile);
         CurrentEnergy = currentEnergy;
         _activeSkillChain = activeSkillChain?.ToArray() ?? [];
         // 有主动链时 Cap 恒为各档 cooldown 之和（规格 §5.1）；无链时才回落到显式传入值（仅测试用）。
         SkillCounterCap = _activeSkillChain.Length > 0
             ? _activeSkillChain.Sum(tier => tier.Cooldown)
             : Math.Max(0, skillCounterCap);
-        _handSlots = Enumerable.Range(0, CombatConstants.HandSlotCount)
+        // 槽号用于稳定寻址；同一角色可以占用全队的所有空位。
+        _handSlots = Enumerable.Range(0, CombatConstants.TeamHandLimit)
             .Select(index => new HandSlot(index))
             .ToArray();
         _handView = Array.AsReadOnly(_handSlots);
-        _drawView = _drawPile.AsReadOnly();
-        _graveyardView = _graveyard.AsReadOnly();
+    }
+
+    internal void JoinTeamPiles(TeamCardPiles piles, int index)
+    {
+        piles.ImportOwner(_piles, _ownerIndex, index);
+        _ownerIndex = index;
+        _piles = piles;
     }
 
     /// <summary>
@@ -189,6 +193,14 @@ public sealed class CharacterBattleInstance
         ArgumentNullException.ThrowIfNull(definitions);
         ArgumentNullException.ThrowIfNull(rng);
 
+        var character = FromLoadout(source, definitions, out error, obtainedCardIds);
+        character?._piles.ShuffleDrawPile(rng);
+        return character;
+    }
+
+    internal static CharacterBattleInstance? FromLoadout(
+        CharacterInstance source, GameDefinitionRegistry definitions, out string? error, IReadOnlySet<string>? obtainedCardIds)
+    {
         var deck = source.GetCurrentDeck();
         if (deck is null)
         {
@@ -216,8 +228,6 @@ public sealed class CharacterBattleInstance
         var drawPile = deck.CardIds
             .Select(cardId => new CardRuntimeEntry(cardId, Guid.NewGuid().ToString("N")))
             .ToList();
-
-        Shuffle(drawPile, rng);
 
         error = null;
         return new CharacterBattleInstance(
@@ -251,7 +261,6 @@ public sealed class CharacterBattleInstance
             .ToArray();
     }
 
-    public void SetHasActed(bool hasActed) => HasActed = hasActed;
 
     #region 能量（当前能量 / 当前可用能量）
 
@@ -381,50 +390,31 @@ public sealed class CharacterBattleInstance
         return (int)Math.Clamp(1L + largestBonus - largestPenalty + _extraDrawCount, 0, int.MaxValue);
     }
 
-    public void ResetPhaseShuffleBudget() => _phaseShuffleUsed = false;
 
     /// <summary>
-    /// 抽牌，抽牌堆空且本阶段尚未洗牌时把弃牌堆洗回再抽（规格 §4.4，每阶段至多洗 1 次）。
+    /// 抽牌堆为空时洗回弃牌堆，直到抽够、手牌已满或无牌可抽。
     /// </summary>
     /// <returns>实际抽到的张数。</returns>
     public int DrawWithReshuffle(int count, HostRng rng)
     {
         ArgumentNullException.ThrowIfNull(rng);
-        if (count <= 0)
-            return 0;
-
-        var drawn = 0;
-        while (drawn < count)
-        {
-            var slot = FindFirstEmptyHandSlot();
-            if (slot is null)
-                break;
-
-            if (_drawPile.Count == 0 && !TryReshuffleGraveyardIntoDrawPile(rng))
-                break;
-
-            var entry = _drawPile[^1];
-            _drawPile.RemoveAt(_drawPile.Count - 1);
-            slot.PlaceCard(entry.CardId, entry.RuntimeInstanceId);
-            drawn++;
-        }
-
-        return drawn;
-    }
-
-    private bool TryReshuffleGraveyardIntoDrawPile(HostRng rng)
-    {
-        if (_phaseShuffleUsed || _graveyard.Count == 0)
-            return false;
-
-        _phaseShuffleUsed = true;
-        _drawPile.AddRange(_graveyard);
-        _graveyard.Clear();
-        Shuffle(_drawPile, rng);
-        return _drawPile.Count > 0;
+        return _piles.Draw(count, rng, requiredOwner: _ownerIndex);
     }
 
     #endregion
+
+    internal void BeginResolvingCard(HandSlot slot)
+    {
+        _resolvingCard = new CardRuntimeEntry(slot.CardId!, slot.RuntimeInstanceId!, _ownerIndex);
+        slot.ClearCard();
+    }
+
+    internal void FinishResolvingCard()
+    {
+        if (_resolvingCard is { } card)
+            _piles.Discard(card);
+        _resolvingCard = null;
+    }
 
     /// <summary>
     /// 规格 §2.1：卡牌结算完毕（含空放）后从手牌槽移入弃牌堆并空出槽位。
@@ -443,7 +433,7 @@ public sealed class CharacterBattleInstance
                 continue;
             }
 
-            _graveyard.Add(new CardRuntimeEntry(slot.CardId, runtimeInstanceId));
+            _piles.Discard(new CardRuntimeEntry(slot.CardId, runtimeInstanceId, _ownerIndex));
             slot.ClearCard();
             return true;
         }
@@ -451,61 +441,12 @@ public sealed class CharacterBattleInstance
         return false;
     }
 
-    public void MoveTopDrawToGraveyard()
-    {
-        if (_drawPile.Count == 0)
-            return;
-        var entry = _drawPile[^1];
-        _drawPile.RemoveAt(_drawPile.Count - 1);
-        _graveyard.Add(entry);
-    }
+    public void MoveTopDrawToGraveyard() => _piles.DiscardTop();
 
-    public int DrawCards(int count)
-    {
-        if (count <= 0)
-            return 0;
+    public int DrawCards(int count) => _piles.Draw(count, rng: null, requiredOwner: _ownerIndex);
 
-        var drawn = 0;
-        while (drawn < count && _drawPile.Count > 0)
-        {
-            var slot = FindFirstEmptyHandSlot();
-            if (slot is null)
-                break;
-
-            var entry = _drawPile[^1];
-            _drawPile.RemoveAt(_drawPile.Count - 1);
-            slot.PlaceCard(entry.CardId, entry.RuntimeInstanceId);
-            drawn++;
-        }
-
-        return drawn;
-    }
-
-    /// <summary>
-    /// 弃置指定手牌槽的牌（<paramref name="slotIndex"/> 0 起；暴风 <c>slot.storm</c> 的相邻槽吹散、
-    /// 效果 <c>DiscardSlot</c> 都走这里）。规格 §2.2"其它通道"口径：<b>只弃未标记的牌</b>——
-    /// 已入队/已确认的牌保留，钩子不得借弃牌回滚确认态。
-    /// </summary>
-    /// <returns>槽位合法、有牌且未标记（即真的弃掉了一张）时返回 <c>true</c>。</returns>
-    public bool DiscardSlotCard(int slotIndex)
-    {
-        if (slotIndex < 0 || slotIndex >= _handSlots.Length)
-            return false;
-
-        var slot = _handSlots[slotIndex];
-        if (slot.IsEmpty || slot.CardId is null || slot.RuntimeInstanceId is null || slot.IsMarked)
-            return false;
-
-        _graveyard.Add(new CardRuntimeEntry(slot.CardId, slot.RuntimeInstanceId));
-        slot.ClearCard();
-        return true;
-    }
-
-    /// <summary>
-    /// 规格 §4.6：从<strong>未标记</strong>手牌中用 <paramref name="rng"/> 均匀随机弃置最多 <paramref name="count"/> 张。
-    /// 未标记池空时弃 0 张（软失败），不改动已标记牌。
-    /// </summary>
-    public int DiscardRandomUnmarked(int count, HostRng rng)
+    /// <summary>从该角色的手牌中随机弃置最多指定张数。</summary>
+    public int DiscardRandomCards(int count, HostRng rng)
     {
         ArgumentNullException.ThrowIfNull(rng);
         if (count <= 0)
@@ -514,12 +455,12 @@ public sealed class CharacterBattleInstance
         var discarded = 0;
         while (discarded < count)
         {
-            var unmarked = CollectUnmarkedOccupiedSlots();
-            if (unmarked.Count == 0)
+            var occupied = CollectOccupiedSlots();
+            if (occupied.Count == 0)
                 break;
 
-            var pick = unmarked[rng.NextInt(0, unmarked.Count)];
-            _graveyard.Add(new CardRuntimeEntry(pick.CardId!, pick.RuntimeInstanceId!));
+            var pick = occupied[rng.NextInt(0, occupied.Count)];
+            _piles.Discard(new CardRuntimeEntry(pick.CardId!, pick.RuntimeInstanceId!, _ownerIndex));
             pick.ClearCard();
             discarded++;
         }
@@ -546,40 +487,20 @@ public sealed class CharacterBattleInstance
         return occupied[rng.NextInt(0, occupied.Count)];
     }
 
-    private List<HandSlot> CollectUnmarkedOccupiedSlots()
+    private List<HandSlot> CollectOccupiedSlots()
     {
-        var unmarked = new List<HandSlot>();
+        var occupied = new List<HandSlot>();
         foreach (var slot in _handSlots)
         {
-            if (!slot.IsEmpty && !slot.IsMarked)
-                unmarked.Add(slot);
+            if (!slot.IsEmpty)
+                occupied.Add(slot);
         }
 
-        return unmarked;
+        return occupied;
     }
 
     private int ReadAscEnergy(string attributeId) =>
         Math.Max(0, (int)MathF.Round(Asc.GetCurrentValue(attributeId)));
-
-    private HandSlot? FindFirstEmptyHandSlot()
-    {
-        foreach (var slot in _handSlots)
-        {
-            if (slot.IsEmpty)
-                return slot;
-        }
-
-        return null;
-    }
-
-    private static void Shuffle(List<CardRuntimeEntry> entries, HostRng rng)
-    {
-        for (var i = entries.Count - 1; i > 0; i--)
-        {
-            var j = rng.NextInt(0, i + 1);
-            (entries[i], entries[j]) = (entries[j], entries[i]);
-        }
-    }
 
     internal static CharacterBattleInstance CreateForTests(
         string definitionId,

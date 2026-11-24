@@ -53,15 +53,12 @@ public sealed class RenoContentTests
     }
 
     [Test]
-    public void Character_has_four_potential_passives_on_the_standard_tiers()
+    public void Character_has_four_passives_in_definition_order()
     {
         var definitions = BaseGameContent.Load();
         var reno = definitions.Characters[CharacterId];
 
         Assert.That(reno.Passives, Has.Count.EqualTo(4));
-        Assert.That(
-            reno.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(
             reno.Passives.Select(passive => passive.BuffId),
             Is.EqualTo(new[] { "reno_passive_p1", "reno_passive_p2", "reno_passive_p3", "reno_passive_p4" }));
@@ -145,7 +142,6 @@ public sealed class RenoContentTests
         Assert.That(card.CostType, Is.EqualTo(ECostType.Energy));
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.CardType, Is.EqualTo(ECardType.Support));
-        Assert.That(card.Priority, Is.EqualTo(priority));
     }
 
     [Test]

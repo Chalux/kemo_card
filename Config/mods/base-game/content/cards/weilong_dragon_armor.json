@@ -1,7 +1,7 @@
 {
   "displayNameId": "card.weilong_dragon_armor.name",
   "element": 4,
-  "role": "Shield",
+  "role": "Defense",
   "costType": "Energy",
   "cost": 1,
   "baseValue": 0,
@@ -17,7 +17,6 @@
       "MagicDefense": 1
     }
   },
-  "priority": 12,
   "cardType": "Guard",
   "targetSide": "Self",
   "targetScope": "Self",

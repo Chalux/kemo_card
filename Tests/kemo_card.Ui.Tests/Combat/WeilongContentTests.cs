@@ -26,16 +26,15 @@ public sealed class WeilongContentTests
         Assert.That(report.HasIssues, Is.False, string.Join("\n", report.ValidationErrors));
         var def = BaseGameContent.Load().Characters["weilong"];
         Assert.That(def.Element, Is.EqualTo(EElement.Green));
-        Assert.That(def.Role, Is.EqualTo(ERole.Shield));
+        Assert.That(def.Role, Is.EqualTo(ERole.Defense));
         Assert.That(def.Race, Is.EqualTo(ERace.Machine | ERace.Dragon));
         Assert.That(def.ActiveSkillChain.Select(t => t.Cooldown), Is.EqualTo(new[] { 6, 6 }));
-        Assert.That(def.Passives.Select(p => p.RequiredPotential), Is.EqualTo(new[] { 0, 10, 30, 50 }));
         Assert.That(def.Cards, Has.Count.EqualTo(4));
         foreach (var id in def.Cards)
         {
             Assert.That(registry.Store.TryGetCard(id, out var card), Is.True);
             Assert.That(card!.Element, Is.EqualTo((int)EElement.Green));
-            Assert.That(card.Role, Is.EqualTo(ERole.Shield));
+            Assert.That(card.Role, Is.EqualTo(ERole.Defense));
             Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
             Assert.That(card.IsExclusive, Is.True);
             Assert.That(card.Stats!.Attributes.Sum(p => p.Key == AttributeIds.MaxHealth ? p.Value : 10 * p.Value), Is.EqualTo(40));
@@ -136,12 +135,10 @@ public sealed class WeilongContentTests
     }
 
     [Test]
-    public void Timer_immunity_blocks_slots_and_battle_start_wires_all_passives()
+    public void Battle_start_wires_all_passives()
     {
         using var sim = Build(start: true);
         sim.RunBattleStart();
-        sim.Buffs.ApplyToSlot(sim, 0, 2, "slot_timer", new Dictionary<string, object> { ["timerTurns"] = 1, ["amount"] = 100 });
-        Assert.That(sim.PlayerTeam.Characters[0].HandSlots[2].Buffs.Find("slot_timer"), Is.Null);
         Assert.That(Value(sim, AttributeIds.NormalAttackShieldGainScale), Is.EqualTo(1));
         Assert.That(sim.PlayerTeam.Characters[0].Buffs.Find("weilong_passive_p4"), Is.Not.Null);
     }

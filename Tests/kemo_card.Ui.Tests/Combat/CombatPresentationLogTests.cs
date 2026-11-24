@@ -41,7 +41,7 @@ public sealed class CombatPresentationLogTests
     }
 
     [Test]
-    public void PlayCard_emits_energy_change_only()
+    public void PlayCard_emits_the_owners_energy_change()
     {
         using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand(cost: 2, energy: 5);
         sim.Presentation.Clear();
@@ -50,42 +50,16 @@ public sealed class CombatPresentationLogTests
 
         Assert.That(result.Success, Is.True, result.Error);
         var events = sim.Presentation.Drain();
-        Assert.That(events, Has.Count.EqualTo(1));
-        Assert.That(events[0], Is.EqualTo(new EnergyChangedEvent(0, Current: 5, Available: 3, Max: 5)));
+        Assert.That(events.OfType<EnergyChangedEvent>().Single(), Is.EqualTo(new EnergyChangedEvent(0, Current: 5, Available: 3, Max: 5)));
     }
 
     [Test]
-    public void Cancel_queued_card_emits_refund_energy_change()
-    {
-        using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand(cost: 2, energy: 5);
-        sim.TryApply(new PlayCardCommand(0, 0, Enemy0));
-        sim.Presentation.Clear();
-
-        var result = sim.TryApply(new CancelQueuedCardCommand(0));
-
-        Assert.That(result.Success, Is.True, result.Error);
-        var events = sim.Presentation.Drain();
-        Assert.That(events.OfType<EnergyChangedEvent>().Single().Available, Is.EqualTo(5));
-    }
-
-    [Test]
-    public void Executing_a_marked_card_emits_settle_damage_and_discard_in_order()
+    public void Immediate_play_emits_card_removal_and_damage_in_order()
     {
         using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand(cost: 1, energy: 5, handSize: 1);
         var enemy = sim.EnemyTeam.Enemies[0];
         var hpBefore = enemy.CurrentHp;
         Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True);
-        sim.Presentation.Clear();
-
-        for (var i = 0; i < 4; i++)
-            Assert.That(sim.TryApply(new ConfirmCharacterCommand(i)).Success, Is.True);
-
-        // 第四次确认推进到 CardExecution；执行阶段由 AdvancePhase 驱动。
-        Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.CardExecution));
-        var phaseEvents = sim.Presentation.Drain();
-        Assert.That(phaseEvents.OfType<PhaseChangedEvent>().Single().To, Is.EqualTo(ECombatPhase.CardExecution));
-
-        sim.AdvancePhase();
         var events = sim.Presentation.Drain();
 
         var settleStart = events.OfType<CardSettleStartedEvent>().Single();
@@ -110,10 +84,9 @@ public sealed class CombatPresentationLogTests
         var order = events.ToList();
         Assert.That(order.IndexOf(settleStart), Is.LessThan(order.IndexOf(damage)));
         Assert.That(order.IndexOf(damage), Is.LessThan(order.IndexOf(settleEnd)));
-        Assert.That(order.IndexOf(settleEnd), Is.LessThan(order.IndexOf(discard)));
+        Assert.That(order.IndexOf(discard), Is.LessThan(order.IndexOf(damage)));
 
-        // 执行阶段之后进入敌方阶段：相位事件跟随其后。
-        Assert.That(events.OfType<PhaseChangedEvent>().Any(evt => evt.To == ECombatPhase.Enemy), Is.True);
+        Assert.That(events.OfType<PhaseChangedEvent>(), Is.Empty);
     }
 
     [Test]
@@ -121,9 +94,9 @@ public sealed class CombatPresentationLogTests
     {
         using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand(cost: 1, energy: 5, handSize: 1);
         Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True);
-        for (var i = 0; i < 4; i++)
-            Assert.That(sim.TryApply(new ConfirmCharacterCommand(i)).Success, Is.True);
-        Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.CardExecution));
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Marble));
+        MarblePhaseTests.ShootQueuedBalls(sim);
         sim.Presentation.Clear();
 
         sim.AdvanceAutomaticPhases();
@@ -137,12 +110,12 @@ public sealed class CombatPresentationLogTests
     [Test]
     public void Damage_event_reports_target_defeated()
     {
-        using var sim = CombatSimulationTestBuilder.WithQueuedCard();
+        using var sim = CombatSimulationTestBuilder.PlayerPhaseWithHand();
         var enemy = sim.EnemyTeam.Enemies[0];
         enemy.ApplyDamage(enemy.CurrentHp - 1);
         sim.Presentation.Clear();
 
-        sim.AdvancePhase();
+        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True);
 
         var damage = sim.Presentation.Drain().OfType<DamageDealtEvent>().First();
         Assert.That(damage.TargetHpAfter, Is.Zero);

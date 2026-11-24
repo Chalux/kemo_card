@@ -11,8 +11,7 @@
       "MaxHealth": 10
     }
   },
-  "role": "Wizard",
-  "priority": 6,
+  "role": "Attack",
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "Single",

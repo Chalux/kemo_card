@@ -82,14 +82,6 @@ public sealed class GameplayEffectApplicator
                 damageDealt += ownHealthLoss;
             }
 
-            // 规格 §2.5：非免疫角色挂上封印后立刻清标记并视作已行动。
-            if (target.Side == ECombatSide.Player &&
-                target.Index >= 0 &&
-                target.Index < simulation.PlayerTeam.Characters.Count &&
-                simulation.PlayerTeam.Characters[target.Index].IsSealed)
-            {
-                CombatStateMachine.EnforceSeal(simulation, target.Index);
-            }
         }
 
         // 吸血只对"玩家来源 → 非玩家目标"成立：账本是玩家侧的血，敌人打自己不该给玩家回血。

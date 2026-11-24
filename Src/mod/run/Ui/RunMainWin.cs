@@ -16,7 +16,6 @@ public partial class RunMainWin : BaseWin
     [Export] private Label? _lblRing;
     [Export] private Label? _lblSeed;
     [Export] private Label? _lblGold;
-    [Export] private Label? _lblPotential;
     [Export] private Button? _btnSave;
     [Export] private Button? _btnSaveExit;
     [Export] private Button? _btnQuickLoad;
@@ -65,7 +64,7 @@ public partial class RunMainWin : BaseWin
         }
 
         BindPhaseChanges();
-        if (_items is not null) _items.PotionRequested = slot => _ = RunUiController.OpenPotionAsync(new Items.RunPotionDlgPayload
+        if (_items is not null) _items.ConsumableRequested = slot => _ = RunUiController.OpenConsumableAsync(new Items.RunConsumableDlgPayload
         { Slot = slot, CanUse = false, Changed = UpdateView });
         var state = RunRuntime.Current?.State;
         if (state is not null) Binder.Add(state.OnRunAdventureChanged((_, _) => UpdateView(), this).Off);
@@ -184,11 +183,6 @@ public partial class RunMainWin : BaseWin
             _lblGold.Text = run.GetGold().ToString();
         }
 
-        if (_lblPotential != null)
-        {
-            _lblPotential.Text = run.Potential.TeamPool.ToString();
-        }
-
         var inCombat = state.Phase.IsCombatPhase();
         if (_btnSave != null)
         {
@@ -239,14 +233,16 @@ public partial class RunMainWin : BaseWin
 
     private void OnQuickLoad()
     {
-        if (RunRuntime.TryLoadLatest())
-        {
-            UpdateView();
-        }
-        else
+        if (!RunRuntime.TryLoadLatest())
         {
             ToastService.Show("UI_RUN_LOAD_FAILED");
+            return;
         }
+
+        // TryLoadLatest 会销毁旧 RunController 并替换 RunRuntime.Current；本界面的阶段 / 冒险订阅
+        // 仍挂在旧 RunMod 上。对已打开的界面再走一次 OpenAsync，框架会先 Binder.UnbindAll 再
+        // 重跑 InitEvent（重新绑定新模型）并触发 OnOpen 刷新视图。
+        _ = RunUiController.OpenRunMainAsync();
     }
 
     #endregion

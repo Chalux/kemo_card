@@ -4,6 +4,7 @@ using KemoCard.Frame.Gas;
 using KemoCard.Frame.Scripting;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Combat.Commands;
+using KemoCard.Mod.Combat.Presentation;
 using KemoCard.Mod.Combat.Rules;
 using KemoCard.Mod.Combat.Rules.Builtin;
 using KemoCard.Mod.Combat.Runtime;
@@ -45,11 +46,9 @@ public sealed class CombatSimulationIntegrationTests
         CombatOutcome RunOnce()
         {
             var sim = CombatSimulationTestBuilder.FullBattle(seed: 12345);
-            sim.TryApply(new ConfirmCharacterCommand(0));
-            sim.TryApply(new ConfirmCharacterCommand(1));
-            sim.TryApply(new ConfirmCharacterCommand(2));
-            sim.TryApply(new ConfirmCharacterCommand(3));
-            sim.AdvancePhase();
+            sim.TryApply(new EndTurnCommand());
+            MarblePhaseTests.ShootQueuedBalls(sim);
+            sim.AdvanceAutomaticPhases();
             return new CombatOutcome(
                 sim.PlayerTeam.SharedHp,
                 sim.EnemyTeam.Enemies[0].CurrentHp,
@@ -70,7 +69,7 @@ public sealed class CombatSimulationIntegrationTests
         Assert.That(second.SharedHpTrail, Is.EqualTo(first.SharedHpTrail));
         Assert.That(second.ExecutionOrder, Is.EqualTo(first.ExecutionOrder));
         Assert.That(second.FinalPhase, Is.EqualTo(ECombatPhase.Victory));
-        Assert.That(second.ExecutionOrder, Is.EqualTo(new[] { "card.high", "card.low" }), "priority 降序");
+        Assert.That(second.ExecutionOrder, Has.Length.EqualTo(2));
         Assert.That(second.EnergyAfterSecondPhase, Is.EqualTo(first.EnergyAfterSecondPhase));
         Assert.That(second.HandAfterSecondPhase, Is.EqualTo(first.HandAfterSecondPhase));
         Assert.That(second.ActiveSkillConsumedCounter, Is.True);
@@ -91,26 +90,28 @@ public sealed class CombatSimulationIntegrationTests
 
         var trail = new List<int> { sim.PlayerTeam.SharedHp };
         Assert.That(
-            sim.PlayerTeam.Characters.All(c => c.HandSlots.Count(s => !s.IsEmpty) == CombatConstants.HandSlotCount),
-            Is.True,
+            sim.PlayerTeam.CardPiles.HandCount,
+            Is.EqualTo(CombatConstants.TeamHandLimit),
             "开局满手");
         Assert.That(sim.PlayerTeam.MaxHp, Is.EqualTo(60), "每人 MaxHealth 10+10，队伍 MaxSharedHp=60");
 
-        var c0 = sim.PlayerTeam.Characters[0];
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, Enemy0)).Success, Is.True, "标记 high");
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 1, Enemy0)).Success, Is.True, "标记 low");
+        var owner = sim.PlayerTeam.Characters.Count - 1;
+        var caster = sim.PlayerTeam.Characters[owner];
+        var expectedOrder = new[] { caster.HandSlots[1].CardId, caster.HandSlots[0].CardId };
+        Assert.That(sim.TryApply(new PlayCardCommand(owner, 1, Enemy0)).Success, Is.True);
+        Assert.That(sim.TryApply(new PlayCardCommand(owner, 0, Enemy0)).Success, Is.True);
+        var executionOrder = sim.Presentation.Drain().OfType<CardSettleStartedEvent>().Select(evt => evt.CardId).ToArray();
+        Assert.That(executionOrder, Is.EqualTo(expectedOrder));
 
         for (var i = 0; i < 4; i++)
-            c0.TickSkillCounter();
-        var counterBefore = c0.SkillCounter;
-        Assert.That(sim.TryApply(new CastActiveSkillCommand(0, Enemy0)).Success, Is.True);
-        var activeConsumed = c0.SkillCounter == counterBefore - 4;
+            caster.TickSkillCounter();
+        var counterBefore = caster.SkillCounter;
+        Assert.That(sim.TryApply(new CastActiveSkillCommand(owner, Enemy0)).Success, Is.True);
+        var activeConsumed = caster.SkillCounter == counterBefore - 4;
 
-        var executionOrder = sim.CardQueue.PeekAllOrdered().Select(e => e.CardId).ToArray();
-
-        for (var i = 0; i < 4; i++)
-            Assert.That(sim.TryApply(new ConfirmCharacterCommand(i)).Success, Is.True);
-        Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.CardExecution));
+        Assert.That(sim.TryApply(new EndTurnCommand()).Success, Is.True);
+        Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Marble));
+        MarblePhaseTests.ShootQueuedBalls(sim);
 
         sim.AdvancePhase();
         trail.Add(sim.PlayerTeam.SharedHp);
@@ -119,31 +120,31 @@ public sealed class CombatSimulationIntegrationTests
         if (sim.Phase == ECombatPhase.Enemy)
             sim.AdvancePhase();
         Assert.That(sim.Phase, Is.EqualTo(ECombatPhase.Player));
-        Assert.That(c0.CurrentEnergy, Is.EqualTo(4), "第二回合当前能量 +1");
-        Assert.That(c0.AvailableEnergy, Is.EqualTo(4));
-        var handAfter = c0.HandSlots.Count(s => !s.IsEmpty);
-        Assert.That(handAfter, Is.GreaterThanOrEqualTo(3), "执行耗两张后公式抽牌应补回");
+        Assert.That(caster.CurrentEnergy, Is.EqualTo(4), "第二回合当前能量 +1");
+        Assert.That(caster.AvailableEnergy, Is.EqualTo(4));
+        var handAfter = sim.PlayerTeam.CardPiles.HandCount;
+        Assert.That(handAfter, Is.EqualTo(10), "打两张后补满全队手牌");
         trail.Add(sim.PlayerTeam.SharedHp);
 
         // 第二回合：再打出足够伤害清敌取胜（敌方剩 3 HP）。
-        var unmarked = c0.HandSlots
+        var unmarked = caster.HandSlots
             .Select((slot, index) => (slot, index))
-            .Where(x => !x.slot.IsEmpty && !x.slot.IsMarked)
+            .Where(x => !x.slot.IsEmpty)
             .Take(2)
             .ToArray();
         foreach (var (_, slotIndex) in unmarked)
-            Assert.That(sim.TryApply(new PlayCardCommand(0, slotIndex, Enemy0)).Success, Is.True);
-        for (var i = 0; i < 4; i++)
-            Assert.That(sim.TryApply(new ConfirmCharacterCommand(i)).Success, Is.True);
-        if (sim.Phase == ECombatPhase.CardExecution)
-            sim.AdvancePhase();
+        {
+            if (sim.Phase != ECombatPhase.Player)
+                break;
+            Assert.That(sim.TryApply(new PlayCardCommand(owner, slotIndex, Enemy0)).Success, Is.True);
+        }
         trail.Add(sim.PlayerTeam.SharedHp);
 
         return new FullRoundSnapshot(
             trail,
             executionOrder,
             sim.Phase,
-            c0.CurrentEnergy,
+            caster.CurrentEnergy,
             handAfter,
             activeConsumed);
     }
@@ -186,7 +187,6 @@ public sealed class CombatSimulationIntegrationTests
                     Id = "card.high",
                     CostType = ECostType.Energy,
                     Cost = 1,
-                    Priority = 200,
                     TargetSide = ETargetSide.Enemy,
                     TargetScope = ETargetScope.Single,
                     TargetCount = 1,
@@ -197,7 +197,6 @@ public sealed class CombatSimulationIntegrationTests
                     Id = "card.low",
                     CostType = ECostType.Energy,
                     Cost = 1,
-                    Priority = 50,
                     TargetSide = ETargetSide.Enemy,
                     TargetScope = ETargetScope.Single,
                     TargetCount = 1,
@@ -353,7 +352,7 @@ public sealed class CombatSimulationIntegrationTests
             enemies: new Dictionary<string, EnemyDto> { ["slime"] = new() { Id = "slime", MaxHp = 5 } },
             battles: new Dictionary<string, BattleDto> { [battle.Id] = battle });
         var catalog = CombatRuleCatalog.CreateDefault();
-        var party = CombatSimulationTestBuilder.CreateParty(4, registry);
+        var party = CombatSimulationTestBuilder.CreateParty(KemoCard.Mod.Combat.CombatConstants.SlotCount, registry);
         var sim = CombatSimulationFactory.TryCreate(
             battle,
             party,

@@ -21,7 +21,7 @@ skill.chalux_path.desc,对敌方全体造成 12 点物理伤害；赋予自身�
 skill.chalux_sword.name,才煌的绝剑,Brilliant Absolute Sword
 skill.chalux_sword.desc,赋予自身【2 回合 / 物理攻击 +9】；获得 2 个蓝属性球。,Grant self +9 P.Atk for 2 turns; gain 2 Blue Orbs.
 skill.chalux_resolve.name,绝念,Absolute Resolve
-skill.chalux_resolve.desc,赋予 2 号手牌槽【5 回合 / 充能II】；充能触发时赋予自身【3 回合 / 物理攻击 +6】。,Grant hand slot 2 Charge II for 5 turns; when it triggers grant self +6 P.Atk for 3 turns.
+skill.chalux_resolve.desc,打出后无效果。,Has no effect when played.
 buff.chalux_path_frost.name,长路余韵,Roads Echo
 buff.chalux_path_frost.desc,物理攻击 +6，持续 2 回合。,Physical Attack +6 for 2 turns.
 buff.chalux_sword_frost.name,绝剑锋锐,Blade Edge
@@ -44,7 +44,7 @@ buff.chalux_charge.desc,该槽位每打出一张牌，对随机 1 名敌人造�
 buff.chalux_def_break.name,零度侵蚀,Zero Erosion
 buff.chalux_def_break.desc,物理防御与魔法防御变为 0，持续 1 回合。,Physical and Magic Defense become 0 for 1 turn.
 skill.chalux_glacial.name,超限极寒,Overlimit Glacial
-skill.chalux_glacial.desc,自身 3 回合物理攻击 +6；自身 3 号位手牌槽 3 回合附加[url=kw:charge]充能I[/url]。,P.Atk +6 for 3 turns; attach [url=kw:charge]Charge I[/url] to hand slot 3 for 3 turns.
+skill.chalux_glacial.desc,自身 3 回合物理攻击 +6。,Gain 6 Physical Attack for 3 turns.
 ge.chalux_charge_damage.name,极寒充能伤害,Glacial Charge Damage
 enemy.training_dummy.name,木桩,Training Dummy
 enemy.training_dummy.desc,不会行动的训练木桩，用来观察输出与机制。,A motionless dummy for damage testing.
@@ -72,7 +72,7 @@ ge.slime_damage.name,史莱姆撞击伤害,Slime Tackle Damage
 ge.strike_damage.name,打击伤害,Strike Damage
 ge.weak.name,虚弱,Weak
 item.health_potion.name,治疗药水,Health Potion
-item.health_potion.desc,恢复队伍共享生命，使用次数可叠加。,Restores shared team health and stacks in uses.
+item.health_potion.desc,使用后恢复 20 点队伍共享生命。,Restores 20 shared team health when used.
 attr.health.name,生命,Health
 attr.max_health.name,生命上限,Max Health
 attr.physical_attack.name,物理攻击,Physical Attack
@@ -145,7 +145,7 @@ skill.bach_trio.desc,对单个敌人造成 6 点魔法伤害；直到此卡打�
 ge.bach_trio.name,三重奏伤害,Trio Damage
 card.bach_fugue.name,赋格,Fugue
 skill.bach_fugue.name,赋格,Fugue
-skill.bach_fugue.desc,自身 1·2·3·4·5 号手牌槽获得【2 回合 / 充能I】：该槽每打出一张牌获得 1 个绿属性球。,All five of his hand slots gain Charge I for 2 turns: each card played from that slot grants 1 Green orb.
+skill.bach_fugue.desc,打出后无效果。,Has no effect when played.
 buff.bach_fugue_charge.name,赋格·回响,Fugue Echo
 buff.bach_fugue_charge.desc,该槽每打出一张牌，获得 1 个绿属性球，持续 2 回合。,Each card played from this slot grants 1 Green orb. Lasts 2 turns.
 char.von_neumann.name,冯·诺依曼,Von Neumann
@@ -305,7 +305,7 @@ skill.einstein_mass_energy.desc,对随机单体敌人造成 6 + 75% 魔法攻击
 skill.einstein_relativity.name,相对时空,Relative Spacetime
 skill.einstein_relativity.desc,自身 3 回合内魔法攻击力 +12。,Gain +12 M.Atk for 3 turns.
 skill.einstein_photoelectric.name,光电效应,Photoelectric Effect
-skill.einstein_photoelectric.desc,对随机单体敌人造成 30 + 225% 魔法攻击力的黄属性·魔法伤害，攻击次数等于当前连携数（至少 1 次）。,"Deal 30 + 225% M.Atk Yellow magical damage to a random enemy, once per current chain count (minimum 1)."
+skill.einstein_photoelectric.desc,打出后无效果。,Has no effect when played.
 skill.einstein_condensate.name,玻色-爱因斯坦凝聚,Bose-Einstein Condensate
 skill.einstein_condensate.desc,自身 1 回合内：触发黄元素球时获得 10 点护盾。并获得 1 个黄元素球。,For 1 turn: gain 10 shield whenever a Yellow orb triggers. Also gain 1 Yellow orb.
 buff.einstein_relativity.name,相对时空,Relative Spacetime
@@ -407,7 +407,7 @@ attr.physical_card_attack_count.name,物理卡牌攻击次数,Physical Card Atta
 "buff.perseus_battle_pressure.name","英神压制","Heroic Pressure"
 "buff.perseus_battle_pressure.desc","物攻·魔攻降低 6 × 珀尔修斯本回合打出的卡牌数量，持续 1 回合；数值在卡牌执行结束时取快照。","P.Atk and M.Atk are reduced by 6 times Perseus's cards played this turn for 1 turn. Snapshotted at card execution end."
 "buff.perseus_passive_p1.desc","免疫病毒。","Immune to Virus."
-"buff.perseus_passive_p2.desc","卡牌执行结束后，敌方全体 1 回合【物攻·魔攻 -6 × X】（X 为本回合自身打出的卡牌数量）。","At card execution end, all enemies suffer -6 × X P.Atk and M.Atk for 1 turn (X = your cards played this turn)."
+buff.perseus_passive_p2.desc,本版本暂未启用。,Inactive in this version.
 "buff.perseus_passive_p3.desc","阶层开始时或阶层内每 10 回合开始时：自身技能进度 +1，绿属性角色 +2，人类角色 +2，神族角色 +2（各项可叠加）。","At floor start and every 10 turns within the floor: gain +1 skill progress; Green allies gain +2, Human allies +2, and God allies +2. Bonuses stack."
 "buff.perseus_passive_p4.desc","自身释放主动技能后，1 回合【抽卡 +5】（作用于下次己方回合抽牌）。自身主动技能施加的减益替换为 3 回合【物攻·魔攻 -30】。","After casting your active skill, gain +5 draw for the next allied draw step. Replace your active skill debuff with -30 P.Atk and M.Atk for 3 turns."
 "ge.perseus_physical_damage.name","英神之刃","Heroic Blade"
@@ -431,7 +431,7 @@ attr.physical_card_attack_count.name,物理卡牌攻击次数,Physical Card Atta
 "buff.cupid_passive_p1.name","暴风免疫","Storm Immunity"
 "buff.cupid_passive_p1.desc","免疫暴风。","Immune to hand-slot storm effects."
 "buff.cupid_passive_p2.name","蔚蓝爱意","Azure Affection"
-"buff.cupid_passive_p2.desc","卡牌执行结束后，如果本回合自身打出过至少1张蓝元素卡牌，则队伍恢复50点生命。","At the end of card execution: if Cupid played at least 1 blue card this turn, restore 50 team HP."
+buff.cupid_passive_p2.desc,本版本暂未启用。,Inactive in this version.
 "buff.cupid_passive_p3.name","爱神共鸣","Divine Resonance"
 "buff.cupid_passive_p3.desc","阶层开始时或阶层内每7回合开始时：自身技能进度+2，蓝元素角色+1，神族角色+1。各项独立叠加。","At floor start and every 7 turns: gain 2 skill progress; blue allies gain 1; God allies gain 1. Bonuses stack."
 "buff.cupid_passive_p4.name","爱神恩泽","Blessing of Love"
@@ -461,7 +461,7 @@ attr.physical_card_attack_count.name,物理卡牌攻击次数,Physical Card Atta
 "buff.anubis_passive_p3.name","冥神兽鸣","Divine Beast Resonance"
 "buff.anubis_passive_p3.desc","阶层开始时或阶层内每8回合开始时：自身技能进度+2，红元素角色+1，神族角色+1，动物角色+1。各项独立叠加。","At floor start and every 8 turns: gain 2 skill progress; red allies gain 1; God allies gain 1; Animal allies gain 1. Bonuses stack."
 "buff.anubis_passive_p4.name","葬仪连奏","Funerary Frenzy"
-"buff.anubis_passive_p4.desc","每回合仅1次：卡牌执行之前，若自身本回合已标记至少3张卡牌，自身1回合【卡牌伤害+50%】，下一次己方抽牌数量+3。","Once per turn, before card execution: if at least 3 of your cards are queued, gain +50% card damage for 1 turn and +3 cards on your next draw."
+buff.anubis_passive_p4.desc,本版本暂未启用。,Inactive in this version.
 "buff.anubis_frenzy.name","葬仪连奏","Funerary Frenzy"
 "buff.anubis_frenzy.desc","1回合【卡牌伤害+50%】，下一次己方抽牌数量+3。","Card damage +50% for 1 turn; next draw +3."
 "ge.anubis_physical_damage.name","冥界物理伤害","Underworld Physical Damage"
@@ -670,7 +670,7 @@ UI_COMBAT_HINT_PICK_DISCARD,请选择{0}～{1}张手牌丢弃（已选{2}张，E
 "buff.mother_machine_operator_slot_5.name","超级算子进程·5号槽","Super Operator Process · Slot 5"
 "buff.mother_machine_operator_slot_5.desc","5回合充能I：队伍恢复50点生命。","Charge I for 5 turns: heal the team for 50."
 "skill.mother_machine_super_operator.name","超级算子进程","Super Operator Process"
-"skill.mother_machine_super_operator.desc","自身1号手牌槽1回合充能I【队伍恢复100点生命】，3号手牌槽3回合充能I【队伍恢复75点生命】，5号手牌槽5回合充能I【队伍恢复50点生命】。","Grant Charge I to own slots 1, 3 and 5 for 1, 3 and 5 turns, healing the team for 100, 75 and 50 respectively."
+skill.mother_machine_super_operator.desc,消耗技能进度。本次施放无效果。,Spends skill progress. This cast has no effect.
 "buff.mother_machine_preload_power.name","算力预载","Compute Preload"
 "buff.mother_machine_preload_power.desc","2回合恢复量+4。","+4 Heal Power for 2 turns."
 "skill.mother_machine_cache_repair.name","缓存修复","Cache Repair"
@@ -853,7 +853,7 @@ buff.evil_thought_attack_down.desc,物理攻击和魔法攻击各-10，持续后
 skill.ghost_strike.name,幽灵侵袭,Ghost Assault
 skill.ghost_strike.desc,随机1名角色造成50点魔法伤害。,Deal 50 magical damage to one random character.
 skill.ghost_seal_twice.name,幽灵封印,Ghost Seals
-skill.ghost_seal_twice.desc,随机1名角色随机1个手牌槽封印2回合，执行2次，每次重新随机。,"Twice, randomly select a character and one hand slot, sealing it for 2 turns. Roll a new character and slot each time."
+skill.ghost_seal_twice.desc,幽灵空过这次行动。,The ghost skips this action.
 skill.evil_thought_double.name,恶念连击,Malice Double Strike
 skill.evil_thought_double.desc,随机1名角色2次，每次造成50点魔法伤害。,"Randomly target one character twice, dealing 50 magical damage each time. Roll a new target each time."
 skill.evil_thought_weaken.name,恶念压制,Malice Suppression
@@ -884,15 +884,15 @@ UI_COMBAT_INTENT_LIFE_BAR,意图：切换血条后行动,Intent: Act after chang
 
 UI_COMBAT_STAT_SHIELD,护盾,Shield
 UI_COMBAT_SHIELD,护盾 {0},Shield {0}
-UI_ITEMS_POTIONS,药水,Potions
+UI_ITEMS_CONSUMABLES,消耗品,Consumables
 UI_ITEMS_RELICS,遗物,Relics
-UI_ITEM_USE,使用药水,Use potion
-UI_ITEM_DISCARD,丢弃药水,Discard potion
+UI_ITEM_USE,使用消耗品,Use consumable
+UI_ITEM_DISCARD,丢弃消耗品,Discard consumable
 UI_ITEM_MISSING,道具定义不可用,Item definition unavailable
-UI_ITEM_INVALID,药水槽位或定义无效,Invalid potion slot or definition
-UI_ITEM_INVALID_TARGET,药水目标无效,Invalid potion target
+UI_ITEM_INVALID,消耗品槽位或定义无效,Invalid consumable slot or definition
+UI_ITEM_INVALID_TARGET,消耗品目标无效,Invalid consumable target
 UI_ITEM_EMPTY_SLOT,空槽位,Empty slot
-UI_ITEM_REPLACE_HINT,药水槽已满。选择要替换的药水，或放弃本次获取。,Potion slots are full. Replace a potion or decline the new one.
+UI_ITEM_REPLACE_HINT,消耗品槽已满。选择要替换的消耗品，或放弃本次获取。,Consumable slots are full. Replace a consumable or decline the new one.
 UI_ITEM_REPLACE_SLOT,替换槽位 {0}：{1},Replace slot {0}: {1}
 UI_ITEM_GIVE_UP,放弃获取,Decline
 UI_MAP_TITLE,当前环路线,Ring routes
@@ -907,7 +907,7 @@ UI_MAP_FINISHED,已完成最后一环,Final ring complete
 UI_MAP_RING_COMPLETE,本环战斗已完成，可以进入下一环。,This ring is complete. Proceed to the next ring.
 UI_EVENT_EMPTY,此节点暂未配置事件，可以继续前进。,No event is configured for this node. You may continue.
 UI_SHOP_EMPTY,货架暂时为空。后续将在这里配置商品。,The shelves are empty. Goods will be configured here later.
-UI_SHOP_HINT,购买后商品售罄。药水槽满时可选择替换。,Purchased goods sell out. Full potion slots allow replacement.
+UI_SHOP_HINT,购买后商品售罄。消耗品槽满时可选择替换。,Purchased goods sell out. Full consumable slots allow replacement.
 UI_SHOP_SOLD,{0}（售罄）,{0} (sold out)
 UI_SHOP_PRICE,{0} · {1} 金币,{0} · {1} gold
 UI_EVENT_NEED_GOLD,需要金币 ≥ {0}（当前 {1}）,Requires gold ≥ {0} (current {1})

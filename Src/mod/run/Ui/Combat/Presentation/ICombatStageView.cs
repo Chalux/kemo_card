@@ -9,7 +9,7 @@ namespace KemoCard.Mod.Run.Ui.CombatUi.Presentation;
 /// </summary>
 public interface ICombatStageView
 {
-    /// <summary>当前操控的槽位（手牌 / 能量类事件只对它可见）。</summary>
+    /// <summary>当前角色信息面板显示的角色索引。</summary>
     int ControlledSlot { get; }
 
     AllyUnitCmp? GetAllyUnit(int slotIndex);
@@ -18,7 +18,7 @@ public interface ICombatStageView
 
     HpBarCmp? SharedHpBar { get; }
 
-    /// <summary>只有当前操控角色的手牌槽在界面上；其余角色返回 null。</summary>
+    /// <summary>按归属角色和槽位查找队伍手牌中已绑定的牌面。</summary>
     HandSlotCmp? GetHandSlot(int characterIndex, int slotIndex);
 
     ActorInfoCmp? ActorInfo { get; }
@@ -52,8 +52,8 @@ public interface ICombatStageView
     /// <summary>立即按状态重绘 buff 列表（图标弹入前先把新图标画出来）。</summary>
     void RefreshBuffs(BuffHolderRef holder);
 
-    /// <summary>立即按状态重绘当前操控角色的手牌槽。</summary>
-    void RefreshHandSlot(int characterIndex, int slotIndex);
+    /// <summary>把新抽到的牌绑定至队伍手牌区，供抽牌动画使用。</summary>
+    void ShowDrawnCard(int characterIndex, DrawnCard card);
 
     /// <summary>立即按状态重绘充能球队列（入队 / 触发的闪光前先把颜色画对）。</summary>
     void RefreshOrbs();

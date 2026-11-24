@@ -36,7 +36,7 @@ public sealed class BachContentTests
         Assert.That(definitions.Characters.TryGetValue("bach", out var bach), Is.True, "巴赫未随内容出货");
 
         Assert.That(bach!.Element, Is.EqualTo(EElement.Green));
-        Assert.That(bach.Role, Is.EqualTo(ERole.Elementist));
+        Assert.That(bach.Role, Is.EqualTo(ERole.Attack));
         Assert.That(bach.Race, Is.EqualTo(ERace.Human | ERace.God));
         Assert.That(bach.MaxEnergy, Is.EqualTo(8));
         Assert.That(bach.InitialEnergy, Is.EqualTo(3));
@@ -48,10 +48,6 @@ public sealed class BachContentTests
         Assert.That(bach.ActiveSkillChain[1].SkillId, Is.EqualTo("bach_charge_two"));
         Assert.That(bach.ActiveSkillChain[1].Cooldown, Is.EqualTo(4));
 
-        // 潜能被动保留 0/10/30/50 四档（70/99 档已删除）。
-        Assert.That(
-            bach.Passives.Select(passive => passive.RequiredPotential),
-            Is.EqualTo(new[] { 0, 10, 30, 50 }));
         foreach (var passive in bach.Passives)
             Assert.That(definitions.Buffs.ContainsKey(passive.BuffId), Is.True, $"被动 {passive.BuffId} 不存在");
     }
@@ -183,9 +179,8 @@ public sealed class BachContentTests
         Assert.That(trio.Element, Is.EqualTo((int)EElement.Green));
         Assert.That(trio.Cost, Is.EqualTo(3));
         Assert.That(trio.CardType, Is.EqualTo(ECardType.Magical));
-        Assert.That(trio.Priority, Is.EqualTo(1));
         Assert.That(trio.Rarity, Is.EqualTo(ERarity.Exclusive));
-        Assert.That(trio.Role, Is.EqualTo(ERole.Elementist));
+        Assert.That(trio.Role, Is.EqualTo(ERole.Attack));
         Assert.That(trio.IsExclusive, Is.True);
         Assert.That(trio.Stats?.Attributes.GetValueOrDefault("MaxHealth"), Is.EqualTo(30));
         Assert.That(trio.Stats?.Attributes.GetValueOrDefault("MagicAttack"), Is.EqualTo(1));
@@ -236,37 +231,6 @@ public sealed class BachContentTests
     }
 
     [Test]
-    public void Fugue_attaches_charge_one_to_every_hand_slot()
-    {
-        using var sim = Build();
-        var caster = sim.PlayerTeam.Characters[0];
-
-        sim.EffectExecutor.ExecuteSkillActionRef(
-            new SkillActionRefDto { ActionId = "bach_fugue_attach" },
-            sim,
-            Player(0),
-            [Player(0)]);
-
-        for (var index = 0; index < caster.HandSlots.Count; index++)
-        {
-            var charge = caster.HandSlots[index].Buffs.Find("bach_fugue_charge");
-            Assert.That(charge, Is.Not.Null, $"槽位 {index + 1} 应挂上充能");
-            Assert.That(charge!.RemainingTurns, Is.EqualTo(2));
-            Assert.That(charge.ChargeCounter, Is.EqualTo(1), "充能I = 计数 1");
-        }
-
-        // 打出该槽的一张牌 → 触发载荷（获得 1 个绿球），计数重置。
-        var target = caster.HandSlots[0];
-        var before = sim.Orbs.Queue.CountOf(ShippedGreenOrb);
-        sim.Buffs.FireSlotCardPlayed(sim, 0, target);
-
-        Assert.That(
-            sim.Orbs.Queue.CountOf(ShippedGreenOrb),
-            Is.EqualTo(before + 1),
-            "充能 I 触发时获得 1 个绿属性球");
-    }
-
-    [Test]
     public void Fugue_card_matches_the_design()
     {
         var definitions = BaseGameContent.Load();
@@ -275,45 +239,9 @@ public sealed class BachContentTests
         Assert.That(card.Element, Is.EqualTo((int)EElement.Green));
         Assert.That(card.Cost, Is.EqualTo(5));
         Assert.That(card.CardType, Is.EqualTo(ECardType.Support));
-        Assert.That(card.Priority, Is.EqualTo(10));
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
         Assert.That(card.Stats?.Attributes.GetValueOrDefault("MaxHealth"), Is.EqualTo(40));
         Assert.That(card.IsExclusive, Is.True);
-    }
-
-    [Test]
-    public void New_charge_overwrites_the_old_one_and_resets_progress()
-    {
-        using var sim = Build();
-        var caster = sim.PlayerTeam.Characters[0];
-        var slot = caster.HandSlots[0];
-
-        // 先挂一个"充能II"（计数 2：充能I 是 1）。
-        sim.Buffs.ApplyToSlot(
-            sim,
-            0,
-            0,
-            "chalux_charge_glacial",
-            new Dictionary<string, object>(StringComparer.Ordinal) { ["charge"] = 2 });
-        Assert.That(slot.Buffs.Find("chalux_charge_glacial")!.ChargeCounter, Is.EqualTo(2));
-
-        // 打出该槽的牌 → 进度 2 → 1（尚未触发）。
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(slot.Buffs.Find("chalux_charge_glacial")!.ChargeCounter, Is.EqualTo(1), "已积累进度");
-
-        // 新的充能（赋格的充能I）覆盖：旧的一律移除、新的进度从头开始。
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "bach_fugue_charge");
-        Assert.That(slot.Buffs.Find("chalux_charge_glacial"), Is.Null, "旧充能被覆盖");
-        Assert.That(slot.Buffs.Find("bach_fugue_charge")!.ChargeCounter, Is.EqualTo(1), "进度重置");
-
-        // 即使新触发的与老的完全一样（同 id），也要覆盖并重置：不能再叠出第二个实例。
-        sim.Buffs.FireSlotCardPlayed(sim, 0, slot);
-        Assert.That(slot.Buffs.Find("bach_fugue_charge")!.ChargeCounter, Is.EqualTo(1), "触发后重置计数");
-        sim.Buffs.ApplyToSlot(sim, 0, 0, "bach_fugue_charge");
-        Assert.That(
-            slot.Buffs.All.Count(instance => instance.Def.Id == "bach_fugue_charge"),
-            Is.EqualTo(1),
-            "同 id 的充能也只保留 1 个实例");
     }
 
     [Test]
@@ -351,9 +279,8 @@ public sealed class BachContentTests
         Assert.That(card.CostType, Is.EqualTo(ECostType.Energy));
         Assert.That(card.Cost, Is.EqualTo(cost));
         Assert.That(card.CardType, Is.EqualTo(ECardType.Support));
-        Assert.That(card.Priority, Is.EqualTo(priority));
         Assert.That(card.Rarity, Is.EqualTo(ERarity.Exclusive));
-        Assert.That(card.Role, Is.EqualTo(ERole.Elementist));
+        Assert.That(card.Role, Is.EqualTo(ERole.Attack));
         Assert.That(card.IsExclusive, Is.True);
         Assert.That(card.Stats?.Attributes.GetValueOrDefault("MaxHealth"), Is.EqualTo(maxHealth));
         Assert.That(card.Stats?.Attributes.GetValueOrDefault("MagicAttack"), Is.EqualTo(magicAttack));
@@ -508,7 +435,6 @@ public sealed class BachContentTests
         TargetSide = ETargetSide.Enemy,
         TargetScope = ETargetScope.Single,
         TargetCount = 1,
-        Priority = 1,
     };
 
     /// <summary>卡组：N 张绿卡 + 1 张红卡（红卡用来证明元素掩码确实在筛属性）。</summary>

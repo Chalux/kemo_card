@@ -16,10 +16,10 @@
   "maxEnergy": 8,
   "initialEnergy": 3,
   "passives": [
-    { "buffId": "reno_passive_p1", "requiredPotential": 0 },
-    { "buffId": "reno_passive_p2", "requiredPotential": 10 },
-    { "buffId": "reno_passive_p3", "requiredPotential": 30 },
-    { "buffId": "reno_passive_p4", "requiredPotential": 50 }
+    { "buffId": "reno_passive_p1" },
+    { "buffId": "reno_passive_p2" },
+    { "buffId": "reno_passive_p3" },
+    { "buffId": "reno_passive_p4" }
   ],
   "tags": ["starter"]
 }

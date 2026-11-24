@@ -142,7 +142,7 @@ public sealed class DiscardDrawCountTests
     [Test]
     public void Modifier_is_consumed_by_the_next_player_phase_draw_step()
     {
-        using var sim = BuildSim(handSize: 2, deckSize: 10);
+        using var sim = BuildSim(handSize: 2, deckSize: 10, characterCount: 2);
         var character = sim.PlayerTeam.Characters[0];
 
         ExecuteAction(sim, "action.discard_two");
@@ -151,12 +151,12 @@ public sealed class DiscardDrawCountTests
 
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
 
-        Assert.That(HandCount(sim, 0), Is.EqualTo(3), "抽牌步骤按修正抽 3 张");
+        Assert.That(sim.PlayerTeam.CardPiles.HandCount, Is.EqualTo(6), "保留两张，补抽 3 + 1 张");
         Assert.That(sim.LastDiscardCount, Is.Zero, "玩家阶段开始即清账（账期 = 本玩家阶段）");
 
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
 
-        Assert.That(HandCount(sim, 0), Is.EqualTo(4), "修正已消费：回到每回合 1 张");
+        Assert.That(sim.PlayerTeam.CardPiles.HandCount, Is.EqualTo(8), "修正已消费，两位角色各贡献一次普通抽牌");
         Assert.That(character.ComputeDrawCount(), Is.EqualTo(1));
     }
 
@@ -287,8 +287,8 @@ public sealed class DiscardDrawCountTests
 
         // 主动技释放期间状态机把弃牌通道切到 ActiveSkill（见 CombatStateMachine.ApplyCastActiveSkill）。
         sim.SetDiscardChannel(EDiscardChannel.ActiveSkill);
-        sim.SelectedDiscardCharacterIndex = 0;
-        sim.SelectedDiscardSlots = new Queue<int>([0, 2]);
+        sim.SelectedDiscardCards = [.. new[] { 0, 2 }.Select(index =>
+            new HandCardChoice(0, sim.PlayerTeam.Characters[0].HandSlots[index].RuntimeInstanceId!))];
         ExecuteAction(sim, "einstein_discard_two");
         ExecuteAction(sim, "einstein_draw_by_discard");
 
@@ -299,7 +299,7 @@ public sealed class DiscardDrawCountTests
         Assert.That(sim.BlockedMidDrawCount, Is.Zero);
 
         PlayerPhasePipeline.Run(sim, isFirstPlayerPhase: false);
-        Assert.That(HandCount(sim, 0), Is.EqualTo(4), "下回合只抽基础 1 张");
+        Assert.That(sim.PlayerTeam.CardPiles.HandCount, Is.EqualTo(10), "回合补牌受全队上限约束");
     }
 
     #endregion
@@ -319,8 +319,8 @@ public sealed class DiscardDrawCountTests
     private static CombatSimulation BuildSim(
         int handSize = 3,
         int seed = 1,
-        int deckSize = CombatConstants.HandSlotCount + 5,
-        bool includeReadEffect = false)
+        int deckSize = 10,
+        bool includeReadEffect = false, int characterCount = 4)
     {
         var skillActions = new Dictionary<string, SkillActionDto>(StringComparer.Ordinal)
         {
@@ -392,7 +392,7 @@ public sealed class DiscardDrawCountTests
             [AttributeIds.MaxEnergy] = 5f,
             [AttributeIds.InitialEnergy] = 5f,
         };
-        var characters = Enumerable.Range(0, 4)
+        var characters = Enumerable.Range(0, characterCount)
             .Select(i => CharacterBattleInstance.CreateForTests(
                 $"c{i}",
                 attrs,

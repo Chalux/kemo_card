@@ -172,28 +172,6 @@ public sealed partial class CombatAuditRegressionTests
     }
 
     [Test]
-    public void Self_target_mark_should_not_survive_player_phase_wave_clear()
-    {
-        var card = new CardDto { Id = "self", CostType = ECostType.Energy, Cost = 1, TargetSide = ETargetSide.Self, TargetScope = ETargetScope.Self };
-        var skill = new SkillDto
-        {
-            Id = "active", TargetOverride = new() { Side = ETargetSide.Enemy, Scope = ETargetScope.All },
-            EffectRefs = [new() { EffectId = "kill" }]
-        };
-        var kill = new EffectDto { Id = "kill", Kind = EEffectKind.Damage, Params = new() { ["amount"] = 1000 } };
-        var wave = new BattleWaveDto { EnemySpawns = [new() { EnemyId = "slime", Count = 1 }] };
-        var battle = new BattleDto { Id = "waves", Waves = [wave, wave] };
-        using var sim = Build(CombatTestHelper.CreateFullRegistry(cards: new Dictionary<string, CardDto> { [card.Id] = card },
-            skills: new Dictionary<string, SkillDto> { [skill.Id] = skill }, effects: new Dictionary<string, EffectDto> { [kill.Id] = kill },
-            enemies: new Dictionary<string, EnemyDto> { ["slime"] = new() { Id = "slime", MaxHp = 100 } }), battle: battle);
-        sim.PlayerTeam.Characters[0].HandSlots[0].PlaceCard(card.Id, "runtime");
-        Assert.That(sim.TryApply(new PlayCardCommand(0, 0, [Player()])).Success, Is.True);
-        Assert.That(sim.TryApply(new CastActiveSkillCommand(0, [])).Success, Is.True);
-        Assert.That(sim.CurrentWaveIndex, Is.EqualTo(1));
-        Assert.That(sim.CardQueue.Count, Is.Zero, "old paid marks must not cross the turn boundary");
-    }
-
-    [Test]
     public void Team_hp_clamp_should_use_effective_max_including_domain()
     {
         var domain = new GameplayEffectDefDto

@@ -15,8 +15,7 @@
       "MagicAttack": 2
     }
   },
-  "role": "Mage",
-  "priority": 6,
+  "role": "Attack",
   "cardType": "Magical",
   "targetSide": "Enemy",
   "targetScope": "All",

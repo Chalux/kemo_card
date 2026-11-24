@@ -1,7 +1,7 @@
 {
   "displayNameId": "char.von_neumann.name",
   "element": "Red",
-  "role": "Healer",
+  "role": "Support",
   "race": ["Human", "Academic"],
   "skillRefs": [],
   "activeSkillChain": [
@@ -10,10 +10,10 @@
   "maxEnergy": 8,
   "initialEnergy": 3,
   "passives": [
-    { "buffId": "von_neumann_passive_p1", "requiredPotential": 0 },
-    { "buffId": "von_neumann_passive_p2", "requiredPotential": 10 },
-    { "buffId": "von_neumann_passive_p3", "requiredPotential": 30 },
-    { "buffId": "von_neumann_passive_p4", "requiredPotential": 50 }
+    { "buffId": "von_neumann_passive_p1" },
+    { "buffId": "von_neumann_passive_p2" },
+    { "buffId": "von_neumann_passive_p3" },
+    { "buffId": "von_neumann_passive_p4" }
   ],
   "cards": [
     "von_neumann_direct_deduction",

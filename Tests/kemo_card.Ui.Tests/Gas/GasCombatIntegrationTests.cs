@@ -20,10 +20,8 @@ public sealed class GasCombatIntegrationTests
         (int SharedHp, int EnemyHp, ECombatPhase Phase) RunOnce()
         {
             var sim = CombatSimulationTestBuilder.FullBattle(seed: 12345);
-            sim.TryApply(new ConfirmCharacterCommand(0));
-            sim.TryApply(new ConfirmCharacterCommand(1));
-            sim.TryApply(new ConfirmCharacterCommand(2));
-            sim.TryApply(new ConfirmCharacterCommand(3));
+            sim.TryApply(new EndTurnCommand());
+            MarblePhaseTests.ShootQueuedBalls(sim);
             sim.AdvancePhase();
             return (sim.PlayerTeam.SharedHp, sim.EnemyTeam.Enemies[0].CurrentHp, sim.Phase);
         }

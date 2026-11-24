@@ -25,6 +25,7 @@ public partial class EnemyUnitCmp : BaseCmp
     [Export] private HpBarCmp? _hp;
     [Export] private BuffListCmp? _buffs;
     [Export] private Panel? _highlight;
+    [Export] private Label? _marbleMark;
 
     /// <summary>点击回调（选目标态），参数为敌人索引。</summary>
     public Action<int>? Clicked { get; set; }
@@ -40,6 +41,12 @@ public partial class EnemyUnitCmp : BaseCmp
     protected override void OnReady()
     {
         MouseFilter = MouseFilterEnum.Stop;
+        if (_marbleMark != null)
+        {
+            _marbleMark.Text = "◎";
+            _marbleMark.TooltipText = Localization.Tr("UI_COMBAT_MARBLE_MARK");
+            _marbleMark.SelfModulate = KemoPalette.Accent;
+        }
     }
 
     protected override void InitEvent()
@@ -118,6 +125,13 @@ public partial class EnemyUnitCmp : BaseCmp
         }
 
         MouseDefaultCursorShape = _targetable ? CursorShape.PointingHand : CursorShape.Arrow;
+    }
+
+    /// <summary>弹珠阶段的敌方标记（点击切换分配目标）；只改标记图标，不影响血条 / 目标高亮。</summary>
+    public void SetMarbleMarked(bool marked)
+    {
+        if (_marbleMark != null)
+            _marbleMark.Visible = marked;
     }
 
     public Task ShakeAsync(float duration) => UnitTweens.ShakeAsync(this, 8f, duration);
