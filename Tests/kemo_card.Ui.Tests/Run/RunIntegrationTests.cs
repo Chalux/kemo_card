@@ -46,12 +46,10 @@ public sealed class RunIntegrationTests
             Assert.That(controller.GetGold(), Is.EqualTo(200));
             Assert.That(controller.ValidateParty(), Is.True);
 
-            mod.Phase = ERunPhase.Reward;
             var simulation = controller.StartBattle(registry, rng, 1);
             Assert.That(mod.Phase, Is.EqualTo(ERunPhase.Battle));
             Assert.That(simulation, Is.Not.Null);
 
-            mod.Phase = ERunPhase.BattleEnd;
             controller.EndBattle(won: true);
             Assert.That(mod.Phase, Is.EqualTo(ERunPhase.RingEnd));
 
@@ -86,7 +84,6 @@ public sealed class RunIntegrationTests
         var rng = new HostRng(99, "rollback");
 
         controller.CreateRun("story_a", rng, []);
-        mod.Phase = ERunPhase.Reward;
 
         for (var i = 0; i < RunConstants.SlotCount; i++)
         {

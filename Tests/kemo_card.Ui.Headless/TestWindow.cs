@@ -1,9 +1,35 @@
 using Godot;
+using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 
 namespace KemoCard.Ui.Headless;
+
+public enum EHeadlessEvent
+{
+    [EventPayload(typeof(HeadlessPingPayload))]
+    Ping,
+
+    [EventPayload(typeof(HeadlessPingPayload))]
+    GlobalPing,
+}
+
+public readonly struct HeadlessPingPayload
+{
+}
+
+public sealed class HeadlessEventFacade : IEventBusProvider
+{
+    /// <summary>可替换：模拟 QuickLoad 后 RunController / InternalBus 被换成新实例。</summary>
+    public EventDispatcher EventBus { get; set; } = new();
+}
+
+/// <summary>把测试窗口（owner = tests）的门面解析到共享的测试总线。</summary>
+public sealed class HeadlessFacadeProvider(HeadlessEventFacade facade) : IUiFacadeProvider
+{
+    public object? ResolveUiFacade(string ownerModId) => ownerModId == "tests" ? facade : null;
+}
 
 public partial class TestWindow : BaseWin
 {
@@ -77,4 +103,29 @@ public partial class TestWindow : BaseWin
     }
 
     #endregion
+}
+
+/// <summary>
+/// 带装饰器事件订阅的测试窗口。独立子类是为了不改动
+/// <see cref="TestWindow"/> 的「InitEvent 只有一条订阅」断言。
+/// </summary>
+public partial class DecoratedTestWindow : TestWindow
+{
+    public int PingCount { get; private set; }
+    public int GlobalPingCount { get; private set; }
+
+    [EventSubscribe(EHeadlessEvent.Ping)]
+    private void OnHeadlessPing() => PingCount++;
+
+    [EventSubscribe(EHeadlessEvent.GlobalPing, Bus = EventBusScope.Global)]
+    private void OnHeadlessGlobalPing() => GlobalPingCount++;
+}
+
+/// <summary>带装饰器订阅的组件，用于验证窗口已挂载时再次 Open 会重绑到当前功能总线。</summary>
+public partial class DecoratedTestCmp : BaseCmp
+{
+    public int PingCount { get; private set; }
+
+    [EventSubscribe(EHeadlessEvent.Ping)]
+    private void OnHeadlessPing() => PingCount++;
 }

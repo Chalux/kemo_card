@@ -52,13 +52,25 @@ public abstract partial class BaseUI : Control, IUIMeta
         try { OnExitTree(); }              // 子类清理时订阅仍有效
         finally
         {
-            Binder.UnbindAll();            // hook 抛异常也必须解绑
-            GlobalEvents.Bus.OffCaller(this);
-            base._ExitTree();
+            try { OnExitTreeComplete(); }  // 框架级收尾（如组件独立装饰器账本）
+            finally
+            {
+                Binder.UnbindAll();        // hook 抛异常也必须解绑
+                GlobalEvents.Bus.OffCaller(this);
+                base._ExitTree();
+            }
         }
     }
 
     protected virtual void OnReady()
+    {
+    }
+
+    /// <summary>
+    /// 框架级离场收尾：在 <see cref="Binder.UnbindAll"/> 之前执行，且即使
+    /// <see cref="OnExitTree"/> 抛异常也保证执行。仅供框架内部组件使用。
+    /// </summary>
+    protected virtual void OnExitTreeComplete()
     {
     }
 

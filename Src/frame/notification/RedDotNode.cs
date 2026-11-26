@@ -17,6 +17,9 @@ internal sealed class RedDotNode
     public RedDotNode? Parent;
     public readonly List<RedDotNode> Children = new();
 
+    /// <summary>正在级联反注册：期间不允许子节点摘除把它重新聚合为 active。</summary>
+    public bool IsRemoving;
+
     /// <summary>
     /// 已注册的事件订阅句柄。用于反注册时批量解除。
     /// 存储为 Action 委托，调用时执行 unsubscribe。

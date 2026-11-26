@@ -121,7 +121,7 @@ public sealed class RunBattleWiringTests
     private static (RunController Controller, GameDefinitionRegistry Registry, HostRng Rng) BuildReadyRun()
     {
         var registry = RunTestHelper.CreateRegistryWithHpCard();
-        var mod = new RunMod { Phase = ERunPhase.Reward };
+        var mod = new RunMod { Phase = ERunPhase.Event };
         for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(i);

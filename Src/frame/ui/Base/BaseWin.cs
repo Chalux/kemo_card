@@ -102,7 +102,14 @@ public abstract partial class BaseWin : BaseUI, IUILifecycleInvoker
     void IUILifecycleInvoker.InvokePreLoad(Action done, Action fail) => OnPreLoad(done, fail);
     void IUILifecycleInvoker.InvokeCreate() => OnCreate();
     void IUILifecycleInvoker.InvokeResetBindings() => ResetBindings();
-    void IUILifecycleInvoker.InvokeInitEvent() => InitEvent();
+    void IUILifecycleInvoker.InvokeInitEvent()
+    {
+        InitEvent();
+        // 装饰器订阅由框架统一收口：跟随本次 InitEvent 绑定，离场/重开时随 Binder 一起解绑。
+        Binder.BindOwnerDecorated(UIVo, this);
+        // 已挂载窗口再次 Open 不会让子组件重走 _EnterTree；显式把它们切到当前总线。
+        BindingScopeEvents.RebindDescendantDecoratedEvents(this);
+    }
     void IUILifecycleInvoker.InvokeOpen() => OnOpen();
     Action? IUILifecycleInvoker.InvokeOpenAnim(Action done) => OnOpenAnim(done);
     Action? IUILifecycleInvoker.InvokeCloseAnim(Action done) => OnCloseAnim(done);

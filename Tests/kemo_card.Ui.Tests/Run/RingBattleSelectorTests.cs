@@ -59,7 +59,7 @@ public sealed class RingBattleSelectorTests
             new() { Ring = 1, Battles = [new() { BattleId = RunTestHelper.TestBattleId }] },
             new() { Ring = 2, Battles = [new() { BattleId = RunTestHelper.TestBattleId }] } ]
         };
-        var model = new RunMod { StoryId = "pool-test", CurrentRing = 1, Phase = ERunPhase.Reward };
+        var model = new RunMod { StoryId = "pool-test", CurrentRing = 1, Phase = ERunPhase.Event };
         for (var index = 0; index < RunConstants.SlotCount; index++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(index);
@@ -72,7 +72,7 @@ public sealed class RingBattleSelectorTests
         Assert.That(model.BattleHistory.Single().BattleId, Is.EqualTo(RunTestHelper.TestBattleId));
         Assert.That(model.BattleHistory.Single().Ring, Is.EqualTo(1));
         controller.LoadRun(model.ToDto());
-        model.Phase = ERunPhase.Reward;
+        model.Phase = ERunPhase.Event;
         Assert.Throws<InvalidOperationException>(() => controller.StartBattle(registry, new HostRng(42, "run"), 42));
         model.CurrentRing = 2;
         Assert.DoesNotThrow(() => controller.StartBattle(registry, new HostRng(42, "run"), 42));

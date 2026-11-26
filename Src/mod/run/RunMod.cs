@@ -40,15 +40,19 @@ public sealed partial class RunMod : BaseMod
     /// 当前流程阶段。写入且**真的发生变化**时广播 <see cref="RunPhaseChangedPayload"/>。
     /// </summary>
     /// <remarks>
+    /// <para><b>只读外露：</b>正常流程只能经 <see cref="RunController"/> 的流程命令
+    /// （<c>EnterExploration</c> / <c>StartBattle</c> / <c>EndBattle</c> / <c>NextRing</c> / <c>AbandonRun</c>）
+    /// 迁移阶段，避免调用点各自写 <c>Phase = ...</c> 绕过前置校验。调试与读档恢复分别走
+    /// <c>ForceSetPhase</c> 和 <see cref="RestoreFrom"/>。</para>
     /// <para>此前 <c>Phase</c> 是裸自动属性、事件表里的 <c>RunPhaseChanged</c> 全仓无人发送也无人订阅，
     /// 于是 <c>RunMainWin</c> 只在 <c>OnOpen</c> 刷过一次视图：调试面板开战后，相位标签仍停在旧阶段、
     /// 右上角充能球面板也不出现——「进了战斗但界面毫无变化」，看上去就像进不去战斗。</para>
-    /// <para>比较后再广播：调试面板先把阶段拨到 <c>Reward</c> 再开战，重复赋值不应产生多余事件。</para>
+    /// <para>比较后再广播：重复赋值同一阶段不应产生多余事件。</para>
     /// </remarks>
     public ERunPhase Phase
     {
         get => _phase;
-        set
+        internal set
         {
             if (_phase == value)
             {
@@ -232,7 +236,6 @@ public sealed partial class RunMod : BaseMod
         StoryId = dto.StoryId;
         CurrentRing = dto.CurrentRing;
         MaxRing = dto.MaxRing;
-        Phase = dto.Phase;
         RunSeed = dto.RunSeed;
         SharedGold = dto.SharedGold;
         Items.Restore(dto.Relics, dto.Consumables);
@@ -292,5 +295,10 @@ public sealed partial class RunMod : BaseMod
                 PlayerStates[i].SetActiveCharacter(null);
             }
         }
+
+        // Phase 必须最后写：setter 会广播 RunPhaseChanged，订阅方（RunMainWin 等）在回调里直接读
+        // 背包 / 金币 / 角色。若先写 Phase 再恢复 Items，战败回滚的广播会读到"战斗中使用过消耗品"
+        // 的半恢复状态。EndBattle 回滚时会把快照阶段归一为 Event，因此这里只广播一次最终阶段。
+        Phase = dto.Phase;
     }
 }

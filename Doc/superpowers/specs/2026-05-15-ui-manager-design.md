@@ -5,7 +5,7 @@
 > 本文是 `Src/frame/` **跨域基础**（UI 框架、订阅生命周期、事件分发、条件引擎、脚本宿主）的**唯一权威文档**。四份已实装的下级规格已整篇并入本文 **§14–§17**，原文文件归档（见下表），此后只在本文维护。
 
 **日期**：2026-05-15（原「UI 管理器与 BaseUI」规格首次定稿）  
-**最后修订**：2026-10-06（Dlg 多实例并存、UI 生命周期边界与 headless 回归）
+**最后修订**：2026-11-25（新增 `[EventSubscribe]` 装饰器事件订阅与 UI 生命周期联动）
 **状态**：活规格（框架域基础的唯一权威）
 - **§1–§13**（原「UI 管理器与 BaseUI」，2026-05-15）：原状态「已定稿待实现评审」；现已实现并与代码对齐，见 §12 实现备注。
 - **§14**（原 ui-mod-binding，2026-09-15）：原状态「活规格（2026-09-15 起）」；迁移步骤 1–9 已落地，自检见 §14.12。
@@ -906,9 +906,11 @@ public partial class BaseKemoButton : Button
 | Godot 信号（跨节点、如 `KeywordTipService._currentAnchor.TreeExited`） | `Binder.Bind(() => x.TreeExited += h, () => x.TreeExited -= h)` | 同上 + 调用方需自行 `IsInstanceValid` 判断 |
 | 功能内部总线 | `Binder.OnBusEvent(key, handler)`（caller 固定 this） | `OwnerBus.OffCaller(this)` + `Binder` |
 | 跨功能总线 `GlobalEvents.Bus` | `Binder.OnGlobalEvent(key, handler)` | `GlobalEvents.Bus.OffCaller(this)` |
-| 静态门面事件（`RedDotService.OnStateChanged` 等） | `Binder.Bind(() => X += h, () => X -= h)` | `Binder.UnbindAll()` |
+| 事件总线（装饰器） | `[EventSubscribe(事件枚举成员)]`；UI 家族由框架在 `InitEvent` 后自动 `Binder.BindDecorated` | `Binder.UnbindAll()`（`EventBinding.Off`） |
+| 框架服务自有总线（如 `RedDotService.Events`） | `Binder.BindDecorated(bus, this)`，或 `bus.On(key, handler, caller: this)` | `Binder.UnbindAll()` / `bus.OffCaller(this)` |
+| 静态门面事件（其他静态 C# 事件） | `Binder.Bind(() => X += h, () => X -= h)` | `Binder.UnbindAll()` |
 
-**用事件总线替代静态 C# 事件**是推荐做法（`RedDotService.OnStateChanged` 已因此类问题被修过一次）；此处只保证**即使用静态事件也能被统一登记**。
+**用事件总线替代静态 C# 事件**是推荐做法。红点系统已从静态 `OnStateChanged` 迁移到独立总线 `RedDotService.Events`；其余静态 C# 事件仍必须用 `Binder.Bind` 成对登记，保证离场可解绑。
 
 ---
 
@@ -1338,6 +1340,41 @@ bool Has<TPayload>(EventKey<TPayload> key,
     Action<TPayload, IEventListener<TPayload>>? handler = null, object? caller = null);
 ```
 
+##### 15.4.2.5 装饰器注册（2026-11-25 增补）
+
+```csharp
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
+public sealed class EventSubscribeAttribute : Attribute
+{
+    public EventSubscribeAttribute(object eventValue); // 事件枚举成员
+    public object EventValue { get; }
+    public bool Once { get; init; }
+    public EventBusScope Bus { get; init; } = EventBusScope.Owner;
+}
+
+public enum EventBusScope { Owner, Global }
+
+// 扫描 target 上的 [EventSubscribe] 方法；caller 缺省为 target
+public EventBinding BindDecorated(
+    object target,
+    object? caller = null,
+    object? bindingOwner = null,
+    EventBusScope? scopeFilter = null);
+
+public sealed class EventBinding : IDisposable
+{
+    public int Count { get; }
+    public bool IsActive { get; }
+    public void Off();
+}
+```
+
+- **契约与源生成器同源**：事件 id 取枚举整型值，载荷类型取该枚举成员上的 `[EventPayload]`；不另建映射表。
+- 方法签名支持 `void M()` / `void M(TPayload)` / `void M(IEventListener<TPayload>)` / `void M(TPayload, IEventListener<TPayload>)`；返回类型必须为 `void`。
+- 单个方法签名不合法或契约缺失只记日志并跳过，不阻断其余方法；方法发现结果按类型缓存，派发阶段走普通强类型委托。
+- UI 家族由框架统一收口：`BaseWin` / `BaseMask` 在每次 `InvokeInitEvent` 后、`BaseCmp` 在 `_EnterTree` 中，按 `Bus` 作用域分流——`Owner` 绑定归属功能门面（实现 `IEventBusProvider`）的内部总线，`Global` 绑定 `GlobalEvents.Bus`；`BaseWin` / `BaseMask` 的装饰器登记进 `BindingScope`，随 `Binder.UnbindAll()` 解绑；`BaseCmp` 使用独立的 `_decoratedBinder`，由 `OnExitTreeComplete` 释放（普通 `Binder` 订阅仍由 `Binder` 管理）。非 UI 实例显式调用 `BindDecorated` 并自行持有 `EventBinding`。
+- **不要把所有事件都交给归属总线**：各事件枚举的 id 都从 0 开始，跨功能事件必须标 `Bus = EventBusScope.Global`（或手动指定 `scopeFilter`），否则会与归属功能的同 id 事件发生载荷类型冲突。
+
 #### 15.4.3 线程模型（原 §4.3）
 
 - 设计目标为 **Godot 主线程派发**。
@@ -1422,6 +1459,21 @@ public abstract class BaseController<TModel>(TModel model) : IDisposable where T
 ```
 
 - `BaseController.Dispose` 调用 `OffCaller(this)`，利用 `caller` 追踪自动清理——不需逐条 `Off`。
+
+#### 15.7.3 框架服务自有总线（2026-11-25 增补）
+
+框架服务可以持有自己的领域总线，既不属于 `GlobalEvents.Bus`，也不属于某个 Mod：
+
+```csharp
+public static class RedDotService
+{
+    public static EventDispatcher Events { get; } = new();
+}
+```
+
+- 示例：红点状态变化通过 `RedDotService.Events` 上的 `RedDotEvents.Changed` 发布，通知目标节点自身及其父级 / 子级。
+- 消费方用 `bus.On(key, handler, caller: this)` 或 `Binder.BindDecorated(bus, this)` 订阅，离场统一 `Off` / `OffCaller`。
+- 总线监听由订阅方（`BindingScope` / `EventBinding`）负责解绑；`Configure()` 等重启入口**不得**无条件 `OffAll`，否则会静默断开仍挂载的 `RedDotCmp`（它只在 `_EnterTree` 订阅，重配后不会重新进树）。
 
 ---
 
@@ -1578,14 +1630,23 @@ InternalBus.Once(SomeEvent, (payload, listener) =>
 ```
 Src/frame/mvc/
 ├── EventDispatcher.cs           # EventKey + EventListener + EventDispatcher + EventConst
+├── EventBinding.cs              # 装饰器批量绑定的取消句柄
+├── EventDecoratorBinder.cs      # [EventSubscribe] 扫描 / 校验 / 注册
+├── EventSubscribeAttribute.cs   # 装饰器事件订阅 Attribute
 ├── EventDispatchFailureMode.cs  # 派发失败策略枚举
 ├── EventTableAttribute.cs       # EventTable / EventPayload Attribute 定义
+├── IEventBusProvider.cs         # 功能 Controller 向 UI 暴露内部总线
 ├── IEventDispatcherLogger.cs    # 日志接口 + NullEventDispatcherLogger
 ├── GlobalEvents.cs              # 全局静态总线
 ├── BaseMod.cs                   # InternalBus 定义
-├── BaseController.cs            # OffCaller(this) 自动清理
+├── BaseController.cs            # OffCaller(this) 自动清理 + IEventBusProvider
 └── Generators/KemoCard.Mvc.Generators/
     └── EventTableGenerator.cs   # Source Generator
+
+Src/frame/ui/
+├── BindingScope.cs              # 界面订阅账本
+├── BindingScopeEvents.cs        # 装饰器绑定 + 归属总线解析糖
+└── BindingScopeSignals.cs       # Godot 信号糖
 
 Src/fixed/godot/
 └── GodotEventDispatcherLogger.cs  # GD.PushError 桥接

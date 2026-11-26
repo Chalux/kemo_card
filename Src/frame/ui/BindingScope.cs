@@ -26,11 +26,14 @@ public sealed class BindingScope
     /// <summary>已登记的订阅数量（供诊断与测试断言订阅不随开关次数增长）。</summary>
     public int Count => _unbinders.Count;
 
-    /// <summary>只登记解绑动作，不立即订阅。</summary>
+    /// <summary>只登记解绑动作，不立即订阅。同一委托重复登记只保留一条。</summary>
     public void Add(Action unsubscribe)
     {
         ArgumentNullException.ThrowIfNull(unsubscribe);
-        _unbinders.Add(unsubscribe);
+        if (!_unbinders.Contains(unsubscribe))
+        {
+            _unbinders.Add(unsubscribe);
+        }
     }
 
     /// <summary>登记并立即订阅。</summary>

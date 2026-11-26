@@ -306,7 +306,7 @@ public sealed class RunDebugServiceTests
         var (service, controller, _) = Build();
         foreach (var hero in HeroIds)
             service.GrantCharacter(hero);
-        controller.State.Phase = ERunPhase.Event;
+        controller.State.Phase = ERunPhase.Reward;
         controller.State.AddBattleRecord(new BattleRecordDto
         {
             Ring = controller.State.CurrentRing,
@@ -317,7 +317,7 @@ public sealed class RunDebugServiceTests
         var result = service.StartBattle(BattleId);
 
         Assert.That(result.Ok, Is.False);
-        Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Event), "调试开战失败必须还原原来的 Run 阶段");
+        Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Reward), "调试开战失败必须还原原来的 Run 阶段");
     }
 
     [Test]
@@ -336,6 +336,68 @@ public sealed class RunDebugServiceTests
 
         Assert.That(result.Ok, Is.True, result.Message);
         Assert.That(result.Message, Does.Contain("1 波"), "必须报出内容里真实的波次，说明走的是内容定义");
+    }
+
+    [Test]
+    public void StartBattle_rejects_when_a_battle_is_already_active()
+    {
+        var (service, controller, _) = Build();
+        foreach (var hero in HeroIds)
+            service.GrantCharacter(hero);
+        Assert.That(service.StartBattle(BattleId).Ok, Is.True);
+
+        var result = service.StartBattle(BattleId);
+        var phaseResult = service.SetPhase(ERunPhase.Event);
+        var eventResult = service.TriggerEvent(DataEventId);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Ok, Is.False);
+            Assert.That(result.Message, Does.Contain("已有战斗"));
+            Assert.That(phaseResult.Ok, Is.False);
+            Assert.That(eventResult.Ok, Is.False);
+            Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Battle));
+            Assert.That(controller.Simulation, Is.Not.Null, "调试操作不得留下幽灵模拟器或关闭战斗");
+        });
+    }
+
+    [Test]
+    public void SetPhase_rejects_combat_phases_without_a_simulation()
+    {
+        var (service, controller, _) = Build();
+
+        var battle = service.SetPhase(ERunPhase.Battle);
+        var battleEnd = service.SetPhase(ERunPhase.BattleEnd);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(battle.Ok, Is.False);
+            Assert.That(battleEnd.Ok, Is.False);
+            Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Event));
+        });
+    }
+
+    [Test]
+    public void StartBattle_failure_does_not_restore_a_combat_phase_without_a_simulation()
+    {
+        var (service, controller, registry) = Build();
+        foreach (var hero in HeroIds)
+            service.GrantCharacter(hero);
+        registry.Store.BattlesMutable[BattleId] = new BattleDto
+        {
+            Id = BattleId,
+            Waves = [],
+        };
+        controller.ForceSetPhase(ERunPhase.BattleEnd);
+
+        var result = service.StartBattle(BattleId);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Ok, Is.False);
+            Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Event),
+                "没有模拟器的战斗阶段不能作为失败恢复目标");
+        });
     }
 
     [Test]

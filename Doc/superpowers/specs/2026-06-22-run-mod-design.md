@@ -5,7 +5,7 @@
 > **2026-11-24 阅读提示**：本文中「团体潜能（§13）/ 联机控制权 / 联机奖励分叉 / 旧药水与遗物」相关段落已停用或移除；五槽共享消耗品、存档 v5、队伍编辑以[总规格 §4.5–§4.7](2026-05-11-kemo-card-design.md)与本文现行章节为准。存档 schema 以 v5 为准（`RunDto`）。
 
 **日期**：2026-06-22
-**最后修订**：2026-09-24（新增 §14 战斗界面 `CombatWin`）
+**最后修订**：2026-11-25（阶段迁移收口：Phase 对外只读，转移统一经 RunController 命令）
 **状态**：已实装（`Src/mod/run/`，`RunMod.FeatureId = "run"`）
 **关系**：服从 [2026-05-11 总规格](2026-05-11-kemo-card-design.md)（玩法边界权威）；战斗相关服从 [2026-07-21 战斗规格](2026-07-21-combat-system-design.md)；内容定义见 [2026-05-17 内容 Mod 管理器规格](2026-05-17-content-mod-manager-design.md)；界面层遵循 [2026-05-15 UI 管理器规格](2026-05-15-ui-manager-design.md)、[2026-09-15 ui-mod-binding 规格](2026-05-15-ui-manager-design.md)、[2026-09-19 UI 主题规格](2026-09-21-global-mod-design.md) 与 [2026-09-21 羊皮纸重设计](2026-09-21-global-mod-design.md)。
 **范围**：Run 域功能 Mod（`Src/mod/run/`，`RunMod.FeatureId = "run"`）的**唯一权威规格** —— 模块结构与架构、生命周期与阶段流转、数据模型与存档 schema v5、奖励分发、队伍编辑、Run 界面流程、存档闭环、ESC 系统菜单、五槽共享消耗品与商店 / 事件结算。
@@ -127,12 +127,21 @@ Finished    ── Run结束（终态，用于结算和成就判定）
 ### 阶段流转
 
 ```
-Init → Event → Reward → Event → Reward → ... → Reward → Battle → BattleEnd
-                                                                ├── 胜利 → RingEnd → Event / Finished
-                                                                └── 失败 → 回滚快照 → Event
+Init → Event → Battle ── 胜利 → RingEnd ──（NextRing，仍有下一环）→ Event
+                  │
+                  └── 失败 → 回滚快照 → Event
 
 所有阶段均可通过 RunController.AbandonRun() 跳转到 Finished。
+Reward / BattleEnd 为旧存档 / 调试兼容状态；正常流程由 Event 直接进入 Battle。
 ```
+
+> **2026-11-25 实现收口**：`RunMod.Phase` 对外只读（`internal set`），正常流程只经 `RunController` 的显式命令迁移：
+> `EnterExploration()`（地图节点切换 / 事件结算回到 Event，战斗 / RingEnd / Finished 不可用）、
+> `StartBattle()`（Init / Event 或兼容的 Reward → Battle，**成功创建战斗后才改阶段**）、
+> `EndBattle(bool)`（Battle/BattleEnd → RingEnd 或回滚后的 Event）、
+> `NextRing()`（仅 RingEnd 且仍有下一环时 → 下一环 Event）、`AbandonRun()`（→ Finished）。
+> 正常流程不再"先临时置 Reward 再开战"；`Reward` 只保留旧存档 / 调试兼容。调试面板统一走
+> `RunController.ForceSetPhase()`，业务代码不得直接写 `Phase`。
 
 ### 战斗失败回滚机制
 
@@ -152,6 +161,8 @@ flowchart LR
 - 回滚后 Run 回到 Event 阶段，玩家可调整编队后重新战斗；无失败资源税、可无限重试
 
 ### RunController 公开 API
+
+> 以下为历史 API 概览；联机 / 潜能相关条目已停用。阶段与战斗签名以 2026-11-25 的标注为准。
 
 ```csharp
 // 生命周期（storyId 必选：Run 开始前必须选定故事脚本，总规格 4.1）
@@ -183,11 +194,14 @@ void SelectEventOption(int slotIndex, int optionIndex);
 void ApplyEventRewards();
 
 // 战斗
-CombatSimulation StartBattle(GameDefinitionRegistry definitions, HostRng rng, int runSeed);
-void EndBattle(CombatSimulation simulation, bool won);
+CombatSimulation StartBattle(GameDefinitionRegistry definitions, HostRng rng, int runSeed, string? battleId = null);
+bool EndBattle(bool won);                                     // true=失败且实际回滚；false=胜利或无快照可回滚
 
-// 流程控制
-void NextRing();
+// 流程控制（2026-11-25：Phase 对外只读，仅以下命令可迁移）
+ERunPhase Phase { get; }
+bool EnterExploration();                                     // → Event；Battle/BattleEnd/RingEnd/Finished 不可用
+bool NextRing();                                             // 仅 RingEnd 且仍有下一环 → 下一环 Event
+internal void ForceSetPhase(ERunPhase phase);                // 调试绕过入口；业务代码禁用
 bool HasNextRing();
 
 // 控制权管理（联机用，仅非战斗阶段可主动调用）

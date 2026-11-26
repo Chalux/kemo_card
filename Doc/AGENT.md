@@ -4,7 +4,7 @@
 > 维护：显式或架构变更时使用 skill `maintain-agent-doc`（见文末）。  
 > **新增或修改项目约定：直接改本文**，不要再往 `.cursor/rules/` 堆叠重复规则。
 
-**最后修订**：2026-11-24（并入单机三人队 / 弹珠阶段规格）
+**最后修订**：2026-11-25（新增事件装饰器订阅）
 
 ---
 
@@ -40,6 +40,7 @@ Godot 4.7 Mono（纯 C#）单机卡牌 Roguelike，玩家指挥三名出战角�
 - **语言**：游戏本体只写 **C#**，不写 GDScript。布局用 Godot 场景编辑器，代码只写逻辑。
 - **组合优先于继承**：持有并委托（节点组合、小服务/接口），避免深继承。
 - **界面订阅一律经 `BindingScope`**：Godot 信号 / 事件总线 / 静态门面事件都必须用 `Binder.OnXxx(...)` 或 `Binder.Bind(...)` 登记，**不得裸写 `+=`**，也不得自写 `_eventsBound` 之类守卫。框架在离场时统一解绑（见 UI 与运行时规格「界面归属与统一订阅生命周期」，即原 ui-mod-binding 规格 §4）。
+- **事件订阅可用装饰器**：方法标注 `[EventSubscribe(事件枚举成员)]` 后，UI 家族（`BaseWin` / `BaseMask` / `BaseCmp`）由框架在每次 `InitEvent` 后自动按作用域绑定：默认 `Bus = EventBusScope.Owner` → 归属功能总线，`Bus = EventBusScope.Global` → `GlobalEvents.Bus`；都登记进 `BindingScope`，离场 / 重开自动解绑。载荷类型取枚举成员上的 `[EventPayload]`。非 UI 实例显式调用 `EventDispatcher.BindDecorated(this)` 并持有返回的 `EventBinding`，用完 `Off()`。
 - **UI 节点不得 override `_ExitTree`**：`BaseUI` / `BaseMask` 已把它收敛为 `sealed`，请改 override 框架级生命周期 `OnExitTree()`；无法继承 `BaseUI` 的节点（`Button` / `CanvasLayer` 等）按 UI 与运行时规格的 6 行模式（原 ui-mod-binding 规格 §4.3）组合 `BindingScope`。
 - **订阅登记写在 `_EnterTree`，不要写在 `_Ready`**：Godot 的 `_Ready` **每个节点只调用一次**，界面进缓存走 `RemoveChild`、重开走 `AddChild`，**不会**再触发 `_Ready`（除非显式 `RequestReady()`）。写在 `_Ready` 的订阅会在第一次离场时被 `Binder` 解绑后永不再登记（`BaseCmp` 走框架级 `InitEvent()`，已挂在 `_EnterTree`）。`_Ready` 只放一次性初始化（尺寸、样式、外部数据同步）。
 - **界面必须声明归属 Mod 且只取自家门面**：`UIRegistration` 的 `OwnerModId` 必填、在 `Src/mod/FeatureModCatalog.cs` 登记；界面取数用 `Facade<T>()`，不得跨功能直接访问 `AppRoot.Services`。
@@ -99,7 +100,7 @@ Godot 4.7 Mono（纯 C#）单机卡牌 Roguelike，玩家指挥三名出战角�
 | 界面归属 | `Src/mod/FeatureModCatalog.cs`，`Src/frame/ui/IUiFacadeProvider.cs` | 功能 Mod 界面声明与门面解析（唯一登记处；权威见 UI 与运行时规格） |
 | 音频 | `Src/frame/audio/` | `Sound` 门面 + `SoundManager` |
 | 日志 | `Src/frame/logging/` + `Src/fixed/godot/GodotAppLog.cs` | `AppLog` 门面 |
-| 红点 | `Src/frame/notification/` | |
+| 红点 | `Src/frame/notification/` | `RedDotService` 持有独立 `EventDispatcher`（`RedDotService.Events`），状态变化通知自身 / 父级 / 子级；`RedDotCmp` 用 `[EventSubscribe]` + `BindingScope` |
 | 脚本宿主 | `Src/frame/scripting/` | Puerts；agent builtins 在 `Src/typescript/src/builtins/`，mod 脚本源在 `Config/mods/<mod>/scripts-src/`（编译至 `scripts/`）；权威见 UI 与运行时规格「Mod 脚本运行时」 |
 | 显示 / 语言设置 | `Src/frame/display/`，`Src/frame/locale/` | |
 

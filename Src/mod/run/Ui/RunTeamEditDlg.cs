@@ -52,9 +52,6 @@ public partial class RunTeamEditDlg : BaseDlg
     private string? _previewInstanceId;
     private IReadOnlyList<TeamPoolEntryView> _pool = [];
 
-    private IEventListener<RunCharacterAssignedPayload>? _onCharacterAssigned;
-    private IEventListener<RunDeckChangedPayload>? _onDeckChanged;
-
     public override string UIId => RunUiIds.TeamEdit;
     public override string UIDir => "Src/mod/run/Ui";
 
@@ -84,9 +81,6 @@ public partial class RunTeamEditDlg : BaseDlg
             _currentCharacter.Hovered = OnCurrentCharacterHovered;
             _currentCharacter.Clicked = (_, _) => OpenDeckEditor(CurrentSlotInstanceId());
         }
-
-        // 二级界面 / 调试面板改动数据后回来刷新：订阅 Run 功能内部总线（随界面离场自动退订）。
-        Bind(SubscribeTeamEvents, UnsubscribeTeamEvents);
     }
 
     protected override void OnOpen()
@@ -140,26 +134,16 @@ public partial class RunTeamEditDlg : BaseDlg
     #region 刷新
 
     /// <summary>
-    /// 订阅 Run 功能内部总线：槽位上阵变化与卡组变化都要重读（不只是本界面自己改的）。
+    /// 二级界面 / 调试面板改动数据后回来刷新：订阅 Run 功能内部总线。
     /// </summary>
-    private void SubscribeTeamEvents()
-    {
-        if (RunRuntime.Current?.State is not { } mod)
-        {
-            return;
-        }
-
-        _onCharacterAssigned = mod.OnRunCharacterAssigned((_, _) => RefreshAll(), this);
-        _onDeckChanged = mod.OnRunDeckChanged((_, _) => RefreshAll(), this);
-    }
-
-    private void UnsubscribeTeamEvents()
-    {
-        _onCharacterAssigned?.Off();
-        _onDeckChanged?.Off();
-        _onCharacterAssigned = null;
-        _onDeckChanged = null;
-    }
+    /// <remarks>
+    /// 装饰器由 <see cref="BaseWin"/> 生命周期统一绑定到「归属功能门面」的总线，
+    /// 并登记进 <see cref="BaseUI.Binder"/>，界面离场或重开前自动解绑；
+    /// 不再需要成对的 Subscribe/Unsubscribe 字段与手写守卫。
+    /// </remarks>
+    [EventSubscribe(ERunEvent.RunCharacterAssigned)]
+    [EventSubscribe(ERunEvent.RunDeckChanged)]
+    private void RefreshOnTeamChanged() => RefreshAll();
 
     private void RefreshAll()
     {

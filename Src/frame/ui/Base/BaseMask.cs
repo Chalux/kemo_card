@@ -86,7 +86,13 @@ public abstract partial class BaseMask : Control, IUILifecycleInvoker
     void IUILifecycleInvoker.InvokePreLoad(Action done, Action fail) => done();
     void IUILifecycleInvoker.InvokeCreate() { }
     void IUILifecycleInvoker.InvokeResetBindings() => Binder.UnbindAll();
-    void IUILifecycleInvoker.InvokeInitEvent() => InitEvent();
+    void IUILifecycleInvoker.InvokeInitEvent()
+    {
+        InitEvent();
+        // 与 BaseWin 同一收口：遮罩上的装饰器订阅也随 InitEvent 绑定、随离场解绑。
+        Binder.BindOwnerDecorated(UIVo, this);
+        BindingScopeEvents.RebindDescendantDecoratedEvents(this);
+    }
     void IUILifecycleInvoker.InvokeOpen() => OnOpen();
     Action? IUILifecycleInvoker.InvokeOpenAnim(Action done) => OnOpenAnim(done);
     Action? IUILifecycleInvoker.InvokeCloseAnim(Action done) => OnCloseAnim(done);

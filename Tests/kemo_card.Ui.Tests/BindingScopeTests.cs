@@ -36,6 +36,18 @@ public sealed class BindingScopeTests
     }
 
     [Test]
+    public void Add_deduplicates_the_same_delegate()
+    {
+        var scope = new BindingScope();
+        Action unsubscribe = () => { };
+
+        scope.Add(unsubscribe);
+        scope.Add(unsubscribe);
+
+        Assert.That(scope.Count, Is.EqualTo(1), "重复登记同一解绑动作不应让账本膨胀");
+    }
+
+    [Test]
     public void UnbindAll_invokes_every_unbinder_and_clears()
     {
         var scope = new BindingScope();

@@ -87,10 +87,13 @@ public sealed class RunAdventureService(
             || !map.Nodes.Any(node => node.Branch == branch && node.Step == step
                 && (node.Kind == ERunNodeKind.Shop || !node.Completed)))
             return false;
+
         map.Position = step;
         map.NodeOpen = true;
         PrepareVisibleReward();
-        State.Phase = ERunPhase.Event;
+        // 地图已改完再切阶段：CanNavigate 已保证 EnterExploration 成功，
+        // 阶段广播的订阅方看到的是与新阶段一致的地图。
+        run.EnterExploration();
         run.NotifyAdventureChanged();
         return true;
     }
@@ -112,7 +115,7 @@ public sealed class RunAdventureService(
         if (map.CurrentNode!.Kind != ERunNodeKind.Shop)
             map.CurrentNode.Completed = true;
         map.NodeOpen = false;
-        State.Phase = ERunPhase.Event;
+        run.EnterExploration();
         run.NotifyAdventureChanged();
     }
 
@@ -125,16 +128,15 @@ public sealed class RunAdventureService(
         error = null;
         if (!CanStartBoss)
             return false;
-        var previous = State.Phase;
+
         try
         {
-            State.Phase = ERunPhase.Reward;
+            // StartBattle 接受 Init/Event/Reward，且成功前不改阶段；失败无需回滚。
             run.StartBattle(definitions, new HostRng(State.RunSeed, $"battle:{State.CurrentRing}"), State.RunSeed);
             return true;
         }
-        catch (InvalidOperationException ex)
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
         {
-            State.Phase = previous;
             error = ex.Message;
             return false;
         }

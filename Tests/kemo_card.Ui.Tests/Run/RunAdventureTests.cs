@@ -164,6 +164,65 @@ public sealed class RunAdventureTests
     }
 
     [Test]
+    public void StartBoss_starts_from_init_phase()
+    {
+        var registry = Definitions();
+        var controller = new RunController(new RunMod { StoryId = "story", Phase = ERunPhase.Init });
+        for (var i = 0; i < RunConstants.SlotCount; i++)
+        {
+            var character = new CharacterInstance(new CharacterDto { Id = $"hero{i}", Cards = ["hp"] });
+            controller.State.AddToCharacterPool(character);
+            controller.State.PlayerStates[i].SetActiveCharacter(character);
+        }
+
+        controller.State.Map = new RunMapState
+        {
+            Ring = 1,
+            Position = 0,
+            SelectedBranch = 0,
+            NodeOpen = false,
+            Nodes =
+            [
+                new RunMapNode { Branch = 0, Step = 0, Kind = ERunNodeKind.Event, Completed = true },
+                new RunMapNode { Branch = 0, Step = 1, Kind = ERunNodeKind.Shop },
+                new RunMapNode { Branch = 0, Step = 2, Kind = ERunNodeKind.Event, Completed = true },
+            ],
+        };
+        var service = new RunAdventureService(controller, registry);
+        Assert.That(service.CanStartBoss, Is.True);
+
+        Assert.That(service.StartBoss(out var error), Is.True, error);
+        Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Battle));
+        controller.AbandonRun();
+    }
+
+    [Test]
+    public void StartBoss_failure_keeps_the_previous_phase()
+    {
+        var controller = new RunController(new RunMod { StoryId = "story", Phase = ERunPhase.Init });
+        controller.State.Map = new RunMapState
+        {
+            Ring = 1,
+            Position = 0,
+            SelectedBranch = 0,
+            NodeOpen = false,
+            Nodes =
+            [
+                new RunMapNode { Branch = 0, Step = 0, Kind = ERunNodeKind.Event, Completed = true },
+                new RunMapNode { Branch = 0, Step = 1, Kind = ERunNodeKind.Shop },
+                new RunMapNode { Branch = 0, Step = 2, Kind = ERunNodeKind.Event, Completed = true },
+            ],
+        };
+        var service = new RunAdventureService(controller, Definitions());
+        Assert.That(service.CanStartBoss, Is.True);
+
+        Assert.That(service.StartBoss(out var error), Is.False);
+        Assert.That(error, Does.Contain("上阵角色"));
+        Assert.That(controller.State.Phase, Is.EqualTo(ERunPhase.Init),
+            "开战失败必须还原进入探索前的阶段");
+    }
+
+    [Test]
     public void Conditions_are_explained_and_checked_again_at_submission()
     {
         var controller = new RunController(new RunMod { StoryId = "story", SharedGold = 20 });
@@ -358,10 +417,47 @@ public sealed class RunAdventureTests
     }
 
     [Test]
+    public void Defeat_phase_event_observes_restored_inventory()
+    {
+        var registry = Definitions();
+        var controller = new RunController(new RunMod { StoryId = "story", Phase = ERunPhase.Event });
+        for (var i = 0; i < RunConstants.SlotCount; i++)
+        {
+            var character = new CharacterInstance(new CharacterDto { Id = $"hero{i}", Cards = ["hp"] });
+            controller.State.AddToCharacterPool(character);
+            controller.State.PlayerStates[i].SetActiveCharacter(character);
+        }
+
+        controller.State.Items.TryAdd(registry.Store.Items["potion"]);
+        string? potionWhenEvent = null;
+
+        using (controller.StartBattle(registry, new HostRng(1, "battle"), 1, "battle"))
+        {
+            Assert.That(controller.State.Items.RemoveConsumable(0, "potion"), Is.True);
+            Assert.That(controller.State.Items.Consumables[0], Is.Null);
+
+            var listener = controller.State.OnRunPhaseChanged((payload, _) =>
+            {
+                if (payload.CurrentPhase == ERunPhase.Event)
+                {
+                    potionWhenEvent = controller.State.Items.Consumables[0];
+                }
+            }, this);
+
+            controller.EndBattle(won: false);
+            listener.Off();
+        }
+
+        Assert.That(potionWhenEvent, Is.EqualTo("potion"),
+            "战败回滚的 RunPhaseChanged 必须能读到已经恢复的背包，否则 RunMainWin 会渲染战斗中状态");
+        Assert.That(controller.State.Items.Consumables[0], Is.EqualTo("potion"));
+    }
+
+    [Test]
     public void Relics_run_after_passives_and_defeat_restores_items_and_boss_route()
     {
         var registry = Definitions();
-        var controller = new RunController(new RunMod { StoryId = "story", Phase = ERunPhase.Reward });
+        var controller = new RunController(new RunMod { StoryId = "story", Phase = ERunPhase.Event });
         for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = new CharacterInstance(new CharacterDto { Id = $"hero{i}", Cards = ["hp"] });

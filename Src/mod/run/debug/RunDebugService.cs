@@ -28,9 +28,10 @@ public sealed record RunDebugOption(string Id, string Label);
 /// <remarks>
 /// <para><b>刻意不引用 Godot</b>：这样每条调试操作的语义（给了什么、改了什么、失败在哪一步）
 /// 都能被现有「不依赖场景树」的测试直接覆盖，界面层只剩取值与显示。</para>
-/// <para><b>这是调试工具，允许绕过玩法前置条件</b>：例如 <see cref="StartBattle"/> 会先把阶段改成
-/// Reward、补齐控制权与上阵，再调用正式的 <see cref="RunController.StartBattle"/>。
-/// 绕过的是「怎么走到这一步」，进入战斗后走的仍是生产管线（内容定义 + BattleStart 管线）。</para>
+/// <para><b>这是调试工具，允许绕过玩法前置条件</b>：例如 <see cref="StartBattle"/> 会先调用
+/// <see cref="RunController.ForceSetPhase"/> 把阶段拨到探索、补齐控制权与上阵，再调用正式的
+/// <see cref="RunController.StartBattle"/>。绕过的是「怎么走到这一步」，进入战斗后走的仍是生产管线
+/// （内容定义 + BattleStart 管线）。所有绕过入口集中在本类的显式方法里，业务代码不直接写阶段。</para>
 /// </remarks>
 public sealed class RunDebugService
 {
@@ -324,6 +325,11 @@ public sealed class RunDebugService
     /// </remarks>
     public RunDebugResult StartBattle(string battleId, int? seed = null, bool useRandomSeed = false)
     {
+        if (_run.Simulation is not null)
+        {
+            return RunDebugResult.Failure("已有战斗进行中，请先结算。");
+        }
+
         if (string.IsNullOrWhiteSpace(battleId))
         {
             return RunDebugResult.Failure("未选择战斗。");
@@ -340,10 +346,10 @@ public sealed class RunDebugService
             return RunDebugResult.Failure($"队伍未齐，无法开战：{party.Message}");
         }
 
-        // StartBattle 只接受 Reward 阶段；调试面板显式前置到这里，绕过的是流程而不是战斗管线。
-        // 失败时必须还原原阶段：否则下一次自动存档会把错误的 Reward 阶段写进存档。
+        // 调试面板可以无视地图/奖励前置直接从任意阶段开战：先把阶段强制拨到探索。
+        // StartBattle 成功前不会改阶段，失败时还原原阶段，避免自动存档写入错误阶段。
         var previousPhase = State.Phase;
-        State.Phase = ERunPhase.Reward;
+        _run.ForceSetPhase(ERunPhase.Event);
 
         try
         {
@@ -362,16 +368,20 @@ public sealed class RunDebugService
         }
         catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
         {
-            State.Phase = previousPhase;
+            _run.ForceSetPhase(RestorablePhase(previousPhase));
             return RunDebugResult.Failure($"开战失败：{ex.Message}");
         }
         catch
         {
-            // 未预期异常同样不能把 Run 留在 Reward 阶段。
-            State.Phase = previousPhase;
+            // 未预期异常同样不能把 Run 留在错误的探索阶段。
+            _run.ForceSetPhase(RestorablePhase(previousPhase));
             throw;
         }
     }
+
+    /// <summary>恢复失败前阶段；没有模拟器时不能把 Run 留在战斗阶段。</summary>
+    private ERunPhase RestorablePhase(ERunPhase phase) =>
+        phase is ERunPhase.Battle or ERunPhase.BattleEnd ? ERunPhase.Event : phase;
 
     /// <summary>判定当前战斗胜负并退出战斗阶段（<c>true</c> 走胜利结算，<c>false</c> 回滚到战前快照）。</summary>
     public RunDebugResult EndBattle(bool won)
@@ -381,9 +391,10 @@ public sealed class RunDebugService
             return RunDebugResult.Failure($"当前不在战斗中（阶段 {State.Phase}），无需结算。");
         }
 
+        bool rolledBack;
         try
         {
-            _run.EndBattle(won);
+            rolledBack = _run.EndBattle(won);
         }
         catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
         {
@@ -392,7 +403,9 @@ public sealed class RunDebugService
 
         return RunDebugResult.Success(won
             ? $"已判定胜利，阶段 → {State.Phase}。"
-            : $"已判定失败（回滚到战前快照），阶段 → {State.Phase}。");
+            : rolledBack
+                ? $"已判定失败（回滚到战前快照），阶段 → {State.Phase}。"
+                : $"已判定失败（没有可回滚快照），阶段 → {State.Phase}。");
     }
 
     #endregion
@@ -410,6 +423,11 @@ public sealed class RunDebugService
     /// </remarks>
     public RunDebugResult TriggerEvent(string eventId)
     {
+        if (_run.Simulation is not null)
+        {
+            return RunDebugResult.Failure("战斗进行中，不能触发事件；请先结算。");
+        }
+
         if (string.IsNullOrWhiteSpace(eventId))
         {
             return RunDebugResult.Failure("未选择事件。");
@@ -420,7 +438,7 @@ public sealed class RunDebugService
             return RunDebugResult.Failure($"内容中不存在事件 '{eventId}'。");
         }
 
-        State.Phase = ERunPhase.Event;
+        _run.ForceSetPhase(ERunPhase.Event);
         foreach (var state in State.PlayerStates)
         {
             state.SetEventFlag(LastEventFlagKey, eventId);
@@ -500,7 +518,17 @@ public sealed class RunDebugService
 
     public RunDebugResult SetPhase(ERunPhase phase)
     {
-        State.Phase = phase;
+        if (_run.Simulation is not null && phase is not (ERunPhase.Battle or ERunPhase.BattleEnd))
+        {
+            return RunDebugResult.Failure("战斗进行中，不能切换到非战斗阶段；请先结算。");
+        }
+
+        if (phase is ERunPhase.Battle or ERunPhase.BattleEnd && _run.Simulation is null)
+        {
+            return RunDebugResult.Failure("没有进行中的战斗，不能设置战斗阶段。");
+        }
+
+        _run.ForceSetPhase(phase);
         return RunDebugResult.Success($"阶段 → {State.Phase}");
     }
 

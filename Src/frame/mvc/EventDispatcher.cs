@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace KemoCard.Frame.Mvc;
 
@@ -21,7 +22,10 @@ internal interface IEventListener
     EventDispatcher Owner { get; }
     object Caller { get; }
     int EventId { get; }
+    bool IsActive { get; }
+    bool Once { get; }
     void Deactivate();
+    void Off();
     void InvokeUntyped(object? payload);
 }
 
@@ -93,6 +97,8 @@ internal sealed class EventListener<TPayload> : IEventListener, IEventListener<T
 
     void IEventListener.Deactivate() => IsActive = false;
 
+    void IEventListener.Off() => Owner.OffListener(this);
+
     void IEventListener.InvokeUntyped(object? payload)
     {
         if (payload is null)
@@ -128,9 +134,46 @@ public sealed class EventDispatcher
 
     public static EventDispatchFailureMode FailureMode { get; set; } = EventDispatchFailureMode.LogAndContinue;
 
+    private static readonly object DefaultBindingOwner = new();
+
     private readonly object _gate = new();
     private readonly Dictionary<int, List<IEventListener>> _handlers = [];
     private readonly Dictionary<object, Dictionary<int, List<IEventListener>>> _callerMap = [];
+    private readonly Dictionary<DecoratedBindingKey, EventBinding> _decoratedBindings = [];
+
+    /// <summary>
+    /// 装饰器索引键：target / caller / owner 都按引用身份比较，
+    /// 避免 record、string、boxed struct 等值相等对象被误认为同一订阅方。
+    /// </summary>
+    private readonly struct DecoratedBindingKey : IEquatable<DecoratedBindingKey>
+    {
+        public DecoratedBindingKey(object target, object caller, object owner, EventBusScope? scope)
+        {
+            Target = target;
+            Caller = caller;
+            Owner = owner;
+            Scope = scope;
+        }
+
+        public object Target { get; }
+        public object Caller { get; }
+        public object Owner { get; }
+        public EventBusScope? Scope { get; }
+
+        public bool Equals(DecoratedBindingKey other) =>
+            ReferenceEquals(Target, other.Target)
+            && ReferenceEquals(Caller, other.Caller)
+            && ReferenceEquals(Owner, other.Owner)
+            && Scope == other.Scope;
+
+        public override bool Equals(object? obj) => obj is DecoratedBindingKey other && Equals(other);
+
+        public override int GetHashCode() => HashCode.Combine(
+            RuntimeHelpers.GetHashCode(Target),
+            RuntimeHelpers.GetHashCode(Caller),
+            RuntimeHelpers.GetHashCode(Owner),
+            Scope);
+    }
 
     /// <summary>
     /// 配置全局错误日志实现；应在应用启动时调用一次。
@@ -141,6 +184,18 @@ public sealed class EventDispatcher
     }
 
     internal static void LogError(string message) => _logger.LogError(message);
+
+    /// <summary>装饰器绑定索引数量；仅供测试断言空绑定不残留。</summary>
+    internal int DecoratedBindingCount
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _decoratedBindings.Count;
+            }
+        }
+    }
 
     /// <summary>
     /// 注册监听器。<paramref name="caller"/> 为 <c>null</c> 时归一化为 <see cref="EventConst.NoneCaller"/>。
@@ -197,6 +252,76 @@ public sealed class EventDispatcher
         Action<TPayload, IEventListener<TPayload>> handler,
         object? caller)
         => On(key, handler, caller, true);
+
+    /// <summary>
+    /// 扫描 <paramref name="target"/> 上标记了 <see cref="EventSubscribeAttribute"/> 的方法，
+    /// 按各方法声明的事件枚举成员注册到本分发器。
+    /// </summary>
+    /// <remarks>
+    /// <para><paramref name="caller"/> 缺省为 <paramref name="target"/>，便于 <see cref="OffCaller"/> 按界面
+    /// 一次性清理；返回的 <see cref="EventBinding"/> 可精确取消本次登记而不影响其他 caller 订阅。</para>
+    /// <para>单个方法签名不合法或事件契约缺失时只记日志并跳过，不阻断其余方法——
+    /// 界面打开不该因一个装饰器写错而失败。</para>
+    /// <para>方法发现结果按类型缓存；同一界面反复 InitEvent 不会重复反射。</para>
+    /// <para><paramref name="bindingOwner"/> 区分绑定作用域：同一 UI 的两个 <c>BindingScope</c>
+    /// 各自持有独立句柄，不会因为一方 UnbindAll 把另一方拆掉；不传时按 target+caller 幂等复用。</para>
+    /// <para><paramref name="scopeFilter"/> 只注册指定 <see cref="EventBusScope"/> 的标注，
+    /// 用于把 Owner / Global 事件分流到不同总线。</para>
+    /// </remarks>
+    public EventBinding BindDecorated(
+        object target,
+        object? caller = null,
+        object? bindingOwner = null,
+        EventBusScope? scopeFilter = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        caller ??= target;
+        var key = new DecoratedBindingKey(
+            target,
+            caller,
+            bindingOwner ?? DefaultBindingOwner,
+            scopeFilter);
+
+        // 注册与索引放在同一临界区：EventDispatcher 的锁可重入，On/Off 嵌套调用是安全的。
+        // 这样 OffCaller/OffAll 不会在「Listener 已注册、索引尚未写入」之间把订阅扫掉。
+        lock (_gate)
+        {
+            if (_decoratedBindings.TryGetValue(key, out var existing))
+            {
+                if (existing.IsActive && existing.AllListenersActive)
+                {
+                    return existing;
+                }
+
+                // 监听器可能被 Off/OffId 或 Once 在索引之外移除了；旧句柄不能再直接复用。
+                _decoratedBindings.Remove(key);
+                existing.Off();
+            }
+
+            var binding = EventDecoratorBinder.Bind(this, target, caller, scopeFilter);
+
+            // 没有装饰器方法的 UI（绝大多数 BaseCmp）不进入索引：否则索引会强引用已释放的节点，
+            // 而调用方只在 Count > 0 时登记解绑，这条空绑定永远没有生命周期来清理。
+            if (binding.Count == 0)
+            {
+                return binding;
+            }
+
+            binding.OffCompleted = () =>
+            {
+                lock (_gate)
+                {
+                    if (_decoratedBindings.TryGetValue(key, out var current) && ReferenceEquals(current, binding))
+                    {
+                        _decoratedBindings.Remove(key);
+                    }
+                }
+            };
+
+            _decoratedBindings[key] = binding;
+            return binding;
+        }
+    }
 
     public void Send<TPayload>(EventKey<TPayload> key, TPayload data)
     {
@@ -304,94 +429,179 @@ public sealed class EventDispatcher
         Action<TPayload, IEventListener<TPayload>>? handler = null,
         object? caller = null)
     {
-        lock (_gate)
+        try
         {
-            if (handler == null && caller == null)
+            lock (_gate)
             {
-                OffIdCore(key.Id);
-                return;
-            }
+                if (handler == null && caller == null)
+                {
+                    OffIdCore(key.Id);
+                    return;
+                }
 
-            if (caller == null)
-            {
-                if (!_handlers.TryGetValue(key.Id, out var handlers) || handlers.Count == 0)
+                if (caller == null)
+                {
+                    if (!_handlers.TryGetValue(key.Id, out var handlers) || handlers.Count == 0)
+                    {
+                        return;
+                    }
+
+                    foreach (var obj in handlers.ToArray())
+                    {
+                        if (obj is not EventListener<TPayload> e)
+                        {
+                            continue;
+                        }
+                        if (handler != null && !ReferenceEquals(handler, e.Handler))
+                        {
+                            continue;
+                        }
+                        RemoveListenerInternal(e, key.Id);
+                    }
+                    return;
+                }
+
+                if (!_callerMap.TryGetValue(caller, out var callerHandlers) || callerHandlers.Count == 0)
+                {
+                    return;
+                }
+                if (!callerHandlers.TryGetValue(key.Id, out var callerList) || callerList.Count == 0)
                 {
                     return;
                 }
 
-                foreach (var obj in handlers.ToArray())
+                foreach (var obj in callerList.ToArray())
                 {
                     if (obj is not EventListener<TPayload> e)
                     {
                         continue;
                     }
-                    if (handler != null && !ReferenceEquals(handler, e.Handler))
+                    if (handler != null && !ReferenceEquals(e.Handler, handler))
                     {
                         continue;
                     }
                     RemoveListenerInternal(e, key.Id);
                 }
-                return;
             }
-
-            if (!_callerMap.TryGetValue(caller, out var callerHandlers) || callerHandlers.Count == 0)
-            {
-                return;
-            }
-            if (!callerHandlers.TryGetValue(key.Id, out var callerList) || callerList.Count == 0)
-            {
-                return;
-            }
-
-            foreach (var obj in callerList.ToArray())
-            {
-                if (obj is not EventListener<TPayload> e)
-                {
-                    continue;
-                }
-                if (handler != null && !ReferenceEquals(e.Handler, handler))
-                {
-                    continue;
-                }
-                RemoveListenerInternal(e, key.Id);
-            }
+        }
+        finally
+        {
+            PruneDecoratedBindings();
         }
     }
 
     public void OffId(int id)
     {
+        try
+        {
+            lock (_gate)
+            {
+                OffIdCore(id);
+            }
+        }
+        finally
+        {
+            PruneDecoratedBindings();
+        }
+    }
+
+    /// <summary>
+    /// 回收已因 Off/OffId/Once 失去监听的装饰器句柄，避免索引继续强引用 target。
+    /// </summary>
+    private void PruneDecoratedBindings()
+    {
+        List<EventBinding>? stale = null;
         lock (_gate)
         {
-            OffIdCore(id);
+            List<DecoratedBindingKey>? keys = null;
+            foreach (var entry in _decoratedBindings)
+            {
+                // 只回收完全失效的句柄；部分监听器被移除时保留索引，
+                // 让同一 UI 的其他装饰器事件继续工作，直到下一次显式重绑。
+                if (!entry.Value.IsActive || !entry.Value.HasActiveListeners)
+                {
+                    (keys ??= []).Add(entry.Key);
+                }
+            }
+
+            if (keys is null)
+            {
+                return;
+            }
+
+            stale = [];
+            foreach (var key in keys)
+            {
+                if (_decoratedBindings.Remove(key, out var binding))
+                {
+                    stale.Add(binding);
+                }
+            }
+        }
+
+        foreach (var binding in stale)
+        {
+            binding.Off();
         }
     }
 
     public void OffCaller(object? caller)
     {
         caller ??= EventConst.NoneCaller;
+        List<EventBinding>? decorated = null;
+
         lock (_gate)
         {
-            if (!_callerMap.TryGetValue(caller, out var callerHandlers) || callerHandlers.Count == 0)
+            if (_callerMap.TryGetValue(caller, out var callerHandlers) && callerHandlers.Count > 0)
             {
-                return;
-            }
-            foreach (var entry in callerHandlers)
-            {
-                var id = entry.Key;
-                foreach (var listener in entry.Value.ToArray())
+                foreach (var entry in callerHandlers)
                 {
-                    listener.Deactivate();
-                    if (_handlers.TryGetValue(id, out var handlers) && handlers.Count > 0)
+                    var id = entry.Key;
+                    foreach (var listener in entry.Value.ToArray())
                     {
-                        handlers.Remove(listener);
-                        if (handlers.Count == 0)
+                        listener.Deactivate();
+                        if (_handlers.TryGetValue(id, out var handlers) && handlers.Count > 0)
                         {
-                            _handlers.Remove(id);
+                            handlers.Remove(listener);
+                            if (handlers.Count == 0)
+                            {
+                                _handlers.Remove(id);
+                            }
                         }
                     }
                 }
+                _callerMap.Remove(caller);
             }
-            _callerMap.Remove(caller);
+
+            // 装饰器句柄同样按 caller 清理；Off() 要锁 _gate，必须放到锁外执行。
+            List<DecoratedBindingKey>? removeKeys = null;
+            foreach (var entry in _decoratedBindings)
+            {
+                if (ReferenceEquals(entry.Key.Caller, caller))
+                {
+                    (removeKeys ??= []).Add(entry.Key);
+                }
+            }
+
+            if (removeKeys is not null)
+            {
+                decorated = [];
+                foreach (var key in removeKeys)
+                {
+                    if (_decoratedBindings.Remove(key, out var binding))
+                    {
+                        decorated.Add(binding);
+                    }
+                }
+            }
+        }
+
+        if (decorated is not null)
+        {
+            foreach (var binding in decorated)
+            {
+                binding.Off();
+            }
         }
     }
 
@@ -401,14 +611,22 @@ public sealed class EventDispatcher
         {
             return;
         }
-        lock (_gate)
+        try
         {
-            RemoveListenerInternal(listener, listener.Key.Id);
+            lock (_gate)
+            {
+                RemoveListenerInternal(listener, listener.Key.Id);
+            }
+        }
+        finally
+        {
+            PruneDecoratedBindings();
         }
     }
 
     public void OffAll()
     {
+        EventBinding[]? decorated;
         lock (_gate)
         {
             foreach (var handlers in _handlers.Values)
@@ -420,6 +638,16 @@ public sealed class EventDispatcher
             }
             _handlers.Clear();
             _callerMap.Clear();
+            decorated = _decoratedBindings.Count > 0 ? [.. _decoratedBindings.Values] : null;
+            _decoratedBindings.Clear();
+        }
+
+        if (decorated is not null)
+        {
+            foreach (var binding in decorated)
+            {
+                binding.Off();
+            }
         }
     }
 

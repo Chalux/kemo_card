@@ -38,8 +38,7 @@ public sealed class RunPhaseChangeNotificationTests
     }
 
     /// <summary>
-    /// 调试面板开战前会先把阶段显式拨到 <c>Reward</c>（<c>StartBattle</c> 只接受该阶段），
-    /// 重复赋同一个值不应产生多余事件，否则界面会被无谓地重刷。
+    /// 重复赋同一个阶段不应产生多余事件（旧流程中开战前会临时改阶段，界面不能因此被重刷）。
     /// </summary>
     [Test]
     public void Assigning_the_same_phase_does_not_broadcast()
@@ -86,6 +85,26 @@ public sealed class RunPhaseChangeNotificationTests
         Assert.That(phases[^1], Is.EqualTo(controller.State.Phase), "最后一次广播必须与最终阶段一致");
     }
 
+    [Test]
+    public void Defeat_from_legacy_reward_snapshot_rolls_back_to_event_only()
+    {
+        var (controller, registry, rng) = BuildReadyRun(ERunPhase.Reward);
+        var phases = new List<ERunPhase>();
+        controller.State.OnRunPhaseChanged((payload, _) => phases.Add(payload.CurrentPhase), caller: this);
+
+        using (controller.StartBattle(registry, rng, runSeed: 1))
+        {
+            controller.EndBattle(won: false);
+        }
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(phases, Does.Contain(ERunPhase.Battle));
+            Assert.That(phases, Has.No.Member(ERunPhase.Reward), "旧 Reward 快照回滚不得广播从未停留的 Reward");
+            Assert.That(phases[^1], Is.EqualTo(ERunPhase.Event));
+        });
+    }
+
     /// <summary>
     /// 界面经 <c>Binder.Add(listener.Off)</c> 登记解绑动作，因此 <c>Off()</c> 必须真的停止派发。
     /// </summary>
@@ -106,10 +125,11 @@ public sealed class RunPhaseChangeNotificationTests
         Assert.That(listener.IsActive, Is.False);
     }
 
-    private static (RunController Controller, GameDefinitionRegistry Registry, HostRng Rng) BuildReadyRun()
+    private static (RunController Controller, GameDefinitionRegistry Registry, HostRng Rng) BuildReadyRun(
+        ERunPhase phase = ERunPhase.Event)
     {
         var registry = RunTestHelper.CreateRegistryWithHpCard();
-        var mod = new RunMod { Phase = ERunPhase.Reward };
+        var mod = new RunMod { Phase = phase };
         for (var i = 0; i < RunConstants.SlotCount; i++)
         {
             var character = RunTestHelper.CreateCharacterWithHp(i);

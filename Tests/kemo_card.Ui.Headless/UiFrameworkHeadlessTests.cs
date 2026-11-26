@@ -1,9 +1,11 @@
 using System.Reflection;
 using Godot;
+using KemoCard.Frame.Mvc;
 using KemoCard.Frame.UI;
 using KemoCard.Frame.UI.Base;
 using KemoCard.Frame.UI.Def;
 using KemoCard.Frame.Content.Definitions;
+using KemoCard.Frame.Notification;
 using KemoCard.Mod.Global.Ui.Comp;
 using KemoCard.Mod.Combat;
 using KemoCard.Mod.Run.Ui.CombatUi;
@@ -23,6 +25,7 @@ namespace KemoCard.Ui.Headless;
 public partial class UiFrameworkHeadlessTests : Node
 {
     private readonly UIRuntimeRegistry _registry = new();
+    private readonly HeadlessEventFacade _events = new();
     private UIManager _manager = null!;
     private Control _stage = null!;
     private int _id;
@@ -43,6 +46,7 @@ public partial class UiFrameworkHeadlessTests : Node
             Registry = _registry, StageRoot = _stage,
             Layers = [EUILayer.Win, EUILayer.Dlg, EUILayer.Pop],
             TopLayers = [EUILayer.Debug], KnownOwnerModIds = ["tests", "other", "remove"],
+            FacadeProvider = new HeadlessFacadeProvider(_events),
         });
         (string Name, Func<Task> Run)[] cases =
         [
@@ -62,6 +66,9 @@ public partial class UiFrameworkHeadlessTests : Node
             (nameof(ThrowingCallbacksAdvanceQueue), () => Run(ThrowingCallbacksAdvanceQueue)),
             (nameof(CallbackReentryPreservesRequest), () => Run(CallbackReentryPreservesRequest)),
             (nameof(ExitFailureStillUnbinds), () => Run(ExitFailureStillUnbinds)),
+            (nameof(DecoratedOwnerEventsBindAndUnbindAsync), DecoratedOwnerEventsBindAndUnbindAsync),
+            (nameof(DecoratedComponentRebindsWhenOwnerBusChanges), DecoratedComponentRebindsWhenOwnerBusChanges),
+            (nameof(RedDotWatchBeforeEnterTreeStaysVisible), () => Run(RedDotWatchBeforeEnterTreeStaysVisible)),
             (nameof(MaskExitFailureStillUnbinds), () => Run(MaskExitFailureStillUnbinds)),
             (nameof(FitExitFailureStillUnbinds), () => Run(FitExitFailureStillUnbinds)),
             (nameof(UnregisterOwnerAdvancesQueue), () => Run(UnregisterOwnerAdvancesQueue)),
@@ -126,6 +133,18 @@ public partial class UiFrameworkHeadlessTests : Node
         vo.StateMachine.SetInitialState(EUIState.Cache);
         return (vo, win);
     }
+    private (UIVo Vo, DecoratedTestWindow Win) SeedDecorated()
+    {
+        string id = $"headless.{++_id}";
+        Register(id);
+        var vo = _manager.VoRegistry.GetOrCreate(id, EUIType.Win, "tests", null);
+        var win = new DecoratedTestWindow { TestId = id, TestType = EUIType.Win, UIVo = vo };
+        vo.Runtime.UI = win;
+        vo.Lifecycle.OpenTime = 1;
+        vo.Lifecycle.DestroyTime = -1;
+        vo.StateMachine.SetInitialState(EUIState.Cache);
+        return (vo, win);
+    }
     private void Register(string id, EUIType type = EUIType.Win, string owner = "tests") =>
         _registry.Register(new UIRuntimeEntry
         {
@@ -147,6 +166,10 @@ public partial class UiFrameworkHeadlessTests : Node
             vo.StateMachine.TransitionTo(EUIState.Destroy, vo);
         }
         _manager.OpenNext();
+
+        // 每个用例结束后清掉静态总线与可替换 facade，避免用例顺序影响后续绑定。
+        GlobalEvents.Bus.OffAll();
+        _events.EventBus = new EventDispatcher();
     }
     private async Task NextFramesAsync()
     {
@@ -444,7 +467,8 @@ public partial class UiFrameworkHeadlessTests : Node
             _stage.AddChild(map);
             try
             {
-                var nodes = Enumerable.Range(0, 2).SelectMany(branch => Enumerable.Range(0, 3).Select(step => new RunMapNode {
+                var nodes = Enumerable.Range(0, 2).SelectMany(branch => Enumerable.Range(0, 3).Select(step => new RunMapNode
+                {
                     Branch = branch, Step = step, Kind = step == 0 ? ERunNodeKind.Event : step == 1 ? ERunNodeKind.Shop : ERunNodeKind.VisibleEvent,
                     VisibleReward = step == 2 ? new() { Kind = kind, Role = ERole.Attack } : null,
                 })).ToList();
@@ -1010,6 +1034,101 @@ public partial class UiFrameworkHeadlessTests : Node
         s.Win.ClickButton.EmitSignal(BaseButton.SignalName.Pressed);
         Require(s.Win.BindingCount == 0 && s.Win.Clicks == 0, "exit failure bypassed native signal unbind");
         s.Win.ThrowOnExit = false;
+    }
+
+    /// <summary>
+    /// 装饰器订阅必须跟随界面生命周期：打开时绑定到归属功能总线，关闭后解绑，缓存重开时重新绑定。
+    /// </summary>
+    private Task DecoratedOwnerEventsBindAndUnbindAsync()
+    {
+        var s = SeedDecorated();
+        Opened(_manager.OpenAsync(s.Vo.Id), s.Vo);
+        var ping = new EventKey<HeadlessPingPayload>((int)EHeadlessEvent.Ping);
+        var globalPing = new EventKey<HeadlessPingPayload>((int)EHeadlessEvent.GlobalPing);
+
+        _events.EventBus.Send(ping, default);
+        Require(s.Win.PingCount == 1, "decorated handler was not bound on open");
+
+        _events.EventBus.Send(globalPing, default);
+        Require(s.Win.GlobalPingCount == 0, "Global-scope handler must not bind to the owner bus");
+        GlobalEvents.Bus.Send(globalPing, default);
+        Require(s.Win.GlobalPingCount == 1, "Global-scope handler was not bound to GlobalEvents.Bus");
+
+        _manager.Close(s.Vo.Id);
+        _events.EventBus.Send(ping, default);
+        GlobalEvents.Bus.Send(globalPing, default);
+        Require(s.Win.PingCount == 1 && s.Win.GlobalPingCount == 1,
+            "decorated handlers still bound after close");
+
+        Opened(_manager.OpenAsync(s.Vo.Id), s.Vo);
+        _events.EventBus.Send(ping, default);
+        GlobalEvents.Bus.Send(globalPing, default);
+        Require(s.Win.PingCount == 2 && s.Win.GlobalPingCount == 2,
+            "decorated handler was not rebound after cached reopen");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 已挂载窗口再次 Open（QuickLoad 换 RunController）时，子组件的装饰器订阅必须切到新总线。
+    /// </summary>
+    private Task DecoratedComponentRebindsWhenOwnerBusChanges()
+    {
+        var s = SeedDecorated();
+        var component = new DecoratedTestCmp();
+        s.Win.AddChild(component);
+        Opened(_manager.OpenAsync(s.Vo.Id), s.Vo);
+        var ping = new EventKey<HeadlessPingPayload>((int)EHeadlessEvent.Ping);
+
+        _events.EventBus.Send(ping, default);
+        Require(s.Win.PingCount == 1 && component.PingCount == 1,
+            "window/component decorated handler was not bound on open");
+
+        var oldBus = _events.EventBus;
+        _events.EventBus = new EventDispatcher();
+        Opened(_manager.OpenAsync(s.Vo.Id), s.Vo);
+
+        oldBus.Send(ping, default);
+        Require(s.Win.PingCount == 1 && component.PingCount == 1,
+            "old bus still delivers after owner bus changed");
+
+        _events.EventBus.Send(ping, default);
+        Require(s.Win.PingCount == 2 && component.PingCount == 2,
+            "already-mounted window/component was not rebound to the current bus");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// WatchRed 在入树前调用时，首次 _Ready 不得把可见性覆盖回 false。
+    /// </summary>
+    private void RedDotWatchBeforeEnterTreeStaysVisible()
+    {
+        RedDotService.Configure();
+        RedDotService.RegisterNode("headless.dot", () => true);
+        var dot = new RedDotCmp();
+        try
+        {
+            dot.WatchRed("headless.dot");
+            _stage.AddChild(dot);
+            Require(dot.Visible, "WatchRed before _Ready was overwritten by default hide");
+
+            // 缓存重开：_Ready 不会再跑，_EnterTree 必须用保留的 watch id 重新对账。
+            _stage.RemoveChild(dot);
+            RedDotService.SetOverride("headless.dot", RedDotOverride.ForceInactive);
+            RedDotService.InternalFlushAll();
+            _stage.AddChild(dot);
+            Require(!dot.Visible, "re-entering the tree did not reconcile the retained watched id");
+        }
+        finally
+        {
+            if (dot.GetParent() != null)
+            {
+                _stage.RemoveChild(dot);
+            }
+            dot.QueueFree();
+            RedDotService.Configure();
+        }
     }
 
     private void MaskExitFailureStillUnbinds()

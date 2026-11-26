@@ -29,14 +29,18 @@ public sealed class RunSaveClosureTests
     {
         using var dir = TempDir();
         var saveService = new RunSaveService(dir.Path);
-        var controller = new RunController(new RunMod());
-        controller.EnableAutoSave(saveService);
+        var controller = BuildBattleReadyController(saveService);
 
-        controller.CreateRun("story_a", new HostRng(1, "create"), []);
-        controller.NextRing();
+        // 走真实流程进入 RingEnd：胜利后 NextRing 才允许推进。
+        using (controller.StartBattle(RunTestHelper.CreateRegistryWithHpCard(), new HostRng(1, "battle"), 1))
+        {
+            controller.EndBattle(won: true);
+        }
+        Assert.That(controller.NextRing(), Is.True);
 
         var loaded = saveService.LoadOrDefault();
         Assert.That(loaded.CurrentRing, Is.EqualTo(2));
+        Assert.That(loaded.Phase, Is.EqualTo(ERunPhase.Event));
     }
 
     [Test]
@@ -45,7 +49,7 @@ public sealed class RunSaveClosureTests
         using var dir = TempDir();
         var saveService = new RunSaveService(dir.Path);
         var controller = BuildBattleReadyController(saveService);
-        controller.Save(saveService); // 战前存档（Phase=Reward）
+        controller.Save(saveService); // 战前存档（沿用 Reward 旧档路径，便于观察战败后的阶段差）
 
         var simulation = controller.StartBattle(
             RunTestHelper.CreateRegistryWithHpCard(), new HostRng(1, "battle"), 1);
@@ -79,7 +83,7 @@ public sealed class RunSaveClosureTests
         using var dir = TempDir();
         var saveService = new RunSaveService(dir.Path);
         var controller = BuildBattleReadyController(saveService);
-        controller.Save(saveService); // 战前存档（Phase=Reward）
+        controller.Save(saveService); // 战前存档（沿用 Reward 旧档路径，便于观察战败后的阶段差）
 
         var simulation = controller.StartBattle(
             RunTestHelper.CreateRegistryWithHpCard(), new HostRng(1, "battle"), 1);
